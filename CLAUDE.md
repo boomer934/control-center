@@ -54,17 +54,18 @@ pnpm non è installato globalmente: si usa `npx pnpm@10.34.9 <comando>`, oppure 
 
 Leggi solo ciò che serve al momento:
 
-| File                | Leggi quando                        | Aggiorna quando                         |
-| ------------------- | ----------------------------------- | --------------------------------------- |
-| `STATO.md`          | **sempre a inizio sessione**        | a fine sessione e a ogni cambio di task |
-| `PROSSIMI_PASSI.md` | scegli cosa fare                    | un task si chiude o nasce               |
-| `STORIA.md`         | devi capire perché qualcosa è così  | a fine sessione (voce in cima)          |
-| `PIANO.md`          | apri una nuova fase o sotto-fase    | cambia il piano (con voce in STORIA)    |
-| `DECISIONI.md`      | prima di cambiare architettura      | ogni nuova ADR                          |
-| `DESIGN.md`         | prima di toccare la UI              | cambia il design system                 |
-| `SICUREZZA.md`      | prima di IPC, processi, fs, segreti | nuova superficie d'attacco              |
-| `GLOSSARIO.md`      | incontri un termine del progetto    | nasce un termine                        |
-| `PROBLEMI_NOTI.md`  | qualcosa si rompe                   | scopri o risolvi un problema            |
+| File                | Leggi quando                        | Aggiorna quando                                            |
+| ------------------- | ----------------------------------- | ---------------------------------------------------------- |
+| `STATO.md`          | **sempre a inizio sessione**        | a fine sessione e a ogni cambio di task                    |
+| `PROSSIMI_PASSI.md` | scegli cosa fare                    | un task si chiude o nasce                                  |
+| `STORIA.md`         | devi capire perché qualcosa è così  | a fine sessione (voce in cima)                             |
+| `PIANO.md`          | apri una nuova fase o sotto-fase    | cambia il piano (con voce in STORIA)                       |
+| `DECISIONI.md`      | prima di cambiare architettura      | ogni nuova ADR                                             |
+| `DESIGN.md`         | prima di toccare la UI              | cambia il design system                                    |
+| `SICUREZZA.md`      | prima di IPC, processi, fs, segreti | nuova superficie d'attacco                                 |
+| `GLOSSARIO.md`      | incontri un termine del progetto    | nasce un termine                                           |
+| `PROBLEMI_NOTI.md`  | qualcosa si rompe                   | scopri o risolvi un problema                               |
+| `FASE_<n>.md`       | inizi o riprendi quella fase        | chiudi una sotto-fase; a fine fase va archiviato in STORIA |
 
 Skill di progetto:
 

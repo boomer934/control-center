@@ -4,6 +4,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-13 — Passaggio alla Fase 1
+
+**Fatto**
+
+- Scritto il brief operativo `FASE_1.md`: prerequisiti, sotto-fasi 1a-1d con modello, effort e goal, registrazione delle fixture, vincoli e decisioni aperte. Collegato da STATO, PROSSIMI_PASSI e CLAUDE.md.
+- Corretta un'incoerenza in `PIANO.md`: l'ultracode della Fase 1 è per la 1b (tre direzioni in parallelo), non per la 1c.
+
+**Decisioni**
+
+- Ogni fase lunga avrà un file `FASE_<n>.md` di passaggio, archiviato in STORIA a fine fase.
+- La Fase 1 si fa in una nuova sessione, partendo da `inizio-sessione`.
+
+---
+
 ## 2026-11-13 — Chiusura Fase 0
 
 **Fatto**

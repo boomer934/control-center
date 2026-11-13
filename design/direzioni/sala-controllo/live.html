@@ -1,0 +1,4763 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="compact" data-scenario="normal" data-gray="0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Control Center · Live · sala-controllo</title>
+    <script>
+      // Read URL params before first paint (theme, density, scenario, gray).
+      (function () {
+        var q = new URLSearchParams(location.search),
+          r = document.documentElement;
+        var ok = {
+          theme: ['dark', 'light'],
+          density: ['compact', 'comfortable'],
+          scenario: ['normal', 'dense'],
+          gray: ['0', '1'],
+        };
+        Object.keys(ok).forEach(function (k) {
+          var v = q.get(k);
+          if (v && ok[k].indexOf(v) > -1) r.setAttribute('data-' + k, v);
+        });
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow+Semi+Condensed:wght@400;500;600&family=Iosevka+Charon+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ---------- palette (all colors live here) ---------- */
+      html[data-theme='dark'] {
+        --page: #05090d;
+        --s0: #0a1117;
+        --s1: #0f181f;
+        --s2: #16212a;
+        --s3: #1f2d39;
+        --grid-1: #101b23;
+        --grid-2: #172631;
+        --line: #22313d;
+        --line-2: #5b7184;
+        --tx-1: #e2ebf1;
+        --tx-2: #97a9b7;
+        --tx-3: #6c7f8e;
+        --accent: #cfe4f3;
+        --on-accent: #0a1117;
+        --st-idle: #71879a;
+        --st-read: #3cc8f0;
+        --st-write: #ff9442;
+        --st-run: #3fd68a;
+        --st-wait: #ffd23a;
+        --st-wait-tx: #ffd23a;
+        --st-error: #ff5e5e;
+        --st-done: #b4c3ce;
+        --st-done-trace: #2c3e4c;
+        --on-wait: #17130a;
+        --wait-edge: #ffd23a;
+        --on-state: #0a1117;
+        --st-read-bg: #0d2330;
+        --st-write-bg: #2a1b0f;
+        --st-run-bg: #0d2a1d;
+        --st-error-bg: #2c1215;
+        --ev-past: #5a6e7e;
+        --id-claude: #b89eff;
+        --id-sub: #d6c9ff;
+        --id-local: #ff8dcb;
+        color-scheme: dark;
+      }
+      html[data-theme='light'] {
+        --page: #bcc6c1;
+        --s0: #e3e9e5;
+        --s1: #ebf0ec;
+        --s2: #f6f8f6;
+        --s3: #d6ded9;
+        --grid-1: #d3dcd6;
+        --grid-2: #bfcbc4;
+        --line: #c0cac4;
+        --line-2: #74847d;
+        --tx-1: #0d1b22;
+        --tx-2: #3b4e59;
+        --tx-3: #5f717b;
+        --accent: #0d1b22;
+        --on-accent: #f6f8f6;
+        --st-idle: #677883;
+        --st-read: #08668a;
+        --st-write: #a84300;
+        --st-run: #136e37;
+        --st-wait: #f7c81c;
+        --st-wait-tx: #6b4f00;
+        --st-error: #b91f28;
+        --st-done: #46565f;
+        --st-done-trace: #c9d3cd;
+        --on-wait: #17130a;
+        --wait-edge: #17130a;
+        --on-state: #f6f8f6;
+        --st-read-bg: #d5e8ef;
+        --st-write-bg: #f3e0d2;
+        --st-run-bg: #d5ebdc;
+        --st-error-bg: #f4d9d9;
+        --ev-past: #6e7f88;
+        --id-claude: #5a3ccb;
+        --id-sub: #6e52d6;
+        --id-local: #a32f75;
+        color-scheme: light;
+      }
+
+      /* ---------- type, motion, density tokens ---------- */
+      :root {
+        --f-ui: 'Barlow Semi Condensed', system-ui, sans-serif;
+        --f-num: 'Barlow Condensed', 'Barlow Semi Condensed', system-ui, sans-serif;
+        --f-mono: 'Iosevka Charon Mono', ui-monospace, Consolas, monospace;
+        --dur-1: 150ms;
+        --dur-2: 220ms;
+        --dur-3: 300ms;
+        --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+        --ease-io: cubic-bezier(0.45, 0, 0.25, 1);
+        --act-w: 48px;
+        --dock-w: 340px;
+        --col-w: 280px;
+        --lane-label: 164px;
+      }
+      html[data-density='compact'] {
+        --h-title: 34px;
+        --h-status: 26px;
+        --h-tool: 34px;
+        --h-tl: 212px;
+        --fs-2xs: 9.5px;
+        --fs-xs: 10.5px;
+        --fs-s: 12px;
+        --fs-m: 13px;
+        --fs-l: 15px;
+        --fs-xl: 22px;
+        --fs-2xl: 30px;
+        --node-h: 20px;
+        --fs-node: 11px;
+        --fs-mono: 11.5px;
+        --av-w: 32px;
+        --av-h: 18px;
+        --pad: 8px;
+        --pad-s: 5px;
+        --btn-h: 22px;
+        --tl-head: 24px;
+        --tl-ruler: 20px;
+        --tl-scrub: 22px;
+      }
+      html[data-density='comfortable'] {
+        --h-title: 38px;
+        --h-status: 28px;
+        --h-tool: 38px;
+        --h-tl: 246px;
+        --fs-2xs: 10.5px;
+        --fs-xs: 11.5px;
+        --fs-s: 13px;
+        --fs-m: 14px;
+        --fs-l: 16.5px;
+        --fs-xl: 25px;
+        --fs-2xl: 34px;
+        --node-h: 24px;
+        --fs-node: 12px;
+        --fs-mono: 12.5px;
+        --av-w: 36px;
+        --av-h: 20px;
+        --pad: 11px;
+        --pad-s: 7px;
+        --btn-h: 26px;
+        --tl-head: 28px;
+        --tl-ruler: 22px;
+        --tl-scrub: 26px;
+      }
+
+      /* ---------- page ---------- */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        background: var(--page);
+        color: var(--tx-1);
+      }
+      body {
+        font-family: var(--f-ui);
+        font-size: var(--fs-m);
+        padding: 14px 20px 28px;
+        min-width: 1490px;
+        -webkit-font-smoothing: antialiased;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .num {
+        font-family: var(--f-num);
+        font-variant-numeric: tabular-nums lining-nums;
+        letter-spacing: 0.01em;
+      }
+      .mono {
+        font-family: var(--f-mono);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0;
+        font-size: 1.06em;
+      }
+      .dim {
+        color: var(--tx-2);
+      }
+      .grow {
+        flex: 1;
+      }
+      .ic {
+        width: 14px;
+        height: 14px;
+        flex: none;
+      }
+      .ic.xs {
+        width: 11px;
+        height: 11px;
+      }
+      html[data-scenario='normal'] .only-dense,
+      html[data-scenario='dense'] .only-normal {
+        display: none !important;
+      }
+      html[data-density='compact'] .only-f,
+      html[data-density='comfortable'] .only-c {
+        display: none !important;
+      }
+
+      /* ---------- toggle bar (outside the window) ---------- */
+      .toggles {
+        width: 1440px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin: 0 auto 10px;
+        font-size: 13px;
+        color: var(--tx-2);
+      }
+      .toggles .ttl {
+        color: var(--tx-1);
+        font-weight: 600;
+        font-size: 14px;
+        margin-right: auto;
+      }
+      .toggles .ttl span {
+        color: var(--tx-2);
+        font-weight: 400;
+      }
+      .tg {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .tg > span {
+        color: var(--tx-2);
+      }
+      .seg-ctl {
+        display: inline-flex;
+        border: 1px solid var(--line-2);
+      }
+      .seg-ctl button {
+        padding: 3px 10px;
+        color: var(--tx-2);
+        font-size: 13px;
+      }
+      .seg-ctl button + button {
+        border-left: 1px solid var(--line-2);
+      }
+      .seg-ctl button[aria-pressed='true'] {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+
+      /* ---------- simulated window ---------- */
+      .win {
+        width: 1440px;
+        height: 900px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-rows: var(--h-title) 1fr var(--h-status);
+        background: var(--s1);
+        outline: 1px solid var(--line-2);
+        overflow: hidden;
+        position: relative;
+      }
+      html[data-gray='1'] .win {
+        filter: grayscale(1);
+      }
+
+      /* title bar */
+      .titlebar {
+        display: flex;
+        align-items: stretch;
+        background: var(--s2);
+        border-bottom: 1px solid var(--line);
+        font-size: var(--fs-s);
+      }
+      .tb-mark {
+        width: var(--act-w);
+        display: grid;
+        place-items: center;
+        color: var(--tx-1);
+      }
+      .tb-mark .ic {
+        width: 16px;
+        height: 16px;
+      }
+      .tb-crumbs {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        min-width: 0;
+      }
+      .tb-crumbs > * {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 12px;
+        height: 100%;
+        border-right: 1px solid var(--line);
+      }
+      .tb-ws {
+        color: var(--tx-1);
+        font-weight: 600;
+      }
+      .tb-br {
+        color: var(--tx-2);
+      }
+      .tb-sess {
+        color: var(--tx-1);
+      }
+      .tb-sess .dim {
+        font-weight: 400;
+      }
+      .tb-right {
+        margin-left: auto;
+        display: flex;
+        align-items: stretch;
+      }
+      .tb-dock {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 10px;
+        border-left: 1px solid var(--line);
+      }
+      .tb-dock button {
+        width: 26px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        color: var(--tx-2);
+      }
+      .tb-dock button[aria-pressed='true'] {
+        color: var(--tx-1);
+        background: var(--s3);
+      }
+      .tb-win button {
+        width: 46px;
+        height: 100%;
+        display: grid;
+        place-items: center;
+        color: var(--tx-2);
+      }
+      .tb-win .ic {
+        width: 10px;
+        height: 10px;
+      }
+
+      /* body grid */
+      .wbody {
+        display: grid;
+        grid-template-columns: var(--act-w) 1fr var(--dock-w);
+        min-height: 0;
+      }
+
+      /* activity bar */
+      .activity {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--s1);
+        border-right: 1px solid var(--line);
+        padding: 8px 0;
+      }
+      .ws-av {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line-2);
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--tx-1);
+        margin-bottom: 10px;
+        letter-spacing: 0.04em;
+        background: var(--s2);
+      }
+      .act {
+        width: 48px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        color: var(--tx-3);
+        position: relative;
+      }
+      .act .ic {
+        width: 20px;
+        height: 20px;
+      }
+      .act[aria-current='page'] {
+        color: var(--tx-1);
+      }
+      .act[aria-current='page']::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: var(--accent);
+      }
+      .act .bdg {
+        position: absolute;
+        right: 7px;
+        top: 6px;
+        min-width: 14px;
+        height: 13px;
+        padding: 0 3px;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: 11px;
+        line-height: 13px;
+        text-align: center;
+      }
+      .act-sp {
+        flex: 1;
+      }
+
+      /* live area */
+      .live {
+        display: grid;
+        grid-template-rows: var(--h-tool) 1fr var(--h-tl);
+        min-width: 0;
+        min-height: 0;
+      }
+      .ltool {
+        display: grid;
+        grid-template-columns: 1fr var(--col-w);
+        border-bottom: 1px solid var(--line);
+        background: var(--s1);
+      }
+      .ltool-l {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+      }
+      .tbtn {
+        height: var(--btn-h);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 9px;
+        border: 1px solid var(--line-2);
+        color: var(--tx-1);
+        font-size: var(--fs-s);
+        font-weight: 500;
+      }
+      .tbtn .ic {
+        width: 13px;
+        height: 13px;
+        color: var(--tx-2);
+      }
+      .tbtn .v {
+        color: var(--tx-1);
+        font-weight: 600;
+      }
+      .tbtn.on {
+        background: var(--s3);
+      }
+      .ltool-l .sp {
+        flex: 1;
+      }
+      .ltool-l .ro {
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        display: flex;
+        gap: 14px;
+      }
+      .tabs {
+        display: flex;
+        align-items: stretch;
+        border-left: 1px solid var(--line);
+      }
+      .tab {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: var(--fs-s);
+        color: var(--tx-2);
+        font-weight: 500;
+        position: relative;
+      }
+      .tab[aria-selected='true'] {
+        color: var(--tx-1);
+        background: var(--s2);
+      }
+      .tab[aria-selected='true']::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 2px;
+        background: var(--accent);
+      }
+      .tab .num {
+        color: var(--tx-2);
+      }
+      .lmid {
+        display: grid;
+        grid-template-columns: 1fr var(--col-w);
+        min-height: 0;
+      }
+
+      /* ---------- map ---------- */
+      .map {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--s0);
+        background-image:
+          linear-gradient(var(--grid-2) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid-2) 1px, transparent 1px),
+          linear-gradient(var(--grid-1) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid-1) 1px, transparent 1px);
+        background-size:
+          100px 100px,
+          100px 100px,
+          20px 20px,
+          20px 20px;
+        background-position: -1px -1px;
+      }
+      .map::before,
+      .map::after {
+        content: '';
+        position: absolute;
+        pointer-events: none;
+        z-index: 3;
+      }
+      .map::before {
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 7px;
+        border-bottom: 1px solid var(--line);
+        background:
+          repeating-linear-gradient(90deg, var(--line-2) 0 1px, transparent 1px 20px) 0 3px/100% 4px
+            no-repeat,
+          repeating-linear-gradient(90deg, var(--line-2) 0 1px, transparent 1px 100px) 0 0/100% 7px
+            no-repeat,
+          var(--s1);
+      }
+      .map::after {
+        left: 0;
+        top: 7px;
+        bottom: 0;
+        width: 7px;
+        border-right: 1px solid var(--line);
+        background:
+          repeating-linear-gradient(0deg, var(--line-2) 0 1px, transparent 1px 20px) 3px 0/4px 100%
+            no-repeat,
+          repeating-linear-gradient(0deg, var(--line-2) 0 1px, transparent 1px 100px) 0 0/7px 100%
+            no-repeat,
+          var(--s1);
+      }
+      .map-world {
+        position: absolute;
+        inset: 0;
+      }
+      html[data-density='compact'] .pos {
+        left: var(--xc);
+        top: var(--yc);
+      }
+      html[data-density='comfortable'] .pos {
+        left: var(--xf);
+        top: var(--yf);
+      }
+      .pos {
+        position: absolute;
+      }
+
+      .frame {
+        background:
+          linear-gradient(var(--line-2), var(--line-2)) left top/9px 1px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) left top/1px 9px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) right top/9px 1px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) right top/1px 9px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) left bottom/9px 1px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) left bottom/1px 9px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) right bottom/9px 1px no-repeat,
+          linear-gradient(var(--line-2), var(--line-2)) right bottom/1px 9px no-repeat;
+      }
+      html[data-density='compact'] .frame {
+        width: var(--wc);
+        height: var(--hc);
+      }
+      html[data-density='comfortable'] .frame {
+        width: var(--wf);
+        height: var(--hf);
+      }
+      html[data-density='compact'] .node {
+        width: var(--wc);
+      }
+      html[data-density='comfortable'] .node {
+        width: var(--wf);
+      }
+      .frame .fl {
+        position: absolute;
+        left: 12px;
+        top: 3px;
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        letter-spacing: 0;
+        white-space: nowrap;
+      }
+      .frame.lane {
+        background: none;
+        border-left: 1px dashed var(--line-2);
+      }
+      .frame.lane .fl {
+        font-family: var(--f-ui);
+        font-size: var(--fs-xs);
+        left: 10px;
+      }
+
+      .edges {
+        position: absolute;
+        left: 0;
+        top: 0;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .e {
+        fill: none;
+        stroke-width: 1.5;
+      }
+      .e-write {
+        stroke: var(--st-write);
+      }
+      .e-read {
+        stroke: var(--st-read);
+        stroke-dasharray: 4 3;
+      }
+      .e-wait {
+        stroke: var(--wait-edge);
+      }
+      .e-run {
+        stroke: var(--st-run);
+        stroke-dasharray: 1 3;
+        stroke-linecap: round;
+        stroke-width: 2;
+      }
+      .ee {
+        stroke: none;
+      }
+      rect.e-write {
+        fill: var(--st-write);
+      }
+      rect.e-read {
+        fill: var(--st-read);
+      }
+      rect.e-wait {
+        fill: var(--wait-edge);
+      }
+      rect.e-run {
+        fill: var(--st-run);
+      }
+
+      .node {
+        height: var(--node-h);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 6px 0 6px;
+        border: 1px solid var(--line);
+        background: var(--s1);
+        color: var(--tx-2);
+        font-family: var(--f-mono);
+        font-size: var(--fs-node);
+        letter-spacing: 0;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      html[data-theme='light'] .node {
+        border-color: var(--line-2);
+      }
+      .node.temp {
+        border-radius: 999px;
+        padding-left: 8px;
+      }
+      .node .lamp {
+        width: 9px;
+        height: 9px;
+        flex: none;
+        color: var(--st-idle);
+      }
+      .node .nm {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .node .pre {
+        color: var(--tx-2);
+        margin-right: -1px;
+      }
+      .node .tag {
+        margin-left: auto;
+        font-weight: 500;
+        font-size: calc(var(--fs-node) - 1.5px);
+        padding: 0 4px;
+        line-height: calc(var(--node-h) - 8px);
+        flex: none;
+      }
+      .node.st-folder {
+        border-style: dashed;
+      }
+      .node.st-folder .lamp {
+        color: var(--tx-2);
+      }
+      .node.st-folder .tag {
+        color: var(--tx-2);
+        font-weight: 400;
+      }
+      .node.st-reading {
+        border-color: var(--st-read);
+        background: var(--st-read-bg);
+        color: var(--tx-1);
+        overflow: visible;
+      }
+      .node.st-reading .lamp {
+        color: var(--st-read);
+      }
+      .node.st-reading::before {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: calc(50% - 7.5px);
+        width: 15px;
+        height: 15px;
+        border: 1px solid var(--st-read);
+        border-radius: 50%;
+        opacity: 0;
+        animation: blip 2.8s var(--ease-out) infinite;
+      }
+      @keyframes blip {
+        0% {
+          opacity: 0.9;
+          transform: scale(0.45);
+        }
+        10% {
+          opacity: 0;
+          transform: scale(1.25);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.25);
+        }
+      }
+      .node.st-writing {
+        border: 2px solid var(--st-write);
+        background: var(--st-write-bg);
+        color: var(--tx-1);
+        padding-left: 5px;
+      }
+      .node.st-writing .lamp {
+        color: var(--st-write);
+      }
+      .node.st-writing .tag {
+        background: var(--st-write);
+        color: var(--on-state);
+      }
+      .node.st-running {
+        border-color: var(--st-run);
+        background: var(--st-run-bg);
+        color: var(--tx-1);
+        position: absolute;
+      }
+      .node.st-running.temp {
+        border-style: dashed;
+      }
+      .node.st-running .lamp {
+        color: var(--st-run);
+      }
+      .node.st-running .tag {
+        color: var(--st-run);
+      }
+      .node.st-running::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--st-run) 40%,
+          var(--st-run) 60%,
+          transparent
+        );
+        transform: translateX(-100%);
+        animation: sweep 1.3s linear infinite;
+      }
+      @keyframes sweep {
+        to {
+          transform: translateX(100%);
+        }
+      }
+      .node.st-waiting {
+        background: var(--st-wait);
+        color: var(--on-wait);
+        border: 1px solid var(--on-wait);
+        font-weight: 600;
+        padding-left: 14px;
+      }
+      .node.st-waiting::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: repeating-linear-gradient(
+          -45deg,
+          var(--on-wait) 0 2px,
+          var(--st-wait) 2px 4.5px
+        );
+      }
+      .node.st-waiting .lamp,
+      .node.st-waiting .pre {
+        color: var(--on-wait);
+      }
+      .node.st-error {
+        border-color: var(--st-error);
+        border-left: 3px solid var(--st-error);
+        background: var(--st-error-bg);
+        color: var(--tx-1);
+        padding-left: 5px;
+      }
+      .node.st-error .lamp {
+        color: var(--st-error);
+        width: 10px;
+        height: 10px;
+      }
+      .node.st-error .tag {
+        color: var(--st-error);
+        font-weight: 600;
+      }
+      .node.st-done {
+        border-color: var(--line-2);
+        background: linear-gradient(90deg, var(--st-done-trace), var(--s1) 78%);
+        color: var(--tx-1);
+        animation: settle var(--dur-3) var(--ease-out) both;
+      }
+      .node.st-done .lamp {
+        color: var(--st-done);
+      }
+      .node.st-done .tag {
+        color: var(--tx-2);
+        border: 1px solid var(--line-2);
+        line-height: calc(var(--node-h) - 10px);
+      }
+      @keyframes settle {
+        from {
+          border-color: var(--st-done);
+        }
+      }
+      .node.st-idle .nm {
+        color: var(--tx-2);
+      }
+
+      .avatar {
+        height: var(--av-h);
+        width: var(--av-w);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        background: var(--s2);
+        border: 1px solid currentColor;
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: var(--fs-xs);
+        letter-spacing: 0.04em;
+        z-index: 2;
+      }
+      .avatar .gl {
+        width: 8px;
+        height: 8px;
+      }
+      .avatar .al {
+        width: 8px;
+        height: 8px;
+      }
+      .id-claude {
+        color: var(--id-claude);
+      }
+      .id-sub {
+        color: var(--id-sub);
+      }
+      .id-local {
+        color: var(--id-local);
+      }
+      .avatar.id-sub {
+        border-style: dashed;
+      }
+      .avatar.id-local {
+        border-bottom-width: 3px;
+      }
+      .al.st-waiting {
+        color: var(--st-wait-tx);
+      }
+      .al.st-reading {
+        color: var(--st-read);
+      }
+      .al.st-running {
+        color: var(--st-run);
+      }
+      .al.st-writing {
+        color: var(--st-write);
+      }
+      .al.st-done {
+        color: var(--st-done);
+      }
+      .al.st-error {
+        color: var(--st-error);
+      }
+      .al.st-idle {
+        color: var(--st-idle);
+      }
+
+      .av-ro {
+        height: var(--av-h);
+        display: flex;
+        align-items: baseline;
+        gap: 3px;
+        white-space: nowrap;
+        line-height: var(--av-h);
+      }
+      .av-ro b {
+        font-size: calc(var(--fs-s) + 2px);
+        font-weight: 600;
+      }
+      .av-ro span {
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+      }
+      .t-running {
+        color: var(--st-run);
+      }
+      .t-reading {
+        color: var(--st-read);
+      }
+      .t-waiting {
+        color: var(--st-wait-tx);
+      }
+      .minimap {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        width: 132px;
+        height: 92px;
+        background: var(--s1);
+        border: 1px solid var(--line-2);
+        padding: 3px;
+        z-index: 4;
+      }
+      .minimap svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .mm-f {
+        fill: none;
+        stroke: var(--line-2);
+        stroke-width: 3;
+      }
+      .mm-n {
+        fill: var(--st-idle);
+      }
+      .mm-n.st-reading {
+        fill: var(--st-read);
+      }
+      .mm-n.st-writing {
+        fill: var(--st-write);
+      }
+      .mm-n.st-running {
+        fill: var(--st-run);
+      }
+      .mm-n.st-waiting {
+        fill: var(--st-wait);
+      }
+      .mm-n.st-error {
+        fill: var(--st-error);
+      }
+      .mm-n.st-done {
+        fill: var(--st-done);
+      }
+      .mm-v {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 5;
+      }
+      .map-readout {
+        position: absolute;
+        left: 16px;
+        bottom: 9px;
+        display: flex;
+        gap: 12px;
+        font-size: var(--fs-2xs);
+        color: var(--tx-2);
+        z-index: 4;
+        background: var(--s0);
+        padding: 2px 4px;
+      }
+
+      /* ---------- agents column ---------- */
+      .agents-col {
+        border-left: 1px solid var(--line);
+        background: var(--s1);
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-height: 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--line-2) transparent;
+      }
+      .tele {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-bottom: 1px solid var(--line);
+      }
+      .rd {
+        padding: var(--pad) 10px calc(var(--pad) - 1px);
+        min-width: 0;
+      }
+      .rd + .rd {
+        border-left: 1px solid var(--line);
+      }
+      .rd-l {
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+      }
+      .rd-v {
+        font-size: var(--fs-2xl);
+        font-weight: 600;
+        line-height: 1.02;
+        color: var(--tx-1);
+        margin-top: 1px;
+      }
+      .rd-v small {
+        font-size: var(--fs-s);
+        font-weight: 500;
+        color: var(--tx-2);
+        margin-left: 2px;
+      }
+      .rd-s {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        margin-top: 4px;
+        white-space: nowrap;
+      }
+      .rd-s .num {
+        color: var(--tx-1);
+        font-size: var(--fs-s);
+      }
+      .gnd {
+        width: 11px;
+        height: 9px;
+        flex: none;
+      }
+      .split {
+        display: flex;
+        height: 6px;
+        margin-top: 5px;
+        border: 1px solid var(--line-2);
+      }
+      .split .cloud {
+        background: var(--s3);
+      }
+      .split .local {
+        background: repeating-linear-gradient(
+          -45deg,
+          var(--id-local) 0 1.5px,
+          transparent 1.5px 3.5px
+        );
+        border-left: 1px solid var(--id-local);
+      }
+      .cells {
+        display: grid;
+        grid-template-columns: repeat(16, 1fr);
+        gap: 1px;
+        margin-top: 5px;
+        height: 6px;
+      }
+      .cells i {
+        background: var(--s3);
+      }
+      .cells i.on {
+        background: var(--tx-2);
+      }
+
+      .chan {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        border-bottom: 1px solid var(--line);
+        position: relative;
+      }
+      .chan-plate {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 9px 0 7px;
+        border-left: 3px solid currentColor;
+        background: var(--s2);
+      }
+      .chan-plate .gl {
+        width: 11px;
+        height: 11px;
+      }
+      .chan-plate b {
+        font-family: var(--f-num);
+        font-size: var(--fs-s);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+      }
+      .chan.id-sub .chan-plate {
+        border-left-style: dashed;
+      }
+      .chan-body {
+        padding: 7px 10px 8px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        color: var(--tx-1);
+      }
+      .chan header {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        white-space: nowrap;
+        min-width: 0;
+      }
+      .chan .cn {
+        font-size: var(--fs-l);
+        font-weight: 600;
+        color: var(--tx-1);
+      }
+      .chan .cn.mono-name {
+        font-family: var(--f-mono);
+        font-size: var(--fs-s);
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      .chan header .dim {
+        font-size: var(--fs-xs);
+      }
+      .chan .where {
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        border: 1px solid var(--line-2);
+        padding: 0 4px;
+        line-height: 1.35;
+      }
+      .chan .where.loc {
+        border-bottom-width: 2px;
+      }
+      .chan .mid {
+        font-size: var(--fs-xl);
+        font-weight: 600;
+        line-height: 0.9;
+      }
+      .chan .mid small {
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        margin-left: 2px;
+        font-weight: 500;
+      }
+      .sline {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--fs-s);
+        min-width: 0;
+        white-space: nowrap;
+      }
+      .sline .lamp {
+        width: 10px;
+        height: 10px;
+        flex: none;
+      }
+      .sline .sl {
+        font-weight: 600;
+      }
+      .sline .path {
+        font-size: var(--fs-xs);
+        color: var(--tx-1);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .sline .task-s {
+        color: var(--tx-1);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .sline.st-reading {
+        color: var(--st-read);
+      }
+      .sline.st-running {
+        color: var(--st-run);
+      }
+      .sline.st-writing {
+        color: var(--st-write);
+      }
+      .sline.st-done {
+        color: var(--st-done);
+      }
+      .sline .badge {
+        margin-left: auto;
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        background: var(--st-write);
+        color: var(--on-state);
+        padding: 0 4px;
+        font-weight: 500;
+      }
+      .sline.filled {
+        background: var(--st-wait);
+        color: var(--on-wait);
+        padding: 3px 7px 3px 6px;
+        margin: 1px 0;
+        border: 1px solid var(--on-wait);
+      }
+      .sline.filled .mono {
+        margin-left: auto;
+        font-size: var(--fs-xs);
+      }
+      .chan .task {
+        font-size: var(--fs-m);
+        color: var(--tx-1);
+        line-height: 1.25;
+      }
+      .chan .kv {
+        font-size: var(--fs-xs);
+        color: var(--tx-1);
+        display: flex;
+        gap: 6px;
+      }
+      .readouts {
+        display: flex;
+        gap: 16px;
+        margin-top: 1px;
+      }
+      .readouts span {
+        display: flex;
+        align-items: baseline;
+        gap: 3px;
+        white-space: nowrap;
+      }
+      .readouts b {
+        font-size: var(--fs-xl);
+        font-weight: 600;
+        line-height: 1;
+      }
+      .readouts small {
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+      }
+      .acts {
+        display: flex;
+        gap: 4px;
+        margin-top: 3px;
+      }
+      .acts button {
+        height: var(--btn-h);
+        padding: 0 7px;
+        border: 1px solid var(--line-2);
+        font-size: var(--fs-s);
+        color: var(--tx-1);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .acts button.on {
+        background: var(--s3);
+      }
+      .indet {
+        display: block;
+        height: 2px;
+        background: var(--st-run-bg);
+        position: relative;
+        overflow: hidden;
+        margin-top: 2px;
+      }
+      .indet::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        width: 40%;
+        background: var(--st-run);
+        animation: indet 1.3s var(--ease-io) infinite;
+      }
+      @keyframes indet {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(250%);
+        }
+      }
+      .changed {
+        padding: var(--pad-s) 10px;
+      }
+      .changed header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        height: calc(var(--btn-h) + 2px);
+      }
+      .changed header .num {
+        color: var(--tx-1);
+        font-size: var(--fs-s);
+      }
+      .changed header button {
+        font-size: var(--fs-xs);
+        color: var(--tx-1);
+        border: 1px solid var(--line-2);
+        padding: 0 6px;
+        line-height: 1.6;
+      }
+      .crow {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: calc(var(--node-h) + 1px);
+        font-size: var(--fs-xs);
+        color: var(--tx-1);
+      }
+      .crow .lamp {
+        width: 9px;
+        height: 9px;
+        flex: none;
+      }
+      .crow .mono {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .crow b.mono {
+        margin-left: auto;
+        font-weight: 500;
+        color: var(--tx-2);
+        flex: none;
+      }
+      .crow.st-writing .lamp {
+        color: var(--st-write);
+      }
+      .crow.st-done .lamp {
+        color: var(--st-done);
+      }
+      .crow.more {
+        color: var(--tx-2);
+        padding-left: 16px;
+      }
+      .chan.done {
+        background: linear-gradient(90deg, var(--st-done-trace), var(--s1) 70%);
+      }
+      .chan.done .cn {
+        color: var(--tx-2);
+      }
+
+      /* ---------- timeline ---------- */
+      .timeline {
+        border-top: 1px solid var(--line-2);
+        background: var(--s1);
+        min-height: 0;
+        display: flex;
+      }
+      .tl {
+        flex: 1;
+        display: grid;
+        grid-template-rows: var(--tl-head) var(--tl-ruler) 1fr var(--tl-scrub);
+        min-width: 0;
+      }
+      .tl-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 0 0 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: var(--fs-xs);
+      }
+      .tl-title {
+        font-size: var(--fs-s);
+        font-weight: 600;
+        color: var(--tx-1);
+      }
+      .dock-tab {
+        height: 100%;
+        padding: 0 10px;
+        border-left: 1px solid var(--line);
+        color: var(--tx-2);
+        font-size: var(--fs-s);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dock-tab.icon {
+        padding: 0 9px;
+      }
+      .err-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        color: var(--st-error);
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .tl-ruler,
+      .tl-scrub {
+        display: grid;
+        grid-template-columns: var(--lane-label) 1fr;
+      }
+      .ruler-label {
+        font-size: var(--fs-2xs);
+        padding: 0 10px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        border-right: 1px solid var(--line);
+      }
+      .ruler-track,
+      .track,
+      .tl-ov,
+      .scrub-track {
+        position: relative;
+      }
+      .ruler-track {
+        border-bottom: 1px solid var(--line-2);
+      }
+      .tk {
+        position: absolute;
+        bottom: 0;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        width: 1px;
+        height: 4px;
+        background: var(--line-2);
+      }
+      .tk.mj {
+        height: 9px;
+        background: var(--tx-2);
+      }
+      .tk span {
+        position: absolute;
+        bottom: 9px;
+        left: 3px;
+        font-family: var(--f-num);
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .cpf {
+        position: absolute;
+        top: 1px;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        display: flex;
+        align-items: flex-start;
+        gap: 2px;
+        color: var(--tx-1);
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: var(--fs-xs);
+        line-height: 1;
+      }
+      .cpf .fl {
+        width: 9px;
+        height: 11px;
+        margin-left: -1px;
+      }
+      .nowtag {
+        position: absolute;
+        top: 2px;
+        right: 0;
+        transform: translateX(0);
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: var(--fs-xs);
+        font-style: normal;
+        background: var(--accent);
+        color: var(--on-accent);
+        padding: 0 4px;
+        line-height: 1.35;
+        font-variant-numeric: tabular-nums;
+      }
+      .lanes {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .lane {
+        flex: 1;
+        display: grid;
+        grid-template-columns: var(--lane-label) 1fr;
+        border-bottom: 1px solid var(--line);
+        min-height: 0;
+      }
+      .lane-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 8px 0 10px;
+        border-right: 1px solid var(--line);
+        white-space: nowrap;
+        overflow: hidden;
+        background: var(--s2);
+      }
+      .lane-label .gl {
+        width: 9px;
+        height: 9px;
+        flex: none;
+      }
+      .lane-label b {
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: var(--fs-s);
+        letter-spacing: 0.05em;
+      }
+      .lane-label .ln {
+        color: var(--tx-1);
+        font-size: var(--fs-s);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .lane-label .al {
+        width: 9px;
+        height: 9px;
+        flex: none;
+        margin-left: auto;
+      }
+      .lane-label .hook {
+        width: 8px;
+        height: 9px;
+        border-left: 1px solid var(--line-2);
+        border-bottom: 1px solid var(--line-2);
+        margin: -6px 0 0 0;
+        flex: none;
+      }
+      .lane.child .lane-label {
+        padding-left: 12px;
+      }
+      .track {
+        background: repeating-linear-gradient(
+            90deg,
+            transparent 0 calc((100% - 16px) / 26.8 - 1px),
+            var(--grid-2) 0 calc((100% - 16px) / 26.8)
+          )
+          8px 0/100% 100% no-repeat;
+      }
+      html[data-theme='dark'] .track {
+        background-color: var(--s0);
+      }
+      html[data-theme='light'] .track {
+        background-color: var(--s2);
+      }
+      .unborn {
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: calc((100% - 16px) * var(--d));
+        background: repeating-linear-gradient(-45deg, var(--grid-1) 0 1px, transparent 1px 5px);
+      }
+      .ended {
+        position: absolute;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        top: 0;
+        bottom: 0;
+        width: calc((100% - 16px) * var(--d));
+        background: repeating-linear-gradient(-45deg, var(--grid-1) 0 1px, transparent 1px 5px);
+      }
+      .ev {
+        position: absolute;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        width: max(3px, calc((100% - 16px) * var(--d)));
+        top: 50%;
+        height: 8px;
+        transform: translateY(-50%);
+        background: var(--ev-past);
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        white-space: nowrap;
+        font-style: normal;
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        letter-spacing: 0;
+      }
+      .ev span {
+        padding: 0 3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ev-grep {
+        background: transparent;
+        border: 1.5px solid var(--ev-past);
+        height: 10px;
+      }
+      .ev-bash {
+        height: 15px;
+        background: var(--s3);
+        border: 1px solid var(--ev-past);
+        color: var(--tx-2);
+      }
+      .ev-think {
+        height: 15px;
+        background: transparent;
+        border: 1px dashed var(--ev-past);
+        color: var(--tx-2);
+      }
+      .ev-edit {
+        height: 17px;
+        background: var(--st-write-bg);
+        border: 1.5px solid var(--st-write);
+        color: var(--tx-1);
+      }
+      .ev-run {
+        height: 15px;
+        background: var(--s3);
+        border: 1px solid var(--ev-past);
+        color: var(--tx-2);
+      }
+      .ev-read-now {
+        height: 17px;
+        background: var(--st-read-bg);
+        border: 1px solid var(--st-read);
+        color: var(--tx-1);
+        border-left-width: 3px;
+      }
+      .ev-run-now {
+        height: 17px;
+        background: var(--st-run-bg);
+        border: 1px dashed var(--st-run);
+        color: var(--tx-1);
+        border-left: 3px solid var(--st-run);
+      }
+      .ev-wait,
+      .ev-wait-lo {
+        height: 19px;
+        background: var(--st-wait);
+        color: var(--on-wait);
+        border: 1px solid var(--on-wait);
+        font-weight: 600;
+        border-right: 0;
+      }
+      .ev-wait::after,
+      .ev-wait-lo::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: repeating-linear-gradient(
+          -45deg,
+          var(--on-wait) 0 2px,
+          var(--st-wait) 2px 4.5px
+        );
+      }
+      .ev-wait-lo {
+        top: auto;
+        bottom: 3px;
+        transform: none;
+        height: 45%;
+      }
+      .ev-write-hi {
+        top: 3px;
+        transform: none;
+        height: 38%;
+        background: var(--st-write);
+        border: 0;
+        z-index: 1;
+      }
+      .mk {
+        position: absolute;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-style: normal;
+        z-index: 2;
+      }
+      .mki {
+        width: 12px;
+        height: 12px;
+        background: var(--s1);
+      }
+      .mk-error {
+        color: var(--st-error);
+      }
+      .mk-done {
+        color: var(--st-done);
+      }
+      .mk span {
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        color: var(--st-error);
+        background: var(--s1);
+        padding: 0 3px;
+        transform: translateX(0);
+      }
+      .tl-ov {
+        position: absolute;
+        left: var(--lane-label);
+        right: 0;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .ev,
+      .mk {
+        z-index: 2;
+      }
+      .cp {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        border-left: 1px dashed var(--tx-2);
+      }
+      .birth {
+        position: absolute;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        width: 6px;
+        border-left: 1px solid var(--line-2);
+        border-bottom: 1px solid var(--line-2);
+      }
+      .birth::before {
+        content: '';
+        position: absolute;
+        left: -3px;
+        top: -3px;
+        width: 5px;
+        height: 5px;
+        background: var(--line-2);
+      }
+      .now {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 8px;
+        width: 1px;
+        background: var(--accent);
+      }
+      .scrub-label {
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border-right: 1px solid var(--line);
+      }
+      .live-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: var(--fs-xs);
+        font-weight: 600;
+        color: var(--tx-1);
+        border: 1px solid var(--line-2);
+        padding: 0 6px;
+        line-height: 1.5;
+      }
+      .live-chip i {
+        width: 6px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 50%;
+      }
+      .scrub-track {
+        border-top: 1px solid var(--line);
+      }
+      .hist {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 3px;
+        bottom: 7px;
+      }
+      .hist i {
+        position: absolute;
+        bottom: 0;
+        left: calc((100% - 16px) * var(--t) + 8px);
+        width: calc((100% - 16px) * var(--d));
+        height: calc(var(--v) * 100%);
+        background: var(--line-2);
+      }
+      .scrub-line {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 5px;
+        height: 2px;
+        background: var(--tx-2);
+      }
+      .scrub-handle {
+        position: absolute;
+        right: 4px;
+        bottom: 1px;
+        width: 9px;
+        height: 12px;
+        background: var(--accent);
+      }
+
+      /* ---------- session dock ---------- */
+      .dock {
+        border-left: 1px solid var(--line-2);
+        background: var(--s1);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .dock-head {
+        height: var(--h-tool);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 6px 0 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--s1);
+      }
+      .dock-head .t {
+        font-weight: 600;
+        font-size: var(--fs-s);
+      }
+      .dock-head .s {
+        color: var(--tx-2);
+        font-size: var(--fs-s);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dock-head button {
+        width: 24px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        color: var(--tx-2);
+        margin-left: auto;
+      }
+      .log {
+        flex: 1;
+        overflow: hidden;
+        padding: var(--pad) 12px 0;
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--pad) + 2px);
+      }
+      .msg {
+        display: grid;
+        grid-template-columns: 38px 1fr;
+        gap: 0 8px;
+      }
+      .msg-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+        padding-top: 1px;
+      }
+      .msg-meta b {
+        font-family: var(--f-num);
+        font-weight: 600;
+        font-size: var(--fs-s);
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .msg-meta b .gl {
+        width: 9px;
+        height: 9px;
+      }
+      .msg-meta time {
+        font-family: var(--f-num);
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        font-variant-numeric: tabular-nums;
+      }
+      .msg p {
+        font-size: var(--fs-m);
+        line-height: 1.38;
+        color: var(--tx-1);
+        max-width: 62ch;
+      }
+      .msg.you p {
+        color: var(--tx-1);
+      }
+      .msg.cl p {
+        border-left: 2px solid var(--id-claude);
+        padding-left: 8px;
+      }
+      .msg.you b {
+        color: var(--tx-2);
+      }
+      .msg code,
+      .perm code {
+        font-family: var(--f-mono);
+        font-size: 0.86em;
+        color: var(--tx-1);
+        background: var(--s3);
+        padding: 0 3px;
+      }
+      .msg .tool {
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+        border-left: 2px solid var(--line-2);
+        padding-left: 8px;
+      }
+      .perm {
+        margin: var(--pad) 10px 0;
+        border: 2px solid var(--wait-edge);
+        background: var(--s2);
+      }
+      .perm-h {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--st-wait);
+        color: var(--on-wait);
+        padding: 5px 9px;
+        font-weight: 600;
+        font-size: var(--fs-s);
+      }
+      .perm-h .ic {
+        width: 12px;
+        height: 12px;
+      }
+      .perm-h .who {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+      }
+      .perm-h .who .ic {
+        width: 9px;
+        height: 9px;
+      }
+      .perm-b {
+        padding: 9px 10px 10px;
+      }
+      .perm-cmd {
+        font-family: var(--f-mono);
+        font-size: var(--fs-l);
+        font-weight: 500;
+        color: var(--tx-1);
+        background: var(--s0);
+        border: 1px solid var(--line-2);
+        padding: 7px 9px;
+        letter-spacing: -0.01em;
+      }
+      .perm-cmd .p {
+        color: var(--tx-2);
+        margin-right: 8px;
+      }
+      .perm dl {
+        display: grid;
+        grid-template-columns: 52px 1fr;
+        gap: 4px 8px;
+        margin: 8px 0 10px;
+        font-size: var(--fs-s);
+      }
+      .perm dt {
+        color: var(--tx-2);
+      }
+      .perm dd {
+        color: var(--tx-1);
+      }
+      .perm dd.mono {
+        font-size: var(--fs-xs);
+        align-self: center;
+      }
+      .perm-a {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+      }
+      .perm-a button {
+        height: calc(var(--btn-h) + 8px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 0 9px;
+        border: 1px solid var(--line-2);
+        font-weight: 600;
+        font-size: var(--fs-s);
+        color: var(--tx-1);
+      }
+      .perm-a button.primary {
+        background: var(--accent);
+        color: var(--on-accent);
+        border-color: var(--accent);
+      }
+      .perm-a button.wide {
+        grid-column: 1/3;
+      }
+      .perm-a kbd {
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        font-weight: 400;
+        color: inherit;
+      }
+      .perm-a button:not(.primary) kbd {
+        color: var(--tx-2);
+      }
+      .perm-n {
+        margin-top: 7px;
+        font-size: var(--fs-xs);
+        color: var(--tx-2);
+      }
+      .ctx {
+        display: flex;
+        gap: 6px;
+        padding: var(--pad) 10px 6px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: var(--fs-xs);
+        color: var(--tx-1);
+        border: 1px solid var(--line-2);
+        padding: 1px 6px;
+      }
+      .chip .ic {
+        width: 9px;
+        height: 9px;
+        color: var(--id-claude);
+      }
+      .chip .on {
+        width: 6px;
+        height: 6px;
+        background: var(--tx-1);
+        border-radius: 50%;
+      }
+      .input {
+        margin: 0 10px 10px;
+        min-height: calc(var(--btn-h) * 2.6);
+        border: 1px dashed var(--line-2);
+        background: var(--s0);
+        padding: 8px 10px;
+        color: var(--tx-3);
+        font-size: var(--fs-m);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+      .input kbd {
+        font-family: var(--f-mono);
+        font-size: var(--fs-xs);
+        color: var(--tx-3);
+      }
+
+      /* ---------- status bar ---------- */
+      .status {
+        display: flex;
+        align-items: stretch;
+        background: var(--s2);
+        border-top: 1px solid var(--line-2);
+        font-size: var(--fs-s);
+        color: var(--tx-2);
+        white-space: nowrap;
+      }
+      .status .seg {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 10px;
+        border-right: 1px solid var(--line);
+        color: var(--tx-2);
+      }
+      .status .seg .ic {
+        color: var(--tx-2);
+      }
+      .status .sep {
+        color: var(--tx-3);
+        margin: 0 2px;
+      }
+      .status .grow {
+        border-right: 1px solid var(--line);
+      }
+      .status .num {
+        color: var(--tx-1);
+        font-size: calc(var(--fs-s) + 1px);
+      }
+      .status .gnd {
+        color: var(--id-local);
+      }
+      .status .id-claude .gl {
+        color: var(--id-claude);
+      }
+      .status .id-claude {
+        color: var(--tx-1);
+      }
+      .status em {
+        font-style: normal;
+        font-weight: 600;
+      }
+      .t-wait {
+        color: var(--st-wait-tx);
+      }
+      .t-write {
+        color: var(--st-write);
+      }
+      .sdot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--tx-1);
+      }
+      .seg-wait {
+        background: var(--st-wait);
+        color: var(--on-wait) !important;
+        font-weight: 600;
+        position: relative;
+        padding-left: 12px !important;
+        border-right: 1px solid var(--on-wait) !important;
+      }
+      .seg-wait .ic {
+        color: var(--on-wait) !important;
+      }
+      .seg-wait .mono {
+        font-size: var(--fs-xs);
+        font-weight: 500;
+      }
+      .beacon {
+        position: absolute;
+        inset: 0;
+        background: var(--on-wait);
+        opacity: 0;
+        animation: beacon 1.6s var(--ease-io) infinite;
+        pointer-events: none;
+      }
+      @keyframes beacon {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 0.16;
+        }
+      }
+      .seg-err {
+        color: var(--st-error) !important;
+        font-weight: 600;
+      }
+      .seg-err .ic {
+        color: var(--st-error) !important;
+      }
+      .seg-err .num {
+        color: var(--st-error);
+      }
+      .vbar {
+        display: inline-flex;
+        gap: 1px;
+        margin-right: 3px;
+      }
+      .vbar i {
+        width: 4px;
+        height: 10px;
+        border: 1px solid var(--tx-2);
+      }
+      .vbar i.on {
+        background: var(--tx-2);
+      }
+
+      /* ---------- reduced motion: no pulses, no sweeps, no animated trails ---------- */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .st-reading::before {
+          display: none;
+        }
+        .st-running::after {
+          transform: none;
+          background: repeating-linear-gradient(90deg, var(--st-run) 0 4px, transparent 4px 7px);
+        }
+        .indet::after {
+          width: 100%;
+          transform: none;
+          background: repeating-linear-gradient(90deg, var(--st-run) 0 4px, transparent 4px 7px);
+        }
+        .beacon {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <symbol id="s-idle" viewBox="0 0 10 10">
+          <circle cx="5" cy="5" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5" />
+        </symbol>
+        <symbol id="s-reading" viewBox="0 0 10 10">
+          <circle cx="5" cy="5" r="3.9" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="5" cy="5" r="1.7" fill="currentColor" />
+        </symbol>
+        <symbol id="s-writing" viewBox="0 0 10 10">
+          <rect x="1.2" y="1.2" width="7.6" height="7.6" fill="currentColor" />
+        </symbol>
+        <symbol id="s-running" viewBox="0 0 10 10">
+          <path d="M2 1.2 9.2 5 2 8.8Z" fill="currentColor" />
+        </symbol>
+        <symbol id="s-waiting" viewBox="0 0 10 10">
+          <path
+            fill="currentColor"
+            fill-rule="evenodd"
+            d="M5 .5 9.7 9.2H.3ZM4.4 3.5h1.2v3.1H4.4ZM4.4 7.2h1.2v1.1H4.4Z"
+          />
+        </symbol>
+        <symbol id="s-error" viewBox="0 0 10 10">
+          <path
+            d="M3.3.9h3.4l2.4 2.4v3.4L6.7 9.1H3.3L.9 6.7V3.3Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M3.4 3.4 6.6 6.6M6.6 3.4 3.4 6.6" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+        <symbol id="s-done" viewBox="0 0 10 10">
+          <path d="M1.4 5.3 4 7.8 8.8 2.3" fill="none" stroke="currentColor" stroke-width="1.7" />
+        </symbol>
+        <symbol id="s-folder" viewBox="0 0 10 10">
+          <path
+            d="M.8 2h3.3l1 1.2h4.1v5.3H.8Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+        </symbol>
+        <symbol id="g-claude" viewBox="0 0 10 10">
+          <path d="M5 .4 9.6 5 5 9.6.4 5Z" fill="currentColor" />
+        </symbol>
+        <symbol id="g-sub" viewBox="0 0 10 10">
+          <path
+            d="M5 1.2 8.8 5 5 8.8 1.2 5Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </symbol>
+        <symbol id="g-local" viewBox="0 0 10 10">
+          <path d="M5 .3 9.1 2.65v4.7L5 9.7.9 7.35v-4.7Z" fill="currentColor" />
+        </symbol>
+        <symbol id="g-ground" viewBox="0 0 12 10">
+          <path
+            d="M6 0v4M1 4h10M3 6.5h6M4.8 9h2.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+        </symbol>
+        <symbol id="g-uplink" viewBox="0 0 12 10">
+          <path d="M6 9.5V5.2" stroke="currentColor" stroke-width="1.4" />
+          <circle cx="6" cy="4.2" r="1.2" fill="currentColor" />
+          <path
+            d="M3.3 6.6a3.6 3.6 0 0 1 0-4.8M8.7 1.8a3.6 3.6 0 0 1 0 4.8M1.4 8.2a6.2 6.2 0 0 1 0-8M10.6.2a6.2 6.2 0 0 1 0 8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+        </symbol>
+        <symbol id="i-branch" viewBox="0 0 16 16">
+          <circle cx="4.5" cy="3.5" r="1.7" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="4.5" cy="12.5" r="1.7" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="11.5" cy="5" r="1.7" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <path
+            d="M4.5 5.2v5.6M11.5 6.7c0 3-7 2.2-7 4.1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+          />
+        </symbol>
+        <symbol id="i-scope" viewBox="0 0 16 16">
+          <circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="8" cy="8" r="2.8" fill="none" stroke="currentColor" stroke-width="1.1" />
+          <path d="M8 0v3.2M8 12.8V16M0 8h3.2M12.8 8H16" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+        <symbol id="i-live" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="10" cy="10" r="3.6" fill="none" stroke="currentColor" stroke-width="1.2" />
+          <path d="M10 10 15.3 4.7" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="13.6" cy="12.6" r="1.3" fill="currentColor" />
+        </symbol>
+        <symbol id="i-infra" viewBox="0 0 20 20">
+          <rect
+            x="3"
+            y="3"
+            width="14"
+            height="4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <rect
+            x="3"
+            y="8"
+            width="14"
+            height="4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <rect
+            x="3"
+            y="13"
+            width="14"
+            height="4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path d="M5.5 5h1.5M5.5 10h1.5M5.5 15h1.5" stroke="currentColor" stroke-width="1.5" />
+        </symbol>
+        <symbol id="i-chip" viewBox="0 0 20 20">
+          <rect
+            x="5"
+            y="5"
+            width="10"
+            height="10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="M8 2v3M12 2v3M8 15v3M12 15v3M2 8h3M2 12h3M15 8h3M15 12h3"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path d="M10 7.6 12.1 8.8v2.4L10 12.4 7.9 11.2V8.8Z" fill="currentColor" />
+        </symbol>
+        <symbol id="i-plug" viewBox="0 0 20 20">
+          <path
+            d="M7 2v4M13 2v4M5 6h10v4a5 5 0 0 1-10 0ZM10 15v3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </symbol>
+        <symbol id="i-git" viewBox="0 0 20 20">
+          <circle cx="6" cy="4.5" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="6" cy="15.5" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="14.5" cy="6.5" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path
+            d="M6 6.5v7M14.5 8.5c0 3.6-8.5 2.6-8.5 5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </symbol>
+        <symbol id="i-gauge" viewBox="0 0 20 20">
+          <path d="M3 14a7 7 0 1 1 14 0" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path d="M10 14 13.5 8.5" stroke="currentColor" stroke-width="1.5" />
+          <path d="M3 14h2M15 14h2M10 7V9" stroke="currentColor" stroke-width="1.5" />
+        </symbol>
+        <symbol id="i-gear" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path
+            d="M10 2v3M10 15v3M2 10h3M15 10h3M4.3 4.3l2.1 2.1M13.6 13.6l2.1 2.1M4.3 15.7l2.1-2.1M13.6 6.4l2.1-2.1"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </symbol>
+        <symbol id="i-eye" viewBox="0 0 16 16">
+          <path
+            d="M1 8s2.6-4.5 7-4.5S15 8 15 8s-2.6 4.5-7 4.5S1 8 1 8Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+          />
+          <circle cx="8" cy="8" r="2" fill="currentColor" />
+        </symbol>
+        <symbol id="i-filter" viewBox="0 0 16 16">
+          <path d="M2 3h12M4.5 8h7M7 13h2" stroke="currentColor" stroke-width="1.5" />
+        </symbol>
+        <symbol id="i-fit" viewBox="0 0 16 16">
+          <path
+            d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 16 16">
+          <path d="M4.5 3 12 8l-7.5 5Z" fill="currentColor" />
+        </symbol>
+        <symbol id="i-chev" viewBox="0 0 10 10">
+          <path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+        <symbol id="i-up" viewBox="0 0 10 10">
+          <path d="M2 6.5 5 3.5 8 6.5" fill="none" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+        <symbol id="i-flag" viewBox="0 0 10 12">
+          <path
+            d="M1.5 12V1M1.5 1.5h6.5L6.4 4.2 8 7H1.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+          />
+        </symbol>
+        <symbol id="i-pbottom" viewBox="0 0 16 16">
+          <rect
+            x="2"
+            y="2.5"
+            width="12"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M2 10h12" stroke="currentColor" stroke-width="1.2" />
+        </symbol>
+        <symbol id="i-pright" viewBox="0 0 16 16">
+          <rect
+            x="2"
+            y="2.5"
+            width="12"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M10 2.5v11" stroke="currentColor" stroke-width="1.2" />
+          <rect x="10" y="2.5" width="4" height="11" fill="currentColor" />
+        </symbol>
+        <symbol id="i-pleft" viewBox="0 0 16 16">
+          <rect
+            x="2"
+            y="2.5"
+            width="12"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M6 2.5v11" stroke="currentColor" stroke-width="1.2" />
+        </symbol>
+        <symbol id="i-min" viewBox="0 0 10 10">
+          <path d="M0 5h10" stroke="currentColor" stroke-width="1" />
+        </symbol>
+        <symbol id="i-max" viewBox="0 0 10 10">
+          <rect
+            x=".5"
+            y=".5"
+            width="9"
+            height="9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+          />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 10 10">
+          <path d="M0 0l10 10M10 0 0 10" stroke="currentColor" stroke-width="1" />
+        </symbol>
+        <symbol id="i-more" viewBox="0 0 16 16">
+          <circle cx="3.5" cy="8" r="1.3" fill="currentColor" />
+          <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+          <circle cx="12.5" cy="8" r="1.3" fill="currentColor" />
+        </symbol>
+      </defs>
+    </svg>
+    <div class="toggles" role="toolbar" aria-label="Mockup controls">
+      <div class="ttl">Live view <span>sala-controllo, 1440 × 900</span></div>
+      <div class="tg">
+        <span>Theme</span>
+        <div class="seg-ctl" data-k="theme">
+          <button data-v="dark">Dark</button><button data-v="light">Light</button>
+        </div>
+      </div>
+      <div class="tg">
+        <span>Density</span>
+        <div class="seg-ctl" data-k="density">
+          <button data-v="compact">Compact</button><button data-v="comfortable">Comfortable</button>
+        </div>
+      </div>
+      <div class="tg">
+        <span>Scenario</span>
+        <div class="seg-ctl" data-k="scenario">
+          <button data-v="normal">Normal</button><button data-v="dense">Dense</button>
+        </div>
+      </div>
+      <div class="tg">
+        <span>Grayscale</span>
+        <div class="seg-ctl" data-k="gray">
+          <button data-v="0">Off</button><button data-v="1">On</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="win" role="application" aria-label="Control Center window">
+      <header class="titlebar">
+        <div class="tb-mark" title="Control Center">
+          <svg class="ic" aria-hidden="true"><use href="#i-scope" /></svg>
+        </div>
+        <div class="tb-crumbs">
+          <button class="tb-ws" title="Switch workspace (Ctrl+Alt+O)">
+            control-center <svg class="ic xs" aria-hidden="true"><use href="#i-chev" /></svg>
+          </button>
+          <span class="tb-br"
+            ><svg class="ic xs" aria-hidden="true"><use href="#i-branch" /></svg
+            ><span class="mono">feat/live-map</span></span
+          >
+          <span class="tb-sess">Refactor IPC client</span>
+        </div>
+        <div class="tb-right">
+          <div class="tb-dock">
+            <button aria-pressed="true" title="Activity bar (Ctrl+B)">
+              <svg class="ic" aria-hidden="true"><use href="#i-pleft" /></svg>
+            </button>
+            <button aria-pressed="false" title="Bottom dock (Ctrl+J)">
+              <svg class="ic" aria-hidden="true"><use href="#i-pbottom" /></svg>
+            </button>
+            <button aria-pressed="true" title="Session dock (Ctrl+Alt+B)">
+              <svg class="ic" aria-hidden="true"><use href="#i-pright" /></svg>
+            </button>
+          </div>
+          <div class="tb-win">
+            <button aria-label="Minimize">
+              <svg class="ic" aria-hidden="true"><use href="#i-min" /></svg></button
+            ><button aria-label="Maximize">
+              <svg class="ic" aria-hidden="true"><use href="#i-max" /></svg></button
+            ><button aria-label="Close">
+              <svg class="ic" aria-hidden="true"><use href="#i-close" /></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="wbody">
+        <nav class="activity" aria-label="Sections">
+          <div class="ws-av" title="control-center">CC</div>
+          <button class="act" aria-current="page" title="Live (Ctrl+1)">
+            <svg class="ic" aria-hidden="true"><use href="#i-live" /></svg>
+          </button>
+          <button class="act" title="Infra (Ctrl+2)">
+            <svg class="ic" aria-hidden="true"><use href="#i-infra" /></svg>
+          </button>
+          <button class="act" title="Local agents (Ctrl+3)">
+            <svg class="ic" aria-hidden="true"><use href="#i-chip" /></svg>
+          </button>
+          <button class="act" title="MCP &amp; Skills (Ctrl+4)">
+            <svg class="ic" aria-hidden="true"><use href="#i-plug" /></svg>
+          </button>
+          <button class="act" title="Git (Ctrl+5): 2 changed files">
+            <svg class="ic" aria-hidden="true"><use href="#i-git" /></svg
+            ><span class="bdg num">2</span>
+          </button>
+          <button class="act" title="Telemetry (Ctrl+6)">
+            <svg class="ic" aria-hidden="true"><use href="#i-gauge" /></svg>
+          </button>
+          <span class="act-sp"></span>
+          <button class="act" title="Settings (Ctrl+7)">
+            <svg class="ic" aria-hidden="true"><use href="#i-gear" /></svg>
+          </button>
+        </nav>
+
+        <main class="live" aria-label="Live">
+          <div class="ltool">
+            <div class="ltool-l">
+              <button class="tbtn on" title="Follow agent (F)">
+                <svg class="ic" aria-hidden="true"><use href="#i-eye" /></svg>Follow
+                <span class="v">Claude</span
+                ><svg class="ic xs" aria-hidden="true"><use href="#i-chev" /></svg>
+              </button>
+              <button class="tbtn" title="Filter by agent or state">
+                <svg class="ic" aria-hidden="true"><use href="#i-filter" /></svg>Filters
+              </button>
+              <button class="tbtn" title="Fit everything (0)">
+                <svg class="ic" aria-hidden="true"><use href="#i-fit" /></svg>Fit
+              </button>
+              <button class="tbtn" title="Replay the session">
+                Replay <svg class="ic" aria-hidden="true"><use href="#i-play" /></svg>
+              </button>
+              <span class="sp"></span>
+              <span class="ro mono"
+                ><span class="only-normal">3 agents</span
+                ><span class="only-dense">5 agents</span></span
+              >
+            </div>
+            <div class="tabs" role="tablist">
+              <button class="tab" role="tab" aria-selected="true">
+                Agents <span class="num only-normal">3</span
+                ><span class="num only-dense">5</span></button
+              ><button class="tab" role="tab" aria-selected="false">Inspector</button>
+            </div>
+          </div>
+          <div class="lmid">
+            <section class="map" aria-label="Map">
+              <div class="map-world only-normal">
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 54px;
+                    --yc: 40px;
+                    --xf: 54px;
+                    --yf: 40px;
+                    --wc: 196px;
+                    --hc: 90px;
+                    --wf: 204px;
+                    --hf: 102px;
+                  "
+                >
+                  <span class="fl">src/ipc/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 54px;
+                    --yc: 170px;
+                    --xf: 54px;
+                    --yf: 182px;
+                    --wc: 196px;
+                    --hc: 50px;
+                    --wf: 204px;
+                    --hf: 58px;
+                  "
+                >
+                  <span class="fl">src/main/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 54px;
+                    --yc: 260px;
+                    --xf: 54px;
+                    --yf: 280px;
+                    --wc: 196px;
+                    --hc: 50px;
+                    --wf: 204px;
+                    --hf: 58px;
+                  "
+                >
+                  <span class="fl">src/preload/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 320px;
+                    --yc: 40px;
+                    --xf: 320px;
+                    --yf: 40px;
+                    --wc: 196px;
+                    --hc: 90px;
+                    --wf: 204px;
+                    --hf: 102px;
+                  "
+                >
+                  <span class="fl">packages/ipc-contract/src/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 320px;
+                    --yc: 170px;
+                    --xf: 320px;
+                    --yf: 182px;
+                    --wc: 196px;
+                    --hc: 90px;
+                    --wf: 204px;
+                    --hf: 102px;
+                  "
+                >
+                  <span class="fl">./</span>
+                </div>
+                <div
+                  class="frame pos lane"
+                  style="
+                    --xc: 590px;
+                    --yc: 40px;
+                    --xf: 590px;
+                    --yf: 40px;
+                    --wc: 174px;
+                    --hc: 290px;
+                    --wf: 174px;
+                    --hf: 322px;
+                  "
+                >
+                  <span class="fl">Commands and local tasks</span>
+                </div>
+                <svg
+                  class="edges only-c"
+                  width="772"
+                  height="594"
+                  viewBox="0 0 772 594"
+                  aria-hidden="true"
+                >
+                  <path class="e e-write" d="M600 72H588V20H218V62" />
+                  <rect class="ee e-write" x="216" y="60" width="4" height="4" />
+                  <path class="e e-wait" d="M608 81V112H616" />
+                  <rect class="ee e-wait" x="614" y="110" width="4" height="4" />
+                  <path class="e e-run" d="M608 281V312H616" />
+                  <rect class="ee e-run" x="614" y="310" width="4" height="4" />
+                  <path class="e e-read" d="M544 39V72H506" />
+                  <rect class="ee e-read" x="504" y="70" width="4" height="4" /></svg
+                ><svg
+                  class="edges only-f"
+                  width="772"
+                  height="550"
+                  viewBox="0 0 772 550"
+                  aria-hidden="true"
+                >
+                  <path class="e e-write" d="M600 78H588V20H226V66" />
+                  <rect class="ee e-write" x="224" y="64" width="4" height="4" />
+                  <path class="e e-wait" d="M608 88V122H616" />
+                  <rect class="ee e-wait" x="614" y="120" width="4" height="4" />
+                  <path class="e e-run" d="M608 308V342H616" />
+                  <rect class="ee e-run" x="614" y="340" width="4" height="4" />
+                  <path class="e e-read" d="M554 41.8V78H514" />
+                  <rect class="ee e-read" x="512" y="76" width="4" height="4" />
+                </svg>
+                <div
+                  class="node pos st-writing"
+                  style="--xc: 64px; --yc: 62px; --xf: 64px; --yf: 66px; --wc: 176px; --wf: 184px"
+                  title="client.ts · writing"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                  ><span class="nm">client.ts</span><b class="tag">+12 −3</b>
+                </div>
+                <div
+                  class="node pos st-done"
+                  style="--xc: 64px; --yc: 102px; --xf: 64px; --yf: 110px; --wc: 176px; --wf: 184px"
+                  title="server.ts · done"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                  ><span class="nm">server.ts</span><b class="tag">+4 −1</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 64px; --yc: 192px; --xf: 64px; --yf: 208px; --wc: 176px; --wf: 184px"
+                  title="index.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">index.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 64px; --yc: 282px; --xf: 64px; --yf: 306px; --wc: 176px; --wf: 184px"
+                  title="index.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">index.ts</span>
+                </div>
+                <div
+                  class="node pos st-reading"
+                  style="--xc: 330px; --yc: 62px; --xf: 330px; --yf: 66px; --wc: 176px; --wf: 184px"
+                  title="channels.ts · reading"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-reading" /></svg
+                  ><span class="nm">channels.ts</span>
+                </div>
+                <div
+                  class="node pos st-error"
+                  style="
+                    --xc: 330px;
+                    --yc: 102px;
+                    --xf: 330px;
+                    --yf: 110px;
+                    --wc: 176px;
+                    --wf: 184px;
+                  "
+                  title="schema.test.ts · error"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-error" /></svg
+                  ><span class="nm">schema.test.ts</span><b class="tag">2 failing</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 330px;
+                    --yc: 192px;
+                    --xf: 330px;
+                    --yf: 208px;
+                    --wc: 176px;
+                    --wf: 184px;
+                  "
+                  title="README.md · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">README.md</span>
+                </div>
+                <div
+                  class="node pos st-folder"
+                  style="
+                    --xc: 330px;
+                    --yc: 232px;
+                    --xf: 330px;
+                    --yf: 252px;
+                    --wc: 176px;
+                    --wf: 184px;
+                  "
+                  title="docs/ · folder"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-folder" /></svg
+                  ><span class="nm">docs/</span><b class="tag">14 files</b>
+                </div>
+                <div
+                  class="node pos st-waiting temp"
+                  style="
+                    --xc: 616px;
+                    --yc: 102px;
+                    --xf: 616px;
+                    --yf: 110px;
+                    --wc: 146px;
+                    --wf: 150px;
+                  "
+                  title="npm test -- ipc · waiting"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-waiting" /></svg
+                  ><span class="pre">$</span><span class="nm">npm test -- ipc</span>
+                </div>
+                <div
+                  class="node pos st-running temp"
+                  style="
+                    --xc: 616px;
+                    --yc: 302px;
+                    --xf: 616px;
+                    --yf: 330px;
+                    --wc: 146px;
+                    --wf: 150px;
+                  "
+                  title="ollama: draft tests · running"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-running" /></svg
+                  ><span class="nm">ollama: draft tests</span>
+                </div>
+                <div
+                  class="avatar pos id-claude"
+                  style="--xc: 600px; --yc: 63px; --xf: 600px; --yf: 68px"
+                  title="Claude · waiting"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>CL</b>
+                </div>
+                <div
+                  class="av-ro pos t-waiting"
+                  style="--xc: 638px; --yc: 63px; --xf: 642px; --yf: 68px"
+                >
+                  <b class="num">Waiting</b><span>0m12</span>
+                </div>
+                <div
+                  class="avatar pos id-local"
+                  style="--xc: 600px; --yc: 263px; --xf: 600px; --yf: 288px"
+                  title="qwen2.5-coder:14b · running"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-local" /></svg><b>QW</b>
+                </div>
+                <div
+                  class="av-ro pos t-running"
+                  style="--xc: 638px; --yc: 263px; --xf: 642px; --yf: 288px"
+                >
+                  <b class="num">38</b><span>tok/s</span>
+                </div>
+                <div
+                  class="avatar pos id-sub"
+                  style="--xc: 528px; --yc: 21px; --xf: 536px; --yf: 21.8px"
+                  title="Explore · reading"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>EX</b>
+                </div>
+                <div class="minimap" title="Minimap: the whole map is in view">
+                  <svg viewBox="0 0 772 594" preserveAspectRatio="none" aria-hidden="true">
+                    <rect class="mm-f" x="54" y="40" width="196" height="90" />
+                    <rect class="mm-f" x="54" y="170" width="196" height="50" />
+                    <rect class="mm-f" x="54" y="260" width="196" height="50" />
+                    <rect class="mm-f" x="320" y="40" width="196" height="90" />
+                    <rect class="mm-f" x="320" y="170" width="196" height="90" />
+                    <rect class="mm-f" x="590" y="40" width="174" height="290" />
+                    <rect class="mm-n st-writing" x="64" y="62" width="176" height="20" />
+                    <rect class="mm-n st-done" x="64" y="102" width="176" height="20" />
+                    <rect class="mm-n st-idle" x="64" y="192" width="176" height="20" />
+                    <rect class="mm-n st-idle" x="64" y="282" width="176" height="20" />
+                    <rect class="mm-n st-reading" x="330" y="62" width="176" height="20" />
+                    <rect class="mm-n st-error" x="330" y="102" width="176" height="20" />
+                    <rect class="mm-n st-idle" x="330" y="192" width="176" height="20" />
+                    <rect class="mm-n st-idle" x="330" y="232" width="176" height="20" />
+                    <rect class="mm-n st-waiting" x="616" y="102" width="146" height="20" />
+                    <rect class="mm-n st-running" x="616" y="302" width="146" height="20" />
+                    <rect class="mm-v" x="4" y="4" width="764" height="586" />
+                  </svg>
+                </div>
+                <div class="map-readout mono">
+                  <span>Fit 100%</span><span>10 nodes</span
+                  ><span>touched files and direct neighbours</span>
+                </div>
+              </div>
+              <div class="map-world only-dense">
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 8px;
+                    --yc: 40px;
+                    --xf: 8px;
+                    --yf: 40px;
+                    --wc: 186px;
+                    --hc: 242px;
+                    --wf: 192px;
+                    --hf: 282px;
+                  "
+                >
+                  <span class="fl">src/ipc/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 8px;
+                    --yc: 294px;
+                    --xf: 8px;
+                    --yf: 336px;
+                    --wc: 186px;
+                    --hc: 74px;
+                    --wf: 192px;
+                    --hf: 86px;
+                  "
+                >
+                  <span class="fl">src/preload/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 8px;
+                    --yc: 380px;
+                    --xf: 8px;
+                    --yf: 436px;
+                    --wc: 186px;
+                    --hc: 74px;
+                    --wf: 192px;
+                    --hf: 86px;
+                  "
+                >
+                  <span class="fl">./</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 202px;
+                    --yc: 40px;
+                    --xf: 202px;
+                    --yf: 40px;
+                    --wc: 186px;
+                    --hc: 170px;
+                    --wf: 192px;
+                    --hf: 198px;
+                  "
+                >
+                  <span class="fl">src/main/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 202px;
+                    --yc: 222px;
+                    --xf: 202px;
+                    --yf: 252px;
+                    --wc: 186px;
+                    --hc: 170px;
+                    --wf: 192px;
+                    --hf: 198px;
+                  "
+                >
+                  <span class="fl">packages/ipc-contract/src/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 396px;
+                    --yc: 40px;
+                    --xf: 396px;
+                    --yf: 40px;
+                    --wc: 186px;
+                    --hc: 218px;
+                    --wf: 192px;
+                    --hf: 254px;
+                  "
+                >
+                  <span class="fl">src/renderer/components/</span>
+                </div>
+                <div
+                  class="frame pos"
+                  style="
+                    --xc: 396px;
+                    --yc: 270px;
+                    --xf: 396px;
+                    --yf: 308px;
+                    --wc: 186px;
+                    --hc: 146px;
+                    --wf: 192px;
+                    --hf: 170px;
+                  "
+                >
+                  <span class="fl">packages/event-schema/src/</span>
+                </div>
+                <div
+                  class="frame pos lane"
+                  style="
+                    --xc: 596px;
+                    --yc: 40px;
+                    --xf: 596px;
+                    --yf: 40px;
+                    --wc: 168px;
+                    --hc: 218px;
+                    --wf: 168px;
+                    --hf: 254px;
+                  "
+                >
+                  <span class="fl">Commands and local tasks</span>
+                </div>
+                <svg
+                  class="edges only-c"
+                  width="772"
+                  height="594"
+                  viewBox="0 0 772 594"
+                  aria-hidden="true"
+                >
+                  <path class="e e-write" d="M606 72H598V16H162V62" />
+                  <rect class="ee e-write" x="160" y="60" width="4" height="4" />
+                  <path class="e e-write" d="M606 144H590V26H356V62" />
+                  <rect class="ee e-write" x="354" y="60" width="4" height="4" />
+                  <path class="e e-wait" d="M614 81V96H622" />
+                  <rect class="ee e-wait" x="620" y="94" width="4" height="4" />
+                  <path class="e e-run" d="M614 153V168H622" />
+                  <rect class="ee e-run" x="620" y="166" width="4" height="4" />
+                  <path class="e e-run" d="M614 225V240H622" />
+                  <rect class="ee e-run" x="620" y="238" width="4" height="4" />
+                  <path class="e e-read" d="M375 254H394V302H406" />
+                  <rect class="ee e-read" x="404" y="300" width="4" height="4" /></svg
+                ><svg
+                  class="edges only-f"
+                  width="772"
+                  height="550"
+                  viewBox="0 0 772 550"
+                  aria-hidden="true"
+                >
+                  <path class="e e-write" d="M606 78H598V16H168V66" />
+                  <rect class="ee e-write" x="166" y="64" width="4" height="4" />
+                  <path class="e e-write" d="M606 162H590V26H362V66" />
+                  <rect class="ee e-write" x="360" y="64" width="4" height="4" />
+                  <path class="e e-wait" d="M614 88V106H622" />
+                  <rect class="ee e-wait" x="620" y="104" width="4" height="4" />
+                  <path class="e e-run" d="M614 172V190H622" />
+                  <rect class="ee e-run" x="620" y="188" width="4" height="4" />
+                  <path class="e e-run" d="M614 256V274H622" />
+                  <rect class="ee e-run" x="620" y="272" width="4" height="4" />
+                  <path class="e e-read" d="M381 290H394V346H406" />
+                  <rect class="ee e-read" x="404" y="344" width="4" height="4" />
+                </svg>
+                <div
+                  class="node pos st-writing"
+                  style="--xc: 18px; --yc: 62px; --xf: 18px; --yf: 66px; --wc: 166px; --wf: 172px"
+                  title="client.ts · writing"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                  ><span class="nm">client.ts</span><b class="tag">+12 −3</b>
+                </div>
+                <div
+                  class="node pos st-done"
+                  style="--xc: 18px; --yc: 86px; --xf: 18px; --yf: 94px; --wc: 166px; --wf: 172px"
+                  title="server.ts · done"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                  ><span class="nm">server.ts</span><b class="tag">+4 −1</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 110px; --xf: 18px; --yf: 122px; --wc: 166px; --wf: 172px"
+                  title="index.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">index.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 134px; --xf: 18px; --yf: 150px; --wc: 166px; --wf: 172px"
+                  title="channels-map.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">channels-map.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 158px; --xf: 18px; --yf: 178px; --wc: 166px; --wf: 172px"
+                  title="retry.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">retry.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 182px; --xf: 18px; --yf: 206px; --wc: 166px; --wf: 172px"
+                  title="errors.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">errors.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 206px; --xf: 18px; --yf: 234px; --wc: 166px; --wf: 172px"
+                  title="transport.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">transport.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 230px; --xf: 18px; --yf: 262px; --wc: 166px; --wf: 172px"
+                  title="types.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">types.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 254px; --xf: 18px; --yf: 290px; --wc: 166px; --wf: 172px"
+                  title="client.test.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">client.test.ts</span>
+                </div>
+                <div
+                  class="node pos st-done"
+                  style="--xc: 18px; --yc: 316px; --xf: 18px; --yf: 362px; --wc: 166px; --wf: 172px"
+                  title="index.ts · done"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                  ><span class="nm">index.ts</span><b class="tag">+2 −0</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 340px; --xf: 18px; --yf: 390px; --wc: 166px; --wf: 172px"
+                  title="bridge.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">bridge.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 18px; --yc: 402px; --xf: 18px; --yf: 462px; --wc: 166px; --wf: 172px"
+                  title="README.md · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">README.md</span>
+                </div>
+                <div
+                  class="node pos st-folder"
+                  style="--xc: 18px; --yc: 426px; --xf: 18px; --yf: 490px; --wc: 166px; --wf: 172px"
+                  title="docs/ · folder"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-folder" /></svg
+                  ><span class="nm">docs/</span><b class="tag">14 files</b>
+                </div>
+                <div
+                  class="node pos st-writing"
+                  style="--xc: 212px; --yc: 62px; --xf: 212px; --yf: 66px; --wc: 166px; --wf: 172px"
+                  title="ipc-handlers.ts · writing"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                  ><span class="nm">ipc-handlers.ts</span><b class="tag">+31 −8</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 212px; --yc: 86px; --xf: 212px; --yf: 94px; --wc: 166px; --wf: 172px"
+                  title="index.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">index.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 110px;
+                    --xf: 212px;
+                    --yf: 122px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="window.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">window.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 134px;
+                    --xf: 212px;
+                    --yf: 150px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="menu.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">menu.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 158px;
+                    --xf: 212px;
+                    --yf: 178px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="updater.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">updater.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 182px;
+                    --xf: 212px;
+                    --yf: 206px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="logger.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">logger.ts</span>
+                </div>
+                <div
+                  class="node pos st-reading"
+                  style="
+                    --xc: 212px;
+                    --yc: 244px;
+                    --xf: 212px;
+                    --yf: 278px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="channels.ts · reading"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-reading" /></svg
+                  ><span class="nm">channels.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 268px;
+                    --xf: 212px;
+                    --yf: 306px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="schema.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">schema.ts</span>
+                </div>
+                <div
+                  class="node pos st-error"
+                  style="
+                    --xc: 212px;
+                    --yc: 292px;
+                    --xf: 212px;
+                    --yf: 334px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="schema.test.ts · error"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-error" /></svg
+                  ><span class="nm">schema.test.ts</span><b class="tag">2 failing</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 316px;
+                    --xf: 212px;
+                    --yf: 362px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="index.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">index.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 340px;
+                    --xf: 212px;
+                    --yf: 390px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="sender.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">sender.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 212px;
+                    --yc: 364px;
+                    --xf: 212px;
+                    --yf: 418px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="errors.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">errors.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="--xc: 406px; --yc: 62px; --xf: 406px; --yf: 66px; --wc: 166px; --wf: 172px"
+                  title="AgentCard.tsx · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">AgentCard.tsx</span>
+                </div>
+                <div
+                  class="node pos st-done"
+                  style="--xc: 406px; --yc: 86px; --xf: 406px; --yf: 94px; --wc: 166px; --wf: 172px"
+                  title="StatusBar.tsx · done"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                  ><span class="nm">StatusBar.tsx</span><b class="tag">+6 −6</b>
+                </div>
+                <div
+                  class="node pos st-error"
+                  style="
+                    --xc: 406px;
+                    --yc: 110px;
+                    --xf: 406px;
+                    --yf: 122px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="Timeline.tsx · error"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-error" /></svg
+                  ><span class="nm">Timeline.tsx</span><b class="tag">TS2345</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 134px;
+                    --xf: 406px;
+                    --yf: 150px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="MapNode.tsx · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">MapNode.tsx</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 158px;
+                    --xf: 406px;
+                    --yf: 178px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="Minimap.tsx · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">Minimap.tsx</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 182px;
+                    --xf: 406px;
+                    --yf: 206px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="PermissionDialog.tsx · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">PermissionDialog.tsx</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 206px;
+                    --xf: 406px;
+                    --yf: 234px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="Toolbar.tsx · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">Toolbar.tsx</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 230px;
+                    --xf: 406px;
+                    --yf: 262px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="Inspector.tsx · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">Inspector.tsx</span>
+                </div>
+                <div
+                  class="node pos st-reading"
+                  style="
+                    --xc: 406px;
+                    --yc: 292px;
+                    --xf: 406px;
+                    --yf: 334px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="index.ts · reading"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-reading" /></svg
+                  ><span class="nm">index.ts</span>
+                </div>
+                <div
+                  class="node pos st-done"
+                  style="
+                    --xc: 406px;
+                    --yc: 316px;
+                    --xf: 406px;
+                    --yf: 362px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="agent-event.ts · done"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                  ><span class="nm">agent-event.ts</span><b class="tag">+9 −2</b>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 340px;
+                    --xf: 406px;
+                    --yf: 390px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="migrate.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">migrate.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 364px;
+                    --xf: 406px;
+                    --yf: 418px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="version.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">version.ts</span>
+                </div>
+                <div
+                  class="node pos st-idle"
+                  style="
+                    --xc: 406px;
+                    --yc: 388px;
+                    --xf: 406px;
+                    --yf: 446px;
+                    --wc: 166px;
+                    --wf: 172px;
+                  "
+                  title="guards.ts · idle"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-idle" /></svg
+                  ><span class="nm">guards.ts</span>
+                </div>
+                <div
+                  class="node pos st-waiting temp"
+                  style="--xc: 622px; --yc: 86px; --xf: 622px; --yf: 94px; --wc: 136px; --wf: 146px"
+                  title="npm test -- ipc · waiting"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-waiting" /></svg
+                  ><span class="pre">$</span><span class="nm">npm test -- ipc</span>
+                </div>
+                <div
+                  class="node pos st-running temp"
+                  style="
+                    --xc: 622px;
+                    --yc: 158px;
+                    --xf: 622px;
+                    --yf: 178px;
+                    --wc: 136px;
+                    --wf: 146px;
+                  "
+                  title="pnpm typecheck · running"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-running" /></svg
+                  ><span class="pre">$</span><span class="nm">pnpm typecheck</span>
+                </div>
+                <div
+                  class="node pos st-running temp"
+                  style="
+                    --xc: 622px;
+                    --yc: 230px;
+                    --xf: 622px;
+                    --yf: 262px;
+                    --wc: 136px;
+                    --wf: 146px;
+                  "
+                  title="ollama: draft tests · running"
+                >
+                  <svg class="lamp" aria-hidden="true"><use href="#s-running" /></svg
+                  ><span class="nm">ollama: draft tests</span>
+                </div>
+                <div
+                  class="avatar pos id-claude"
+                  style="--xc: 606px; --yc: 63px; --xf: 606px; --yf: 68px"
+                  title="Claude · writing"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>CL</b>
+                </div>
+                <div
+                  class="av-ro pos t-waiting"
+                  style="--xc: 644px; --yc: 63px; --xf: 648px; --yf: 68px"
+                >
+                  <b class="num">Waiting</b><span>0m14</span>
+                </div>
+                <div
+                  class="avatar pos id-claude"
+                  style="--xc: 606px; --yc: 135px; --xf: 606px; --yf: 152px"
+                  title="Claude #2 · running"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>C2</b>
+                </div>
+                <div
+                  class="av-ro pos t-running"
+                  style="--xc: 644px; --yc: 135px; --xf: 648px; --yf: 152px"
+                >
+                  <b class="num">0m22</b><span>typecheck</span>
+                </div>
+                <div
+                  class="avatar pos id-local"
+                  style="--xc: 606px; --yc: 207px; --xf: 606px; --yf: 236px"
+                  title="qwen2.5-coder:14b · running"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-local" /></svg><b>QW</b>
+                </div>
+                <div
+                  class="av-ro pos t-running"
+                  style="--xc: 644px; --yc: 207px; --xf: 648px; --yf: 236px"
+                >
+                  <b class="num">41</b><span>tok/s</span>
+                </div>
+                <div
+                  class="avatar pos id-sub"
+                  style="--xc: 343px; --yc: 245px; --xf: 345px; --yf: 280px"
+                  title="Explore · reading"
+                >
+                  <svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>EX</b>
+                </div>
+                <div class="minimap" title="Minimap: the whole map is in view">
+                  <svg viewBox="0 0 772 594" preserveAspectRatio="none" aria-hidden="true">
+                    <rect class="mm-f" x="8" y="40" width="186" height="242" />
+                    <rect class="mm-f" x="8" y="294" width="186" height="74" />
+                    <rect class="mm-f" x="8" y="380" width="186" height="74" />
+                    <rect class="mm-f" x="202" y="40" width="186" height="170" />
+                    <rect class="mm-f" x="202" y="222" width="186" height="170" />
+                    <rect class="mm-f" x="396" y="40" width="186" height="218" />
+                    <rect class="mm-f" x="396" y="270" width="186" height="146" />
+                    <rect class="mm-f" x="596" y="40" width="168" height="218" />
+                    <rect class="mm-n st-writing" x="18" y="62" width="166" height="20" />
+                    <rect class="mm-n st-done" x="18" y="86" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="110" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="134" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="158" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="182" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="206" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="230" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="254" width="166" height="20" />
+                    <rect class="mm-n st-done" x="18" y="316" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="340" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="402" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="18" y="426" width="166" height="20" />
+                    <rect class="mm-n st-writing" x="212" y="62" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="86" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="110" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="134" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="158" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="182" width="166" height="20" />
+                    <rect class="mm-n st-reading" x="212" y="244" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="268" width="166" height="20" />
+                    <rect class="mm-n st-error" x="212" y="292" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="316" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="340" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="212" y="364" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="62" width="166" height="20" />
+                    <rect class="mm-n st-done" x="406" y="86" width="166" height="20" />
+                    <rect class="mm-n st-error" x="406" y="110" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="134" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="158" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="182" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="206" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="230" width="166" height="20" />
+                    <rect class="mm-n st-reading" x="406" y="292" width="166" height="20" />
+                    <rect class="mm-n st-done" x="406" y="316" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="340" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="364" width="166" height="20" />
+                    <rect class="mm-n st-idle" x="406" y="388" width="166" height="20" />
+                    <rect class="mm-n st-waiting" x="622" y="86" width="136" height="20" />
+                    <rect class="mm-n st-running" x="622" y="158" width="136" height="20" />
+                    <rect class="mm-n st-running" x="622" y="230" width="136" height="20" />
+                    <rect class="mm-v" x="4" y="4" width="764" height="586" />
+                  </svg>
+                </div>
+                <div class="map-readout mono">
+                  <span>Fit 100%</span><span>41 nodes</span
+                  ><span>touched files and direct neighbours</span>
+                </div>
+              </div>
+            </section>
+            <aside class="agents-col" aria-label="Agents">
+              <div class="agents only-normal">
+                <div class="tele">
+                  <div class="rd">
+                    <div class="rd-l">Tokens this session</div>
+                    <div class="rd-v num">182k</div>
+                    <div class="split" title="31k local of 182k">
+                      <i class="cloud" style="width: 83%"></i
+                      ><i class="local" style="width: 17%"></i>
+                    </div>
+                    <div class="rd-s">
+                      <svg class="gnd" aria-hidden="true"><use href="#g-ground" /></svg
+                      ><span class="num">31k</span> local <span class="dim num">17%</span>
+                    </div>
+                  </div>
+                  <div class="rd">
+                    <div class="rd-l">VRAM</div>
+                    <div class="rd-v num">9.1<small>/16 GB</small></div>
+                    <div class="cells" title="9.1 of 16 GB">
+                      <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class=""></i><i class=""></i><i class=""></i
+                      ><i class=""></i><i class=""></i><i class=""></i><i class=""></i>
+                    </div>
+                    <div class="rd-s">qwen2.5-coder:14b loaded</div>
+                  </div>
+                </div>
+                <article class="chan big id-claude">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>CL</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-uplink" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn">Claude</span><span class="mono dim">opus-5.5</span
+                      ><span class="where">cloud</span>
+                    </header>
+                    <div class="sline st-waiting filled">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-waiting" /></svg
+                      ><span class="sl">Waiting for you</span><span class="mono">Bash</span>
+                    </div>
+                    <p class="task">Refactor IPC client to typed channels</p>
+                    <div class="kv mono">
+                      <span class="dim">tool</span> Bash <span class="dim">cmd</span> npm test --
+                      ipc
+                    </div>
+                    <div class="readouts">
+                      <span title="Elapsed"><b class="num">2m14</b></span
+                      ><span><b class="num">41k</b><small>tok</small></span
+                      ><span><b class="num">+15 −4</b><small>2 files</small></span>
+                    </div>
+                    <div class="acts">
+                      <button>Interrupt</button><button>Open log</button
+                      ><button class="on">
+                        <svg class="ic xs" aria-hidden="true"><use href="#i-eye" /></svg>Follow on
+                        map
+                      </button>
+                    </div>
+                  </div>
+                </article>
+                <article class="chan id-sub">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>EX</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-uplink" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn">Explore</span><span class="dim">subagent of Claude</span
+                      ><span class="grow"></span><b class="num mid">0m41</b>
+                    </header>
+                    <div class="sline st-reading">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-reading" /></svg
+                      ><span class="sl">Reading</span
+                      ><span class="mono path">ipc-contract/src/channels.ts</span>
+                    </div>
+                  </div>
+                </article>
+                <article class="chan id-local">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-local" /></svg><b>QW</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-ground" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn mono-name">qwen2.5-coder:14b</span
+                      ><span class="where loc">local</span><span class="grow"></span
+                      ><b class="num mid">38<small>tok/s</small></b>
+                    </header>
+                    <div class="sline st-running">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-running" /></svg
+                      ><span class="sl">Running</span
+                      ><span class="task-s">Draft tests for client.ts</span
+                      ><span class="grow"></span><span class="num dim">1m02</span>
+                    </div>
+                    <i class="indet"></i>
+                  </div>
+                </article>
+                <section class="changed">
+                  <header>
+                    <span>Changed files</span><b class="num">2</b><span class="grow"></span
+                    ><button>Review diff</button>
+                  </header>
+                  <div class="crow st-writing">
+                    <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                    ><span class="mono">src/ipc/client.ts</span><b class="mono">+12 −3</b>
+                  </div>
+                  <div class="crow st-done">
+                    <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                    ><span class="mono">src/ipc/server.ts</span><b class="mono">+4 −1</b>
+                  </div>
+                </section>
+              </div>
+              <div class="agents only-dense">
+                <div class="tele">
+                  <div class="rd">
+                    <div class="rd-l">Tokens this session</div>
+                    <div class="rd-v num">412k</div>
+                    <div class="split" title="96k local of 412k">
+                      <i class="cloud" style="width: 77%"></i
+                      ><i class="local" style="width: 23%"></i>
+                    </div>
+                    <div class="rd-s">
+                      <svg class="gnd" aria-hidden="true"><use href="#g-ground" /></svg
+                      ><span class="num">96k</span> local <span class="dim num">23%</span>
+                    </div>
+                  </div>
+                  <div class="rd">
+                    <div class="rd-l">VRAM</div>
+                    <div class="rd-v num">13.8<small>/16 GB</small></div>
+                    <div class="cells" title="13.8 of 16 GB">
+                      <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i
+                      ><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i>
+                    </div>
+                    <div class="rd-s">qwen2.5-coder:14b loaded</div>
+                  </div>
+                </div>
+                <article class="chan big id-claude">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>CL</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-uplink" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn">Claude</span><span class="mono dim">opus-5.5</span
+                      ><span class="where">cloud</span>
+                    </header>
+                    <div class="sline st-writing">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                      ><span class="sl">Writing</span
+                      ><span class="mono path">src/ipc/client.ts</span><b class="badge">+12 −3</b>
+                    </div>
+                    <div class="sline st-waiting filled">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-waiting" /></svg
+                      ><span class="sl">Waiting for you</span
+                      ><span class="mono">npm test -- ipc</span>
+                    </div>
+                    <div class="readouts">
+                      <span title="Elapsed"><b class="num">2m14</b></span
+                      ><span><b class="num">88k</b><small>tok</small></span
+                      ><span><b class="num">+27 −7</b><small>4 files</small></span>
+                    </div>
+                    <div class="acts">
+                      <button>Interrupt</button><button>Open log</button
+                      ><button class="on">
+                        <svg class="ic xs" aria-hidden="true"><use href="#i-eye" /></svg>Follow on
+                        map
+                      </button>
+                    </div>
+                  </div>
+                </article>
+                <article class="chan id-claude">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>C2</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-uplink" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn">Claude #2</span><span class="mono dim">opus-5.5</span
+                      ><span class="grow"></span><b class="num mid">1m56</b>
+                    </header>
+                    <div class="sline st-running">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-running" /></svg
+                      ><span class="sl">Running</span><span class="mono path">pnpm typecheck</span
+                      ><span class="grow"></span><span class="num dim">0m22</span>
+                    </div>
+                    <i class="indet"></i>
+                  </div>
+                </article>
+                <article class="chan id-sub">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>EX</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-uplink" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn">Explore</span><span class="dim">subagent of Claude</span
+                      ><span class="grow"></span><b class="num mid">0m50</b>
+                    </header>
+                    <div class="sline st-reading">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-reading" /></svg
+                      ><span class="sl">Reading</span
+                      ><span class="mono path">channels.ts, index.ts</span>
+                    </div>
+                  </div>
+                </article>
+                <article class="chan id-sub done">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>PL</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-uplink" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn">Plan</span><span class="dim">subagent of Claude</span
+                      ><span class="grow"></span><b class="num mid dim">0m54</b>
+                    </header>
+                    <div class="sline st-done">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                      ><span class="sl">Done</span><span class="task-s">Plan ready, 4 steps</span>
+                    </div>
+                  </div>
+                </article>
+                <article class="chan id-local">
+                  <div class="chan-plate">
+                    <svg class="gl" aria-hidden="true"><use href="#g-local" /></svg><b>QW</b
+                    ><span class="grow"></span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-ground" /></svg>
+                  </div>
+                  <div class="chan-body">
+                    <header>
+                      <span class="cn mono-name">qwen2.5-coder:14b</span
+                      ><span class="where loc">local</span><span class="grow"></span
+                      ><b class="num mid">41<small>tok/s</small></b>
+                    </header>
+                    <div class="sline st-running">
+                      <svg class="lamp" aria-hidden="true"><use href="#s-running" /></svg
+                      ><span class="sl">Running</span
+                      ><span class="task-s">Draft tests for client.ts</span
+                      ><span class="grow"></span><span class="num dim">0m48</span>
+                    </div>
+                    <i class="indet"></i>
+                  </div>
+                </article>
+                <section class="changed">
+                  <header>
+                    <span>Changed files</span><b class="num">7</b><span class="grow"></span
+                    ><button>Review diff</button>
+                  </header>
+                  <div class="crow st-writing">
+                    <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                    ><span class="mono">src/ipc/client.ts</span><b class="mono">+12 −3</b>
+                  </div>
+                  <div class="crow st-writing">
+                    <svg class="lamp" aria-hidden="true"><use href="#s-writing" /></svg
+                    ><span class="mono">src/main/ipc-handlers.ts</span><b class="mono">+31 −8</b>
+                  </div>
+                  <div class="crow st-done">
+                    <svg class="lamp" aria-hidden="true"><use href="#s-done" /></svg
+                    ><span class="mono">src/ipc/server.ts</span><b class="mono">+4 −1</b>
+                  </div>
+                  <div class="crow more"><span>4 more in Git</span></div>
+                </section>
+              </div>
+            </aside>
+          </div>
+          <section class="timeline" aria-label="Timeline">
+            <div class="tl only-normal" style="--lanes: 3">
+              <div class="tl-head">
+                <span class="tl-title">Timeline</span><span class="mono dim">3 lanes</span
+                ><span class="mono dim">12 events</span><span class="mono dim">1 checkpoint</span
+                ><span class="grow"></span>
+                <button class="dock-tab" title="Bottom dock (Ctrl+J)">Terminal</button
+                ><button class="dock-tab" title="Logs">Logs</button
+                ><button class="dock-tab" title="Problems (Ctrl+Shift+M)">
+                  Problems
+                  <span class="err-count"
+                    ><svg class="ic xs" aria-hidden="true"><use href="#s-error" /></svg>2</span
+                  ></button
+                ><button class="dock-tab icon" aria-label="Open bottom dock">
+                  <svg class="ic xs" aria-hidden="true"><use href="#i-up" /></svg>
+                </button>
+              </div>
+              <div class="tl-ruler">
+                <div class="ruler-label mono dim">m:ss</div>
+                <div class="ruler-track">
+                  <i class="tk mj" style="--t: 0"><span>0:00</span></i
+                  ><i class="tk" style="--t: 0.0373"></i><i class="tk" style="--t: 0.0746"></i
+                  ><i class="tk" style="--t: 0.1119"></i><i class="tk" style="--t: 0.1493"></i
+                  ><i class="tk" style="--t: 0.1866"></i
+                  ><i class="tk mj" style="--t: 0.2239"><span>0:30</span></i
+                  ><i class="tk" style="--t: 0.2612"></i><i class="tk" style="--t: 0.2985"></i
+                  ><i class="tk" style="--t: 0.3358"></i><i class="tk" style="--t: 0.3731"></i
+                  ><i class="tk" style="--t: 0.4104"></i
+                  ><i class="tk mj" style="--t: 0.4478"><span>1:00</span></i
+                  ><i class="tk" style="--t: 0.4851"></i><i class="tk" style="--t: 0.5224"></i
+                  ><i class="tk" style="--t: 0.5597"></i><i class="tk" style="--t: 0.597"></i
+                  ><i class="tk" style="--t: 0.6343"></i
+                  ><i class="tk mj" style="--t: 0.6716"><span>1:30</span></i
+                  ><i class="tk" style="--t: 0.709"></i><i class="tk" style="--t: 0.7463"></i
+                  ><i class="tk" style="--t: 0.7836"></i><i class="tk" style="--t: 0.8209"></i
+                  ><i class="tk" style="--t: 0.8582"></i
+                  ><i class="tk mj" style="--t: 0.8955"><span>2:00</span></i
+                  ><i class="tk" style="--t: 0.9328"></i><i class="tk" style="--t: 0.9701"></i
+                  ><i class="cpf" style="--t: 0.3284"
+                    ><svg class="fl" aria-hidden="true"><use href="#i-flag" /></svg
+                    ><span>CP1</span></i
+                  ><i class="nowtag" style="--t: 1">2:14</i>
+                </div>
+              </div>
+              <div class="lanes">
+                <div class="lane">
+                  <div class="lane-label id-claude">
+                    <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>CL</b
+                    ><span class="ln" title="Claude">Claude</span
+                    ><svg class="al st-waiting" aria-hidden="true"><use href="#s-waiting" /></svg>
+                  </div>
+                  <div class="track">
+                    <i
+                      class="ev ev-read"
+                      style="--t: 0.0373; --d: 0.0224"
+                      title="0:05  Read src/ipc/client.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.0746; --d: 0.0149"
+                      title="0:10  Read src/ipc/server.ts"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.1119; --d: 0.0149"
+                      title='0:15  Grep "ipcRenderer.invoke"'
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1493; --d: 0.0299"
+                      title="0:20  Read packages/ipc-contract/src/channels.ts"
+                    ></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.3358; --d: 0.0746"
+                      title="0:45  Edit src/ipc/server.ts (+4 −1)"
+                      ><span>server.ts</span></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.4328; --d: 0.1343"
+                      title="0:58  Edit src/ipc/client.ts (+12 −3)"
+                      ><span>client.ts +12 −3</span></i
+                    ><i
+                      class="ev ev-bash"
+                      style="--t: 0.7761; --d: 0.0597"
+                      title="1:44  Bash vitest run schema"
+                      ><span>$ vitest</span></i
+                    ><i
+                      class="mk mk-error"
+                      style="--t: 0.8358"
+                      title="1:52  schema.test.ts: 2 failing"
+                      ><svg class="mki" aria-hidden="true"><use href="#s-error" /></svg
+                      ><span>schema.test.ts</span></i
+                    ><i
+                      class="ev ev-wait"
+                      style="--t: 0.9104; --d: 0.0896"
+                      title="2:02  Bash npm test -- ipc: waiting for permission"
+                      ><span>npm test</span></i
+                    >
+                  </div>
+                </div>
+                <div class="lane child">
+                  <div class="lane-label id-sub">
+                    <i class="hook"></i
+                    ><svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>EX</b
+                    ><span class="ln" title="Explore">Explore</span
+                    ><svg class="al st-reading" aria-hidden="true"><use href="#s-reading" /></svg>
+                  </div>
+                  <div class="track">
+                    <i class="unborn" style="--d: 0.6716"></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.6791; --d: 0.0149"
+                      title='1:31  Grep "defineChannel"'
+                    ></i
+                    ><i
+                      class="ev ev-read-now"
+                      style="--t: 0.694; --d: 0.306"
+                      title="1:33  Read packages/ipc-contract/src/channels.ts"
+                      ><span>channels.ts</span></i
+                    >
+                  </div>
+                </div>
+                <div class="lane child">
+                  <div class="lane-label id-local">
+                    <i class="hook"></i
+                    ><svg class="gl" aria-hidden="true"><use href="#g-local" /></svg><b>QW</b
+                    ><span class="ln" title="qwen2.5-coder:14b">qwen-coder</span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-ground" /></svg
+                    ><svg class="al st-running" aria-hidden="true"><use href="#s-running" /></svg>
+                  </div>
+                  <div class="track">
+                    <i class="unborn" style="--d: 0.5224"></i
+                    ><i
+                      class="ev ev-run-now"
+                      style="--t: 0.5373; --d: 0.4627"
+                      title="1:12  Draft tests for client.ts · 38 tok/s"
+                      ><span>Draft tests for client.ts · 38 tok/s</span></i
+                    >
+                  </div>
+                </div>
+                <div class="tl-ov">
+                  <i class="cp" style="--t: 0.3284" title="Checkpoint 1 at 0:44"></i
+                  ><i
+                    class="birth"
+                    style="--t: 0.6716; top: 16.67%; height: 33.33%"
+                    title="Explore started at 1:30"
+                  ></i
+                  ><i
+                    class="birth"
+                    style="--t: 0.5224; top: 16.67%; height: 66.67%"
+                    title="qwen2.5-coder:14b started at 1:10"
+                  ></i
+                  ><i class="now"></i>
+                </div>
+              </div>
+              <div class="tl-scrub">
+                <div class="scrub-label">
+                  <span class="live-chip"><i></i>Live</span>
+                </div>
+                <div class="scrub-track">
+                  <div class="hist">
+                    <i style="--t: 0.0299; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.0597; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.0896; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.1493; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.3284; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.4179; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.5373; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.6567; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.6866; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.7761; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.8358; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.8955; --d: 0.0224; --v: 1"></i>
+                  </div>
+                  <i class="scrub-line"></i
+                  ><i class="scrub-handle" title="Scrubber at present (End)"></i>
+                </div>
+              </div>
+            </div>
+            <div class="tl only-dense" style="--lanes: 5">
+              <div class="tl-head">
+                <span class="tl-title">Timeline</span><span class="mono dim">5 lanes</span
+                ><span class="mono dim">53 events</span><span class="mono dim">2 checkpoints</span
+                ><span class="grow"></span>
+                <button class="dock-tab" title="Bottom dock (Ctrl+J)">Terminal</button
+                ><button class="dock-tab" title="Logs">Logs</button
+                ><button class="dock-tab" title="Problems (Ctrl+Shift+M)">
+                  Problems
+                  <span class="err-count"
+                    ><svg class="ic xs" aria-hidden="true"><use href="#s-error" /></svg>3</span
+                  ></button
+                ><button class="dock-tab icon" aria-label="Open bottom dock">
+                  <svg class="ic xs" aria-hidden="true"><use href="#i-up" /></svg>
+                </button>
+              </div>
+              <div class="tl-ruler">
+                <div class="ruler-label mono dim">m:ss</div>
+                <div class="ruler-track">
+                  <i class="tk mj" style="--t: 0"><span>0:00</span></i
+                  ><i class="tk" style="--t: 0.0373"></i><i class="tk" style="--t: 0.0746"></i
+                  ><i class="tk" style="--t: 0.1119"></i><i class="tk" style="--t: 0.1493"></i
+                  ><i class="tk" style="--t: 0.1866"></i
+                  ><i class="tk mj" style="--t: 0.2239"><span>0:30</span></i
+                  ><i class="tk" style="--t: 0.2612"></i><i class="tk" style="--t: 0.2985"></i
+                  ><i class="tk" style="--t: 0.3358"></i><i class="tk" style="--t: 0.3731"></i
+                  ><i class="tk" style="--t: 0.4104"></i
+                  ><i class="tk mj" style="--t: 0.4478"><span>1:00</span></i
+                  ><i class="tk" style="--t: 0.4851"></i><i class="tk" style="--t: 0.5224"></i
+                  ><i class="tk" style="--t: 0.5597"></i><i class="tk" style="--t: 0.597"></i
+                  ><i class="tk" style="--t: 0.6343"></i
+                  ><i class="tk mj" style="--t: 0.6716"><span>1:30</span></i
+                  ><i class="tk" style="--t: 0.709"></i><i class="tk" style="--t: 0.7463"></i
+                  ><i class="tk" style="--t: 0.7836"></i><i class="tk" style="--t: 0.8209"></i
+                  ><i class="tk" style="--t: 0.8582"></i
+                  ><i class="tk mj" style="--t: 0.8955"><span>2:00</span></i
+                  ><i class="tk" style="--t: 0.9328"></i><i class="tk" style="--t: 0.9701"></i
+                  ><i class="cpf" style="--t: 0.2687"
+                    ><svg class="fl" aria-hidden="true"><use href="#i-flag" /></svg
+                    ><span>CP1</span></i
+                  ><i class="cpf" style="--t: 0.7761"
+                    ><svg class="fl" aria-hidden="true"><use href="#i-flag" /></svg
+                    ><span>CP2</span></i
+                  ><i class="nowtag" style="--t: 1">2:14</i>
+                </div>
+              </div>
+              <div class="lanes">
+                <div class="lane">
+                  <div class="lane-label id-claude">
+                    <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>CL</b
+                    ><span class="ln" title="Claude">Claude</span
+                    ><svg class="al st-writing" aria-hidden="true"><use href="#s-writing" /></svg>
+                  </div>
+                  <div class="track">
+                    <i
+                      class="ev ev-read"
+                      style="--t: 0.0149; --d: 0.0149"
+                      title="0:02  Read src/ipc/client.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.0373; --d: 0.0149"
+                      title="0:05  Read src/ipc/server.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.0597; --d: 0.0149"
+                      title="0:08  Read src/preload/index.ts"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.0821; --d: 0.0149"
+                      title='0:11  Grep "invoke("'
+                    ></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.2836; --d: 0.0448"
+                      title="0:38  Edit src/ipc/server.ts (+4 −1)"
+                    ></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.3433; --d: 0.0224"
+                      title="0:46  Edit src/preload/index.ts (+2 −0)"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.403; --d: 0.0149"
+                      title="0:54  Read packages/event-schema/src/agent-event.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.4254; --d: 0.0149"
+                      title="0:57  Read packages/event-schema/src/index.ts"
+                    ></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.4627; --d: 0.0448"
+                      title="1:02  Edit agent-event.ts (+9 −2)"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.5373; --d: 0.0149"
+                      title='1:12  Grep "schemaVersion"'
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.5672; --d: 0.0149"
+                      title="1:16  Read src/ipc/types.ts"
+                    ></i
+                    ><i
+                      class="ev ev-bash"
+                      style="--t: 0.7015; --d: 0.0448"
+                      title="1:34  Bash vitest run schema"
+                    ></i
+                    ><i
+                      class="mk mk-error"
+                      style="--t: 0.7463"
+                      title="1:40  schema.test.ts: 2 failing"
+                      ><svg class="mki" aria-hidden="true"><use href="#s-error" /></svg></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.791; --d: 0.0597"
+                      title="1:46  Edit src/ipc/client.ts (+8 −1)"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.8657; --d: 0.0149"
+                      title="1:56  Read src/ipc/retry.ts"
+                    ></i
+                    ><i
+                      class="ev ev-wait-lo"
+                      style="--t: 0.8955; --d: 0.1045"
+                      title="2:00  Bash npm test -- ipc: waiting for permission"
+                      ><span>npm test</span></i
+                    ><i
+                      class="ev ev-write-hi"
+                      style="--t: 0.9552; --d: 0.0448"
+                      title="2:08  Writing src/ipc/client.ts (+12 −3)"
+                    ></i>
+                  </div>
+                </div>
+                <div class="lane child">
+                  <div class="lane-label id-sub">
+                    <i class="hook"></i
+                    ><svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>PL</b
+                    ><span class="ln" title="Plan">Plan</span
+                    ><svg class="al st-done" aria-hidden="true"><use href="#s-done" /></svg>
+                  </div>
+                  <div class="track">
+                    <i class="unborn" style="--d: 0.0448"></i
+                    ><i class="ended" style="--t: 0.4478; --d: 0.5522"></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.0597; --d: 0.0149"
+                      title="0:08  Read docs/memoria/PIANO.md"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.0821; --d: 0.0149"
+                      title="0:11  Read src/ipc/client.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1045; --d: 0.0149"
+                      title="0:14  Read src/main/index.ts"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.1269; --d: 0.0149"
+                      title='0:17  Grep "ipcMain.handle"'
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1493; --d: 0.0149"
+                      title="0:20  Read packages/ipc-contract/src/index.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1791; --d: 0.0149"
+                      title="0:24  Read packages/ipc-contract/src/schema.ts"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.209; --d: 0.0149"
+                      title='0:28  Grep "z.object"'
+                    ></i
+                    ><i
+                      class="ev ev-think"
+                      style="--t: 0.2463; --d: 0.1866"
+                      title="0:33  Planning: 4 steps"
+                      ><span>Planning</span></i
+                    ><i class="mk mk-done" style="--t: 0.4478" title="1:00  Plan ready: 4 steps"
+                      ><svg class="mki" aria-hidden="true"><use href="#s-done" /></svg
+                    ></i>
+                  </div>
+                </div>
+                <div class="lane child">
+                  <div class="lane-label id-local">
+                    <i class="hook"></i
+                    ><svg class="gl" aria-hidden="true"><use href="#g-local" /></svg><b>QW</b
+                    ><span class="ln" title="qwen2.5-coder:14b">qwen-coder</span
+                    ><svg class="gnd" aria-hidden="true"><use href="#g-ground" /></svg
+                    ><svg class="al st-running" aria-hidden="true"><use href="#s-running" /></svg>
+                  </div>
+                  <div class="track">
+                    <i class="unborn" style="--d: 0.3731"></i
+                    ><i
+                      class="ev ev-run"
+                      style="--t: 0.3881; --d: 0.209"
+                      title="0:52  Summarize vitest log · 36 tok/s"
+                      ><span>Summarize log</span></i
+                    ><i
+                      class="mk mk-error"
+                      style="--t: 0.6045"
+                      title="1:21  Ollama returned invalid JSON"
+                      ><svg class="mki" aria-hidden="true"><use href="#s-error" /></svg></i
+                    ><i
+                      class="ev ev-run-now"
+                      style="--t: 0.6418; --d: 0.3582"
+                      title="1:26  Draft tests for client.ts · 41 tok/s"
+                      ><span>Draft tests · 41 tok/s</span></i
+                    >
+                  </div>
+                </div>
+                <div class="lane child">
+                  <div class="lane-label id-sub">
+                    <i class="hook"></i
+                    ><svg class="gl" aria-hidden="true"><use href="#g-sub" /></svg><b>EX</b
+                    ><span class="ln" title="Explore">Explore</span
+                    ><svg class="al st-reading" aria-hidden="true"><use href="#s-reading" /></svg>
+                  </div>
+                  <div class="track">
+                    <i class="unborn" style="--d: 0.6269"></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.6343; --d: 0.0149"
+                      title='1:25  Grep "defineChannel"'
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.6567; --d: 0.0149"
+                      title="1:28  Read channels.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.6791; --d: 0.0149"
+                      title="1:31  Read schema.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.7015; --d: 0.0149"
+                      title="1:34  Read sender.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.7239; --d: 0.0149"
+                      title="1:37  Read errors.ts"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.7463; --d: 0.0149"
+                      title='1:40  Grep "schemaVersion"'
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.7687; --d: 0.0149"
+                      title="1:43  Read migrate.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.791; --d: 0.0149"
+                      title="1:46  Read version.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.8134; --d: 0.0149"
+                      title="1:49  Read guards.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read-now"
+                      style="--t: 0.8358; --d: 0.1642"
+                      title="1:52  Reading channels.ts and event-schema/src/index.ts"
+                      ><span>channels.ts, index.ts</span></i
+                    >
+                  </div>
+                </div>
+                <div class="lane">
+                  <div class="lane-label id-claude">
+                    <svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg><b>C2</b
+                    ><span class="ln" title="Claude #2">Claude #2</span
+                    ><svg class="al st-running" aria-hidden="true"><use href="#s-running" /></svg>
+                  </div>
+                  <div class="track">
+                    <i class="unborn" style="--d: 0.1343"></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1418; --d: 0.0149"
+                      title="0:19  Read src/renderer/components/StatusBar.tsx"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1642; --d: 0.0149"
+                      title="0:22  Read Timeline.tsx"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.1866; --d: 0.0149"
+                      title="0:25  Read AgentCard.tsx"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.209; --d: 0.0149"
+                      title='0:28  Grep "useAgentStore"'
+                    ></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.291; --d: 0.0448"
+                      title="0:39  Edit StatusBar.tsx (+6 −6)"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.3284; --d: 0.0149"
+                      title="0:44  Read MapNode.tsx"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.3507; --d: 0.0149"
+                      title="0:47  Read Minimap.tsx"
+                    ></i
+                    ><i
+                      class="ev ev-bash"
+                      style="--t: 0.5224; --d: 0.0896"
+                      title="1:10  Bash pnpm typecheck"
+                      ><span>$ typecheck</span></i
+                    ><i class="mk mk-error" style="--t: 0.6119" title="1:22  Timeline.tsx: TS2345"
+                      ><svg class="mki" aria-hidden="true"><use href="#s-error" /></svg></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.6418; --d: 0.0149"
+                      title="1:26  Read src/main/ipc-handlers.ts"
+                    ></i
+                    ><i
+                      class="ev ev-read"
+                      style="--t: 0.6716; --d: 0.0149"
+                      title="1:30  Read src/main/index.ts"
+                    ></i
+                    ><i
+                      class="ev ev-grep"
+                      style="--t: 0.7015; --d: 0.0149"
+                      title='1:34  Grep "handle("'
+                    ></i
+                    ><i
+                      class="ev ev-edit"
+                      style="--t: 0.806; --d: 0.0597"
+                      title="1:48  Edit src/main/ipc-handlers.ts (+31 −8)"
+                      ><span>ipc-handlers</span></i
+                    ><i
+                      class="ev ev-run-now"
+                      style="--t: 0.8806; --d: 0.1194"
+                      title="1:58  Bash pnpm typecheck"
+                      ><span>pnpm typecheck</span></i
+                    >
+                  </div>
+                </div>
+                <div class="tl-ov">
+                  <i class="cp" style="--t: 0.2687" title="Checkpoint 1 at 0:36"></i
+                  ><i class="cp" style="--t: 0.7761" title="Checkpoint 2 at 1:44"></i
+                  ><i
+                    class="birth"
+                    style="--t: 0.0448; top: 10%; height: 20%"
+                    title="Plan started at 0:06"
+                  ></i
+                  ><i
+                    class="birth"
+                    style="--t: 0.3731; top: 10%; height: 40%"
+                    title="qwen2.5-coder:14b started at 0:50"
+                  ></i
+                  ><i
+                    class="birth"
+                    style="--t: 0.6269; top: 10%; height: 60%"
+                    title="Explore started at 1:24"
+                  ></i
+                  ><i class="now"></i>
+                </div>
+              </div>
+              <div class="tl-scrub">
+                <div class="scrub-label">
+                  <span class="live-chip"><i></i>Live</span>
+                </div>
+                <div class="scrub-track">
+                  <div class="hist">
+                    <i style="--t: 0; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.0299; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.0597; --d: 0.0224; --v: 1"></i
+                    ><i style="--t: 0.0896; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.1194; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.1493; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.1791; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.209; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.2388; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.2687; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.3284; --d: 0.0224; --v: 0.75"></i
+                    ><i style="--t: 0.3881; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.4179; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.4478; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.5075; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.5373; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.5672; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.597; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.6269; --d: 0.0224; --v: 0.75"></i
+                    ><i style="--t: 0.6567; --d: 0.0224; --v: 0.75"></i
+                    ><i style="--t: 0.6866; --d: 0.0224; --v: 0.75"></i
+                    ><i style="--t: 0.7164; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.7463; --d: 0.0224; --v: 0.75"></i
+                    ><i style="--t: 0.7761; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.806; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.8358; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.8657; --d: 0.0224; --v: 0.5"></i
+                    ><i style="--t: 0.8955; --d: 0.0224; --v: 0.25"></i
+                    ><i style="--t: 0.9552; --d: 0.0224; --v: 0.25"></i>
+                  </div>
+                  <i class="scrub-line"></i
+                  ><i class="scrub-handle" title="Scrubber at present (End)"></i>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <aside class="dock" aria-label="Session">
+          <div class="dock-head">
+            <span class="t">Session</span><span class="s">Refactor IPC client</span
+            ><button aria-label="More">
+              <svg class="ic" aria-hidden="true"><use href="#i-more" /></svg>
+            </button>
+          </div>
+          <div class="log">
+            <div class="msg you">
+              <div class="msg-meta"><b>You</b><time>0:00</time></div>
+              <p>
+                Refactor the IPC client to use the typed channels from <code>ipc-contract</code>
+              </p>
+            </div>
+            <div class="msg cl id-claude">
+              <div class="msg-meta">
+                <b
+                  ><svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg>CL</b
+                ><time>1:40</time>
+              </div>
+              <p>
+                Moved <code>client.ts</code> to the typed channels and updated the handlers in
+                <code>server.ts</code>. Explore is checking <code>channels.ts</code>; qwen is
+                drafting tests locally.
+              </p>
+            </div>
+            <div class="msg cl id-claude">
+              <div class="msg-meta">
+                <b
+                  ><svg class="gl" aria-hidden="true"><use href="#g-claude" /></svg>CL</b
+                ><time>2:02</time>
+              </div>
+              <p>
+                <code>schema.test.ts</code> has 2 failing tests. I want to run the IPC suite to
+                check the refactor.
+              </p>
+            </div>
+          </div>
+          <section class="perm" role="dialog" aria-label="Permission request from Claude">
+            <div class="perm-h">
+              <svg class="ic" aria-hidden="true"><use href="#s-waiting" /></svg>Permission
+              needed<span class="mono">Bash</span
+              ><span class="who"
+                ><svg class="ic" aria-hidden="true"><use href="#g-claude" /></svg>Claude</span
+              >
+            </div>
+            <div class="perm-b">
+              <div class="perm-cmd"><span class="p">$</span>npm test -- ipc</div>
+              <dl>
+                <dt>cwd</dt>
+                <dd class="mono">C:\dev\control-center</dd>
+                <dt>Reason</dt>
+                <dd>Run the IPC tests to verify the refactor</dd>
+              </dl>
+              <div class="perm-a">
+                <button class="primary">Approve <kbd>Ctrl+Enter</kbd></button>
+                <button>Deny <kbd>Ctrl+Backspace</kbd></button>
+                <button class="wide">Always this session <kbd>Ctrl+Shift+Enter</kbd></button>
+              </div>
+              <p class="perm-n">Esc closes without denying</p>
+            </div>
+          </section>
+          <div class="ctx">
+            <span class="chip"
+              ><svg class="ic" aria-hidden="true"><use href="#g-claude" /></svg>opus-5.5</span
+            ><span class="chip"><span class="num">3</span> MCP</span
+            ><span class="chip"><i class="on"></i>Checkpoint on</span>
+          </div>
+          <div class="input" aria-disabled="true">
+            <span>Waiting for your decision…</span><kbd>Ctrl+L</kbd>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="status only-normal">
+        <span class="seg"
+          ><svg class="ic xs" aria-hidden="true"><use href="#i-branch" /></svg>control-center<span
+            class="sep"
+            >/</span
+          >feat/live-map</span
+        >
+        <span class="seg"><i class="sdot"></i>Session active</span>
+        <span class="seg id-claude"
+          ><svg class="ic xs gl" aria-hidden="true"><use href="#g-claude" /></svg>Claude
+          <span class="sep">/</span> <em class="t-wait">waiting</em> <span class="sep">/</span>
+          <span class="num">+2</span></span
+        >
+        <button class="seg seg-wait" title="Open the permission dialog (Ctrl+Shift+A)">
+          <i class="beacon"></i
+          ><svg class="ic xs" aria-hidden="true"><use href="#s-waiting" /></svg>Waiting for you:
+          <span class="mono">npm test -- ipc</span>
+        </button>
+        <span class="seg seg-err"
+          ><svg class="ic xs" aria-hidden="true"><use href="#s-error" /></svg
+          ><span class="num">2</span></span
+        >
+        <span class="seg"><span class="num">2</span>&nbsp;changed</span>
+        <span class="grow"></span>
+        <span class="seg"
+          ><span class="num">182k</span>&nbsp;tok<span class="sep">/</span
+          ><svg class="ic xs gnd" aria-hidden="true"><use href="#g-ground" /></svg
+          ><span class="num">31k</span>&nbsp;local</span
+        >
+        <span class="seg"
+          ><span class="vbar"
+            ><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i></span
+          ><span class="num">9.1/16</span>&nbsp;GB</span
+        >
+        <span class="seg">Docker<span class="sep">/</span><span class="num">4</span></span>
+      </footer>
+      <footer class="status only-dense">
+        <span class="seg"
+          ><svg class="ic xs" aria-hidden="true"><use href="#i-branch" /></svg>control-center<span
+            class="sep"
+            >/</span
+          >feat/live-map</span
+        >
+        <span class="seg"><i class="sdot"></i>Session active</span>
+        <span class="seg id-claude"
+          ><svg class="ic xs gl" aria-hidden="true"><use href="#g-claude" /></svg>Claude
+          <span class="sep">/</span> <em class="t-write">writing</em> <span class="sep">/</span>
+          <span class="num">+4</span></span
+        >
+        <button class="seg seg-wait" title="Open the permission dialog (Ctrl+Shift+A)">
+          <i class="beacon"></i
+          ><svg class="ic xs" aria-hidden="true"><use href="#s-waiting" /></svg>Waiting for you:
+          <span class="mono">npm test -- ipc</span>
+        </button>
+        <span class="seg seg-err"
+          ><svg class="ic xs" aria-hidden="true"><use href="#s-error" /></svg
+          ><span class="num">3</span></span
+        >
+        <span class="seg"><span class="num">7</span>&nbsp;changed</span>
+        <span class="grow"></span>
+        <span class="seg"
+          ><span class="num">412k</span>&nbsp;tok<span class="sep">/</span
+          ><svg class="ic xs gnd" aria-hidden="true"><use href="#g-ground" /></svg
+          ><span class="num">96k</span>&nbsp;local</span
+        >
+        <span class="seg"
+          ><span class="vbar"
+            ><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span
+          ><span class="num">13.8/16</span>&nbsp;GB</span
+        >
+        <span class="seg">Docker<span class="sep">/</span><span class="num">4</span></span>
+      </footer>
+    </div>
+
+    <script>
+      // Toggle bar: keeps <html data-*> and the URL in sync.
+      (function () {
+        var r = document.documentElement,
+          D = { theme: 'dark', density: 'compact', scenario: 'normal', gray: '0' };
+        function paint() {
+          document.querySelectorAll('.seg-ctl').forEach(function (g) {
+            var k = g.getAttribute('data-k'),
+              cur = r.getAttribute('data-' + k);
+            g.querySelectorAll('button').forEach(function (b) {
+              b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === cur));
+            });
+          });
+        }
+        function sync() {
+          var q = new URLSearchParams();
+          Object.keys(D).forEach(function (k) {
+            var v = r.getAttribute('data-' + k);
+            if (v !== D[k]) q.set(k, v);
+          });
+          var s = q.toString();
+          try {
+            history.replaceState(null, '', s ? '?' + s : location.pathname);
+          } catch (e) {
+            /* file:// in some browsers */
+          }
+        }
+        document.querySelectorAll('.seg-ctl button').forEach(function (b) {
+          b.addEventListener('click', function () {
+            r.setAttribute('data-' + b.parentNode.getAttribute('data-k'), b.getAttribute('data-v'));
+            paint();
+            sync();
+          });
+        });
+        paint();
+      })();
+    </script>
+  </body>
+</html>

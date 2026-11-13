@@ -11,13 +11,36 @@ _Ultimo aggiornamento: 2026-11-13_
 | Sotto-fase                         | Stato                                              |
 | ---------------------------------- | -------------------------------------------------- |
 | 1a Ricerca UX e architettura       | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
-| 1b Tre direzioni estetiche         | ⏭ prossima (ultracode, effort high)                |
+| 1b Tre direzioni estetiche         | 🟡 in corso: 3 direzioni fatte, manca la revisione |
 | 1c Design system e schermate Figma | da fare (bloccata: Figma da autorizzare)           |
 | 1d Prototipo in codice Vista Live  | da fare (bloccata: serve almeno una fixture)       |
 
 ## Branch
 
-`main`: la PR #10 (`feat/design-1a`) è unita, con squash, e il branch è cancellato. Il prossimo lavoro parte da `feat/design-1b`.
+`feat/design-1b` (solo in locale, **non ancora pushato**, nessuna PR). `main` è fermo a `b9433a8`.
+
+## Punto di ripresa (1b, sessione del 2026-11-13)
+
+Sessione fermata vicino al limite delle 5 ore. Piano approvato: `~/.claude/plans/utilizza-il-comando-inizio-sessione-generic-toucan.md` (passi 1-4).
+
+- ✅ **Passo 1:** brief comune in `design/direzioni/BRIEF.md` (vincoli, dati finti identici, scenari `normal`/`dense`, tre direzioni, checklist).
+- ✅ **Passo 2, fase Design** (workflow ultracode): tre direzioni complete, ciascuna con `live.html` (parametri `theme`, `density`, `scenario`, `gray`) e `README.md` con la checklist tutta spuntata. Ogni agente ha verificato 0 errori in console con Chromium headless.
+  - `precisione`: Martian Mono + Instrument Sans, celle mono con colonna dei segni, timeline "analizzatore logico", attesa come targa giallo-nera.
+  - `sala-controllo`: Barlow (Semi) Condensed + Iosevka Charon Mono, piano quotato, sigle di canale, annunciatori, tutto spento tranne le spie.
+  - `carta-inchiostro`: Alegreya + Alegreya Sans + Courier Prime, chiaro-first, stati come segni di correzione, evidenziatore per l'attesa, sigilli tondi (cloud) e quadrati (locale).
+- ⛔ **Passo 2, fase Review:** interrotta. `design/direzioni/REVISIONE.md` **non esiste**.
+- ⏭ **Da fare:**
+  1. revisione `impeccable` delle tre direzioni → `REVISIONE.md`;
+  2. correzione dei problemi gravi;
+  3. screenshot in `design/direzioni/<slug>/screenshot/`;
+  4. `CONFRONTO.md` con le domande all'utente (direzione, densità, nomi);
+  5. memoria, poi push e PR.
+- **Rischi già segnalati dagli agenti** (nei README):
+  - 500 nodi richiedono lo zoom semantico in tutte e tre;
+  - in tema chiaro con `gray=1` l'attesa gialla perde forza e la reggono icona e bordo;
+  - `sala-controllo` usa un mono vicino a `precisione` e fa muovere anche reading/running;
+  - `precisione` ha `--line` sotto 3:1 per scelta.
+- **Ultracode alla ripresa: non conviene.** Il lavoro rimasto è sequenziale: una revisione, poi le correzioni e il confronto. Basta una sessione normale, Opus 5.5 effort high. La revisione si può fare con un solo subagent, o di persona, con la skill `impeccable`.
 
 ## Cosa funziona
 

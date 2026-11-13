@@ -18,3 +18,6 @@ export const eventEnvelopeSchema = z.object({
   timestamp: z.iso.datetime(),
 });
 export type EventEnvelope = z.infer<typeof eventEnvelopeSchema>;
+
+// Intentional type error: this PR only checks that CI blocks it. Never merge.
+export const ciProbe: number = 'not a number';

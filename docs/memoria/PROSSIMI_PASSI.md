@@ -2,11 +2,13 @@
 
 In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`.
 
+> Dettagli, goal e prerequisiti della Fase 1 sono in [`FASE_1.md`](FASE_1.md).
+
 ## Ora (in parallelo)
 
 1. **(F1a)** Ricerca UX: persona, 5 domande chiave, architettura dell'informazione, mappa delle schermate e stati → `docs/memoria/DESIGN.md`.
 2. **(F2)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
-3. **(F1b)** Tre direzioni estetiche con /frontend-design → `design/direzioni/`. Scelta dell'utente.
+3. **(F1b)** Tre direzioni estetiche con /frontend-design (ultracode, una direzione per agente) → `design/direzioni/`. Scelta dell'utente.
 
 ## Dopo
 

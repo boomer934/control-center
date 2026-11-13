@@ -4,7 +4,9 @@ _Ultimo aggiornamento: 2026-11-13_
 
 ## Fase
 
-**Fase 0 — Fondamenta della repo**: ✅ completata il 2026-11-13. Prossima: Fase 1 (UX e design) e, in parallelo, registrazione delle sessioni (Fase 2).
+**Fase 0 — Fondamenta della repo**: ✅ completata il 2026-11-13.
+
+**Prossima: Fase 1 — UX e design, da iniziare con la 1a (ricerca UX).** Il brief operativo completo (prerequisiti, sotto-fasi, modello ed effort, goal, fixture, vincoli) è in [`FASE_1.md`](FASE_1.md): **leggerlo per primo**. In parallelo si possono registrare le prime sessioni (anticipo della Fase 2).
 
 ## Branch
 

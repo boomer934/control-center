@@ -4,6 +4,25 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-13 — Repo su GitHub e prima CI
+
+**Fatto**
+
+- `PIANO.md` spostato in `docs/memoria/` (commit `fd39a80`).
+- Creata la repo GitHub privata `control-center` e pushato `main`.
+- Primo run della CI: Verify (Windows) verde, release-please ok, Dependabot attivo; gitleaks fallito per un difetto dell'action, non per segreti trovati.
+- Gitleaks in CI sostituito con la CLI 8.24.3 su tutta la cronologia.
+
+**Decisioni**
+
+- Senza protezione dei branch (non disponibile nel piano gratuito per le repo private), la regola "solo PR con CI verde" è affidata alla disciplina fino alla pubblicazione.
+
+**Problemi**
+
+- `gitleaks-action@v2` e protezione dei branch: vedi `PROBLEMI_NOTI.md`.
+
+---
+
 ## 2026-11-13 — Nascita del progetto e Fase 0
 
 **Fatto**

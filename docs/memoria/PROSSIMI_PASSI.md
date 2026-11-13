@@ -4,9 +4,9 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`.
 
 ## Ora
 
-1. **(F0)** Spostare `PIANO.md` in `docs/memoria/PIANO.md` e committare.
-2. **(F0)** Creare la repo GitHub privata, push, protezione di `main`, PR di prova per verificare che la CI blocchi un errore di tipo.
-3. **(F0)** Opzionale: `winget install gitleaks` e `npm i -g pnpm@10` in locale.
+1. **(F0)** PR di prova con un errore di tipo per verificare che la CI la blocchi; poi chiuderla senza merge.
+2. **(F0)** Opzionale: `winget install gitleaks` e `npm i -g pnpm@10` in locale.
+3. **(F10, prima di rendere pubblica la repo)** Attivare la protezione di `main` e fissare le GitHub Actions a SHA.
 
 ## Poi (in parallelo)
 

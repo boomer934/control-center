@@ -20,7 +20,9 @@ Progettare l'esperienza completa **prima di scrivere codice di prodotto**, con i
 
 Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisione dell'utente** e con la skill `fine-sessione`. Si lavora su un branch `feat/design-1x`, si apre una PR e si unisce con la CI verde.
 
-### 1a — Ricerca UX e architettura dell'informazione
+### 1a — Ricerca UX e architettura dell'informazione ✅
+
+> ✅ Completata il 2026-11-13 sul branch `feat/design-1a`, in attesa della revisione dell'utente. File: [`persona.md`](../../design/ricerca/persona.md), [`domande-chiave.md`](../../design/ricerca/domande-chiave.md), [`architettura.md`](../../design/ricerca/architettura.md), [`schermate.md`](../../design/ricerca/schermate.md); riassunto in `DESIGN.md`.
 
 - **Modello:** Opus 5.5 · **effort:** high · **ultracode:** no
 - **Produce:**
@@ -95,4 +97,4 @@ claude -p "<compito realistico>" --output-format stream-json --verbose > package
 
 1. Direzione estetica (1b).
 2. Nome del prodotto (1b o 1c).
-3. Densità predefinita dell'interfaccia (compatta "da IDE" o più ariosa).
+3. Densità predefinita dell'interfaccia (compatta "da IDE" o più ariosa). La 1a propone compatta di default con l'opzione `Comfortable` (vedi `design/ricerca/architettura.md`); si decide in 1b.

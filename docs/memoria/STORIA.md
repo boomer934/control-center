@@ -4,6 +4,30 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-13 — Fase 1a: ricerca UX e architettura dell'informazione
+
+**Fatto**
+
+- Su `feat/design-1a`, in `design/ricerca/`:
+  - `persona.md`: Dev quotidiano, Di passaggio, anti-persona, 6 scenari;
+  - `domande-chiave.md`: punto dello schermo, stati e dati per ognuna delle 5 domande; test dei 2 secondi;
+  - `architettura.md`: finestra, sezioni, dock, layout della Live, barra di stato a priorità, palette con prefissi, scorciatoie per ambito, notifiche, flussi F1-F7 e S1-S5;
+  - `schermate.md`: schermate × 6 stati con priorità P0/P1/P2, casi d'errore, onboarding in 3 passi.
+- `DESIGN.md` con il riassunto e l'architettura aggiornata; `GLOSSARIO.md` con 5 nuovi termini; `FASE_1.md` con la 1a segnata ✅. `pnpm verify` verde.
+
+**Decisioni**
+
+- Per la 5ª domanda vale la versione di `DESIGN.md` ("…e quanto in locale"), non quella di `PIANO.md` §4.1.
+- Proposta, da confermare in 1b: densità compatta "da IDE" di default, con l'opzione `Comfortable`.
+- Il dialog dei permessi vive nel dock Session, non è modale sull'app; `Enter` da solo non approva e `Esc` non rifiuta.
+- `PROSSIMI_PASSI.md` tiene le voci fatte segnate con ✅ fino alla chiusura della fase, su richiesta dell'utente.
+
+**Problemi**
+
+- Nessuno.
+
+---
+
 ## 2026-11-13 — Passaggio alla Fase 1
 
 **Fatto**

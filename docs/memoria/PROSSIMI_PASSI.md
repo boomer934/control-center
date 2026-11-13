@@ -1,21 +1,25 @@
 # Prossimi passi
 
-In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`.
+In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatte restano segnate con ✅ finché la fase non si chiude; poi passano in `STORIA.md`.
 
 > Dettagli, goal e prerequisiti della Fase 1 sono in [`FASE_1.md`](FASE_1.md).
 
-## Ora (in parallelo)
+## Fatto
 
-1. **(F1a)** Ricerca UX: persona, 5 domande chiave, architettura dell'informazione, mappa delle schermate e stati → `docs/memoria/DESIGN.md`.
-2. **(F2)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
-3. **(F1b)** Tre direzioni estetiche con /frontend-design (ultracode, una direzione per agente) → `design/direzioni/`. Scelta dell'utente.
+- ✅ **(F1a)** Ricerca UX: persona, 5 domande chiave, architettura dell'informazione, mappa delle schermate e stati → `design/ricerca/` + riassunto in `docs/memoria/DESIGN.md` (2026-11-13, branch `feat/design-1a`).
+
+## Ora
+
+1. **(F1a)** Revisione dell'utente dei 4 documenti in `design/ricerca/`, poi push di `feat/design-1a` e PR verso `main` con la CI verde.
+2. **(F1b)** Tre direzioni estetiche con /frontend-design (ultracode, effort high, una direzione per agente) → `design/direzioni/`. Ogni direzione disegna la Live in stato normale (ed eventualmente denso) con i contenuti indicati in `design/ricerca/schermate.md` ("Cosa serve a 1b e 1c"). Revisione impeccable e **scelta dell'utente**, decidendo anche densità e nome del prodotto. Branch `feat/design-1b`.
+3. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo
 
-4. **(F1c)** Autorizzare Figma (`/mcp`), design system e schermate in alta fedeltà.
+4. **(F1c)** Autorizzare Figma (`/mcp`), design system, schermate P0 e P1 in alta fedeltà, prototipo cliccabile sui flussi F1-F7.
 5. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
-6. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture.
-7. **(F3)** Shell Electron sicura, logger e Console Errori.
+6. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
+7. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
 
 ## Quando capita
 

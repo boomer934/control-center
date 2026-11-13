@@ -17,7 +17,7 @@ _Ultimo aggiornamento: 2026-11-13_
 
 ## Branch
 
-`feat/design-1a` (da `main`), con la ricerca UX e la memoria aggiornata. Commit locali, non ancora pushati; nessuna PR aperta.
+`feat/design-1a` (da `main`), con la ricerca UX e la memoria aggiornata. Pushato; **PR #10 aperta** verso `main`, da unire dopo la revisione dell'utente e con la CI verde.
 
 ## Cosa funziona
 
@@ -37,7 +37,7 @@ _Ultimo aggiornamento: 2026-11-13_
 
 ## Cosa manca per chiudere la Fase 1
 
-- Revisione della 1a da parte dell'utente, poi push e PR di `feat/design-1a`.
+- Revisione della 1a da parte dell'utente, poi merge della PR #10.
 - 1b: tre direzioni estetiche e scelta dell'utente, decidendo anche la densità e il nome del prodotto.
 - 1c: Figma, token in `design/tokens.json`, schermate P0 e P1 in alta fedeltà, prototipo cliccabile.
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.

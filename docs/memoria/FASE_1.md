@@ -22,7 +22,7 @@ Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisi
 
 ### 1a — Ricerca UX e architettura dell'informazione ✅
 
-> ✅ Completata il 2026-11-13 sul branch `feat/design-1a`, in attesa della revisione dell'utente. File: [`persona.md`](../../design/ricerca/persona.md), [`domande-chiave.md`](../../design/ricerca/domande-chiave.md), [`architettura.md`](../../design/ricerca/architettura.md), [`schermate.md`](../../design/ricerca/schermate.md); riassunto in `DESIGN.md`.
+> ✅ Completata e revisionata il 2026-11-13 (PR #10). File: [`persona.md`](../../design/ricerca/persona.md), [`domande-chiave.md`](../../design/ricerca/domande-chiave.md), [`architettura.md`](../../design/ricerca/architettura.md), [`schermate.md`](../../design/ricerca/schermate.md); riassunto in `DESIGN.md`.
 
 - **Modello:** Opus 5.5 · **effort:** high · **ultracode:** no
 - **Produce:**

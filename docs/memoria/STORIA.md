@@ -14,6 +14,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
   - `architettura.md`: finestra, sezioni, dock, layout della Live, barra di stato a priorità, palette con prefissi, scorciatoie per ambito, notifiche, flussi F1-F7 e S1-S5;
   - `schermate.md`: schermate × 6 stati con priorità P0/P1/P2, casi d'errore, onboarding in 3 passi.
 - `DESIGN.md` con il riassunto e l'architettura aggiornata; `GLOSSARIO.md` con 5 nuovi termini; `FASE_1.md` con la 1a segnata ✅. `pnpm verify` verde.
+- PR #10 revisionata dall'utente e unita su `main` con squash, con la CI verde. Una PR successiva ha allineato STATO e PROSSIMI_PASSI al merge.
 
 **Decisioni**
 

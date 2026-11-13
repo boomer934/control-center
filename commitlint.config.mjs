@@ -1,0 +1,33 @@
+export default {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'scope-enum': [
+      1,
+      'always',
+      [
+        'repo',
+        'ci',
+        'deps',
+        'docs',
+        'memoria',
+        'design',
+        'desktop',
+        'main',
+        'preload',
+        'renderer',
+        'event-schema',
+        'ipc-contract',
+        'hooks-bridge',
+        'mcp-bridge',
+        'ollama-client',
+        'fixtures',
+        'live',
+        'infra',
+        'git',
+        'errors',
+        'telemetry',
+        'release',
+      ],
+    ],
+  },
+};

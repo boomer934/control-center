@@ -1,0 +1,7 @@
+# Problemi noti
+
+| Data       | Problema                                                                       | Workaround                                                                                                                                                             | Stato         |
+| ---------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 2026-11-13 | typescript-eslint 8.72 non supporta TypeScript 7 (errore all'avvio di ESLint). | TypeScript fissato a `^6` (installato 6.0.3); Dependabot ignora `typescript >=7`. Rivalutare quando typescript-eslint supporterà TS 7 (issue typescript-eslint#10940). | aperto        |
+| 2026-11-13 | Node 26 non include più corepack, quindi `pnpm` non è nel PATH.                | `npx pnpm@10.34.9 …` oppure `npm i -g pnpm@10`. In CI si usa `pnpm/action-setup` (legge `packageManager`).                                                             | aperto        |
+| 2026-11-13 | La CI usa Node 24 (`.nvmrc`), in locale c'è Node 26.                           | Nessuno per ora; usare API compatibili con Node ≥ 22 (`engines`).                                                                                                      | da monitorare |

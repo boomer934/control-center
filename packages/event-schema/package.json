@@ -1,0 +1,18 @@
+{
+  "name": "@control-center/event-schema",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Unified AgentEvent schema (zod) shared by every part of Control Center.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

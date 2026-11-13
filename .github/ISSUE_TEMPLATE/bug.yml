@@ -1,0 +1,33 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: errors
+    attributes:
+      label: Error report
+      description: Paste the report from the Error Console ("copy report"). It is already redacted, but double-check it contains no secrets.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings → About (version, commit, channel)
+  - type: input
+    id: claude-version
+    attributes:
+      label: Claude Code version
+      description: Output of `claude --version`

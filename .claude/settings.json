@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"Control Center: prima di iniziare leggi docs/memoria/STATO.md e docs/memoria/PROSSIMI_PASSI.md (oppure usa la skill inizio-sessione). A fine lavoro usa la skill fine-sessione.\""
+          }
+        ]
+      }
+    ]
+  }
+}

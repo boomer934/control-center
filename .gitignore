@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+out/
+release/
+coverage/
+*.tsbuildinfo
+
+# env and secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# raw, unsanitized session recordings (only sanitized fixtures are committed)
+packages/fixtures/raw/
+
+# app runtime data during development
+.data/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Claude Code local-only settings
+.claude/settings.local.json

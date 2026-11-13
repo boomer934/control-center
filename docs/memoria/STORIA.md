@@ -4,6 +4,19 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-13 — Chiusura Fase 0
+
+**Fatto**
+
+- PR #6: aggiornate tutte le GitHub Actions (checkout v7, setup-node v7, pnpm/action-setup v6, release-please v5) e raggruppati gli aggiornamenti futuri di Dependabot per le Actions. Le PR Dependabot #1, #2, #3 e #5 sono state chiuse perché superate; la #4 (gitleaks-action) era già chiusa.
+- PR #7 di prova: un errore di tipo voluto fa fallire "Verify (Windows)" con TS2322. Chiusa senza merge. **DoD della Fase 0 raggiunto.**
+
+**Decisioni**
+
+- Da qui in avanti anche la memoria si aggiorna tramite PR.
+
+---
+
 ## 2026-11-13 — Repo su GitHub e prima CI
 
 **Fatto**

@@ -4,6 +4,24 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 2: schema AgentEvent, normalizzatori e fixture ripulite
+
+**Fatto** (branch `feat/event-schema`, `eddb07f`, `b9b7f8e`)
+
+- `AgentEvent` in zod: 16 tipi stretti con envelope comune, percorsi relativi al workspace, `redactSecrets` e `makeTextCleaner` su ogni testo.
+- Normalizzatori puri per stream-json, hooks e Ollama `/api/chat`, più `mergeClaudeSession`, che prende il contenuto dallo stream e i tempi dagli hooks.
+- `scripts/fixtures/sanitize.mjs`:
+  - pulizia ad allowlist: i contenuti dei file diventano righe `<redacted>` e i conteggi restano;
+  - `--check`: nel grezzo trova più di mille problemi, nel ripulito zero;
+  - gira in CI e in Vitest.
+- 5 sessioni ripulite in `packages/fixtures/sanitized/`, rilette a mano: dall'`init` sono stati tolti i tool e i server MCP dell'account. 110 test verdi in `pnpm verify`.
+
+**Decisioni:** ADR 0003. `schemaVersion` resta 1 perché nessun evento è ancora salvato. I test che leggono file stanno in `packages/fixtures`, così `event-schema` resta senza tipi Node. Un `Read` di un file mancante e un comando con test falliti diventano `tool.failed` (`not-found`, `tests-failing`).
+
+**Problemi:** il test ha trovato un ordine sbagliato delle sostituzioni (un nome host che contiene il nome utente restava a metà), corretto ordinando dalla più lunga. Mancano fixture reali di `Notification` e `PostToolUseFailure`. gitleaks non è installato in locale.
+
+---
+
 ## 2026-11-14 — Chiusura Fase 1
 
 **Fatto**

@@ -4,6 +4,23 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Revisione di modelli ed effort per il consumo di token
+
+**Fatto:** rivista la tabella "Modello, effort, ultracode e goal" di `PIANO.md` per le Fasi 3-10, dopo un forte aumento dell'uso di token. Aggiornati di conseguenza `FASE_3.md` e `STATO.md`.
+
+**Decisioni**
+
+- Sonnet 5.5 è il modello di default. Opus 5.5 resta solo per sicurezza e architettura nuova: 3a, 4.1 (bridge), 5a, 5b, il bridge della Fase 7 e l'audit della Fase 10.
+- `high` è il tetto normale dell'effort; `xhigh` e `max` solo per un problema bloccato.
+- Niente ultracode nelle Fasi 5 e 6.
+- La Fase 4 è divisa in tre sotto-goal (4.1 bridge e sessione, 4.2 workspace e terminale, 4.3 chat e permessi).
+- `/code-review` `medium` di default, `high` solo sulle PR di sicurezza.
+- Regole di risparmio: una sessione per sotto-goal, verifiche a testo prima degli screenshot, a inizio sessione si leggono solo `STATO.md` e `FASE_<n>.md`, il lavoro meccanico va a OmniRoute.
+
+**Problemi:** le cause dell'aumento erano Opus usato quasi ovunque, `xhigh` su fasi intere dentro i loop `/goal`, un goal unico per la Fase 4, l'ultracode previsto e le verifiche fatte con molti screenshot (55 nella 1c).
+
+---
+
 ## 2026-11-14 — Chiusura Fase 2
 
 **Fatto**

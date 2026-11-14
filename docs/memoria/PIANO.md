@@ -312,28 +312,40 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 
 **Criteri usati**
 
-- **Opus 5.5:** design, architettura, sicurezza, logica delicata. **Sonnet 5.5:** implementazione ben specificata. **Haiku 5.5:** solo per i subagent di ricerca (`explorer`).
-- **Effort:** `medium` per lavoro definito, `high` per logica non banale, `xhigh` per sicurezza e per il cuore della Vista Live. `max` mai di default: costa molto in limiti d'uso e lo si usa solo per un problema bloccato.
-- **Ultracode** (orchestrazione multi-agente): solo dove ci sono **parti davvero parallele e indipendenti**, perché consuma molti più limiti di una sessione normale. Altrimenti bastano i subagent `implementer`.
+- **Sonnet 5.5 di default:** implementazione già specificata (brief, design approvato, test come criterio di fine). **Opus 5.5** solo per sicurezza, architettura nuova e logica delicata. **Haiku 5.5:** solo per i subagent di ricerca (`explorer`).
+- **Effort:** `medium` per lavoro definito, `high` per logica non banale o sicurezza; `high` è il tetto normale. `xhigh` e `max` mai di default: si usano solo per un problema bloccato, annotandolo in `STORIA.md`.
+- **Ultracode** (orchestrazione multi-agente): oggi non è previsto in nessuna fase, perché ogni agente riparte da zero e consuma molti limiti. Si valuta solo per parti grandi, davvero parallele e indipendenti; altrimenti si lavora in sequenza o con i subagent `implementer` (sonnet).
+- **Risparmio token** (revisione del 2026-11-14):
+  - una sessione per sotto-goal, chiusa con `fine-sessione`; mai due sotto-fasi nella stessa conversazione;
+  - verifiche a testo prima che a immagini (asserzioni Playwright, `read_page`): screenshot solo come prova finale;
+  - a inizio sessione si leggono solo `STATO.md` e `FASE_<n>.md`, non tutto questo piano;
+  - il lavoro meccanico (bozze di test, fixture, documentazione) va a OmniRoute secondo le regole globali.
 - **Goal (`/goal`):** ogni goal è una condizione **verificabile da comandi** (test, lint, file presenti), così il loop si ferma da solo quando è vera e non "a sensazione". Ogni goal termina sempre con l'aggiornamento di `STATO.md`, `PROSSIMI_PASSI.md` e `STORIA.md`.
 - **Le fasi lunghe si fanno a sotto-goal** (uno per sotto-fase): un goal enorme porta il loop a sessioni troppo lunghe e a perdere contesto.
 
-| Fase              | Modello                                                                                          | Effort | Ultracode                                        | Note                                                  |
-| ----------------- | ------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------ | ----------------------------------------------------- |
-| 0 Repo            | Sonnet 5.5                                                                                       | medium | no                                               | Lavoro meccanico; `CLAUDE.md` scritto/rivisto da Opus |
-| 1 Design          | Opus 5.5                                                                                         | high   | sì, effort `high`, solo per 1b                   | 3 direzioni estetiche esplorate in parallelo          |
-| 2 Eventi          | Opus 5.5                                                                                         | high   | no                                               | Lo schema è la base di tutto                          |
-| 3 Shell           | Opus 5.5                                                                                         | xhigh  | no                                               | Sicurezza Electron: niente deleghe                    |
-| 4 Uso quotidiano  | Opus 5.5 (bridge, sessione) + Sonnet 5.5 (terminale, UI chat)                                    | high   | no                                               |                                                       |
-| 4b Git/checkpoint | Opus 5.5                                                                                         | high   | no                                               | Operazioni git distruttive: cautela                   |
-| 5 Vista Live      | Opus 5.5                                                                                         | xhigh  | sì, effort `high`, per 5a-5d dopo che 5a è fatto | 5b/5c/5d in parallelo su un contratto già fissato     |
-| 5e Errori live    | Sonnet 5.5                                                                                       | high   | no                                               | Un parser per linguaggio, delegabile a `implementer`  |
-| 6 Infra           | Sonnet 5.5                                                                                       | medium | sì, effort `medium`                              | Docker, porte, GPU/Ollama: tre pannelli indipendenti  |
-| 7 Ollama          | Opus 5.5                                                                                         | high   | no                                               | Bridge MCP e sicurezza degli agenti locali            |
-| 8 MCP & Skills    | Sonnet 5.5                                                                                       | high   | no                                               | Scrittura file utente: rivista da Opus                |
-| 9 Telemetria      | Sonnet 5.5                                                                                       | medium | no                                               |                                                       |
-| 10 Rilascio       | Opus 5.5                                                                                         | high   | no                                               | Firma, update, audit open source                      |
-| Revisioni         | `/code-review` livello `high`; `ultra` solo prima di rendere pubblica la repo e prima della v1.0 |        |                                                  | `impeccable` su ogni PR di UI                         |
+| Fase              | Modello                                                                                       | Effort | Ultracode                      | Note                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------- | ------ | ------------------------------ | ----------------------------------------------------- |
+| 0 Repo            | Sonnet 5.5                                                                                    | medium | no                             | Lavoro meccanico; `CLAUDE.md` scritto/rivisto da Opus |
+| 1 Design          | Opus 5.5                                                                                      | high   | sì, effort `high`, solo per 1b | 3 direzioni estetiche esplorate in parallelo          |
+| 2 Eventi          | Opus 5.5                                                                                      | high   | no                             | Lo schema è la base di tutto                          |
+| 3a Shell e IPC    | Opus 5.5                                                                                      | high   | no                             | Sicurezza Electron: niente deleghe                    |
+| 3b Console Errori | Sonnet 5.5                                                                                    | high   | no                             | Specificata nel dettaglio; riusa il contratto IPC 3a  |
+| 3c Design system  | Sonnet 5.5                                                                                    | medium | no                             | Porting dell'HTML 1c già approvato; impeccable a fine |
+| 4.1 Bridge        | Opus 5.5                                                                                      | high   | no                             | Hooks bridge, named pipe, token, sessione Claude      |
+| 4.2 Terminale     | Sonnet 5.5                                                                                    | medium | no                             | Workspace, terminale, node-pty                        |
+| 4.3 Chat          | Sonnet 5.5                                                                                    | high   | no                             | UI chat, permessi, cronologia JSONL                   |
+| 4b Git/checkpoint | Sonnet 5.5                                                                                    | high   | no                             | Cautela garantita dai test su repo temporanei         |
+| 5a Modello        | Opus 5.5                                                                                      | high   | no                             | Fissa il contratto per 5b-5d                          |
+| 5b Mappa          | Opus 5.5                                                                                      | high   | no                             | Budget 60 fps con 500 nodi: logica delicata           |
+| 5c Timeline       | Sonnet 5.5                                                                                    | high   | no                             | Stato derivato già impostato in 5a e nel prototipo 1d |
+| 5d Agenti         | Sonnet 5.5                                                                                    | medium | no                             | UI su dati già pronti                                 |
+| 5e Errori live    | Sonnet 5.5                                                                                    | medium | no                             | Parser ripetitivi; bozze di test a OmniRoute          |
+| 6 Infra           | Sonnet 5.5                                                                                    | medium | no                             | Tre pannelli piccoli, in sequenza                     |
+| 7 Ollama          | Opus 5.5 (`mcp-bridge`, allowlist) + Sonnet 5.5 medium (`ollama-client`)                      | high   | no                             | Sicurezza solo nel bridge                             |
+| 8 MCP & Skills    | Sonnet 5.5                                                                                    | high   | no                             | Scrittura file utente: rivista da Opus                |
+| 9 Telemetria      | Sonnet 5.5                                                                                    | medium | no                             |                                                       |
+| 10 Rilascio       | Sonnet 5.5 (packaging, update) + Opus 5.5 high (audit prima della pubblicazione)              | medium | no                             | Firma, update, audit open source                      |
+| Revisioni         | `/code-review` `medium`; `high` su 3a, 4.1, 7, 8, 10; `ultra` solo prima di pubblicare e v1.0 |        |                                | `impeccable` su ogni PR di UI                         |
 
 **Goal da impostare (da copiare in `/goal`)**
 
@@ -358,9 +370,12 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
   - 3b > Il logger scrive JSONL ruotati e alimenta la Console Errori; un errore provocato nel main, nel renderer e in un processo figlio compare in Console con lo stack del sorgente TypeScript (test E2E verdi); log e report passano da `redactSecrets`; memoria aggiornata.
   - 3c > Il design system è in codice (token → Tailwind, componenti base della 1c con i loro stati); layout a pannelli, barra di stato, command palette, scorciatoie con ambiti di focus e temi chiaro/scuro/sistema funzionano; la pagina componenti ha test visivi verdi e un E2E apre la palette e cambia tema; revisione impeccable senza gravi; memoria aggiornata.
 
-- **Fase 4**
+- **Fase 4** (tre goal in sequenza; il goal complessivo è l'unione)
 
   > Dall'app si apre un workspace, si usa il terminale e si conduce una sessione Claude Code con chat in streaming, richieste di permesso e cronologia JSONL; l'hooks bridge consegna gli eventi via named pipe con token; i test E2E con il finto eseguibile claude passano; typecheck, lint e test verdi; memoria aggiornata.
+  - 4.1 > L'hooks bridge consegna gli eventi all'app via named pipe con token per sessione (eventi senza token o malformati rifiutati, con test); la sessione `claude -p` in stream-json con `--resume` è gestita dal main e i suoi eventi passano dai normalizzatori di `event-schema`; test di integrazione con il finto eseguibile claude verdi; memoria aggiornata.
+  - 4.2 > Dall'app si apre un workspace (recenti, cambio rapido, percorsi verificati dentro il workspace con test su traversal e symlink) e si usa il terminale PowerShell/bash a più schede con node-pty ricompilato per Electron; E2E verde; memoria aggiornata.
+  - 4.3 > La chat mostra la sessione in streaming, le richieste di permesso (Approva / Rifiuta / Sempre in questa sessione) funzionano e la cronologia è salvata in JSONL; E2E con il finto eseguibile claude verdi; revisione impeccable senza gravi; memoria aggiornata.
 
 - **Fase 4b**
 
@@ -400,8 +415,7 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 1. Aprire la sessione con la skill `inizio-sessione` (legge `STATO.md`).
 2. Impostare modello ed effort della fase dalle impostazioni della sessione.
 3. Lanciare `/goal` con il testo della sotto-fase.
-4. Per le fasi con ultracode, scrivere "ultracode" nel prompt della sotto-fase indicata.
-5. Alla fine: `fine-sessione`, PR, revisione.
+4. Una sotto-fase per sessione: a goal raggiunto `fine-sessione`, PR, revisione, e la sotto-fase successiva in una sessione nuova.
 
 ## Primi passi dopo l'approvazione
 

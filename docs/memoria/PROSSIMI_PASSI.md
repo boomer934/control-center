@@ -13,7 +13,8 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 1. **(F1c, a metà)** Sul branch `feat/design-1c` (locale):
    - ✅ token, componenti, 9 schermate P0, flussi F1-F7, verifica di Vernier;
-   - restano le 9 schermate P1, gli screenshot nella repo, la revisione impeccable (gravi all'utente prima di correggerli), push e PR.
+   - ✅ 9 schermate P1 con tutti gli stati (2026-11-14);
+   - restano il README delle P1, gli screenshot nella repo, la revisione impeccable (gravi all'utente prima di correggerli), push e PR.
 
    Dettagli nel "Punto di ripresa" di `STATO.md`.
 

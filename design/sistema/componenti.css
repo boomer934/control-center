@@ -2965,3 +2965,15 @@ svg {
     color: var(--st-done);
   }
 }
+
+/* component sheet: map pieces laid out in flow instead of absolute coordinates */
+.stage-box .node,
+.stage-box .achip {
+  position: relative;
+}
+.stage-box.map-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}

@@ -284,5 +284,5 @@
     if (cfg.after) cfg.after(state);
   }
 
-  window.CC = { page, g, ic, sig, esc, expand };
+  window.CC = { page, g, ic, sig, esc, expand, status, title, act };
 })();

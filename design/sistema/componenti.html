@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="compact">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Control Center · Components</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,300..700&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="componenti.css" />
+    <script src="shell.js"></script>
+  </head>
+  <body>
+    <div class="toggles"></div>
+    <div class="sheet cs">
+      <nav aria-label="Sections">
+        <h1>Components</h1>
+        <a href="#foundations">Foundations</a>
+        <a href="#states">States</a>
+        <a href="#agents">Agents and sigils</a>
+        <a href="#buttons">Buttons, kbd, inputs</a>
+        <a href="#chips">Tags and chips</a>
+        <a href="#map">Map</a>
+        <a href="#timeline">Timeline</a>
+        <a href="#cards">Cards and telemetry</a>
+        <a href="#session">Session dock</a>
+        <a href="#permission">Permission dialog</a>
+        <a href="#statusbar">Status bar</a>
+        <a href="#feedback">Feedback</a>
+        <a href="#overlays">Overlays</a>
+        <a href="#data">Tables, diff, stack</a>
+      </nav>
+      <main>
+        <!-- SECTION:foundations -->
+        <section id="foundations">
+          <h2>Foundations</h2>
+          <p>
+            All values come from <code class="code-i">tokens.css</code>, generated from
+            <code class="code-i">design/tokens.json</code>. Switch theme, density and gray in the
+            bar above: every swatch and sample below reads the live token.
+          </p>
+          <h3>Surfaces and text</h3>
+          <div
+            class="swatches"
+            data-swatches="page bg-0 bg-1 bg-2 bg-3 line line-2 line-3 fg-1 fg-2 fg-3 accent"
+          ></div>
+          <h3>Semantic states</h3>
+          <div
+            class="swatches"
+            data-swatches="st-idle st-reading st-writing st-running st-waiting st-waiting-text on-waiting st-error st-done"
+          ></div>
+          <h3>Agents and diff</h3>
+          <div
+            class="swatches"
+            data-swatches="ag-claude ag-sub ag-local diff-add-bg diff-add-fg diff-del-bg diff-del-fg"
+          ></div>
+          <h3>Type</h3>
+          <div class="typo">
+            <div>
+              <code>fs-xl · sans 600</code
+              ><span style="font-size: var(--fs-xl); font-weight: var(--fw-semibold)"
+                >Claude wants to run a command</span
+              >
+            </div>
+            <div>
+              <code>fs-xl · mono 500</code
+              ><span
+                class="mono-wide"
+                style="font-size: var(--fs-xl); font-weight: var(--fw-medium)"
+                >182k <small class="muted" style="font-size: var(--fs-xs)">tokens</small></span
+              >
+            </div>
+            <div>
+              <code>fs-l · sans</code
+              ><span style="font-size: var(--fs-l)">Fix the flaky schema tests</span>
+            </div>
+            <div>
+              <code>fs-m · sans</code
+              ><span style="font-size: var(--fs-m)">Agent names, tabs, chat messages</span>
+            </div>
+            <div><code>fs-s · sans</code><span>Buttons, rows, labels</span></div>
+            <div>
+              <code>fs-xs · mono</code
+              ><span class="mono" style="font-size: var(--fs-xs)"
+                >src/schema/client.ts · +12 −3 · 0:41</span
+              >
+            </div>
+            <div>
+              <code>fs-map · mono-cell</code
+              ><span class="mono" style="font-size: var(--fs-map); font-stretch: var(--mono-cell)"
+                >schema.test.ts client.ts index.ts</span
+              >
+            </div>
+          </div>
+          <h3>Spacing</h3>
+          <div class="scale" data-scale="sp" data-steps="1 2 3 4 5 6 7 8 9 10"></div>
+          <h3>Radius</h3>
+          <div class="scale" data-scale="r" data-steps="1 2 3 pill"></div>
+          <h3>Motion</h3>
+          <table class="tbl" style="max-width: calc(var(--sp-10) * 14)">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Value</th>
+                <th>Use</th>
+              </tr>
+            </thead>
+            <tbody
+              data-motion="dur-1 dur-2 dur-3 ease-out ease-in ease-io cycle-breathe cycle-running cycle-pulse-reading cycle-trail-done cycle-trail-delay"
+            ></tbody>
+          </table>
+        </section>
+        <!-- /SECTION -->
+        <section id="states">
+          <h2>Semantic states</h2>
+          <p>
+            Seven states, the same everywhere. Each has a glyph, a color and a border treatment, so
+            it reads in gray too. Only <b>waiting-user</b> is a filled block. Motion: reading pulses
+            once per event, running shows an indeterminate bar (static stripes with reduced motion),
+            done fades from the writing color once; nothing else moves.
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>glyph + tag</figcaption>
+              <div class="col">
+                <span class="tag state s-idle"><i data-g="s-idle"></i>idle</span>
+                <span class="tag state s-reading pulse"><i data-g="s-reading"></i>reading</span>
+                <span class="tag state s-writing"><i data-g="s-writing"></i>writing</span>
+                <span class="tag state s-running"><i data-g="s-running"></i>running</span>
+                <span class="tag state s-waiting"><i data-g="s-waiting"></i>waiting for you</span>
+                <span class="tag state s-error"><i data-g="s-error"></i>error</span>
+                <span class="tag state s-done"><i data-g="s-done"></i>done</span>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>map cell per state</figcaption>
+              <div class="stage-box map-demo">
+                <div class="node s-idle" style="width: calc(var(--sp-10) * 4)">
+                  <span class="sign"><i data-g="s-idle"></i></span><span class="nm">index.ts</span>
+                </div>
+                <div class="node s-reading pulse" style="width: calc(var(--sp-10) * 4)">
+                  <span class="sign"><i data-g="s-reading"></i></span
+                  ><span class="nm">schema.ts</span><span class="meta">read ×2</span>
+                </div>
+                <div class="node s-writing" style="width: calc(var(--sp-10) * 4)">
+                  <span class="sign"><i data-g="s-writing"></i></span
+                  ><span class="nm">client.ts</span
+                  ><span class="meta"
+                    ><span class="diffbadge"
+                      ><span class="add">+12</span><span class="del">−3</span></span
+                    ></span
+                  >
+                </div>
+                <div
+                  class="node s-running temp"
+                  style="width: calc(var(--sp-10) * 4)"
+                  data-pre="$ "
+                >
+                  <span class="sign"><i data-g="s-running"></i></span
+                  ><span class="nm">npm test -- schema</span><span class="meta">0:12</span
+                  ><span class="prog"></span>
+                </div>
+                <div class="node s-waiting" style="width: calc(var(--sp-10) * 4)">
+                  <span class="sign"><i data-g="s-waiting"></i></span
+                  ><span class="nm">rm -rf dist</span><span class="meta">0:41</span>
+                </div>
+                <div class="node s-error" style="width: calc(var(--sp-10) * 4)">
+                  <span class="sign"><i data-g="s-error"></i></span
+                  ><span class="nm">schema.test.ts</span><span class="meta">2 failing</span>
+                </div>
+                <div class="node s-done fresh" style="width: calc(var(--sp-10) * 4)">
+                  <span class="sign"><i data-g="s-done"></i></span><span class="nm">types.ts</span
+                  ><span class="meta"
+                    ><span class="trail"><i></i><i></i><i></i></span
+                  ></span>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>card edge per state</figcaption>
+              <div class="col" style="width: var(--agents-w)">
+                <div class="card s-reading ag-sub">
+                  <div class="h">
+                    <i data-sig="EX sub cloud"></i><span class="nm">Explore</span
+                    ><span class="tag state s-reading"><i data-g="s-reading"></i>reading</span>
+                  </div>
+                  <div class="now">Read <b>src/schema/index.ts</b></div>
+                </div>
+                <div class="card s-writing ag-claude">
+                  <div class="h">
+                    <i data-sig="CL claude cloud"></i><span class="nm">Claude</span
+                    ><span class="tag state s-writing"><i data-g="s-writing"></i>writing</span>
+                  </div>
+                  <div class="now">Edit <b>src/schema/client.ts</b></div>
+                </div>
+                <div class="card s-running ag-local">
+                  <div class="h">
+                    <i data-sig="QW local local"></i><span class="nm">qwen2.5-coder</span
+                    ><span class="tag state s-running"><i data-g="s-running"></i>running</span>
+                  </div>
+                  <div class="now">Summarize <b>test output</b> · 38 tok/s</div>
+                  <span class="prog"></span>
+                </div>
+                <div class="card s-error ag-claude">
+                  <div class="h">
+                    <i data-sig="CL claude cloud"></i><span class="nm">Claude</span
+                    ><span class="tag state s-error"><i data-g="s-error"></i>error</span>
+                  </div>
+                  <div class="now">Bash <b>npm test</b> · exit 1</div>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="agents">
+          <h2>Agents and channel sigils</h2>
+          <p>
+            Identity is a glyph plus a two-letter code plus a cloud (uplink) or local (ground) mark.
+            Codes: <code class="code-i">CL</code> main Claude session; subagents take the first two
+            letters of their name (<code class="code-i">EX</code> Explore,
+            <code class="code-i">PL</code> Plan), with a digit on collision (<code class="code-i"
+              >C2</code
+            >
+            second Claude session, <code class="code-i">E2</code> second Explore); local models take
+            the first two letters of the model family (<code class="code-i">QW</code> qwen,
+            <code class="code-i">LL</code> llama).
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>sigils</figcaption>
+              <div class="row">
+                <i data-sig="CL claude cloud"></i><i data-sig="C2 claude cloud"></i
+                ><i data-sig="EX sub cloud"></i><i data-sig="PL sub cloud"></i
+                ><i data-sig="E2 sub cloud"></i><i data-sig="QW local local"></i
+                ><i data-sig="LL local local"></i>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>agent chips on the map</figcaption>
+              <div class="stage-box map-demo">
+                <div class="achip ag-claude s-writing" style="width: calc(var(--sp-10) * 4)">
+                  <i data-sig="CL claude cloud"></i><span class="nmx">Claude</span
+                  ><span class="st"><i data-g="s-writing"></i>writing</span>
+                </div>
+                <div class="achip ag-sub s-reading" style="width: calc(var(--sp-10) * 4)">
+                  <i data-sig="EX sub cloud"></i><span class="nmx">Explore</span
+                  ><span class="st"><i data-g="s-reading"></i>reading</span>
+                </div>
+                <div class="achip ag-claude s-waiting" style="width: calc(var(--sp-10) * 4)">
+                  <i data-sig="CL claude cloud"></i><span class="nmx">Claude</span
+                  ><span class="st"><i data-g="s-waiting"></i>waits</span>
+                </div>
+                <div class="achip ag-local s-done" style="width: calc(var(--sp-10) * 4)">
+                  <i data-sig="QW local local"></i><span class="nmx">qwen2.5-coder</span
+                  ><span class="st"><i data-g="s-done"></i>done</span>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="buttons">
+          <h2>Buttons, kbd, inputs</h2>
+          <p>
+            The primary button is a 2 px outline on <code class="code-i">bg-3</code>, never a filled
+            block: the only filled block on screen is the wait. Destructive actions are red outlines
+            and never the default for <span class="kbd">Enter</span>.
+          </p>
+          <h3>Buttons: default · hover · focus · disabled</h3>
+          <div class="col">
+            <div class="row">
+              <button class="btn pri">Approve <span class="kbd">Enter</span></button
+              ><button class="btn pri is-hover">Approve</button
+              ><button class="btn pri is-focus">Approve</button
+              ><button class="btn pri" disabled>Approve</button>
+            </div>
+            <div class="row">
+              <button class="btn">Deny <span class="kbd">Esc</span></button
+              ><button class="btn is-hover">Deny</button><button class="btn is-focus">Deny</button
+              ><button class="btn" disabled>Deny</button>
+            </div>
+            <div class="row">
+              <button class="btn ghost"><i data-ic="copy"></i>Copy report</button
+              ><button class="btn ghost is-hover"><i data-ic="copy"></i>Copy report</button
+              ><button class="btn ghost is-focus"><i data-ic="copy"></i>Copy report</button
+              ><button class="btn ghost" disabled><i data-ic="copy"></i>Copy report</button>
+            </div>
+            <div class="row">
+              <button class="btn danger"><i data-ic="restore"></i>Restore 4 files</button
+              ><button class="btn danger pri"><i data-ic="restore"></i>Restore 4 files</button
+              ><button class="btn danger is-focus">Discard</button
+              ><button class="btn danger" disabled>Discard</button>
+            </div>
+            <div class="row">
+              <button class="btn lg pri">Finish</button><button class="btn lg">Back</button
+              ><span class="icon-btn" aria-pressed="false"><i data-ic="fit"></i></span
+              ><span class="icon-btn" aria-pressed="true"><i data-ic="follow"></i></span>
+            </div>
+          </div>
+          <h3>Kbd</h3>
+          <div class="row">
+            <span class="kbd">Ctrl+K</span><span class="kbd">Ctrl+Shift+A</span
+            ><span class="kbd">Enter</span><span class="kbd">Esc</span><span class="kbd">F</span
+            ><span class="kbd">R</span>
+          </div>
+          <h3>Inputs: default · focus · invalid · disabled</h3>
+          <div class="row" style="align-items: flex-start; gap: var(--sp-6)">
+            <div class="field" style="width: calc(var(--sp-10) * 5)">
+              <label>Ollama URL</label>
+              <div class="input"><span class="mono">http://127.0.0.1:11434</span></div>
+              <span class="hint">Local only. Nothing leaves this machine.</span>
+            </div>
+            <div class="field" style="width: calc(var(--sp-10) * 5)">
+              <label>Search</label>
+              <div class="input is-focus"><i data-ic="search"></i><span>schema</span></div>
+            </div>
+            <div class="field" style="width: calc(var(--sp-10) * 5)">
+              <label>Scrollback lines</label>
+              <div class="input invalid"><span class="mono">-200</span></div>
+              <span class="msg-err"
+                ><i data-g="s-error"></i>Must be between 1,000 and 100,000.</span
+              >
+            </div>
+            <div class="field" style="width: calc(var(--sp-10) * 5)">
+              <label>Session model</label>
+              <div class="input" style="border-style: dashed; background: var(--bg-2)">
+                <span class="faint">Offline: Claude unavailable</span>
+              </div>
+            </div>
+          </div>
+          <h3>Switch and checkbox</h3>
+          <div class="row" style="gap: var(--sp-6)">
+            <span class="row"><span class="switch on"></span>on</span
+            ><span class="row"><span class="switch"></span>off</span
+            ><span class="row"
+              ><span class="check on"><i data-ic="check" class="g-s"></i></span>selected</span
+            ><span class="row"><span class="check"></span>not selected</span>
+          </div>
+        </section>
+
+        <section id="chips">
+          <h2>Tags and chips</h2>
+          <p>
+            Pills carry state, filters and markers. <code class="code-i">Live</code> and checkpoints
+            are outlines; neutral absences (Docker off, no GPU) are dashed, never red.
+          </p>
+          <div class="row" style="flex-wrap: wrap">
+            <span class="tag live">Live 2:14</span>
+            <span class="tag cp"><i data-ic="flag" class="g"></i>cp-3 · before edit</span>
+            <span class="tag filter" aria-pressed="true">Errors</span>
+            <span class="tag filter" aria-pressed="false">Warnings</span>
+            <span class="tag filter" aria-pressed="false">Project only</span>
+            <span class="tag neutral"><i data-ic="box" class="g"></i>Docker off</span>
+            <span class="tag neutral"><i data-ic="gpu" class="g"></i>No NVIDIA GPU</span>
+            <span class="tag mono">claude-opus-5-5</span>
+            <span class="badge">3</span>
+            <span class="badge err">2</span>
+            <span class="diffbadge"><span class="add">+12</span><span class="del">−3</span></span>
+          </div>
+        </section>
+        <section id="map">
+          <h2>Map pieces</h2>
+          <p>
+            Folders are containers at <code class="code-i">r-3</code>; files are cells at
+            <code class="code-i">r-2</code>; agents are pills, so an agent never reads as a file.
+            Links are orthogonal traces with 8 px fillets (the renderer rounds ELK bend points).
+            Writes are solid with a round terminal, reads dashed, attachments neutral. Collapsed
+            folders show a heatmap of reads and writes. The <code class="code-i">Key</code> legend
+            hides first when the graph does not fit.
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>container, folder, collapsed folder with heatmap, ghost</figcaption>
+              <div
+                class="stage-box"
+                style="width: calc(var(--sp-10) * 7); height: calc(var(--sp-10) * 4)"
+              >
+                <div
+                  class="ctr"
+                  style="
+                    left: var(--sp-5);
+                    top: var(--sp-6);
+                    right: var(--sp-5);
+                    bottom: var(--sp-5);
+                  "
+                >
+                  <span class="lg">src/schema <i>· 6 files</i></span>
+                </div>
+                <div
+                  class="node folder"
+                  style="
+                    position: absolute;
+                    left: var(--sp-8);
+                    top: var(--sp-9);
+                    width: calc(var(--sp-10) * 3);
+                  "
+                >
+                  <span class="sign"><i data-ic="folder" class="g"></i></span
+                  ><span class="nm">fixtures/</span><span class="meta">12</span>
+                </div>
+                <div
+                  class="node folder"
+                  style="
+                    position: absolute;
+                    left: var(--sp-8);
+                    top: calc(var(--sp-9) + var(--sp-8));
+                    width: calc(var(--sp-10) * 3);
+                  "
+                >
+                  <span class="sign"><i data-ic="folder" class="g"></i></span
+                  ><span class="nm">generated/</span
+                  ><span class="meta"
+                    ><span class="heat"
+                      ><i class="h"></i><i class="h"></i><i class="r"></i><i></i><i></i
+                      ><i class="r"></i></span
+                    >34</span
+                  >
+                </div>
+                <div
+                  class="node ghost"
+                  style="
+                    position: absolute;
+                    left: var(--sp-8);
+                    top: calc(var(--sp-9) + var(--sp-8) * 2);
+                    width: calc(var(--sp-10) * 3);
+                  "
+                >
+                  <span class="sign"><i data-g="s-idle"></i></span
+                  ><span class="nm">legacy.ts (deleted)</span>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>links: write, read, attach, waiting attach, error</figcaption>
+              <div class="stage-box" style="width: calc(var(--sp-10) * 6)">
+                <svg width="260" height="150" viewBox="0 0 260 150" aria-hidden="true">
+                  <path class="e e-write" d="M10 20 H112 Q120 20 120 28 V52 Q120 60 128 60 H230" />
+                  <circle class="e-end-write" cx="232" cy="60" r="3" />
+                  <path class="e e-read" d="M10 40 H90 Q98 40 98 48 V82 Q98 90 106 90 H230" />
+                  <circle class="e-end-read" cx="232" cy="90" r="3" />
+                  <path class="e e-attach" d="M10 110 H230" />
+                  <path class="e e-attach w" d="M10 125 H230" />
+                  <path class="e e-err" d="M10 140 H230" />
+                </svg>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>Key legend, readout, minimap</figcaption>
+              <div
+                class="stage-box"
+                style="width: calc(var(--sp-10) * 13); height: calc(var(--sp-10) * 3)"
+              >
+                <div class="legend" style="bottom: calc(var(--sp-9) + var(--sp-3))">
+                  <span class="lk">Key</span>
+                  <span class="li s-idle"><i data-g="s-idle"></i>idle</span
+                  ><span class="li s-reading"><i data-g="s-reading"></i>reading</span
+                  ><span class="li s-writing"><i data-g="s-writing"></i>writing</span
+                  ><span class="li s-running"><i data-g="s-running"></i>running</span
+                  ><span class="li s-waiting"><i data-g="s-waiting"></i>waiting</span
+                  ><span class="li s-error"><i data-g="s-error"></i>error</span
+                  ><span class="li s-done"><i data-g="s-done"></i>done</span>
+                  <span class="sep"></span
+                  ><span class="li"
+                    ><svg class="k" style="width: var(--sz-glyph); height: var(--sz-glyph-s)">
+                      <use href="#k-uplink" /></svg
+                    >cloud</span
+                  ><span class="li"
+                    ><svg class="k" style="width: var(--sz-glyph); height: var(--sz-glyph-s)">
+                      <use href="#k-ground" /></svg
+                    >local</span
+                  >
+                </div>
+                <div class="readout">
+                  <span><b>23</b> nodes</span><span><b>7</b> touched</span
+                  ><span>zoom <b>100%</b></span>
+                </div>
+                <div class="minimap">
+                  <svg width="100%" height="100%" viewBox="0 0 144 96">
+                    <rect class="mm-n" x="10" y="12" width="30" height="6" rx="2" />
+                    <rect class="mm-w" x="10" y="24" width="30" height="6" rx="2" />
+                    <rect class="mm-n" x="50" y="12" width="30" height="6" rx="2" />
+                    <rect class="mm-e" x="50" y="40" width="30" height="6" rx="2" />
+                    <rect class="mm-q" x="96" y="60" width="30" height="6" rx="2" />
+                    <rect class="mm-v" x="4" y="6" width="92" height="52" rx="3" />
+                  </svg>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="timeline">
+          <h2>Timeline events</h2>
+          <p>
+            One lane per agent, named by its sigil. Events are capsules: dashed for reads, filled
+            for edits, hatched while running; an open capsule runs on to
+            <code class="code-i">now</code>. Parallel calls never overlap: the lane grows to a
+            second row. An error capsule is labelled with its target (<code class="code-i"
+              >schema.test.ts · 2 failing</code
+            >), never with the tool name. Checkpoints are pills on a dotted line; subagents fork
+            with a rounded elbow.
+          </p>
+          <div
+            class="tl"
+            style="
+              border: var(--sz-hair) solid var(--line);
+              border-radius: var(--r-3);
+              overflow: hidden;
+            "
+          >
+            <div class="tlh">
+              <span>Timeline</span><span><b>Read ×4</b> · Grep ×2 · Edit ×2 · Bash ×2</span
+              ><span class="r">window <b>2:14</b></span>
+            </div>
+            <svg width="1000" height="150" viewBox="0 0 1000 150" aria-hidden="true">
+              <line class="ax" x1="120" y1="0" x2="120" y2="150" />
+              <line class="sep" x1="0" y1="60" x2="1000" y2="60" />
+              <line class="sep" x1="0" y1="102" x2="1000" y2="102" />
+              <g class="ag-claude" style="color: var(--ag-claude)">
+                <use href="#a-claude" x="10" y="12" width="12" height="12" />
+                <text class="ln-name" x="28" y="22">Claude</text>
+                <text class="ln-sig" x="28" y="38">CL</text>
+              </g>
+              <rect class="ev ev-rd" x="130" y="8" width="44" height="16" rx="8" />
+              <text class="lb-rd" x="137" y="20">Read</text>
+              <rect class="ev ev-rd" x="180" y="8" width="44" height="16" rx="8" />
+              <text class="lb-rd" x="187" y="20">Grep</text>
+              <rect class="ev ev-rd" x="180" y="30" width="44" height="16" rx="8" />
+              <text class="lb-rd" x="187" y="42">Read</text>
+              <rect class="ev ev-ed" x="232" y="8" width="88" height="16" rx="8" />
+              <text class="lb-ed" x="240" y="20">client.ts</text>
+              <rect class="ev ev-err" x="328" y="8" width="168" height="16" rx="8" />
+              <text class="lb-err" x="337" y="20">× schema.test.ts · 2 failing</text>
+              <rect class="ev ev-wait" x="504" y="8" width="150" height="16" rx="8" />
+              <text class="lb-wait" x="512" y="20">waits · rm -rf dist</text>
+              <line class="cp-l" x1="226" y1="0" x2="226" y2="150" />
+              <rect class="cp-f" x="196" y="132" width="60" height="16" rx="8" />
+              <text class="cp-t" x="206" y="144">cp-3</text>
+              <path class="fork" d="M300 24 V70 Q300 78 308 78 H320" />
+              <circle class="fork-dot" cx="300" cy="24" r="2.5" />
+              <g style="color: var(--ag-sub)">
+                <use href="#a-sub" x="10" y="72" width="12" height="12" />
+                <text class="ln-name" x="28" y="82">Explore</text>
+                <text class="ln-sig" x="28" y="96">EX</text>
+              </g>
+              <rect class="ev ev-rd" x="320" y="70" width="60" height="16" rx="8" />
+              <text class="lb-rd" x="328" y="82">Read</text>
+              <rect class="ev ev-rd" x="386" y="70" width="60" height="16" rx="8" />
+              <text class="lb-rd" x="394" y="82">Read</text>
+              <g style="color: var(--ag-local)">
+                <use href="#a-local" x="10" y="114" width="12" height="12" />
+                <text class="ln-name" x="28" y="124">qwen2.5</text>
+                <text class="ln-sig" x="28" y="140">QW</text>
+              </g>
+              <path
+                class="ev ev-run"
+                d="M560 112 H900 V128 H560 Q552 128 552 120 Q552 112 560 112 Z"
+              />
+              <text class="lb-run" x="566" y="124">summarize log · running</text>
+              <line class="now-l" x1="900" y1="0" x2="900" y2="150" />
+              <rect class="now-f" x="904" y="132" width="40" height="16" rx="8" />
+              <text class="now-t" x="912" y="144">now</text>
+            </svg>
+          </div>
+        </section>
+
+        <section id="cards">
+          <h2>Cards and telemetry</h2>
+          <p>
+            Telemetry numbers stay at <code class="code-i">fs-xl</code> so they never outrank the
+            wait. A waiting card carries the request line and its two actions.
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>telemetry</figcaption>
+              <div class="tele" style="width: var(--agents-w)">
+                <div class="tm">
+                  <span class="k">Session tokens</span
+                  ><span class="big">182k <small>/ 41% local</small></span
+                  ><span class="bar local"><i style="width: 41%"></i></span
+                  ><span class="sub">local <b>75k</b> · cloud <b>107k</b></span>
+                </div>
+                <div class="tm">
+                  <span class="k">VRAM</span><span class="big">9.1 <small>/ 12 GB</small></span
+                  ><span class="bar"><i style="width: 76%"></i></span
+                  ><span class="sub"
+                    ><i data-g="a-local" class="g-s ag-c ag-local"></i
+                    ><b>qwen2.5-coder 14b</b></span
+                  >
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>waiting · selected · done</figcaption>
+              <div class="col" style="width: var(--agents-w)">
+                <div class="card s-waiting ag-claude sel">
+                  <div class="h">
+                    <i data-sig="CL claude cloud"></i><span class="nm">Claude</span
+                    ><span class="tag state s-waiting"><i data-g="s-waiting"></i>0:41</span>
+                  </div>
+                  <div class="task">Fix the flaky schema tests</div>
+                  <div class="req">
+                    <i data-g="s-waiting"></i>Bash <b>rm -rf dist &amp;&amp; npm run build</b>
+                  </div>
+                  <div class="acts">
+                    <button class="btn pri">Approve <span class="kbd">Enter</span></button
+                    ><button class="btn">Deny</button>
+                  </div>
+                </div>
+                <div class="card s-done ag-sub">
+                  <div class="h">
+                    <i data-sig="EX sub cloud"></i><span class="nm">Explore</span
+                    ><span class="tag state s-done"><i data-g="s-done"></i>done</span>
+                  </div>
+                  <div class="now">Found <b>3 test files</b> · 0:22</div>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>changed files</figcaption>
+              <div class="chg" style="width: var(--agents-w)">
+                <div class="hd"><b>Changed files</b><span>4</span></div>
+                <div class="r s-writing">
+                  <i data-g="s-writing"></i><span class="ell">src/schema/client.ts</span
+                  ><span class="d"><span class="add">+12</span> <span class="del">−3</span></span>
+                </div>
+                <div class="r">
+                  <i data-g="s-done"></i><span class="ell">src/schema/types.ts</span
+                  ><span class="d"><span class="add">+4</span> <span class="del">−1</span></span>
+                </div>
+                <div class="more">2 more in Git</div>
+              </div>
+            </figure>
+          </div>
+        </section>
+        <section id="session">
+          <h2>Session dock</h2>
+          <p>
+            User messages are bubbles on <code class="code-i">bg-1</code>; Claude's tool calls
+            collapse into a trace, one line per call, grouped when repeated. The composer shows
+            model, active MCP servers and the automatic checkpoint above the input.
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>conversation + composer (focus)</figcaption>
+              <div class="dock-demo" style="padding: var(--sp-4) 0 0">
+                <div class="chat" style="padding-bottom: 0">
+                  <div class="msg user">
+                    Fix the flaky schema tests, they fail one run in three.
+                  </div>
+                  <div class="msg">
+                    <div class="who"><i data-g="a-claude"></i>Claude · 0:12</div>
+                    I'll look at the schema tests first, then the client they exercise.
+                    <div class="trace">
+                      <div class="s-reading">
+                        <i data-g="s-reading" class="g k"></i>Read <b>src/schema/client.ts</b
+                        ><span class="x">×4</span>
+                      </div>
+                      <div class="s-reading">
+                        <i data-g="s-reading" class="g k"></i>Grep <b>"retry" src/</b
+                        ><span class="x">×2</span>
+                      </div>
+                      <div class="s-writing">
+                        <i data-g="s-writing" class="g k"></i>Edit <b>src/schema/client.ts</b
+                        ><span class="x add">+12 −3</span>
+                      </div>
+                      <div class="s-error">
+                        <i data-g="s-error" class="g k"></i>Bash <b>npm test -- schema</b
+                        ><span class="x">exit 1</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="composer">
+                  <div class="ctx">
+                    <span class="on"><b>opus-5.5</b></span
+                    ><span>MCP <b>3</b></span
+                    ><span><i data-ic="flag" class="g-s"></i>auto checkpoint</span>
+                  </div>
+                  <div class="inp is-focus">
+                    <span class="typed">Also run the e2e suite</span><span class="kbd">Enter</span>
+                  </div>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>empty with examples · disabled (offline)</figcaption>
+              <div class="col">
+                <div class="dock-demo" style="padding: var(--sp-4)">
+                  <div class="examples">
+                    <button>
+                      Explain how auth works here<span>Reads files, changes nothing</span></button
+                    ><button>
+                      Add tests for client.ts<span>Writes files, asks before running</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="dock-demo" style="padding: var(--sp-4)">
+                  <div class="inp disabled">
+                    <span
+                      >Claude is unavailable offline. Local agents, Git and replay still work.</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="permission">
+          <h2>Permission dialog</h2>
+          <p>
+            The only panel that opens by itself. Title in display style on one line, wait clock
+            under it; the full command, the agent's reason, and for writes a diff preview.
+            <code class="code-i">Approve</code> is the outline primary. Long commands clamp to three
+            lines with an expander; queued requests show a counter.
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>Bash</figcaption>
+              <div class="dock-demo">
+                <div class="perm">
+                  <div class="perm-h">
+                    <i data-g="s-waiting"></i><span class="t">Claude wants to run a command</span
+                    ><span class="r">Bash · waiting 0:41 · <i data-sig="CL claude cloud"></i></span>
+                  </div>
+                  <dl>
+                    <dt>Command</dt>
+                    <dd class="cmd">rm -rf dist &amp;&amp; npm run build</dd>
+                    <dt>Reason</dt>
+                    <dd class="why">
+                      Stale build output makes the schema tests import an old client.
+                    </dd>
+                    <dt>Directory</dt>
+                    <dd>~/code/acme-api</dd>
+                  </dl>
+                  <div class="btns">
+                    <button class="btn lg pri wide">Approve <span class="kbd">Enter</span></button
+                    ><button class="btn lg wide">
+                      Always this session <span class="kbd">Ctrl+Enter</span></button
+                    ><button class="btn lg wide">Deny <span class="kbd">Esc</span></button>
+                  </div>
+                  <div class="note">Approving runs the command once in the workspace.</div>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>Write with diff · queue</figcaption>
+              <div class="dock-demo">
+                <div class="perm">
+                  <div class="perm-h">
+                    <i data-g="s-waiting"></i><span class="t">Claude wants to edit a file</span
+                    ><span class="r">Edit · waiting 0:08</span>
+                  </div>
+                  <dl>
+                    <dt>File</dt>
+                    <dd>src/schema/client.ts</dd>
+                    <div class="snippet">
+                      <div class="diff">
+                        <div class="hunk">@@ -41,6 +41,9 @@</div>
+                        <div class="ln">
+                          <span>41</span><span>41</span><span class="sym"> </span
+                          ><span> const res = await fetch(url);</span>
+                        </div>
+                        <div class="ln d">
+                          <span>42</span><span></span><span class="sym">−</span
+                          ><span> return res.json();</span>
+                        </div>
+                        <div class="ln a">
+                          <span></span><span>42</span><span class="sym">+</span
+                          ><span> if (!res.ok) throw new SchemaError(res);</span>
+                        </div>
+                        <div class="ln a">
+                          <span></span><span>43</span><span class="sym">+</span
+                          ><span> return parse(await res.json());</span>
+                        </div>
+                      </div>
+                    </div>
+                  </dl>
+                  <div class="btns">
+                    <button class="btn lg pri wide">Approve <span class="kbd">Enter</span></button
+                    ><button class="btn lg wide">Deny <span class="kbd">Esc</span></button>
+                  </div>
+                  <div class="queue">
+                    <i data-g="s-waiting" class="g-s"></i><b>2 more</b> requests queued · Explore,
+                    qwen2.5
+                  </div>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>MCP tool · long command clamped</figcaption>
+              <div class="col">
+                <div class="dock-demo">
+                  <div class="perm">
+                    <div class="perm-h">
+                      <i data-g="s-waiting"></i><span class="t">Claude wants to use a tool</span
+                      ><span class="r">MCP · github · waiting 0:03</span>
+                    </div>
+                    <dl>
+                      <dt>Tool</dt>
+                      <dd>github.create_pull_request</dd>
+                      <dt>Input</dt>
+                      <dd>{ "title": "fix(schema): retry flaky fetch", "base": "main" }</dd>
+                    </dl>
+                    <div class="btns">
+                      <button class="btn lg pri wide">Approve <span class="kbd">Enter</span></button
+                      ><button class="btn lg wide">Deny <span class="kbd">Esc</span></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="dock-demo">
+                  <div class="perm">
+                    <div class="perm-h">
+                      <i data-g="s-waiting"></i><span class="t">Claude wants to run a command</span
+                      ><span class="r">Bash · waiting 0:19</span>
+                    </div>
+                    <dl>
+                      <dt>Command</dt>
+                      <dd class="cmd clamp">
+                        docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm
+                        --service-ports --env-file .env.test api npm run test:integration --
+                        --runInBand --reporters=default --coverage
+                      </dd>
+                      <span class="expand">Show full command (186 chars)</span>
+                    </dl>
+                    <div class="btns">
+                      <button class="btn lg pri wide">Approve <span class="kbd">Enter</span></button
+                      ><button class="btn lg wide">Deny <span class="kbd">Esc</span></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="statusbar">
+          <h2>Status bar</h2>
+          <p>
+            Segments by priority: wait (only when present, the one breathing element), errors,
+            agents, session, tokens, changed files; then VRAM and Docker on the right. Absences are
+            neutral. When space runs out, lower segments fold into <code class="code-i">…</code>.
+          </p>
+          <h3>Empty</h3>
+          <div class="statusbar-demo">
+            <div class="status" data-demo='{"empty":true,"docker":"off"}'></div>
+          </div>
+          <h3>Loading</h3>
+          <div class="statusbar-demo"><div class="status" data-demo='{"skeleton":true}'></div></div>
+          <h3>Normal</h3>
+          <div class="statusbar-demo">
+            <div
+              class="status"
+              data-demo='{"agents":["claude"],"session":{"t":"2:14"},"tokens":"182k","local":"41%","changed":4,"vram":[9.1,12],"docker":"4 up"}'
+            ></div>
+          </div>
+          <h3>Waiting + errors</h3>
+          <div class="statusbar-demo">
+            <div
+              class="status"
+              data-demo='{"wait":{"what":"Bash rm -rf dist","t":"0:41"},"errors":2,"agents":["claude","sub","local"],"session":{"t":"2:14","st":"waiting"},"tokens":"182k","local":"41%","changed":4,"vram":[9.1,12],"docker":"4 up"}'
+            ></div>
+          </div>
+          <h3>Overflow</h3>
+          <div class="statusbar-demo" style="width: calc(var(--sp-10) * 14)">
+            <div
+              class="status"
+              data-demo='{"wait":{"what":"Bash","t":"0:41"},"errors":2,"more":4,"docker":"4 up"}'
+            ></div>
+          </div>
+          <h3>Offline</h3>
+          <div class="statusbar-demo">
+            <div
+              class="status"
+              data-demo='{"offline":true,"agents":["local"],"tokens":"75k","local":"100%","vram":[9.1,12],"docker":"4 up"}'
+            ></div>
+          </div>
+        </section>
+        <section id="feedback">
+          <h2>Feedback: banners, empty, loading, toasts</h2>
+          <p>
+            Errors always carry color, icon, text and a way out. Loading shows the final shape as a
+            static skeleton (no shimmer: the wait is the only continuous motion); after 2 s it says
+            what it is doing. Empty states explain what will appear and offer one action.
+          </p>
+          <h3>Banners</h3>
+          <div class="col" style="max-width: calc(var(--sp-10) * 18)">
+            <div class="banner s-error">
+              <i data-g="s-error"></i
+              ><span><b>Session ended with an error.</b> claude exited with code 1 after 2:14.</span
+              ><span class="acts"
+                ><button class="btn">View log</button
+                ><button class="btn pri">Resume session</button></span
+              >
+            </div>
+            <div class="banner offline">
+              <i data-ic="offline" class="g"></i
+              ><span
+                ><b>Offline: Claude unavailable.</b> Ollama, Docker, ports, Git and replay still
+                work.</span
+              >
+            </div>
+            <div class="banner">
+              <i data-ic="info" class="g"></i
+              ><span><b>Replay · read-only.</b> Session of 12 Nov, 14:02 · 1:48:20.</span
+              ><span class="acts"><button class="btn">Back to Live</button></span>
+            </div>
+          </div>
+          <div class="spec" style="margin-top: var(--sp-5)">
+            <figure>
+              <figcaption>empty</figcaption>
+              <div class="stage-box" style="width: calc(var(--sp-10) * 8)">
+                <div class="empty">
+                  <i data-ic="live" class="g"></i>
+                  <h2>No session yet</h2>
+                  <p>
+                    Start a task and Claude's reads, edits and commands will appear here, on the
+                    files they touch.
+                  </p>
+                  <button class="btn pri">Start a task <span class="kbd">Ctrl+L</span></button>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>empty, positive</figcaption>
+              <div class="stage-box" style="width: calc(var(--sp-10) * 6)">
+                <div class="empty positive">
+                  <i data-g="s-done"></i>
+                  <h2>No problems</h2>
+                  <p>
+                    Errors from the app, the bridge and your project's processes will be grouped
+                    here.
+                  </p>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>loading over 2 s</figcaption>
+              <div class="stage-box col" style="width: calc(var(--sp-10) * 6)">
+                <i class="skel line" style="width: 60%"></i><i class="skel cell"></i
+                ><i class="skel cell" style="width: 80%"></i
+                ><i class="skel cell" style="width: 70%"></i
+                ><span class="loading-note"
+                  ><span class="prog run"></span>Scanning 1,204 files…</span
+                >
+              </div>
+            </figure>
+          </div>
+          <h3>Toasts: info · done · error · grouped</h3>
+          <div class="row" style="flex-wrap: wrap; align-items: flex-start">
+            <div class="toast">
+              <i data-ic="info" class="g"></i>
+              <div class="tx">
+                <b>Checkpoint cp-4 created</b><span>Before Claude's first write</span>
+              </div>
+            </div>
+            <div class="toast s-done">
+              <i data-g="s-done"></i>
+              <div class="tx">
+                <b>Task completed</b><span>Fix the flaky schema tests · 6:41</span>
+              </div>
+            </div>
+            <div class="toast s-error">
+              <i data-g="s-error"></i>
+              <div class="tx">
+                <b>Bridge pipe unreachable</b><span>The Live view continues from stream-json.</span>
+                <div class="acts">
+                  <button class="btn">Restart bridge</button
+                  ><button class="btn ghost">View log</button>
+                </div>
+              </div>
+            </div>
+            <div class="toast s-error">
+              <i data-g="s-error"></i>
+              <div class="tx"><b>Internal errors</b><span>Same error repeated</span></div>
+              <span class="count">×7</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="overlays">
+          <h2>Overlays</h2>
+          <p>
+            Palette, confirmations and the diff viewer sit over the window with the overlay shadow;
+            the scrim dims the rest. Destructive confirmations need an explicit button, never
+            <span class="kbd">Enter</span>.
+          </p>
+          <div class="spec">
+            <figure>
+              <figcaption>palette</figcaption>
+              <div
+                class="stage-box"
+                style="width: calc(var(--palette-w) + var(--sp-8)); height: calc(var(--sp-10) * 7)"
+              >
+                <div class="modal pal" style="top: var(--sp-5)">
+                  <div class="q">
+                    <i data-ic="search"></i><span class="pre">&gt;</span><span>rest</span
+                    ><span class="caret"></span>
+                  </div>
+                  <div class="res">
+                    <div class="grp-h">Commands</div>
+                    <div class="it sel">
+                      <i data-ic="restore"></i><span><mark>Rest</mark>ore checkpoint…</span
+                      ><span class="kbd">Enter</span>
+                    </div>
+                    <div class="it">
+                      <i data-ic="refresh"></i><span><mark>Rest</mark>art bridge</span>
+                    </div>
+                    <div class="it">
+                      <i data-ic="mcp"></i
+                      ><span><mark>Rest</mark>art session with MCP changes</span>
+                    </div>
+                  </div>
+                  <div class="ft">
+                    <span><span class="kbd">↑↓</span>move</span
+                    ><span><span class="kbd">Enter</span>run</span
+                    ><span><span class="kbd">Esc</span>close</span
+                    ><span class="push"
+                      >&gt; commands · / files · @ agents · # sessions · ! local · ? help</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>destructive confirmation</figcaption>
+              <div
+                class="stage-box"
+                style="width: calc(var(--dialog-w) + var(--sp-8)); height: calc(var(--sp-10) * 7)"
+              >
+                <div class="modal danger" style="top: var(--sp-5)">
+                  <div class="mh">
+                    <i data-ic="restore" class="ic st-c s-error"></i>
+                    <h2>Restore checkpoint cp-3?</h2>
+                  </div>
+                  <div class="mb">
+                    <span
+                      ><b>4 files</b> in the working tree go back to 14:06. Your branch is not
+                      touched, and a checkpoint of the current state is created first, so you can
+                      undo.</span
+                    >
+                  </div>
+                  <div class="mf">
+                    <span class="hint">Enter does nothing here</span
+                    ><button class="btn">Cancel <span class="kbd">Esc</span></button
+                    ><button class="btn danger pri">
+                      <i data-ic="restore"></i>Restore 4 files
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+
+        <section id="data">
+          <h2>Tables, diff, stack</h2>
+          <div class="spec">
+            <figure>
+              <figcaption>dense table with group row and selection</figcaption>
+              <div class="panel" style="width: calc(var(--sp-10) * 10)">
+                <div class="pb flush">
+                  <table class="tbl">
+                    <thead>
+                      <tr>
+                        <th style="width: 40%">Container</th>
+                        <th>Image</th>
+                        <th>Ports</th>
+                        <th class="num">CPU</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="grp">
+                        <td colspan="4">acme-api · 3</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="row"
+                            ><i data-g="s-running" class="g st-c s-running"></i>api</span
+                          >
+                        </td>
+                        <td class="mono">acme/api:dev</td>
+                        <td class="mono">3000</td>
+                        <td class="num">4%</td>
+                      </tr>
+                      <tr class="sel">
+                        <td>
+                          <span class="row"
+                            ><i data-g="s-running" class="g st-c s-running"></i>postgres</span
+                          >
+                        </td>
+                        <td class="mono">postgres:17</td>
+                        <td class="mono">5432</td>
+                        <td class="num">1%</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="row"
+                            ><i data-g="s-idle" class="g st-c s-idle"></i>redis</span
+                          >
+                        </td>
+                        <td class="mono">redis:8</td>
+                        <td class="mono">—</td>
+                        <td class="num">0%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>diff, line numbers</figcaption>
+              <div class="panel" style="width: calc(var(--sp-10) * 9)">
+                <div class="pb flush diff">
+                  <div class="hunk">@@ -40,7 +40,10 @@ export async function load(url: string)</div>
+                  <div class="ln">
+                    <span>40</span><span>40</span><span class="sym"> </span
+                    ><span>export async function load(url: string) {</span>
+                  </div>
+                  <div class="ln">
+                    <span>41</span><span>41</span><span class="sym"> </span
+                    ><span> const res = await fetch(url);</span>
+                  </div>
+                  <div class="ln d">
+                    <span>42</span><span></span><span class="sym">−</span
+                    ><span> return res.json();</span>
+                  </div>
+                  <div class="ln a">
+                    <span></span><span>42</span><span class="sym">+</span
+                    ><span> if (!res.ok) throw new SchemaError(res);</span>
+                  </div>
+                  <div class="ln a">
+                    <span></span><span>43</span><span class="sym">+</span
+                    ><span> return parse(await res.json());</span>
+                  </div>
+                  <div class="ln">
+                    <span>43</span><span>44</span><span class="sym"> </span><span>}</span>
+                  </div>
+                </div>
+              </div>
+            </figure>
+            <figure>
+              <figcaption>grouped problem with stack</figcaption>
+              <div class="panel" style="width: calc(var(--sp-10) * 10)">
+                <div class="pb flush">
+                  <div class="prob open">
+                    <div class="ph">
+                      <i data-ic="chev" class="g"></i><i data-g="s-error"></i
+                      ><span class="ell"
+                        >TypeError: Cannot read properties of undefined (reading 'id')</span
+                      ><span class="count">×3</span><span class="src">vitest</span
+                      ><span class="t">14:08</span>
+                    </div>
+                    <div class="stack">
+                      <div class="msgline">at parse (src/schema/client.ts:43:18)</div>
+                      <div class="fr own sel">
+                        <span class="loc">src/schema/client.ts:43</span><span>parse</span>
+                      </div>
+                      <div class="fr own">
+                        <span class="loc">src/schema/client.test.ts:17</span
+                        ><span>&lt;anonymous&gt;</span>
+                      </div>
+                      <div class="fr"><span class="fold">12 frames in node_modules</span></div>
+                    </div>
+                  </div>
+                  <div class="prob">
+                    <div class="ph">
+                      <i data-ic="chev-r" class="g"></i><i data-g="s-error"></i
+                      ><span class="ell">Bridge pipe \\.\pipe\cc-bridge unreachable</span
+                      ><span class="src">app</span><span class="t">14:02</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </figure>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      const USE = {
+        'dur-1': 'hover, press, color changes',
+        'dur-2': 'state changes on nodes and cards',
+        'dur-3': 'overlays in',
+        'ease-out': 'default for entering and state changes',
+        'ease-in': 'leaving',
+        'ease-io': 'the waiting breath',
+        'cycle-breathe': 'waiting segment in the status bar only, infinite',
+        'cycle-running': 'indeterminate progress; static stripes with reduced motion',
+        'cycle-pulse-reading': 'one pulse per read event, never looped',
+        'cycle-trail-done': 'writing color fades to done, once',
+        'cycle-trail-delay': 'hold before the done trail',
+      };
+      CC.page({
+        id: 'componenti',
+        name: 'Components',
+        root: true,
+        after() {
+          const css = getComputedStyle(document.documentElement);
+          const v = (n) => css.getPropertyValue(`--${n}`).trim();
+          document.querySelectorAll('[data-swatches]').forEach((box) => {
+            box.innerHTML = box.dataset.swatches
+              .split(' ')
+              .map(
+                (n) =>
+                  `<div class="sw"><i style="background: var(--${n})"></i><div><span>${n}</span><code>${v(n)}</code></div></div>`,
+              )
+              .join('');
+          });
+          document.querySelectorAll('[data-scale]').forEach((box) => {
+            const p = box.dataset.scale;
+            box.innerHTML = box.dataset.steps
+              .split(' ')
+              .map((s) =>
+                p === 'sp'
+                  ? `<div><i style="width: var(--sp-${s}); height: var(--sp-${s})"></i>${s}<span>${v(`sp-${s}`)}</span></div>`
+                  : `<div><i style="width: var(--sp-9); height: var(--sp-8); background: none; border: var(--sz-stroke) solid var(--fg-2); border-radius: var(--r-${s})"></i>r-${s}<span>${v(`r-${s}`)}</span></div>`,
+              )
+              .join('');
+          });
+          document.querySelectorAll('[data-demo]').forEach((el) => {
+            el.innerHTML = CC.status(JSON.parse(el.dataset.demo));
+          });
+          document.querySelectorAll('[data-motion]').forEach((tb) => {
+            tb.innerHTML = tb.dataset.motion
+              .split(' ')
+              .map(
+                (n) =>
+                  `<tr><td class="mono">--${n}</td><td class="mono">${v(n)}</td><td>${USE[n]}</td></tr>`,
+              )
+              .join('');
+          });
+        },
+      });
+    </script>
+  </body>
+</html>

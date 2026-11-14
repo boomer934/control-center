@@ -22,7 +22,12 @@ const ID = {
 };
 const CWD = 'C:\\Users\\ada\\Desktop\\demo';
 const j = (...parts) => parts.join('');
-const SECRET = j('sk-', 'ant-', 'api03-', 'Q1w2E3r4T5y6U7i8O9p0A1s2D3f4');
+// low entropy on purpose (gitleaks scans the repository): not a real key
+const SECRET = j('sk-', 'ant-', 'api03-', 'q'.repeat(28));
+// a random-looking token computed at run time, so no such literal lives in the repository
+const RANDOM_LOOKING = Array.from({ length: 41 }, (_, i) =>
+  String.fromCharCode(i % 2 ? 65 + ((i * 11) % 26) : 97 + ((i * 5) % 26)),
+).join('');
 
 describe('makeCleaner', () => {
   const clean = makeCleaner(CWD, ID);
@@ -222,7 +227,7 @@ describe('check', () => {
         b: 'C:\\Users\\ada\\x',
         c: 'built on ADA-LAPTOP',
         originalFile: '…',
-        d: j('Zx9Qw8Er7Ty6Ui5Op4As3Df2Gh1Jk0Lm', 'Nb8Vc7Xz6'),
+        d: RANDOM_LOOKING,
         e: 'write to bob@corp.example.org',
       },
       ID,

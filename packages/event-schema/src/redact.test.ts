@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { findSecrets, redactSecrets } from './redact';
 
 // Fake secrets are assembled at run time, so no secret-shaped literal lives in the repository
-// (gitleaks scans it). None of them is a real credential.
+// (gitleaks scans it), and their random-looking part is one repeated letter: low entropy on
+// purpose. None of them is a real credential.
 const j = (...parts: string[]) => parts.join('');
 const FAKE = {
-  anthropic: j('sk-', 'ant-', 'api03-', 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4'),
-  openai: j('sk-', 'proj-', 'Zz9Yy8Xx7Ww6Vv5Uu4Tt3Ss2'),
-  github: j('gh', 'p_', 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8'),
-  aws: j('AK', 'IA', 'QWERTYUIOPASDFGH'),
+  anthropic: j('sk-', 'ant-', 'api03-', 'x'.repeat(28)),
+  openai: j('sk-', 'proj-', 'y'.repeat(24)),
+  github: j('gh', 'p_', 'z'.repeat(36)),
+  aws: j('AK', 'IA', 'Q'.repeat(16)),
   jwt: j(
     'eyJ',
     'hbGciOiJIUzI1NiJ9',

@@ -15,6 +15,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - Applicate nel mockup le correzioni trasversali della revisione: minimo 11 px, mono condensato solo in mappa, `Approve` a contorno, corsie della timeline che si alzano per le chiamate parallele, Fit vero.
 - Nessun errore di console in 7 combinazioni (Chromium headless).
 - Aggiornati `CONFRONTO.md` (decisione), `DESIGN.md`, `FASE_1.md` (1b ✅), `STATO.md` e `PROSSIMI_PASSI.md`.
+- PR #12 revisionata dall'utente e unita su `main` con squash, CI verde (6/6).
 
 **Decisioni** (con l'utente)
 

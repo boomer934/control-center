@@ -111,7 +111,7 @@ claude -p "<compito realistico>" --output-format stream-json --verbose > package
 ## Decisioni aperte da chiudere in questa fase
 
 1. ~~Direzione estetica (1b).~~ ✅ `precisione fluida` (2026-11-14).
-2. Nome del prodotto (1c): candidato Vernier, **verificato il 2026-11-14**, decisione all'utente.
+2. ~~Nome del prodotto (1c).~~ ✅ **Vernier** (decisione dell'utente, 2026-11-14). Dove le collisioni qui sotto creano problemi (nome del pacchetto npm, domini, pubblicazione) si resta con **Control Center**. Da riverificare prima della F10.
    - **Marchi:** Vernier Software & Technology ha molti marchi `VERNIER…` negli USA, soprattutto in classe 9 (software).
    - **Pacchetto npm:** `vernier` esiste già (creato a giugno 2026); è un tool locale di feedback UI per agenti AI, cioè un ambito vicino al nostro.
    - **Domini:** `vernier.com` e `vernier.dev` sono in uso.

@@ -4,6 +4,28 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 1c (seconda parte): schermate P1, screenshot e revisione impeccable
+
+**Fatto** (branch `feat/design-1c`, commit da `55c5e54` in poi)
+
+- Le **9 schermate P1** con tutti gli stati: onboarding, replay, infra, local-agents, mcp-skills, settings, terminal, workspace, notifiche.
+- `design/sistema/README.md` con le P1 e 55 screenshot WebP in `design/sistema/screenshot/`.
+- **Revisione impeccable** (audit):
+  - rilevatore su tutte le pagine: 0 errori;
+  - scansione del contrasto su ogni pagina × stato × tema, anche del testo attenuato;
+  - unico grave: il sigillo `CL` sul fondo dell'attesa (1,45:1 nel tema scuro, 2,85:1 nel chiaro), corretto con `.perm-h .sig { color: var(--on-waiting) }`;
+  - rigenerato `componenti-dark.webp`, ora a pagina intera.
+
+**Decisioni** (dell'utente, prese in anticipo per non bloccare la sessione)
+
+- Nome **Vernier**, con ripiego su Control Center dove le collisioni creano problemi.
+- La notifica di Windows non approva mai un permesso.
+- I gravi della revisione si correggono subito se non toccano scelte di design.
+
+**Problemi:** nessuno. Gli avvisi del rilevatore (11 px, Instrument Sans, barra indeterminata, righe di `reading`) sono scelte del design system.
+
+---
+
 ## 2026-11-14 — Fase 1c (prima parte): token, componenti e schermate P0
 
 **Fatto** (branch `feat/design-1c`, commit da `2f76dc2` a `05ec3f8`, solo in locale)

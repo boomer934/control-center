@@ -9,24 +9,18 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 - ✅ **(F1a)** Ricerca UX: persona, 5 domande chiave, architettura dell'informazione, mappa delle schermate e stati → `design/ricerca/` + riassunto in `docs/memoria/DESIGN.md`. Revisionata dall'utente; PR #10 unita su `main` il 2026-11-13.
 - ✅ **(F1b)** Tre direzioni estetiche, revisione, confronto e scelta dell'utente: `precisione fluida` (`design/direzioni/precisione-fluida/`), densità `compact`, nome candidato Vernier. PR #12 unita su `main` il 2026-11-14.
 
+- ✅ **(F1c)** Design system e schermate HTML: token, componenti, 9 P0 + 9 P1 con tutti gli stati, flussi F1-F7, 55 screenshot, revisione impeccable (un grave, corretto). Nome deciso: Vernier, con ripiego su Control Center. PR verso `main` aperta il 2026-11-14.
+
 ## Ora
 
-1. **(F1c, a metà)** Sul branch `feat/design-1c` (locale):
-   - ✅ token, componenti, 9 schermate P0, flussi F1-F7, verifica di Vernier;
-   - ✅ 9 schermate P1 con tutti gli stati (2026-11-14);
-   - ✅ README delle P1 e 55 screenshot in `design/sistema/screenshot/`;
-   - restano la revisione impeccable (gravi all'utente prima di correggerli), `fine-sessione` e la PR.
-
-   Dettagli nel "Punto di ripresa" di `STATO.md`.
-
-2. **(F1c, utente)** Decidere il nome: Vernier ha collisioni (pacchetto npm `vernier` nello stesso ambito, marchi in classe 9).
-3. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
+1. **(F1c, utente)** Rivedere la PR di `feat/design-1c` e unirla con la CI verde.
+2. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo
 
-4. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
-5. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
-6. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
+3. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
+4. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
+5. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
 
 ## Quando capita
 

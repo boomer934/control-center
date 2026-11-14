@@ -32,7 +32,7 @@ Revisione in [`REVISIONE.md`](../../design/direzioni/REVISIONE.md), confronto in
 - `precisione` (palette, stati, linguaggio da IDE) resa **più fluida, con meno spigoli**: raggi 4 / 6 / 10 px più le pillole, eventi della timeline a capsula, collegamenti con curve raccordate, glifi arrotondati, sans per l'interfaccia e mono per i dati, attesa che respira (1.6 s) invece di lampeggiare;
 - innesti: sigle di canale (`CL`, `EX`, `QW` + segno cloud/locale) e telemetria da `sala-controllo`; legenda `Key` e titolo display del dialog da `carta-inchiostro`;
 - densità predefinita `compact`;
-- nome candidato **Vernier**, da verificare in 1c.
+- nome **Vernier** (deciso in 1c il 2026-11-14), con ripiego su Control Center dove le collisioni creano problemi.
 
 **Regole emerse dalla revisione** (già applicate in `precisione fluida`, da portare nei token della 1c):
 
@@ -86,10 +86,15 @@ Colore e glifo stabili per agente (Claude, subagent Claude, agente Ollama). Gli 
 
 Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, `prefers-reduced-motion` rispettato, eventi accorpati per frame, nessuna animazione continua sui nodi inattivi. **L'unico impulso continuo è il segmento d'attesa nella barra di stato** (deciso in 1b): il blocco d'attesa in timeline resta fermo; `reading` fa un solo impulso per evento; la barra indeterminata di `running` è progresso, non impulso, e con movimento ridotto diventa statica.
 
-## Design system (Fase 1c) — in corso
+## Design system (Fase 1c) ✅
 
 - **Token:** [`design/tokens.json`](../../design/tokens.json) in formato DTCG → [`design/sistema/tokens.css`](../../design/sistema/tokens.css), generato da `scripts/build-tokens.mjs` (`--check` per verificarlo). I componenti usano solo `var(--…)`.
-- **Pagine:** [`design/sistema/`](../../design/sistema/README.md), con la pagina componenti, le 9 schermate P0 con tutti i loro stati e la verifica dei flussi F1-F7. Le P1 sono ancora da fare.
+- **Pagine:** [`design/sistema/`](../../design/sistema/README.md), con la pagina componenti, le 9 schermate P0 e le 9 P1 (onboarding, replay, infra, local-agents, mcp-skills, settings, terminal, workspace, notifiche) con tutti i loro stati, la verifica dei flussi F1-F7 e gli screenshot.
+- **Revisione impeccable (2026-11-14):** un solo grave, il sigillo d'agente sul fondo dell'attesa (contrasto 1,45:1), corretto con `--on-waiting`. Il contrasto del testo è AA in tutte le pagine, gli stati e i due temi. Gli avvisi del rilevatore sono scelte volute:
+  - testo a 11 px (densità `compact`);
+  - Instrument Sans (scelta in 1b);
+  - barra indeterminata e righe di `reading` (stati semantici);
+  - bordi di stato delle card.
 - **Minori chiusi nei token:**
   - running e locale si distinguono meglio. La distanza OKLab tra running e locale passa da 0,117 a 0,189 nel tema scuro e da 0,098 a 0,160 nel chiaro; quella tra locale e reading resta ≥ 0,145. Tutti sono AA su `bg-0` e `bg-2`.
 
@@ -109,4 +114,6 @@ Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, 
   - scheletri fermi, senza shimmer;
   - sigle con cifra in caso di collisione (`C2`, `E2`);
   - assenze tratteggiate e neutre;
-  - conferme distruttive senza azione su `Enter`.
+  - conferme distruttive senza azione su `Enter`;
+  - una notifica di Windows non approva mai un permesso: porta alla richiesta, dove si vede il contesto (confermato dall'utente il 2026-11-14);
+  - sul fondo pieno dell'attesa sigle e glifi usano `--on-waiting`, mai il colore dell'agente.

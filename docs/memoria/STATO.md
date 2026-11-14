@@ -11,23 +11,20 @@ _Ultimo aggiornamento: 2026-11-14_
 | Sotto-fase                        | Stato                                              |
 | --------------------------------- | -------------------------------------------------- |
 | 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
-| 1b Tre direzioni estetiche        | 🟡 prodotta, in attesa della scelta dell'utente    |
-| 1c Design system e schermate HTML | da fare (dopo la scelta della 1b)                  |
+| 1b Tre direzioni estetiche        | ✅ scelta `precisione fluida`, PR #12 da unire     |
+| 1c Design system e schermate HTML | da fare: parte da `precisione-fluida/`             |
 | 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)       |
 
 ## Branch
 
 `feat/design-1b`, pushato, con la PR verso `main` aperta. `main` è fermo a `b9433a8`.
 
-## Punto di ripresa (1b)
+## Punto di ripresa (1b → 1c)
 
-La 1b è prodotta e **aspetta la scelta dell'utente**. Tutto è in `design/direzioni/`:
+La 1b è chiusa: l'utente ha scelto **`precisione fluida`** (`design/direzioni/precisione-fluida/`, con `README.md` e 4 screenshot). È `precisione` più fluida e con meno spigoli, con le sigle di canale e la telemetria di `sala-controllo` e la legenda di `carta-inchiostro`. Densità `compact`; nome candidato Vernier.
 
-- tre direzioni (`precisione`, `sala-controllo`, `carta-inchiostro`), ciascuna con `live.html`, `README.md` e 4 screenshot (`dark`, `light`, `dense`, `gray`);
-- `REVISIONE.md`: revisione impeccable. C'era un solo problema grave (controlli finestra di `sala-controllo`), già corretto. Medi e minori restano aperti e passano ai token della 1c;
-- `CONFRONTO.md`: tabella, raccomandazione (`precisione` + sigle di canale e telemetria di `sala-controllo` + legenda di `carta-inchiostro`; densità `compact`; nome preferito Vernier) e **3 domande all'utente**: direzione, densità predefinita, nomi per la 1c.
-
-Quando l'utente risponde: scelta e motivo in `STORIA.md` e `DESIGN.md`, 1b ✅ in `FASE_1.md`, merge della PR dopo la sua revisione.
+- Resta da fare: revisione dell'utente e merge della PR #12 con la CI verde.
+- Poi la **1c**: `design/tokens.json` e `design/sistema/` partendo dai token di `precisione-fluida/live.html` e dalle regole di `DESIGN.md` § "Direzioni estetiche". Restano aperti i minori di `REVISIONE.md` elencati nel README della sintesi.
 
 ## Cosa funziona
 
@@ -38,7 +35,7 @@ Quando l'utente risponde: scelta e motivo in `STORIA.md` e `DESIGN.md`, 1b ✅ i
 - ✅ release-please v5; Dependabot con le Actions raggruppate. Sulle PR girano anche CodeRabbit e GitGuardian.
 - ✅ Documenti open source: LICENSE (MIT), README, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT.
 - ✅ `CLAUDE.md`, memoria completa con `PIANO.md`, ADR 0001-0002, skill `inizio-sessione`/`fine-sessione`, hook `SessionStart`.
-- ✅ **Direzioni estetiche della 1b** in `design/direzioni/` con revisione, screenshot e confronto (vedi sopra).
+- ✅ **Direzioni estetiche della 1b** in `design/direzioni/`: tre direzioni, revisione, confronto e la sintesi scelta `precisione-fluida/`.
 - ✅ **Ricerca UX della 1a** in `design/ricerca/`:
   - persona;
   - domande chiave con il punto dello schermo che risponde;
@@ -48,7 +45,7 @@ Quando l'utente risponde: scelta e motivo in `STORIA.md` e `DESIGN.md`, 1b ✅ i
 
 ## Cosa manca per chiudere la Fase 1
 
-- 1b: scelta dell'utente (direzione, densità predefinita, nomi candidati) e merge della PR.
+- 1b: merge della PR #12.
 - 1c: token in `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/` (Figma tolto dal piano il 2026-11-14).
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.
 

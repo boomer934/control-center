@@ -10,12 +10,12 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F1b, in attesa dell'utente: vedi "Punto di ripresa" in `STATO.md`)** Direzioni, revisione, screenshot e `design/direzioni/CONFRONTO.md` sono fatti; PR aperta da `feat/design-1b`. Manca la **scelta dell'utente** (direzione, densità predefinita, nomi per la 1c), da registrare in `STORIA.md` e `DESIGN.md`, poi il merge.
+1. **(F1b)** Revisione dell'utente e merge della PR #12 (`feat/design-1b`). La scelta è fatta: `precisione fluida`, densità `compact`, nome candidato Vernier.
 2. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo
 
-3. **(F1c)** `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/`; flussi F1-F7 verificati sulla sequenza delle schermate. Niente Figma.
+3. **(F1c)** Partendo da `design/direzioni/precisione-fluida/`: `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/`; flussi F1-F7 verificati sulla sequenza delle schermate. Niente Figma.
 4. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
 5. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
 6. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.

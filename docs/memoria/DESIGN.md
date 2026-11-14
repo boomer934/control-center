@@ -15,9 +15,9 @@
   - command palette con prefissi, scorciatoie per ambito di focus, notifiche;
   - flussi F1-F7 e S1-S5.
 - [Schermate](../../design/ricerca/schermate.md): inventario P0/P1/P2 × stati (vuoto, caricamento, normale, denso, errore, offline), casi d'errore specifici, onboarding in 3 passi.
-- **Proposta aperta:** densità compatta "da IDE" di default, con l'opzione `Comfortable`. Si decide in 1b.
+- **Densità:** `compact` "da IDE" di default, con l'opzione `Comfortable` (deciso in 1b).
 
-## Direzioni estetiche (Fase 1b) 🟡 in attesa della scelta
+## Direzioni estetiche (Fase 1b) ✅ scelta: `precisione fluida`
 
 Tre direzioni della Vista Live sullo stesso [brief](../../design/direzioni/BRIEF.md), ciascuna con `live.html`, `README.md` e screenshot:
 
@@ -25,14 +25,22 @@ Tre direzioni della Vista Live sullo stesso [brief](../../design/direzioni/BRIEF
 - [`sala-controllo`](../../design/direzioni/sala-controllo/README.md): sala di strumentazione, grotesk condensato, sigle di canale e annunciatori;
 - [`carta-inchiostro`](../../design/direzioni/carta-inchiostro/README.md): editoriale chiaro-first, segni di correzione, evidenziatore per l'attesa.
 
-Revisione in [`REVISIONE.md`](../../design/direzioni/REVISIONE.md), confronto, raccomandazione e domande all'utente in [`CONFRONTO.md`](../../design/direzioni/CONFRONTO.md). Raccomandazione: `precisione` come base con le sigle di canale e la telemetria di `sala-controllo` e la legenda di `carta-inchiostro`; densità `compact`.
+Revisione in [`REVISIONE.md`](../../design/direzioni/REVISIONE.md), confronto in [`CONFRONTO.md`](../../design/direzioni/CONFRONTO.md).
 
-**Regole emerse dalla revisione** (valgono per la direzione scelta, da portare nei token della 1c):
+**Scelta dell'utente (2026-11-14): [`precisione fluida`](../../design/direzioni/precisione-fluida/README.md)**, la base di token e componenti della 1c:
+
+- `precisione` (palette, stati, linguaggio da IDE) resa **più fluida, con meno spigoli**: raggi 4 / 6 / 10 px più le pillole, eventi della timeline a capsula, collegamenti con curve raccordate, glifi arrotondati, sans per l'interfaccia e mono per i dati, attesa che respira (1.6 s) invece di lampeggiare;
+- innesti: sigle di canale (`CL`, `EX`, `QW` + segno cloud/locale) e telemetria da `sala-controllo`; legenda `Key` e titolo display del dialog da `carta-inchiostro`;
+- densità predefinita `compact`;
+- nome candidato **Vernier**, da verificare in 1c.
+
+**Regole emerse dalla revisione** (già applicate in `precisione fluida`, da portare nei token della 1c):
 
 - testo funzionale mai sotto 11 px;
 - nella timeline la corsia si allarga per ogni chiamata parallela, gli eventi non si sovrappongono mai;
 - nel tema chiaro il pulsante primario non è un pieno scuro che compete con l'attesa;
-- la mappa applica `Fit` all'apertura;
+- la mappa applica `Fit` all'apertura (se il grafo non entra si nasconde la legenda, poi scala);
+- l'unico blocco pieno è l'attesa: pulsante primario, chip `Live` e avatar sono a contorno;
 - scala di spaziatura e durate dei cicli come token.
 
 ## Domande a cui l'app risponde in meno di 2 secondi
@@ -80,6 +88,5 @@ Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, 
 
 ## Da definire (Fase 1)
 
-- Direzione estetica: scelta dell'utente tra le 3 proposte (vedi sopra).
 - Token (colori, tipografia, spaziatura, raggi, ombre, movimento) → `design/tokens.json`.
 - Link a `design/sistema/` (pagina componenti e schermate HTML della 1c).

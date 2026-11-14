@@ -4,6 +4,30 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 1b: scelta della direzione, `precisione fluida`
+
+**Fatto**
+
+- Nuova cartella `design/direzioni/precisione-fluida/` con `live.html`, `README.md` e 4 screenshot. È la sintesi scelta, ottenuta da una copia di `precisione` con:
+  - uno strato CSS in coda;
+  - collegamenti e timeline arrotondati nello script;
+  - gli innesti: sigle di canale e telemetria da `sala-controllo`, legenda e titolo display del dialog da `carta-inchiostro`.
+- Applicate nel mockup le correzioni trasversali della revisione: minimo 11 px, mono condensato solo in mappa, `Approve` a contorno, corsie della timeline che si alzano per le chiamate parallele, Fit vero.
+- Nessun errore di console in 7 combinazioni (Chromium headless).
+- Aggiornati `CONFRONTO.md` (decisione), `DESIGN.md`, `FASE_1.md` (1b ✅), `STATO.md` e `PROSSIMI_PASSI.md`.
+
+**Decisioni** (con l'utente)
+
+- Direzione: `precisione` con gli innesti raccomandati, **più fluida e con meno spigoli**. Grado "morbido": raggi 4 / 6 / 10 px più le pillole, nessun raggio oltre 10 px.
+- Densità predefinita `compact`; nome candidato per la 1c: **Vernier**.
+- L'attesa respira (1.6 s) invece di lampeggiare a scatti; resta l'unico impulso continuo.
+
+**Problemi**
+
+- Nessuno aperto. Nello scenario dense la colonna Agents non conteneva tutto: ora le card scorrono tra la telemetria e i file modificati, e sfumano quando non entrano.
+
+---
+
 ## 2026-11-14 — Cambio di piano: via Figma, regole sui subagent
 
 **Decisioni** (con l'utente)

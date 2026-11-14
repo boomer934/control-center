@@ -33,4 +33,11 @@ export default defineConfig(
       ],
     },
   },
+  {
+    // Static design mockups (phase 1c) run in the browser, not in Node.
+    files: ['design/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.browser },
+    },
+  },
 );

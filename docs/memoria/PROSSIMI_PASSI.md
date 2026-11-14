@@ -11,14 +11,20 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F1c)** Partendo da `design/direzioni/precisione-fluida/`: `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/`; flussi F1-F7 verificati sulla sequenza delle schermate. Niente Figma. Verificare anche il nome Vernier (marchi, pacchetto, dominio). Branch `feat/design-1c`.
-2. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
+1. **(F1c, a metà)** Sul branch `feat/design-1c` (locale):
+   - ✅ token, componenti, 9 schermate P0, flussi F1-F7, verifica di Vernier;
+   - restano le 9 schermate P1, gli screenshot nella repo, la revisione impeccable (gravi all'utente prima di correggerli), push e PR.
+
+   Dettagli nel "Punto di ripresa" di `STATO.md`.
+
+2. **(F1c, utente)** Decidere il nome: Vernier ha collisioni (pacchetto npm `vernier` nello stesso ambito, marchi in classe 9).
+3. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo
 
-3. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
-4. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
-5. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
+4. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
+5. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
+6. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
 
 ## Quando capita
 

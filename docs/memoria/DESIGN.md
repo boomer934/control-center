@@ -86,7 +86,27 @@ Colore e glifo stabili per agente (Claude, subagent Claude, agente Ollama). Gli 
 
 Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, `prefers-reduced-motion` rispettato, eventi accorpati per frame, nessuna animazione continua sui nodi inattivi. **L'unico impulso continuo è il segmento d'attesa nella barra di stato** (deciso in 1b): il blocco d'attesa in timeline resta fermo; `reading` fa un solo impulso per evento; la barra indeterminata di `running` è progresso, non impulso, e con movimento ridotto diventa statica.
 
-## Da definire (Fase 1)
+## Design system (Fase 1c) — in corso
 
-- Token (colori, tipografia, spaziatura, raggi, ombre, movimento) → `design/tokens.json`.
-- Link a `design/sistema/` (pagina componenti e schermate HTML della 1c).
+- **Token:** [`design/tokens.json`](../../design/tokens.json) in formato DTCG → [`design/sistema/tokens.css`](../../design/sistema/tokens.css), generato da `scripts/build-tokens.mjs` (`--check` per verificarlo). I componenti usano solo `var(--…)`.
+- **Pagine:** [`design/sistema/`](../../design/sistema/README.md), con la pagina componenti, le 9 schermate P0 con tutti i loro stati e la verifica dei flussi F1-F7. Le P1 sono ancora da fare.
+- **Minori chiusi nei token:**
+  - running e locale si distinguono meglio. La distanza OKLab tra running e locale passa da 0,117 a 0,189 nel tema scuro e da 0,098 a 0,160 nel chiaro; quella tra locale e reading resta ≥ 0,145. Tutti sono AA su `bg-0` e `bg-2`.
+
+    | Token        | Scuro                 | Chiaro                |
+    | ------------ | --------------------- | --------------------- |
+    | `st-running` | `#7fd36a` → `#8fd357` | `#2c7520` → `#336e0b` |
+    | `ag-local`   | `#4fd6c8` → `#5fd8f0` | `#00736a` → `#006d87` |
+    | `st-reading` | `#6aaeff` → `#7b9dff` | `#1b62c9` → `#2a5bd7` |
+
+  - l'errore in timeline è etichettato con il bersaglio;
+  - la timeline `normal` ha Read ×4 + Grep ×2.
+- **Nuovi token:**
+  - spaziatura `sp-0…10` (2, 4, 6, 8, 12, 16, 20, 24, 32, 48 px);
+  - misure `sz-*`, layout, `shadow-overlay` (solo per gli overlay), colori del diff e `scrim`;
+  - cicli: `cycle-breathe` 1600 ms (solo l'attesa), `cycle-running` 1200 ms, `cycle-pulse-reading` 300 ms (uno per evento), `cycle-trail-done` 300 ms dopo `cycle-trail-delay` 400 ms.
+- **Regole nuove:**
+  - scheletri fermi, senza shimmer;
+  - sigle con cifra in caso di collisione (`C2`, `E2`);
+  - assenze tratteggiate e neutre;
+  - conferme distruttive senza azione su `Enter`.

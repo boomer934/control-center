@@ -8,44 +8,49 @@ _Ultimo aggiornamento: 2026-11-14_
 
 **Fase 1 — UX e design: in corso.** Il brief operativo è in [`FASE_1.md`](FASE_1.md).
 
-| Sotto-fase                        | Stato                                              |
-| --------------------------------- | -------------------------------------------------- |
-| 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
-| 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14 |
-| 1c Design system e schermate HTML | da fare: parte da `precisione-fluida/`             |
-| 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)       |
+| Sotto-fase                        | Stato                                                     |
+| --------------------------------- | --------------------------------------------------------- |
+| 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13        |
+| 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14        |
+| 1c Design system e schermate HTML | **in corso**: token, componenti e P0 fatti; restano le P1 |
+| 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)              |
 
 ## Branch
 
-`main` (a `a85eb11`, merge della PR #12). Per la 1c si apre `feat/design-1c`.
+`feat/design-1c`, con 6 commit locali + la memoria, **non ancora pushato**.
 
-## Punto di ripresa (1b → 1c)
+## Punto di ripresa (1c, a metà)
 
-La 1b è chiusa: l'utente ha scelto **`precisione fluida`** (`design/direzioni/precisione-fluida/`, con `README.md` e 4 screenshot). È `precisione` più fluida e con meno spigoli, con le sigle di canale e la telemetria di `sala-controllo` e la legenda di `carta-inchiostro`. Densità `compact`; nome candidato Vernier.
+Mi sono fermato vicino al limite delle 5 ore (circa 80 %).
 
-- PR #12 unita su `main` il 2026-11-14 con squash e CI verde.
-- Prossima: la **1c**, `design/tokens.json` e `design/sistema/` partendo dai token di `precisione-fluida/live.html` e dalle regole di `DESIGN.md` § "Direzioni estetiche". Restano aperti i minori di `REVISIONE.md` elencati nel README della sintesi.
+- **Fatto:**
+  - token in `design/tokens.json`, con il generatore `scripts/build-tokens.mjs`;
+  - `design/sistema/` con `componenti.css`, `shell.js` e `componenti.html`;
+  - le 9 schermate P0 con tutti gli stati;
+  - `README.md` con i flussi F1-F7;
+  - `DESIGN.md` e `FASE_1.md` aggiornati.
+- **Da fare, in ordine:**
+  1. **Le 9 schermate P1:** onboarding, replay, infra, local-agents (con la proposta di diff), mcp-skills, settings, terminal, workspace, notifiche. Si fanno come le P0: si copia `schermate/live.html`, si aggiunge `<pagina>-data.js` con `window.PAGE` e `window.LIVE` (varianti con `center`, `bdock`, `overlay`, `noDock`, `inspector`) e si aggiungono le pagine in `PAGES` di `shell.js` (già fatto).
+  2. **Gli screenshot nella repo** (`design/sistema/screenshot/`: scuro, chiaro e denso per pagina). Lo script è nella scratchpad della sessione, `shot.mjs`: va rifatto se la scratchpad sparisce. Usa playwright-core dalla cache npx e Chromium 1248, controlla la console e il testo sotto 11 px.
+  3. **La revisione impeccable:** mostrare i gravi all'utente e **aspettare conferma** prima di correggerli.
+  4. Ancora `fine-sessione`, poi `pnpm verify`, push e PR verso `main`. Il merge solo con CI verde e dopo la revisione dell'utente.
+- **Da decidere (utente):** il nome Vernier, viste le collisioni in `FASE_1.md` § Decisioni aperte.
 
 ## Cosa funziona
 
 - ✅ Monorepo pnpm con `packages/event-schema` (busta minima `AgentEvent` + 3 test).
-- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale e in CI (job "Verify (Windows)").
+- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale e in CI. Ci sono 17 warning del plugin security sugli script, nessun errore.
 - ✅ Hook git: lint-staged + gitleaks (se installato) in pre-commit, commitlint in commit-msg.
-- ✅ CI GitHub Actions: verifica su Windows, gitleaks (CLI, cronologia completa), commitlint e controllo memoria sulle PR, audit. Verificato con la PR #7 che un errore di tipo blocca la CI.
-- ✅ release-please v5; Dependabot con le Actions raggruppate. Sulle PR girano anche CodeRabbit e GitGuardian.
-- ✅ Documenti open source: LICENSE (MIT), README, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT.
-- ✅ `CLAUDE.md`, memoria completa con `PIANO.md`, ADR 0001-0002, skill `inizio-sessione`/`fine-sessione`, hook `SessionStart`.
-- ✅ **Direzioni estetiche della 1b** in `design/direzioni/`: tre direzioni, revisione, confronto e la sintesi scelta `precisione-fluida/`.
-- ✅ **Ricerca UX della 1a** in `design/ricerca/`:
-  - persona;
-  - domande chiave con il punto dello schermo che risponde;
-  - architettura dell'informazione (finestra, dock, barra di stato, palette, scorciatoie, flussi F1-F7 e S1-S5);
-  - schermate × stati con priorità P0/P1/P2;
-  - riassunto e link in `DESIGN.md`.
+- ✅ CI GitHub Actions: verify su Windows, gitleaks, commitlint, controllo memoria, audit. Sulle PR girano anche CodeRabbit e GitGuardian.
+- ✅ Documenti open source, `CLAUDE.md`, memoria, ADR 0001-0002, skill di sessione.
+- ✅ Design:
+  - ricerca UX (1a);
+  - direzioni (1b);
+  - **design system 1c** in `design/tokens.json` e `design/sistema/` (componenti + P0).
 
 ## Cosa manca per chiudere la Fase 1
 
-- 1c: token in `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/` (Figma tolto dal piano il 2026-11-14).
+- 1c: P1, screenshot, revisione impeccable, PR.
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.
 
 ## Blocchi e avvertenze
@@ -53,3 +58,4 @@ La 1b è chiusa: l'utente ha scelto **`precisione fluida`** (`design/direzioni/p
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR.
 - Per la 1d serve almeno una sessione registrata in `packages/fixtures/raw/` (vedi `FASE_1.md`).
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
+- I file HTML/JS molto grandi vanno scritti a pezzi: la generazione in un colpo solo si è bloccata.

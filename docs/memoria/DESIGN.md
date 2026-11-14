@@ -17,6 +17,24 @@
 - [Schermate](../../design/ricerca/schermate.md): inventario P0/P1/P2 × stati (vuoto, caricamento, normale, denso, errore, offline), casi d'errore specifici, onboarding in 3 passi.
 - **Proposta aperta:** densità compatta "da IDE" di default, con l'opzione `Comfortable`. Si decide in 1b.
 
+## Direzioni estetiche (Fase 1b) 🟡 in attesa della scelta
+
+Tre direzioni della Vista Live sullo stesso [brief](../../design/direzioni/BRIEF.md), ciascuna con `live.html`, `README.md` e screenshot:
+
+- [`precisione`](../../design/direzioni/precisione/README.md): strumento di misura da IDE, mono protagonista, quasi monocromo;
+- [`sala-controllo`](../../design/direzioni/sala-controllo/README.md): sala di strumentazione, grotesk condensato, sigle di canale e annunciatori;
+- [`carta-inchiostro`](../../design/direzioni/carta-inchiostro/README.md): editoriale chiaro-first, segni di correzione, evidenziatore per l'attesa.
+
+Revisione in [`REVISIONE.md`](../../design/direzioni/REVISIONE.md), confronto, raccomandazione e domande all'utente in [`CONFRONTO.md`](../../design/direzioni/CONFRONTO.md). Raccomandazione: `precisione` come base con le sigle di canale e la telemetria di `sala-controllo` e la legenda di `carta-inchiostro`; densità `compact`.
+
+**Regole emerse dalla revisione** (valgono per la direzione scelta, da portare nei token della 1c):
+
+- testo funzionale mai sotto 11 px;
+- nella timeline la corsia si allarga per ogni chiamata parallela, gli eventi non si sovrappongono mai;
+- nel tema chiaro il pulsante primario non è un pieno scuro che compete con l'attesa;
+- la mappa applica `Fit` all'apertura;
+- scala di spaziatura e durate dei cicli come token.
+
 ## Domande a cui l'app risponde in meno di 2 secondi
 
 1. Cosa sta facendo l'agente adesso?
@@ -45,7 +63,7 @@ Dettaglio completo in [`architettura.md`](../../design/ricerca/architettura.md).
 | Stato        | Significato             | Trattamento                                        |
 | ------------ | ----------------------- | -------------------------------------------------- |
 | idle         | nessuna attività        | neutro                                             |
-| reading      | l'agente legge          | colore info, impulso leggero                       |
+| reading      | l'agente legge          | colore info, un impulso per evento (mai in ciclo)  |
 | writing      | l'agente modifica       | accento caldo, bordo pieno + badge diff            |
 | running      | comando o tool in corso | progresso indeterminato                            |
 | waiting-user | serve una tua decisione | colore attenzione: l'unico che richiama lo sguardo |
@@ -58,10 +76,10 @@ Colore e glifo stabili per agente (Claude, subagent Claude, agente Ollama). Gli 
 
 ## Movimento
 
-Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, `prefers-reduced-motion` rispettato, eventi accorpati per frame, nessuna animazione continua sui nodi inattivi.
+Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, `prefers-reduced-motion` rispettato, eventi accorpati per frame, nessuna animazione continua sui nodi inattivi. **L'unico impulso continuo è il segmento d'attesa nella barra di stato** (deciso in 1b): il blocco d'attesa in timeline resta fermo; `reading` fa un solo impulso per evento; la barra indeterminata di `running` è progresso, non impulso, e con movimento ridotto diventa statica.
 
 ## Da definire (Fase 1)
 
-- Direzione estetica (scelta tra 3 proposte).
+- Direzione estetica: scelta dell'utente tra le 3 proposte (vedi sopra).
 - Token (colori, tipografia, spaziatura, raggi, ombre, movimento) → `design/tokens.json`.
 - Link al file Figma.

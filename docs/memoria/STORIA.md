@@ -4,6 +4,29 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 1b: tre direzioni estetiche, revisione e confronto
+
+**Fatto**
+
+- 13/11 (`ad5192a`): `design/direzioni/BRIEF.md` e tre direzioni con workflow ultracode: `precisione`, `sala-controllo` e `carta-inchiostro`, ciascuna con `live.html` e `README.md`. La revisione si era interrotta al limite delle 5 ore.
+- 14/11 (`a03783f`), senza ultracode:
+  - revisione impeccable con un solo subagent → `REVISIONE.md`: un grave (controlli finestra di `sala-controllo`), corretto;
+  - 12 screenshot senza errori di console;
+  - `CONFRONTO.md` con raccomandazione e domande all'utente.
+- `DESIGN.md` e `FASE_1.md` aggiornati. `pnpm verify` verde. Branch pushato e PR aperta.
+
+**Decisioni**
+
+- Con l'utente: `reading` fa un solo impulso per evento. L'unico impulso continuo è il segmento d'attesa nella barra di stato, non il blocco in timeline (risolta la contraddizione del BRIEF).
+- I problemi medi e minori non si correggono nei mockup: diventano regole dei token della 1c, tra cui il minimo di 11 px e le corsie della timeline che si allargano.
+- Raccomandazione, da confermare: `precisione` con innesti dalle altre due, densità `compact`.
+
+**Problemi**
+
+- Il server MCP Playwright non funziona ancora. Gli screenshot si fanno con `playwright-core` dalla cache npx e Chromium 1248 (`PROBLEMI_NOTI.md`).
+
+---
+
 ## 2026-11-13 — Fase 1a: ricerca UX e architettura dell'informazione
 
 **Fatto**

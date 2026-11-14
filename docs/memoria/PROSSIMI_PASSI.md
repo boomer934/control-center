@@ -10,7 +10,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F1b, in corso: vedi "Punto di ripresa" in `STATO.md`)** Le tre direzioni sono fatte; mancano revisione, correzioni, screenshot, `CONFRONTO.md` e PR. Tre direzioni estetiche con /frontend-design (ultracode, effort high, una direzione per agente) → `design/direzioni/`. Ogni direzione disegna la Live in stato normale (ed eventualmente denso) con i contenuti indicati in `design/ricerca/schermate.md` ("Cosa serve a 1b e 1c"). Revisione impeccable e **scelta dell'utente**, decidendo anche densità e nome del prodotto. Branch `feat/design-1b`.
+1. **(F1b, in attesa dell'utente: vedi "Punto di ripresa" in `STATO.md`)** Direzioni, revisione, screenshot e `design/direzioni/CONFRONTO.md` sono fatti; PR aperta da `feat/design-1b`. Manca la **scelta dell'utente** (direzione, densità predefinita, nomi per la 1c), da registrare in `STORIA.md` e `DESIGN.md`, poi il merge.
 2. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo

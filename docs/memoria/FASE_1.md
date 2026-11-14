@@ -34,7 +34,9 @@ Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisi
 - **Goal:**
   > Esistono in `design/` la ricerca UX (persona, domande chiave, architettura dell'informazione) e la mappa delle schermate con tutti i loro stati, scritte in `docs/memoria/DESIGN.md`; memoria aggiornata.
 
-### 1b — Tre direzioni estetiche
+### 1b — Tre direzioni estetiche 🟡
+
+> 🟡 Prodotta il 2026-11-14, **in attesa della scelta dell'utente**. Tre direzioni in `design/direzioni/` (`precisione`, `sala-controllo`, `carta-inchiostro`) con `live.html`, `README.md` e 4 screenshot ciascuna; [`REVISIONE.md`](../../design/direzioni/REVISIONE.md) (un solo grave, corretto) e [`CONFRONTO.md`](../../design/direzioni/CONFRONTO.md) con raccomandazione e domande. Decise con l'utente le regole di movimento: `reading` un impulso per evento, pulsa solo il segmento d'attesa nella barra di stato. I medi e i minori vanno nei token della 1c.
 
 - **Modello:** Opus 5.5 · **effort:** high · **ultracode: sì, effort high**: le tre direzioni si esplorano in parallelo, una per agente.
 - **Produce:** `design/direzioni/<nome>/` per ciascuna direzione:

@@ -4,6 +4,18 @@ Tre direzioni della Vista Live costruite sullo stesso [`BRIEF.md`](BRIEF.md): st
 
 Screenshot: 1440×900 più la barra dei toggle, `density=compact`. `dark`/`light` = scenario `normal`; `dense` = tema scuro con 5 agenti e ~40 nodi; `gray` = tema scuro con `gray=1`.
 
+## Decisione dell'utente (2026-11-14)
+
+- **Direzione:** `precisione` con gli innesti raccomandati e, in più, un design **più fluido, con meno spigoli**. La sintesi è in [`precisione-fluida/`](precisione-fluida/README.md): raggi 4-10 px, eventi a capsula, collegamenti con curve raccordate, sans per l'interfaccia, attesa che respira. Ci sono anche le sigle di canale, la telemetria, la legenda e le correzioni della revisione.
+- **Densità predefinita:** `compact`, con testo mai sotto 11 px.
+- **Nome candidato per la 1c:** Vernier, da verificare (marchi, pacchetto, dominio).
+
+| Scuro                                      | Chiaro                                      | Denso                                       | Grigio                                     |
+| ------------------------------------------ | ------------------------------------------- | ------------------------------------------- | ------------------------------------------ |
+| ![](precisione-fluida/screenshot/dark.png) | ![](precisione-fluida/screenshot/light.png) | ![](precisione-fluida/screenshot/dense.png) | ![](precisione-fluida/screenshot/gray.png) |
+
+Il resto del documento è il confronto che ha portato alla scelta.
+
 ## Colpo d'occhio
 
 |        | precisione                           | sala-controllo                           | carta-inchiostro                           |

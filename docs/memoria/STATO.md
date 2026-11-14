@@ -8,12 +8,12 @@ _Ultimo aggiornamento: 2026-11-14_
 
 **Fase 1 — UX e design: in corso.** Il brief operativo è in [`FASE_1.md`](FASE_1.md).
 
-| Sotto-fase                         | Stato                                              |
-| ---------------------------------- | -------------------------------------------------- |
-| 1a Ricerca UX e architettura       | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
-| 1b Tre direzioni estetiche         | 🟡 prodotta, in attesa della scelta dell'utente    |
-| 1c Design system e schermate Figma | da fare (bloccata: Figma da autorizzare)           |
-| 1d Prototipo in codice Vista Live  | da fare (bloccata: serve almeno una fixture)       |
+| Sotto-fase                        | Stato                                              |
+| --------------------------------- | -------------------------------------------------- |
+| 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
+| 1b Tre direzioni estetiche        | 🟡 prodotta, in attesa della scelta dell'utente    |
+| 1c Design system e schermate HTML | da fare (dopo la scelta della 1b)                  |
+| 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)       |
 
 ## Branch
 
@@ -49,12 +49,11 @@ Quando l'utente risponde: scelta e motivo in `STORIA.md` e `DESIGN.md`, 1b ✅ i
 ## Cosa manca per chiudere la Fase 1
 
 - 1b: scelta dell'utente (direzione, densità predefinita, nomi candidati) e merge della PR.
-- 1c: Figma, token in `design/tokens.json`, schermate P0 e P1 in alta fedeltà, prototipo cliccabile.
+- 1c: token in `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/` (Figma tolto dal piano il 2026-11-14).
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.
 
 ## Blocchi e avvertenze
 
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR.
-- Il server MCP Figma va autorizzato con `/mcp` prima della Fase 1c.
 - Per la 1d serve almeno una sessione registrata in `packages/fixtures/raw/` (vedi `FASE_1.md`).
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.

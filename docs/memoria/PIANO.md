@@ -42,7 +42,7 @@ Ogni fase ha deliverable, task e criterio di completamento (DoD). I dettagli com
 | #   | Fase                                                                            | Dimensione |
 | --- | ------------------------------------------------------------------------------- | ---------- |
 | 0   | Repo, tooling, CI, igiene open source                                           | S          |
-| 1   | UX e design system in Figma, prototipo della Vista Live                         | L          |
+| 1   | UX e design system (token + HTML), prototipo della Vista Live                   | L          |
 | 2   | Registrazione sessioni e schema `AgentEvent`                                    | S          |
 | 3   | Shell Electron sicura, layout, design system in codice                          | M          |
 | 4   | Workspace, terminale, sessione Claude Code, permessi, timeline base             | L          |
@@ -65,7 +65,7 @@ Ogni fase ha deliverable, task e criterio di completamento (DoD). I dettagli com
 
 - **Strumenti:**
   - /frontend-design per la direzione estetica (2-3 proposte, tu scegli);
-  - Figma MCP per wireframe, alta fedeltà, componenti e prototipo (⚠️ va autorizzato con `/mcp`: oggi risulta non autenticato);
+  - token e pagine HTML statiche per componenti e schermate in alta fedeltà (Figma tolto il 2026-11-14: troppi token per un passaggio intermedio);
   - impeccable per la critica;
   - Playwright sul prototipo in codice.
 - **Domande a cui l'app deve rispondere in meno di 2 secondi:**
@@ -82,7 +82,7 @@ Ogni fase ha deliverable, task e criterio di completamento (DoD). I dettagli com
   - barra di stato sempre visibile (sessione, agenti attivi, VRAM, token);
   - command palette.
 - **Design system:**
-  - token Figma esportati in Tailwind;
+  - token in `design/tokens.json`, poi tema Tailwind;
   - tema scuro principale e tema chiaro, contrasto AA;
   - font mono con cifre tabulari per i contatori;
   - stati semantici unici in tutta l'app: idle, reading, writing, running, waiting-user, error, done (mai indicati solo dal colore);
@@ -245,17 +245,17 @@ Servono a non perdere contesto tra una sessione e l'altra: Claude legge il file 
 
 **`docs/memoria/`: un file per ogni scopo**
 
-| File                | Contenuto                                                                                                                    | Quando si legge                             | Quando si aggiorna                          |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------- |
-| `STATO.md`          | Fase e task in corso, branch attivo, cosa funziona e cosa è rotto ora, blocchi                                               | **All'inizio di ogni sessione**             | A fine sessione e a ogni cambio di task     |
-| `PROSSIMI_PASSI.md` | Coda ordinata dei prossimi task, con il riferimento alla fase                                                                | Quando si sceglie cosa fare                 | Quando un task si chiude o nasce            |
-| `STORIA.md`         | Diario delle sessioni: data, cosa è stato fatto, decisioni prese, problemi incontrati (voci brevi, la più recente in alto)   | Quando serve capire perché qualcosa è com'è | A fine sessione                             |
-| `DECISIONI.md`      | Indice delle ADR in `docs/adr/` con una riga di sintesi ciascuna                                                             | Prima di cambiare architettura              | Ogni nuova ADR                              |
-| `PIANO.md`          | Questo piano (fasi, DoD)                                                                                                     | Quando si apre una nuova fase               | Se cambia il piano, con voce in `STORIA.md` |
-| `DESIGN.md`         | Direzione estetica, token, linguaggio degli stati, regole di movimento, link a Figma (generato con impeccable a fine Fase 1) | Prima di toccare la UI                      | Quando cambia il design system              |
-| `SICUREZZA.md`      | Modello delle minacce e checklist Electron                                                                                   | Prima di toccare IPC, processi, file system | Ogni nuova superficie                       |
-| `GLOSSARIO.md`      | Termini del progetto (AgentEvent, fixture, bridge, workspace…)                                                               | Al bisogno                                  | Quando nasce un termine                     |
-| `PROBLEMI_NOTI.md`  | Bug noti, workaround, incompatibilità (es. versioni di Claude Code)                                                          | Quando qualcosa si rompe                    | Alla scoperta o risoluzione                 |
+| File                | Contenuto                                                                                                                                  | Quando si legge                             | Quando si aggiorna                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- | ------------------------------------------- |
+| `STATO.md`          | Fase e task in corso, branch attivo, cosa funziona e cosa è rotto ora, blocchi                                                             | **All'inizio di ogni sessione**             | A fine sessione e a ogni cambio di task     |
+| `PROSSIMI_PASSI.md` | Coda ordinata dei prossimi task, con il riferimento alla fase                                                                              | Quando si sceglie cosa fare                 | Quando un task si chiude o nasce            |
+| `STORIA.md`         | Diario delle sessioni: data, cosa è stato fatto, decisioni prese, problemi incontrati (voci brevi, la più recente in alto)                 | Quando serve capire perché qualcosa è com'è | A fine sessione                             |
+| `DECISIONI.md`      | Indice delle ADR in `docs/adr/` con una riga di sintesi ciascuna                                                                           | Prima di cambiare architettura              | Ogni nuova ADR                              |
+| `PIANO.md`          | Questo piano (fasi, DoD)                                                                                                                   | Quando si apre una nuova fase               | Se cambia il piano, con voce in `STORIA.md` |
+| `DESIGN.md`         | Direzione estetica, token, linguaggio degli stati, regole di movimento, link al design system HTML (generato con impeccable a fine Fase 1) | Prima di toccare la UI                      | Quando cambia il design system              |
+| `SICUREZZA.md`      | Modello delle minacce e checklist Electron                                                                                                 | Prima di toccare IPC, processi, file system | Ogni nuova superficie                       |
+| `GLOSSARIO.md`      | Termini del progetto (AgentEvent, fixture, bridge, workspace…)                                                                             | Al bisogno                                  | Quando nasce un termine                     |
+| `PROBLEMI_NOTI.md`  | Bug noti, workaround, incompatibilità (es. versioni di Claude Code)                                                                        | Quando qualcosa si rompe                    | Alla scoperta o risoluzione                 |
 
 **Automazioni**
 
@@ -344,7 +344,7 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 - **Fase 1** (quattro goal in sequenza, ciascuno chiuso da una tua revisione)
   - 1a > Esistono in `design/` la ricerca UX (persona, domande chiave, architettura dell'informazione) e la mappa delle schermate con tutti i loro stati, scritte in `docs/memoria/DESIGN.md`; memoria aggiornata.
   - 1b > Tre direzioni estetiche distinte prodotte con /frontend-design, ciascuna con palette, tipografia e una schermata della Vista Live, salvate in `design/direzioni/`; memoria aggiornata con la richiesta di scelta all'utente.
-  - 1c > In Figma esistono design system (variabili/token, componenti con stati) e tutte le schermate in alta fedeltà nella direzione scelta; `design/tokens.json` esportato; revisione impeccable senza problemi gravi aperti; memoria aggiornata.
+  - 1c > Esistono `design/tokens.json` e `design/sistema/` con token CSS, pagina componenti con tutti gli stati e le schermate P0 e P1 in alta fedeltà nella direzione scelta, solo con i token; screenshot senza errori di console; revisione impeccable senza problemi gravi aperti; memoria aggiornata.
   - 1d > Il prototipo in codice della Vista Live gira su almeno una fixture reale; i test Playwright di screenshot degli stati passano; la revisione impeccable non ha problemi gravi; memoria aggiornata.
 
 - **Fase 2**
@@ -404,7 +404,7 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 
 1. ~~Aggiornare `PIANO.md` con questa versione.~~ Fatto (2026-11-13).
 2. Fase 0: creare la repo (cartella da scegliere, es. `Desktop\control-center`), con `CLAUDE.md`, `docs/memoria/*` già compilati (`STATO.md` = "Fase 0 in corso", `PROSSIMI_PASSI.md` = task delle Fasi 0-2, `STORIA.md` = prima voce con la nascita del progetto e queste decisioni), skill inizio/fine sessione e versionamento configurato.
-3. In parallelo: registrare le prime sessioni (Fase 2) e preparare la moodboard con /frontend-design (Fase 1). Per Figma serve prima l'autorizzazione con `/mcp`.
+3. In parallelo: registrare le prime sessioni (Fase 2) e preparare la moodboard con /frontend-design (Fase 1).
 
 ## Verifica del piano stesso
 
@@ -465,7 +465,7 @@ control-center/
 │  ├─ mcp-bridge/        # server MCP "delegate_to_local_agent" (Fase 9)
 │  └─ fixtures/          # sessioni registrate per design, sviluppo e test
 ├─ docs/adr/             # Architecture Decision Records
-├─ design/               # export Figma, token, specifiche
+├─ design/               # ricerca, direzioni, token, design system HTML
 └─ .github/              # CI, template PR/issue, Dependabot
 ```
 
@@ -476,7 +476,7 @@ control-center/
 | Fase | Contenuto                                                   | Dimensione | Si usa già?               |
 | ---- | ----------------------------------------------------------- | ---------- | ------------------------- |
 | 0    | Repo, tooling, CI, regole                                   | S          | —                         |
-| 1    | Ricerca UX, design system, prototipo Figma                  | L          | prototipo                 |
+| 1    | Ricerca UX, design system, prototipo Vista Live             | L          | prototipo                 |
 | 2    | Registrazione sessioni + schema eventi                      | S          | —                         |
 | 3    | Shell Electron sicura + layout + design system in codice    | M          | finestra vuota ma "bella" |
 | 4    | Workspace, terminale, chat con Claude Code, timeline eventi | L          | **sì, uso quotidiano**    |
@@ -514,9 +514,9 @@ Ogni fase ha: **obiettivo · deliverable · task · criterio di completamento (D
 
 ## 4. Fase 1 — UX e design (prima di qualsiasi codice di prodotto)
 
-**Strumenti:** Figma (MCP) per wireframe, componenti e prototipo; skill **/frontend-design** per la direzione estetica; **impeccable** per la critica e la revisione; Playwright più avanti per validare il prototipo in codice.
+**Strumenti:** skill **/frontend-design** per la direzione estetica; token e pagine HTML statiche per componenti e schermate; **impeccable** per la critica e la revisione; Playwright per gli screenshot e per validare il prototipo in codice.
 
-> ⚠️ Il server MCP di Figma in questa sessione risulta **da autorizzare**: va fatto con `/mcp` prima di iniziare questa fase.
+> Figma era previsto per wireframe, componenti e prototipo, ma è stato tolto il 2026-11-14: con il server MCP costava molti token per un passaggio intermedio (HTML → Figma → codice) che qui non serve, perché non c'è un designer che lavora a mano. Vedi `STORIA.md`.
 
 ### 4.1 Ricerca e architettura dell'informazione
 
@@ -537,7 +537,7 @@ Ogni fase ha: **obiettivo · deliverable · task · criterio di completamento (D
 
 ### 4.2 Design system
 
-- **Token** (colori, spaziatura, raggi, ombre, tipografia, durate e curve di movimento) definiti in Figma come variabili ed esportati in CSS (`design/tokens.json` → Tailwind theme).
+- **Token** (colori, spaziatura, raggi, ombre, tipografia, durate e curve di movimento) definiti in `design/tokens.json`, usati come variabili CSS dalle pagine HTML della 1c e poi come tema Tailwind.
 - **Tema scuro come principale**, tema chiaro completo. Contrasto AA verificato su entrambi.
 - **Tipografia:** un sans per l'interfaccia e un mono per percorsi, codice, numeri (cifre tabulari per i contatori che cambiano in tempo reale).
 - **Linguaggio semantico degli stati**, coerente ovunque (mappa, timeline, lista agenti, barra di stato):
@@ -595,13 +595,12 @@ Vuoto (primo avvio, nessun progetto), caricamento, normale, denso (molti agenti)
 ### 4.5 Processo
 
 1. Moodboard e direzione estetica con **/frontend-design** (2-3 direzioni, ne scegliamo una).
-2. Wireframe in Figma delle schermate principali, poi alta fedeltà.
-3. Prototipo cliccabile in Figma del flusso principale: _apro progetto → lancio task → guardo l'agente sulla mappa → approvo un permesso → vedo il diff_.
-4. Revisione con **impeccable** (critica di gerarchia, densità, coerenza, accessibilità) → iterazione.
-5. **Prototipo in codice della sola Vista Live** alimentato dalle fixture registrate (Fase 2): è il vero test del design, perché il movimento in Figma non si valuta bene.
-6. Revisione insieme a te prima di passare alla Fase 3.
+2. Token in `design/tokens.json`, pagina componenti e schermate in alta fedeltà come HTML statico; i flussi principali (_apro progetto → lancio task → guardo l'agente sulla mappa → approvo un permesso → vedo il diff_) si verificano sulla sequenza delle schermate.
+3. Revisione con **impeccable** (critica di gerarchia, densità, coerenza, accessibilità) → iterazione.
+4. **Prototipo in codice della sola Vista Live** alimentato dalle fixture registrate (Fase 2): è il vero test del design, perché il movimento si valuta solo in codice.
+5. Revisione insieme a te prima di passare alla Fase 3.
 
-**DoD:** design system in Figma con token esportati; tutte le schermate in alta fedeltà con i loro stati; prototipo della Vista Live che gira su una sessione reale registrata; revisione impeccable senza problemi gravi aperti.
+**DoD:** token in `design/tokens.json`; pagina componenti e tutte le schermate P0 e P1 in alta fedeltà con i loro stati, solo con i token; prototipo della Vista Live che gira su una sessione reale registrata; revisione impeccable senza problemi gravi aperti.
 
 ---
 
@@ -637,7 +636,7 @@ Vuoto (primo avvio, nessun progetto), caricamento, normale, denso (molti agenti)
 - **Electron Fuses** (disattivare `RunAsNode`, `EnableNodeOptionsEnvironmentVariable`, attivare integrità ASAR).
 - Preload minimo che espone solo `window.api` tipizzato da `packages/ipc-contract`; ogni messaggio IPC validato con zod nel main, con controllo del mittente.
 - Layout a pannelli agganciabili (dimensioni ricordate per workspace), barra laterale, barra di stato, command palette, scorciatoie da tastiera (mostrate nei tooltip e in una schermata dedicata).
-- Design system in codice: token da Figma → Tailwind; componenti base; **storybook-like** interno (una pagina nascosta che mostra tutti i componenti e stati) usato anche per i test visivi.
+- Design system in codice: `design/tokens.json` → Tailwind; componenti base portati dalla pagina HTML della 1c; **storybook-like** interno (una pagina nascosta che mostra tutti i componenti e stati) usato anche per i test visivi.
 - Tema chiaro/scuro/sistema.
 
 **DoD:** test E2E Playwright avvia l'app, apre la palette, cambia tema; screenshot di riferimento dei componenti; checklist di sicurezza Electron (§13.1) tutta verde.
@@ -823,15 +822,15 @@ L'app avvia shell, agenti che scrivono file, container e server MCP: è un'app p
 
 ## 16. Come lavoriamo con Claude su questo progetto
 
-| Momento                                                   | Strumento                                 |
-| --------------------------------------------------------- | ----------------------------------------- |
-| Direzione estetica, nuove schermate                       | skill **/frontend-design**                |
-| Wireframe, componenti, prototipo                          | **Figma MCP** (da autorizzare con `/mcp`) |
-| Critica e revisione UI                                    | **impeccable**                            |
-| Test E2E, visivi, accessibilità                           | **Playwright** (`_electron`)              |
-| Ricerche ampie nel codice                                 | subagent `explorer`                       |
-| Parti indipendenti (es. pannello Docker e pannello porte) | subagent `implementer` in parallelo       |
-| IPC, sicurezza, hooks bridge, file system, packaging      | agente principale, mai delegato           |
-| Commit, push, aggiornamento di questo piano               | agente principale                         |
+| Momento                                                   | Strumento                               |
+| --------------------------------------------------------- | --------------------------------------- |
+| Direzione estetica, nuove schermate                       | skill **/frontend-design**              |
+| Componenti e schermate in alta fedeltà                    | token + **HTML statico** (niente Figma) |
+| Critica e revisione UI                                    | **impeccable**                          |
+| Test E2E, visivi, accessibilità                           | **Playwright** (`_electron`)            |
+| Ricerche ampie nel codice                                 | subagent `explorer`                     |
+| Parti indipendenti (es. pannello Docker e pannello porte) | subagent `implementer` in parallelo     |
+| IPC, sicurezza, hooks bridge, file system, packaging      | agente principale, mai delegato         |
+| Commit, push, aggiornamento di questo piano               | agente principale                       |
 
 **Primo passo concreto dopo l'approvazione del piano:** Fase 0 (repo) e, in parallelo, registrazione delle prime sessioni (Fase 2) e moodboard (Fase 1).

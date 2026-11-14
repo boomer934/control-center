@@ -1,6 +1,6 @@
 # Design
 
-> Da completare nella **Fase 1** (ricerca UX → direzioni estetiche → Figma → prototipo). Qui sono fissati i vincoli già decisi nel piano.
+> Da completare nella **Fase 1** (ricerca UX → direzioni estetiche → token e design system HTML → prototipo). Qui sono fissati i vincoli già decisi nel piano.
 
 ## Ricerca UX (Fase 1a) ✅
 
@@ -82,4 +82,4 @@ Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, 
 
 - Direzione estetica: scelta dell'utente tra le 3 proposte (vedi sopra).
 - Token (colori, tipografia, spaziatura, raggi, ombre, movimento) → `design/tokens.json`.
-- Link al file Figma.
+- Link a `design/sistema/` (pagina componenti e schermate HTML della 1c).

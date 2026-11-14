@@ -166,7 +166,7 @@ La larghezza dei dock e delle colonne non cambia: cambia il ritmo verticale. La 
 - **Metà schermo**: con dock Session aperto la mappa scende sotto i 500 px; il mono, anche condensato, tronca presto i nomi lunghi (già visibile con `agent-event.test.ts` e `PermissionDialog.tsx` in `dense`).
 - **Monotonia**: quasi tutto grigio può sembrare freddo o "tecnico" a chi non vive nel terminale; il lilla d'identità è l'unico calore costante.
 - **Testo piccolo**: 10.5-11 px condensato è al limite su schermi a 100 % di scala; `comfortable` aiuta, ma la scala minima va validata su un monitor reale.
-- **Tema chiaro**: la targa nera d'attesa vicino al pulsante `Approve` (anch'esso nero, inverse video) nel dialog crea due blocchi scuri vicini; da verificare in Figma.
+- **Tema chiaro**: la targa nera d'attesa vicino al pulsante `Approve` (anch'esso nero, inverse video) nel dialog crea due blocchi scuri vicini; da verificare nelle schermate della 1c.
 - **Stato misto in `dense`**: Claude scrive (`client.ts`) e intanto ha una richiesta `npm test -- ipc` in attesa (chiamata di tool parallela); è coerente con Claude Code ma va spiegato bene nella card.
 
 ## Nomi proposti

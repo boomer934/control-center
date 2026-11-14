@@ -15,7 +15,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Dopo
 
-3. **(F1c)** Autorizzare Figma (`/mcp`), design system, schermate P0 e P1 in alta fedeltà, prototipo cliccabile sui flussi F1-F7.
+3. **(F1c)** `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/`; flussi F1-F7 verificati sulla sequenza delle schermate. Niente Figma.
 4. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
 5. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
 6. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.

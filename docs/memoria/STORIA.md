@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Cambio di piano: via Figma, regole sui subagent
+
+**Decisioni** (con l'utente)
+
+- **Figma tolto dal piano.** Con il server MCP ogni schermata richiede molte chiamate e screenshot per verificare il risultato, e poi va ricostruita in codice. Qui non c'è un designer che lavora a mano, le direzioni della 1b sono già HTML e il movimento si valuta solo nel prototipo in codice della 1d. La 1c diventa: `design/tokens.json`, token CSS, pagina componenti e schermate P0 e P1 in HTML statico in `design/sistema/`, screenshot e revisione impeccable. Niente prototipo cliccabile: i flussi si verificano sulla sequenza delle schermate. Aggiornati `PIANO.md`, `FASE_1.md`, `STATO.md`, `PROSSIMI_PASSI.md`, `DESIGN.md`, `CLAUDE.md`, la skill `inizio-sessione` e i rimandi in `design/`.
+- **Subagent solo se necessari** (regola globale in `~/.claude/CLAUDE.md`, backup fatto): si lanciano solo se sono necessari, migliorano il lavoro e fanno risparmiare token sull'intero task; mai Opus, solo haiku o sonnet; niente `fork`.
+
+---
+
 ## 2026-11-14 — Fase 1b: tre direzioni estetiche, revisione e confronto
 
 **Fatto**

@@ -9,7 +9,7 @@ Il contrasto l'ho ricalcolato due volte: dagli hex dei token (tutte le coppie te
 - **Grave di `sala-controllo` corretto:** `.tb-win { display: flex }`, i tre controlli finestra sono di nuovo visibili.
 - **Regola `reading`:** un impulso per evento di lettura, mai in ciclo. I loop di `sala-controllo` (blip) e `carta-inchiostro` (sottolineatura) diventavano gravi: ora partono una volta sola.
 - **Regola attesa:** pulsa solo il segmento nella barra di stato. Tolto l'impulso dal blocco aperto in timeline in `precisione` (cursore fisso) e `carta-inchiostro`.
-- **Medi e minori:** non corretti nei mockup. Diventano regole per i token e il Figma della 1c, applicate solo alla direzione scelta (minimo 11 px, corsie che si allargano per le chiamate parallele, `Approve` a contorno nel tema chiaro, scala di spaziatura e token dei cicli).
+- **Medi e minori:** non corretti nei mockup. Diventano regole per i token e il design system della 1c, applicate solo alla direzione scelta (minimo 11 px, corsie che si allargano per le chiamate parallele, `Approve` a contorno nel tema chiaro, scala di spaziatura e token dei cicli).
 - README delle tre direzioni allineati alle regole di movimento.
 
 ## precisione
@@ -80,7 +80,7 @@ Nessuno.
 - **Il BRIEF si contraddice sull'impulso di `reading`.** La tabella degli stati chiede un "impulso leggero", ma la checklist dice che con il movimento consentito pulsa solo l'attesa. `precisione` fa un impulso singolo; `sala-controllo` e `carta-inchiostro` lo ripetono all'infinito e spuntano comunque la voce. Va deciso in `DESIGN.md`: un impulso per evento. Se si conferma la checklist, i loop di sala e carta diventano gravi.
 - **In due direzioni l'attesa pulsa in due punti.** `precisione` (`.blink` nella barra di stato e nella cella aperta della timeline, 1676-1678) e `carta-inchiostro` (righe 1186 e 1850) animano sia la barra di stato sia la timeline. `sala-controllo` anima solo la barra di stato. Da decidere se il blocco in timeline conta come "segmento di attesa".
 - **Tema chiaro: il pulsante primario ruba la scena all'attesa.** In tutte e tre `Approve` è un blocco d'inchiostro pieno, e in light+gray è il pieno più forte dello schermo. Nella sala il giallo sta a 1.38:1 sulla carta, in carta a 1.26:1: regge solo grazie a bordo e strisce. Correzione: nel chiaro `Approve` a contorno spesso.
-- **Testo sotto 11 px ovunque.** Il detector trova 41 / 95 / 10 testi funzionali sotto 11 px (precisione / sala / carta). Va fissato un minimo di 11 px nei token prima di Figma: l'app sta su un secondo monitor.
+- **Testo sotto 11 px ovunque.** Il detector trova 41 / 95 / 10 testi funzionali sotto 11 px (precisione / sala / carta). Va fissato un minimo di 11 px nei token della 1c: l'app sta su un secondo monitor.
 - **Gli eventi paralleli sulla stessa corsia si sovrappongono in tutte e tre** nello scenario `dense`. Serve una regola comune: la corsia si allarga per ogni chiamata parallela.
 - **In `normal` la mappa lascia vuota la metà inferiore** in tutte e tre, perché `Fit` non è applicato. Con 10 nodi il confronto sottostima i problemi di densità.
 - **Token incompleti.** I colori sono tutti token: nessun letterale fuori dai blocchi tema in nessuna delle tre. Padding e gap però sono px letterali, e le durate dei cicli sono letterali: 1200 ms; 2.8 s / 1.3 s / 1.6 s; 3.2 s / 0.9 s / 1.6 s. Prima di `design/tokens.json` servono una scala di spaziatura e token per i cicli.

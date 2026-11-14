@@ -16,7 +16,7 @@ description: Avvia una sessione di lavoro su Control Center. Legge lo stato del 
    - il task proposto;
    - modello ed effort consigliati, e se serve ultracode;
    - il testo esatto da usare con `/goal`;
-   - eventuali blocchi da `STATO.md` (es. Figma da autorizzare).
+   - eventuali blocchi da `STATO.md` (es. una fixture mancante).
 5. Se il task richiede un branch nuovo, proponi un nome `feat/…` o `fix/…`.
 
 Non iniziare a modificare file finché l'utente non conferma il task.

@@ -8,11 +8,19 @@ _Ultimo aggiornamento: 2026-11-14 (quinta sessione, Fase 2)_
 
 **Fase 1 — UX e design**: ✅ completata il 2026-11-14 (PR #10, #12, #14, #18). Sintesi in `STORIA.md`, voce "Chiusura Fase 1".
 
-**Fase 2 — Schema eventi**: lavoro fatto sul branch `feat/event-schema`; manca il CI verde sulla PR e il merge.
+**Fase 2 — Schema eventi**: goal raggiunto. La PR #20 ha il CI verde: il verify su Windows ha 110 test verdi e il controllo `sanitize.mjs --check` passa su 11 file. Manca solo il merge, che si fa a mano.
 
 ## Branch
 
-`feat/event-schema` (da `main`), 3 commit: schema e normalizzatori, fixture ripulite e pulizia, memoria. Dopo il merge si riparte da `main`.
+`feat/event-schema` (da `main`), PR #20. I commit sono:
+
+- schema e normalizzatori;
+- fixture ripulite e pulizia;
+- memoria;
+- correzione del falso positivo di gitleaks;
+- nota in PROBLEMI_NOTI.
+
+Dopo il merge si riparte da `main`.
 
 ## Punto di ripresa
 
@@ -34,7 +42,7 @@ _Ultimo aggiornamento: 2026-11-14 (quinta sessione, Fase 2)_
   - i normalizzatori su input sintetici;
   - le 5 fixture: validazione, invarianti e snapshot della timeline;
   - la pulizia, incluso `--check` sulle fixture committate.
-- **Prossimo:** push di `feat/event-schema`, PR, CI verde (verify, gitleaks su tutta la cronologia, commitlint), merge a mano.
+- **Prossimo:** merge a mano della PR #20 (squash), poi chiusura della Fase 2 in `STORIA.md` e partenza della Fase 3.
 - `.claude/settings.json` nega a Claude la lettura di `packages/fixtures/raw/`. Le fixture ripulite invece si leggono, e vanno rilette a mano prima di ogni commit.
 
 ## Cosa funziona
@@ -42,13 +50,13 @@ _Ultimo aggiornamento: 2026-11-14 (quinta sessione, Fase 2)_
 - ✅ Monorepo pnpm con `packages/event-schema`, `packages/fixtures` e, solo per sviluppo, `design/prototipo-live`.
 - ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale: 110 test, 0 errori di lint, restano 86 warning del plugin security.
 - ✅ Hook git: lint-staged + gitleaks (se installato) in pre-commit, commitlint in commit-msg.
-- ✅ CI GitHub Actions: verify su Windows, controllo delle fixture ripulite, gitleaks, commitlint, controllo memoria, audit. Il controllo delle fixture è nuovo e non ha ancora girato in CI.
+- ✅ CI GitHub Actions: verify su Windows, controllo delle fixture ripulite, gitleaks, commitlint, controllo memoria, audit. Il controllo delle fixture è verde dalla PR #20.
 - ✅ Registrazione delle fixture (`capture-hook.mjs`, `check-raw.mjs`), pulizia (`sanitize.mjs`).
 - ✅ Design: ricerca UX (1a), direzioni (1b), design system 1c, prototipo Live 1d.
 
 ## Cosa manca per chiudere la Fase 2
 
-- CI verde sulla PR di `feat/event-schema` e merge su `main`.
+- Merge della PR #20 su `main` (CI già verde).
 
 ## Blocchi e avvertenze
 

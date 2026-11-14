@@ -11,7 +11,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F2)** Push di `feat/event-schema`, PR, CI verde (incluso il nuovo step `sanitize.mjs --check` e gitleaks), merge a mano. Poi si chiude la Fase 2 in `STORIA.md`.
+1. **(F2)** Merge a mano della PR #20 (CI verde dal 2026-11-14), poi chiusura della Fase 2 in `STORIA.md`.
 
 ## Dopo
 

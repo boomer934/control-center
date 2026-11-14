@@ -8,20 +8,20 @@ _Ultimo aggiornamento: 2026-11-14_
 
 **Fase 1 — UX e design: in corso.** Il brief operativo è in [`FASE_1.md`](FASE_1.md).
 
-| Sotto-fase                        | Stato                                                                             |
-| --------------------------------- | --------------------------------------------------------------------------------- |
-| 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13                                |
-| 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14                                |
-| 1c Design system e schermate HTML | **in corso**: token, componenti, P0 e P1 fatti; restano screenshot, revisione, PR |
-| 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)                                      |
+| Sotto-fase                        | Stato                                                      |
+| --------------------------------- | ---------------------------------------------------------- |
+| 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13         |
+| 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14         |
+| 1c Design system e schermate HTML | **in corso**: tutto fatto tranne revisione impeccable e PR |
+| 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)               |
 
 ## Branch
 
-`feat/design-1c`, pushato su `origin` fino a `d3fb2ff`; i commit delle P1 sono solo locali (nessuna PR ancora).
+`feat/design-1c`, pushato su `origin` (nessuna PR ancora: si apre dopo la revisione impeccable).
 
 ## Punto di ripresa (1c, quasi finita)
 
-Sessione del 2026-11-14 fermata all'87 % del limite delle 5 ore, come chiesto dall'utente (stop al 95 %).
+Sessione del 2026-11-14 fermata vicino al limite delle 5 ore (stop chiesto dall'utente al 95 %). Il limite si azzera alle 6:30.
 
 - **Fatto:**
   - token in `design/tokens.json`, con il generatore `scripts/build-tokens.mjs`;
@@ -32,8 +32,8 @@ Sessione del 2026-11-14 fermata all'87 % del limite delle 5 ore, come chiesto da
   - `DESIGN.md` e `FASE_1.md` aggiornati (non ancora per le P1).
 - **Scelta di design da confermare:** la notifica di Windows non approva mai un permesso, porta solo alla richiesta (dove si vede il contesto).
 - **Da fare, in ordine:**
-  1. **Aggiornare `design/sistema/README.md`** con l'elenco delle P1 e i loro stati.
-  2. **Gli screenshot nella repo** (`design/sistema/screenshot/`: scuro, chiaro e denso per pagina). Lo script è `.local/shot.mjs`: è solo su questo PC, escluso da git con `.git/info/exclude`, e c'è anche `.local/color.mjs` per contrasti e distanze OKLab. Usa playwright-core dalla cache npx e Chromium 1248. Si lancia dalla repo: `node .local/shot.mjs <cartella-output> "schermate/live.html?state=normal&theme=light"`. Le P1 non sono ancora state guardate in tema chiaro.
+  1. ✅ `design/sistema/README.md` con le P1, i loro stati e le nuove regole (commit `703c03c`).
+  2. ✅ 55 screenshot WebP in `design/sistema/screenshot/` (scuro e chiaro dello stato predefinito + stato più carico, per pagina; 5,3 MB). Tema chiaro delle P1 controllato a campione: ok. Si rigenerano con `.local/shot.mjs` e si convertono in WebP (qualità 88).
   3. **La revisione impeccable:** mostrare i gravi all'utente e **aspettare conferma** prima di correggerli.
   4. Ancora `fine-sessione`, poi `pnpm verify`, push e PR verso `main`. Il merge solo con CI verde e dopo la revisione dell'utente.
 - **Da decidere (utente):** il nome Vernier, viste le collisioni in `FASE_1.md` § Decisioni aperte.
@@ -41,7 +41,7 @@ Sessione del 2026-11-14 fermata all'87 % del limite delle 5 ore, come chiesto da
 ## Cosa funziona
 
 - ✅ Monorepo pnpm con `packages/event-schema` (busta minima `AgentEvent` + 3 test).
-- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale e in CI. Ci sono 17 warning del plugin security sugli script, nessun errore.
+- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale e in CI. Ci sono 24 warning del plugin security sugli script, nessun errore. In locale servono `.local/*.mjs` formattati con prettier e `/* global document, getComputedStyle */` in testa a `shot.mjs`, altrimenti `verify` fallisce (la CI non li vede).
 - ✅ Hook git: lint-staged + gitleaks (se installato) in pre-commit, commitlint in commit-msg.
 - ✅ CI GitHub Actions: verify su Windows, gitleaks, commitlint, controllo memoria, audit. Sulle PR girano anche CodeRabbit e GitGuardian.
 - ✅ Documenti open source, `CLAUDE.md`, memoria, ADR 0001-0002, skill di sessione.
@@ -52,7 +52,7 @@ Sessione del 2026-11-14 fermata all'87 % del limite delle 5 ore, come chiesto da
 
 ## Cosa manca per chiudere la Fase 1
 
-- 1c: README delle P1, screenshot, revisione impeccable, PR.
+- 1c: revisione impeccable, `fine-sessione`, PR.
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.
 
 ## Blocchi e avvertenze

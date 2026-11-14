@@ -4,6 +4,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Chiusura Fase 2
+
+**Fatto**
+
+- PR #20 unita su `main` (`689ce2c`, squash) con i check verdi: verify su Windows (110 test, `sanitize.mjs --check` pulito su 11 file), gitleaks su tutta la cronologia, commitlint, controllo memoria.
+- Fase 2 completa: 5 sessioni reali registrate (PR #16) e ripulite, `AgentEvent` con 16 tipi, normalizzatori per stream, hooks e Ollama, merge e pulizia controllata in CI (PR #20, ADR 0003).
+- Preparata la Fase 3 senza iniziarla: brief `FASE_3.md` con le sotto-fasi 3a (shell e IPC), 3b (Console Errori) e 3c (design system in codice), ciascuna con branch proposto e goal.
+
+**Decisioni:** la Fase 3 si fa a tre sotto-goal, come prevede `PIANO.md` per le fasi lunghe; il goal complessivo resta e ne è l'unione. Il facoltativo `Notification` passa a "prima della F4", dove servono le richieste di permesso.
+
+**Problemi:** restano le fixture reali mancanti per `Notification` e `PostToolUseFailure`.
+
+---
+
 ## 2026-11-14 — Fase 2: schema AgentEvent, normalizzatori e fixture ripulite
 
 **Fatto** (branch `feat/event-schema`, `eddb07f`, `b9b7f8e`)

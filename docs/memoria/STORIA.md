@@ -4,6 +4,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Chiusura Fase 1
+
+**Fatto**
+
+- PR #18 (1d) unita su `main` (`dbaf4d4`, squash) con i 6 check verdi; insieme le regole `permissions.deny` di `.claude/settings.json`.
+- Fase 1 completa: ricerca UX (PR #10), direzione `precisione fluida` (PR #12), design system e 18 schermate (PR #14), prototipo Live sulle fixture reali (PR #18). Decisioni chiuse: direzione `precisione fluida`, densità `compact`, nome **Vernier** con ripiego su Control Center, notifiche di Windows che non approvano mai.
+- `FASE_1.md` archiviato qui: i vincoli (stati, accessibilità AA, 500 nodi a 60 fps, lingue) sono in `DESIGN.md`; la procedura di registrazione delle fixture è passata in `scripts/fixtures/README.md`; i controlli sul nome Vernier per la F10 in `PROSSIMI_PASSI.md`.
+
+**Decisioni:** il merge si fa a mano a CI verde, perché l'auto-merge di GitHub non è disponibile su questa repo.
+
+**Problemi:** CodeRabbit non ha revisionato la PR #18 (limite del piano gratuito).
+
+---
+
 ## 2026-11-14 — Fase 1d: prototipo in codice della Vista Live
 
 **Fatto** (branch `feat/live-prototype`)

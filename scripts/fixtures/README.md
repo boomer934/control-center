@@ -30,6 +30,22 @@ Run it in a separate **test project**, never in a real one and never with hooks 
 
    It validates every line and checks that the recordings together cover file edits, shell commands, subagents, a permission denial and an error.
 
+4. Sanitize and check:
+
+   ```bash
+   node scripts/fixtures/sanitize.mjs
+   ```
+
+   It rewrites every `raw/<name>.jsonl` and `<name>.hooks.jsonl` into `packages/fixtures/sanitized/`, then runs the check. The sanitizer is an allowlist. For every kind of stream-json line and hook payload it keeps only the keys the normalizers need. It replaces file contents with `<redacted>` lines, so line counts and `+`/`-` diff counts stay true. Then it cleans every string:
+   - the workspace becomes `C:\fixtures\workspace`;
+   - any home becomes `C:\Users\user`;
+   - the local user name, host name, git identity and e-mail addresses are replaced;
+   - secrets are redacted.
+
+   `node scripts/fixtures/sanitize.mjs --check` only scans `sanitized/` and exits 1 on findings. It also runs in CI and in `pnpm test`. **Read the sanitized files before committing them.**
+
+5. Update the timeline snapshots of the normalizer tests (`npx vitest run packages/fixtures -u`) and review the diff.
+
 ## What the current set covers
 
 `sessione-01..05`: a multi-file rename, a failing test fixed and re-run, a subagent, a denied `npx tsc` (through the `PowerShell` tool on Windows, not `Bash`) and a missing file.

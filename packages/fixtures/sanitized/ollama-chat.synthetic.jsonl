@@ -1,0 +1,4 @@
+{"model":"qwen2.5-coder:7b","created_at":"2026-11-14T12:00:00.100Z","message":{"role":"assistant","content":"The function "},"done":false}
+{"model":"qwen2.5-coder:7b","created_at":"2026-11-14T12:00:00.180Z","message":{"role":"assistant","content":"`computeTotal` "},"done":false}
+{"model":"qwen2.5-coder:7b","created_at":"2026-11-14T12:00:00.260Z","message":{"role":"assistant","content":"applies the discount as a percentage."},"done":false}
+{"model":"qwen2.5-coder:7b","created_at":"2026-11-14T12:00:00.340Z","message":{"role":"assistant","content":""},"done":true,"done_reason":"stop","total_duration":1240000000,"load_duration":310000000,"prompt_eval_count":182,"prompt_eval_duration":420000000,"eval_count":24,"eval_duration":480000000}

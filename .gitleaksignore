@@ -1,0 +1,7 @@
+# Known false positives of `gitleaks git` (fingerprint: commit:file:rule:line).
+# Each entry must be a test value, never a real secret, with the reason next to it.
+
+# Fake Anthropic-style keys assembled from fragments in the redaction tests (phase 2). The random
+# part was a mixed-case literal; later commits use a repeated letter instead.
+eddb07f843e81d14d32002fd2e34ef8bd026b9db:packages/event-schema/src/redact.test.ts:generic-api-key:8
+b9b7f8e00ef2f8eb3cceac9a4d8d8082aef1d56b:scripts/fixtures/sanitize.test.mjs:generic-api-key:25

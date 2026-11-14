@@ -1896,9 +1896,9 @@ svg {
   font-stretch: var(--mono-narrow);
 }
 .perm dd.cmd {
-  font-size: var(--fs-l);
+  font-size: var(--fs-m);
   font-stretch: var(--mono-wide);
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .perm dd.cmd::before {
   content: '$ ';
@@ -2976,4 +2976,9 @@ svg {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--sp-3);
+}
+
+.status .wait .kbd {
+  color: var(--on-waiting);
+  border-color: var(--on-waiting);
 }

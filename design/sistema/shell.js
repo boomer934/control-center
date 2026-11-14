@@ -204,7 +204,7 @@
       );
     if (c.agents)
       s.push(
-        `<span>${c.agents.map((a) => g(AG[a], `g ag-c ag-${a}`)).join('')}<b>${c.agents.length}</b> agents</span>`,
+        `<span>${c.agents.map((a) => g(AG[a], `g ag-c ag-${a}`)).join('')}<b>${c.agents.length}</b> ${c.agents.length === 1 ? 'agent' : 'agents'}</span>`,
       );
     if (c.session)
       s.push(

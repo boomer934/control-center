@@ -1859,6 +1859,10 @@ svg {
   color: var(--on-waiting);
   margin-top: var(--sp-1);
 }
+/* agent hues fail on the waiting fill: the sigil keeps its shape and letters, not its hue */
+.perm-h .sig {
+  color: var(--on-waiting);
+}
 .perm-h .t {
   font-size: var(--fs-xl);
   font-weight: var(--fw-semibold);

@@ -24,6 +24,8 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Problemi:** nessuno. Gli avvisi del rilevatore (11 px, Instrument Sans, barra indeterminata, righe di `reading`) sono scelte del design system.
 
+**Merge:** PR #14 unita su `main` il 2026-11-14 (`93a8677`), con i 6 check verdi. CodeRabbit (piano gratuito) ha lasciato solo il riepilogo, senza osservazioni.
+
 ---
 
 ## 2026-11-14 — Fase 1c (prima parte): token, componenti e schermate P0

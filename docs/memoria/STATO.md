@@ -12,25 +12,23 @@ _Ultimo aggiornamento: 2026-11-14 (seconda sessione)_
 | --------------------------------- | -------------------------------------------------- |
 | 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
 | 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14 |
-| 1c Design system e schermate HTML | ✅ fatta e revisionata, **PR verso `main` aperta** |
+| 1c Design system e schermate HTML | ✅ fatta e revisionata, PR #14 unita il 2026-11-14 |
 | 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)       |
 
 ## Branch
 
-`feat/design-1c`, pushato su `origin`, con la PR verso `main` aperta. Il merge si fa solo con la CI verde e dopo la revisione dell'utente.
+`docs/memoria-1c-merge`, solo per registrare il merge della 1c. Dopo il suo merge si riparte da `main`.
 
 ## Punto di ripresa
 
-- **1c finita:**
+- **1c finita e unita su `main`** (PR #14, commit `93a8677`, CI verde):
   - token, componenti, 9 schermate P0 e 9 P1 con tutti gli stati;
   - flussi F1-F7 e 55 screenshot;
   - revisione impeccable: un solo grave, corretto (sigillo sul fondo dell'attesa); contrasto AA in tutte le pagine, gli stati e i due temi.
 - **Decisioni chiuse il 2026-11-14:**
   - nome **Vernier**, con ripiego su Control Center dove le collisioni creano problemi;
   - le notifiche di Windows non approvano mai.
-- **Prossimo:**
-  1. Revisione e merge della PR della 1c (utente).
-  2. Registrare le fixture (F2), che sbloccano la 1d.
+- **Prossimo:** registrare le fixture (F2), che sbloccano la 1d. È l'unico blocco rimasto per chiudere la Fase 1.
 - Strumenti locali: `.local/shot.mjs` (screenshot + console + testo < 11 px). La scansione del contrasto pagina × stato × tema era uno script temporaneo; si riscrive facilmente sullo stesso schema di `shot.mjs`.
 
 ## Cosa funziona
@@ -47,7 +45,6 @@ _Ultimo aggiornamento: 2026-11-14 (seconda sessione)_
 
 ## Cosa manca per chiudere la Fase 1
 
-- 1c: merge della PR (dopo CI verde e revisione dell'utente).
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.
 
 ## Blocchi e avvertenze

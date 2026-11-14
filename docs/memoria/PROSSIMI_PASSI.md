@@ -8,19 +8,17 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 - ✅ **(F1a)** Ricerca UX: persona, 5 domande chiave, architettura dell'informazione, mappa delle schermate e stati → `design/ricerca/` + riassunto in `docs/memoria/DESIGN.md`. Revisionata dall'utente; PR #10 unita su `main` il 2026-11-13.
 - ✅ **(F1b)** Tre direzioni estetiche, revisione, confronto e scelta dell'utente: `precisione fluida` (`design/direzioni/precisione-fluida/`), densità `compact`, nome candidato Vernier. PR #12 unita su `main` il 2026-11-14.
-
-- ✅ **(F1c)** Design system e schermate HTML: token, componenti, 9 P0 + 9 P1 con tutti gli stati, flussi F1-F7, 55 screenshot, revisione impeccable (un grave, corretto). Nome deciso: Vernier, con ripiego su Control Center. PR verso `main` aperta il 2026-11-14.
+- ✅ **(F1c)** Design system e schermate HTML: token, componenti, 9 P0 + 9 P1 con tutti gli stati, flussi F1-F7, 55 screenshot, revisione impeccable (un grave, corretto). Nome deciso: Vernier, con ripiego su Control Center. PR #14 unita su `main` il 2026-11-14.
 
 ## Ora
 
-1. **(F1c, utente)** Rivedere la PR di `feat/design-1c` e unirla con la CI verde.
-2. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
+1. **(F2, sblocca la F1d)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo
 
-3. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
-4. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
-5. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
+2. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
+3. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
+4. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
 
 ## Quando capita
 

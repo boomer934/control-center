@@ -17,7 +17,7 @@ _Ultimo aggiornamento: 2026-11-14_
 
 ## Branch
 
-`feat/design-1c`, con 6 commit locali + la memoria, **non ancora pushato**.
+`feat/design-1c`, pushato su `origin` (nessuna PR ancora).
 
 ## Punto di ripresa (1c, a metà)
 
@@ -31,7 +31,7 @@ Mi sono fermato vicino al limite delle 5 ore (circa 80 %).
   - `DESIGN.md` e `FASE_1.md` aggiornati.
 - **Da fare, in ordine:**
   1. **Le 9 schermate P1:** onboarding, replay, infra, local-agents (con la proposta di diff), mcp-skills, settings, terminal, workspace, notifiche. Si fanno come le P0: si copia `schermate/live.html`, si aggiunge `<pagina>-data.js` con `window.PAGE` e `window.LIVE` (varianti con `center`, `bdock`, `overlay`, `noDock`, `inspector`) e si aggiungono le pagine in `PAGES` di `shell.js` (già fatto).
-  2. **Gli screenshot nella repo** (`design/sistema/screenshot/`: scuro, chiaro e denso per pagina). Lo script è nella scratchpad della sessione, `shot.mjs`: va rifatto se la scratchpad sparisce. Usa playwright-core dalla cache npx e Chromium 1248, controlla la console e il testo sotto 11 px.
+  2. **Gli screenshot nella repo** (`design/sistema/screenshot/`: scuro, chiaro e denso per pagina). Lo script è `.local/shot.mjs`: è solo su questo PC, escluso da git con `.git/info/exclude`, e c'è anche `.local/color.mjs` per contrasti e distanze OKLab. Usa playwright-core dalla cache npx e Chromium 1248, e controlla la console e il testo sotto 11 px. Si lancia da una cartella di output: `node <repo>/.local/shot.mjs shots "schermate/live.html?state=normal"`.
   3. **La revisione impeccable:** mostrare i gravi all'utente e **aspettare conferma** prima di correggerli.
   4. Ancora `fine-sessione`, poi `pnpm verify`, push e PR verso `main`. Il merge solo con CI verde e dopo la revisione dell'utente.
 - **Da decidere (utente):** il nome Vernier, viste le collisioni in `FASE_1.md` § Decisioni aperte.

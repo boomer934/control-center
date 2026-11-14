@@ -1,0 +1,25 @@
+{
+  "name": "@control-center/prototipo-live",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Phase 1d throwaway prototype of the Live view, replaying recorded Claude Code sessions. Dev-only, never shipped.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc -p tsconfig.json",
+    "e2e": "playwright test",
+    "e2e:update": "playwright test --update-snapshots"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "@xyflow/react": "^12.12.1",
+    "elkjs": "^0.12.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "vite": "^8.3.8"
+  }
+}

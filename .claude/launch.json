@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prototipo-live",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["pnpm@10.34.9", "--filter", "@control-center/prototipo-live", "dev"],
+      "port": 5174
+    }
+  ]
+}

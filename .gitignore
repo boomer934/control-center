@@ -18,6 +18,10 @@ coverage/
 # raw, unsanitized session recordings (only sanitized fixtures are committed)
 packages/fixtures/raw/
 
+# Playwright run output
+test-results/
+playwright-report/
+
 # app runtime data during development
 .data/
 

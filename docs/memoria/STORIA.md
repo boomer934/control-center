@@ -4,6 +4,21 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 1d: prototipo in codice della Vista Live
+
+**Fatto** (branch `feat/live-prototype`)
+
+- `design/prototipo-live/`: pacchetto del workspace solo per sviluppo (Vite, React 19, React Flow 12, elkjs) che riproduce le 5 fixture reali con mappa a contenitori (ELK), chip degli agenti agganciate ai nodi, timeline con corsie, forcella del subagent e scrubber, colonna `Agents`. Usa `tokens.css`, `componenti.css` e lo sprite di `shell.js` della 1c.
+- Normalizzatore `stream-json + hooks → Replay` e `viewAt(replay, t)` puri, con 13 test unitari su una registrazione sintetica.
+- 11 test Playwright: screenshot di reading, writing, running, error (×2), waiting, done (scuro e chiaro), più scrubbing, `Space` e movimento ridotto. Console pulita.
+- Revisione impeccable: nessun grave, 16/20 (`design/prototipo-live/REVISIONE.md`).
+
+**Decisioni:** le fixture grezze si normalizzano al volo nel dev server e non si scrive nulla di derivato; i test Playwright girano solo in locale. Un op resta attivo almeno 900 ms per essere visibile a 1×; il permesso negato da `claude -p` è mostrato come attesa simulata di 6 s, segnalata. Dipendenze solo di sviluppo e dentro il prototipo: nessuna ADR.
+
+**Problemi:** React Flow non misura i nodi controllati senza `onNodesChange` (risolto passando le misure di ELK); Playwright 1.65 vuole un Chromium più nuovo di quello installato. Entrambi in `PROBLEMI_NOTI.md`. Un test ha trovato che l'etichetta d'errore troncata perdeva il motivo: ora il motivo resta sempre.
+
+---
+
 ## 2026-11-14 — F2 anticipata: registrazione delle prime 5 fixture
 
 **Fatto** (branch `feat/fixtures-recording`)

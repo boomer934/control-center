@@ -22,7 +22,7 @@ _Ultimo aggiornamento: 2026-11-14 (terza sessione)_
 ## Punto di ripresa
 
 - **Fixture registrate (F2 anticipata):** 5 sessioni in `packages/fixtures/raw/` (ignorata da git), stream-json + hooks, coprono modifiche a più file, test, subagent, permesso negato ed errore. `node scripts/fixtures/check-raw.mjs` passa. Dettagli e lacune in `FASE_1.md`, sezione "Fixture per 1d".
-- Il progetto di prova è `C:\Users\david\Desktop\vernier-fixture-lab` (fuori dalla repo); per nuove registrazioni: `./record.sh NN "<prompt>"`.
+- Il progetto di prova è `~/Desktop/vernier-fixture-lab` (fuori dalla repo); per nuove registrazioni: `./record.sh NN "<prompt>"`.
 - Note per lo schema della F2: su Windows la shell arriva anche come tool `PowerShell`, non solo `Bash`; lo stream-json contiene eventi `system/*` (hook_started, task_progress, permission_denied, ui_panes…) oltre a assistant/user/result.
 - **Prossimo:** aprire la PR di `feat/fixtures-recording`, poi la 1d (prototipo della Vista Live sulle fixture).
 - 1c unita su `main` (PR #14). Decisioni chiuse: nome **Vernier** (ripiego Control Center); le notifiche di Windows non approvano mai.

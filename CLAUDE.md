@@ -19,7 +19,7 @@ packages/event-schema  schema unificato AgentEvent (zod)
 packages/*             ipc-contract, hooks-bridge, mcp-bridge, ollama-client, fixtures (in arrivo)
 docs/memoria/          memoria di progetto (vedi sotto)
 docs/adr/              decisioni architetturali numerate
-design/                token, export Figma, direzioni estetiche
+design/                ricerca UX, direzioni estetiche, token, design system HTML
 scripts/               script di repo (gitleaks pre-commit, pulizia fixture…)
 ```
 

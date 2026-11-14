@@ -4,6 +4,62 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 1b: scelta della direzione, `precisione fluida`
+
+**Fatto**
+
+- Nuova cartella `design/direzioni/precisione-fluida/` con `live.html`, `README.md` e 4 screenshot. È la sintesi scelta, ottenuta da una copia di `precisione` con:
+  - uno strato CSS in coda;
+  - collegamenti e timeline arrotondati nello script;
+  - gli innesti: sigle di canale e telemetria da `sala-controllo`, legenda e titolo display del dialog da `carta-inchiostro`.
+- Applicate nel mockup le correzioni trasversali della revisione: minimo 11 px, mono condensato solo in mappa, `Approve` a contorno, corsie della timeline che si alzano per le chiamate parallele, Fit vero.
+- Nessun errore di console in 7 combinazioni (Chromium headless).
+- Aggiornati `CONFRONTO.md` (decisione), `DESIGN.md`, `FASE_1.md` (1b ✅), `STATO.md` e `PROSSIMI_PASSI.md`.
+
+**Decisioni** (con l'utente)
+
+- Direzione: `precisione` con gli innesti raccomandati, **più fluida e con meno spigoli**. Grado "morbido": raggi 4 / 6 / 10 px più le pillole, nessun raggio oltre 10 px.
+- Densità predefinita `compact`; nome candidato per la 1c: **Vernier**.
+- L'attesa respira (1.6 s) invece di lampeggiare a scatti; resta l'unico impulso continuo.
+
+**Problemi**
+
+- Nessuno aperto. Nello scenario dense la colonna Agents non conteneva tutto: ora le card scorrono tra la telemetria e i file modificati, e sfumano quando non entrano.
+
+---
+
+## 2026-11-14 — Cambio di piano: via Figma, regole sui subagent
+
+**Decisioni** (con l'utente)
+
+- **Figma tolto dal piano.** Con il server MCP ogni schermata richiede molte chiamate e screenshot per verificare il risultato, e poi va ricostruita in codice. Qui non c'è un designer che lavora a mano, le direzioni della 1b sono già HTML e il movimento si valuta solo nel prototipo in codice della 1d. La 1c diventa: `design/tokens.json`, token CSS, pagina componenti e schermate P0 e P1 in HTML statico in `design/sistema/`, screenshot e revisione impeccable. Niente prototipo cliccabile: i flussi si verificano sulla sequenza delle schermate. Aggiornati `PIANO.md`, `FASE_1.md`, `STATO.md`, `PROSSIMI_PASSI.md`, `DESIGN.md`, `CLAUDE.md`, la skill `inizio-sessione` e i rimandi in `design/`.
+- **Subagent solo se necessari** (regola globale in `~/.claude/CLAUDE.md`, backup fatto): si lanciano solo se sono necessari, migliorano il lavoro e fanno risparmiare token sull'intero task; mai Opus, solo haiku o sonnet; niente `fork`.
+
+---
+
+## 2026-11-14 — Fase 1b: tre direzioni estetiche, revisione e confronto
+
+**Fatto**
+
+- 13/11 (`ad5192a`): `design/direzioni/BRIEF.md` e tre direzioni con workflow ultracode: `precisione`, `sala-controllo` e `carta-inchiostro`, ciascuna con `live.html` e `README.md`. La revisione si era interrotta al limite delle 5 ore.
+- 14/11 (`a03783f`), senza ultracode:
+  - revisione impeccable con un solo subagent → `REVISIONE.md`: un grave (controlli finestra di `sala-controllo`), corretto;
+  - 12 screenshot senza errori di console;
+  - `CONFRONTO.md` con raccomandazione e domande all'utente.
+- `DESIGN.md` e `FASE_1.md` aggiornati. `pnpm verify` verde. Branch pushato e PR aperta.
+
+**Decisioni**
+
+- Con l'utente: `reading` fa un solo impulso per evento. L'unico impulso continuo è il segmento d'attesa nella barra di stato, non il blocco in timeline (risolta la contraddizione del BRIEF).
+- I problemi medi e minori non si correggono nei mockup: diventano regole dei token della 1c, tra cui il minimo di 11 px e le corsie della timeline che si allargano.
+- Raccomandazione, da confermare: `precisione` con innesti dalle altre due, densità `compact`.
+
+**Problemi**
+
+- Il server MCP Playwright non funziona ancora. Gli screenshot si fanno con `playwright-core` dalla cache npx e Chromium 1248 (`PROBLEMI_NOTI.md`).
+
+---
+
 ## 2026-11-13 — Fase 1a: ricerca UX e architettura dell'informazione
 
 **Fatto**

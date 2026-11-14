@@ -12,7 +12,6 @@ Progettare l'esperienza completa **prima di scrivere codice di prodotto**, con i
 | -------------------------------------- | ------------------------------------------- | -------------------------------------------- |
 | Skill `/frontend-design`               | già disponibile                             | 1b                                           |
 | Skill `impeccable`                     | già disponibile                             | revisione di 1b, 1c e 1d; genera `DESIGN.md` |
-| **Server MCP Figma autorizzato**       | l'utente esegue `/mcp` e autentica Figma    | 1c (bloccante)                               |
 | Playwright                             | `pnpm add -D -w @playwright/test` (con ADR) | 1d                                           |
 | Almeno 1 sessione registrata (fixture) | vedi "Fixture per 1d" sotto                 | 1d (bloccante)                               |
 
@@ -34,7 +33,9 @@ Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisi
 - **Goal:**
   > Esistono in `design/` la ricerca UX (persona, domande chiave, architettura dell'informazione) e la mappa delle schermate con tutti i loro stati, scritte in `docs/memoria/DESIGN.md`; memoria aggiornata.
 
-### 1b — Tre direzioni estetiche
+### 1b — Tre direzioni estetiche ✅
+
+> ✅ Scelta il 2026-11-14: **`precisione fluida`** ([README](../../design/direzioni/precisione-fluida/README.md)), cioè `precisione` più fluida e con meno spigoli, con gli innesti delle altre due; densità `compact`; nome candidato Vernier. Prodotte prima: tre direzioni in `design/direzioni/` (`precisione`, `sala-controllo`, `carta-inchiostro`) con `live.html`, `README.md` e 4 screenshot ciascuna; [`REVISIONE.md`](../../design/direzioni/REVISIONE.md) (un solo grave, corretto) e [`CONFRONTO.md`](../../design/direzioni/CONFRONTO.md) con raccomandazione e domande. Decise con l'utente le regole di movimento: `reading` un impulso per evento, pulsa solo il segmento d'attesa nella barra di stato. I medi e i minori vanno nei token della 1c.
 
 - **Modello:** Opus 5.5 · **effort:** high · **ultracode: sì, effort high**: le tre direzioni si esplorano in parallelo, una per agente.
 - **Produce:** `design/direzioni/<nome>/` per ciascuna direzione:
@@ -47,17 +48,21 @@ Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisi
 - **Goal:**
   > Tre direzioni estetiche distinte prodotte con /frontend-design, ciascuna con palette, tipografia e una schermata della Vista Live, salvate in `design/direzioni/`; memoria aggiornata con la richiesta di scelta all'utente.
 
-### 1c — Design system e schermate in Figma
+### 1c — Design system e schermate in HTML
+
+> Figma tolto dal piano il 2026-11-14 (vedi `STORIA.md`): costava molti token per un passaggio intermedio HTML → Figma → codice. Il design system nasce direttamente come token e pagine HTML statiche, come i mockup della 1b.
 
 - **Modello:** Opus 5.5 · **effort:** high · **ultracode:** no
-- **Bloccante:** Figma autorizzato.
+- **Bloccante:** scelta della direzione (1b).
 - **Produce:**
-  - file Figma con variabili/token (colori, tipografia, spaziatura, raggi, ombre, durate e curve), componenti con tutti gli stati e schermate in alta fedeltà della direzione scelta;
-  - prototipo cliccabile del flusso principale;
-  - `design/tokens.json` esportato;
-  - link al file Figma in `DESIGN.md`.
+  - `design/tokens.json`: colori (temi scuro e chiaro), tipografia, spaziatura, raggi, ombre, durate e curve della direzione scelta, con le regole di `REVISIONE.md` (minimo 11 px, corsie della timeline, pulsante primario nel tema chiaro…);
+  - `design/sistema/tokens.css`: gli stessi token come variabili CSS, l'unica fonte di stile delle pagine HTML (in Fase 3 diventano il tema Tailwind);
+  - `design/sistema/componenti.html`: tutti i componenti con tutti gli stati, solo con i token (anticipa la pagina componenti della Fase 3);
+  - `design/sistema/schermate/`: schermate P0 e P1 di `schermate.md` in alta fedeltà, statiche, con dati finti e i loro stati;
+  - screenshot (scuro, chiaro, denso) e revisione impeccable.
+- I flussi F1-F7 si verificano sulla sequenza delle schermate; il prototipo interattivo è quello in codice della 1d.
 - **Goal:**
-  > In Figma esistono design system (variabili/token, componenti con stati) e tutte le schermate in alta fedeltà nella direzione scelta; `design/tokens.json` esportato; revisione impeccable senza problemi gravi aperti; memoria aggiornata.
+  > Esistono `design/tokens.json` e `design/sistema/` con token CSS, pagina componenti con tutti gli stati e le schermate P0 e P1 in alta fedeltà nella direzione scelta, solo con i token; screenshot senza errori di console; revisione impeccable senza problemi gravi aperti; memoria aggiornata.
 
 ### 1d — Prototipo in codice della Vista Live
 
@@ -95,6 +100,6 @@ claude -p "<compito realistico>" --output-format stream-json --verbose > package
 
 ## Decisioni aperte da chiudere in questa fase
 
-1. Direzione estetica (1b).
-2. Nome del prodotto (1b o 1c).
-3. Densità predefinita dell'interfaccia (compatta "da IDE" o più ariosa). La 1a propone compatta di default con l'opzione `Comfortable` (vedi `design/ricerca/architettura.md`); si decide in 1b.
+1. ~~Direzione estetica (1b).~~ ✅ `precisione fluida` (2026-11-14).
+2. Nome del prodotto (1c): candidato Vernier, da verificare (marchi, pacchetto, dominio).
+3. ~~Densità predefinita dell'interfaccia.~~ ✅ `compact`, con `Comfortable` nelle impostazioni (2026-11-14).

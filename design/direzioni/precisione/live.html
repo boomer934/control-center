@@ -1,0 +1,3715 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="compact" data-scenario="normal">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Control Center · Live · precisione</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,300..700&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===================================================================
+   precisione — tokens
+   Every color is a custom property, redefined per theme.
+   =================================================================== */
+      :root {
+        --font-mono: 'Martian Mono', 'Cascadia Mono', Consolas, ui-monospace, monospace;
+        --font-sans: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+        --mono-wide: 87.5%; /* readouts, chrome */
+        --mono-narrow: 75%; /* map cells, timeline decode */
+        --dur-1: 150ms;
+        --dur-2: 200ms;
+        --dur-3: 300ms;
+        --ease-out: cubic-bezier(0.2, 0, 0, 1);
+        --ease-in: cubic-bezier(0.4, 0, 1, 1);
+        --blink: 1060ms; /* editor cursor blink, waiting-user only */
+        --r-0: 0;
+        --r-1: 1px;
+        --r-2: 2px;
+        --dock-w: 344px;
+        --agents-w: 288px;
+        --act-w: 48px;
+        --title-h: 32px;
+        --status-h: 24px;
+        --tb-h: 30px;
+        --btab-h: 22px;
+      }
+
+      /* ---------- dark ---------- */
+      :root[data-theme='dark'] {
+        --page: #080808;
+        --bg-0: #0e0e0e;
+        --bg-1: #151515;
+        --bg-2: #1b1b1b;
+        --bg-3: #262626;
+        --line: #2e2e2e;
+        --line-2: #4a4a4a;
+        --line-3: #6e6e6e;
+        --fg-1: #ebebeb;
+        --fg-2: #a3a3a3;
+        --fg-3: #858585;
+        --accent: #ebebeb;
+        --on-accent: #0e0e0e;
+        --st-idle: #8f8f8f;
+        --st-reading: #6aaeff;
+        --st-writing: #ff9a4d;
+        --st-running: #7fd36a;
+        --st-waiting: #ffd43b;
+        --st-waiting-edge: #ffd43b;
+        --st-waiting-text: #ffd43b;
+        --on-waiting: #141414;
+        --st-error: #ff6b6b;
+        --st-done: #b3b3b3;
+        --ag-claude: #c4a5ff;
+        --ag-sub: #c4a5ff;
+        --ag-local: #4fd6c8;
+        color-scheme: dark;
+      }
+      /* ---------- light ---------- */
+      :root[data-theme='light'] {
+        --page: #d4d4d4;
+        --bg-0: #e6e6e6;
+        --bg-1: #f4f4f4;
+        --bg-2: #ffffff;
+        --bg-3: #ececec;
+        --line: #dcdcdc;
+        --line-2: #b5b5b5;
+        --line-3: #7a7a7a;
+        --fg-1: #141414;
+        --fg-2: #575757;
+        --fg-3: #6e6e6e;
+        --accent: #141414;
+        --on-accent: #ffffff;
+        --st-idle: #636363;
+        --st-reading: #1b62c9;
+        --st-writing: #a64a05;
+        --st-running: #2c7520;
+        --st-waiting: #141414;
+        --st-waiting-edge: #141414;
+        --st-waiting-text: #7a5a00;
+        --on-waiting: #ffd43b;
+        --st-error: #c4272a;
+        --st-done: #474747;
+        --ag-claude: #6a3fd1;
+        --ag-sub: #6a3fd1;
+        --ag-local: #00736a;
+        color-scheme: light;
+      }
+
+      /* ---------- density ---------- */
+      :root[data-density='compact'] {
+        --row: 20px;
+        --row-gap: 2px;
+        --lane: 34px;
+        --fs-xs: 10.5px;
+        --fs-s: 11px;
+        --fs-map: 11px;
+        --fs-m: 12.5px;
+        --fs-l: 13.5px;
+        --pad-x: 8px;
+        --pad-y: 4px;
+        --gap: 6px;
+        --card-pad: 8px;
+      }
+      :root[data-density='comfortable'] {
+        --row: 24px;
+        --row-gap: 3px;
+        --lane: 40px;
+        --fs-xs: 11px;
+        --fs-s: 12px;
+        --fs-map: 11.5px;
+        --fs-m: 13.5px;
+        --fs-l: 14.5px;
+        --pad-x: 12px;
+        --pad-y: 6px;
+        --gap: 8px;
+        --card-pad: 12px;
+      }
+
+      /* ===================================================================
+   base
+   =================================================================== */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        background: var(--page);
+      }
+      body {
+        font-family: var(--font-mono);
+        font-stretch: var(--mono-wide);
+        font-size: var(--fs-s);
+        line-height: 1.35;
+        color: var(--fg-1);
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: 'tnum' 1;
+        -webkit-font-smoothing: antialiased;
+        padding: 12px 16px 28px;
+        min-width: 1472px;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        cursor: pointer;
+      }
+      svg {
+        display: block;
+      }
+      .ic {
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .g {
+        width: 12px;
+        height: 12px;
+        flex: none;
+      }
+      .sans {
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+      }
+      :focus-visible {
+        outline: 1px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .kbd {
+        font-size: var(--fs-xs);
+        color: var(--fg-2);
+        border: 1px solid var(--line-2);
+        padding: 0 3px;
+        border-radius: var(--r-1);
+        line-height: 14px;
+        font-stretch: var(--mono-narrow);
+      }
+
+      /* ===================================================================
+   toggle bar (outside the simulated window)
+   =================================================================== */
+      .toggles {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        width: 1440px;
+        margin: 0 auto 10px;
+        color: var(--fg-2);
+        font-size: 11px;
+      }
+      .toggles .id {
+        color: var(--fg-1);
+        margin-right: auto;
+      }
+      .toggles .grp {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .seg {
+        display: flex;
+        border: 1px solid var(--line-3);
+      }
+      .seg button {
+        padding: 2px 8px;
+        color: var(--fg-2);
+        font-size: 11px;
+      }
+      .seg button + button {
+        border-left: 1px solid var(--line-3);
+      }
+      .seg button[aria-pressed='true'] {
+        background: var(--accent);
+        color: var(--on-accent);
+      }
+
+      /* ===================================================================
+   window
+   =================================================================== */
+      .win {
+        width: 1440px;
+        height: 900px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: var(--act-w) 1fr var(--dock-w);
+        grid-template-rows: var(--title-h) 1fr var(--status-h);
+        background: var(--bg-1);
+        border: 1px solid var(--line-3);
+      }
+      .win.gray {
+        filter: grayscale(1);
+      }
+
+      /* activity bar */
+      .act {
+        grid-column: 1;
+        grid-row: 1/3;
+        background: var(--bg-0);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .ws {
+        width: 48px;
+        height: var(--title-h);
+        display: grid;
+        place-items: center;
+        border-bottom: 1px solid var(--line);
+      }
+      .ws span {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        font-stretch: var(--mono-narrow);
+      }
+      .act nav {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding-top: 4px;
+      }
+      .act a {
+        position: relative;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        color: var(--fg-2);
+      }
+      .act a[aria-current='page'] {
+        color: var(--fg-1);
+      }
+      .act a[aria-current='page']::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: var(--accent);
+      }
+      .act a .ic {
+        width: 18px;
+        height: 18px;
+      }
+      .act .badge {
+        position: absolute;
+        top: 6px;
+        right: 7px;
+        min-width: 14px;
+        height: 13px;
+        padding: 0 3px;
+        font-size: 9.5px;
+        line-height: 13px;
+        text-align: center;
+        background: var(--fg-1);
+        color: var(--bg-0);
+        font-stretch: var(--mono-narrow);
+      }
+      .act .bottom {
+        margin-top: auto;
+        border-top: 1px solid var(--line);
+        width: 100%;
+      }
+
+      /* title bar */
+      .title {
+        grid-column: 2/4;
+        grid-row: 1;
+        display: flex;
+        align-items: stretch;
+        background: var(--bg-0);
+        border-bottom: 1px solid var(--line);
+      }
+      .title .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        padding-left: 10px;
+        min-width: 0;
+      }
+      .title .crumbs > * {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        height: 100%;
+        border-right: 1px solid var(--line);
+      }
+      .title .crumbs > *:first-child {
+        padding-left: 0;
+      }
+      .title .wsname {
+        color: var(--fg-1);
+      }
+      .title .branch {
+        color: var(--fg-2);
+      }
+      .title .sess {
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+        font-size: var(--fs-m);
+        color: var(--fg-1);
+        border-right: 0 !important;
+      }
+      .title .sess small {
+        font-family: var(--font-mono);
+        font-stretch: var(--mono-narrow);
+        font-size: var(--fs-xs);
+        color: var(--fg-2);
+      }
+      .title .spacer {
+        flex: 1;
+      }
+      .title .docks {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 8px;
+        border-left: 1px solid var(--line);
+      }
+      .title .docks button {
+        width: 26px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        color: var(--fg-2);
+      }
+      .title .docks button[aria-pressed='true'] {
+        color: var(--fg-1);
+        background: var(--bg-3);
+      }
+      .title .wctl {
+        display: flex;
+      }
+      .title .wctl button {
+        width: 46px;
+        display: grid;
+        place-items: center;
+        color: var(--fg-2);
+      }
+
+      /* live area */
+      .live {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 1fr var(--agents-w);
+        grid-template-rows: var(--tb-h) 1fr var(--btab-h);
+      }
+      .ltb {
+        grid-column: 1/3;
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg-1);
+      }
+      .ltb .tool {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        color: var(--fg-2);
+        border-right: 1px solid var(--line);
+      }
+      .ltb .tool b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+      .ltb .tool .g {
+        color: var(--ag-claude);
+      }
+      .ltb .right {
+        margin-left: auto;
+        display: flex;
+        align-items: stretch;
+      }
+      .ltb .right .tool {
+        border-right: 0;
+        border-left: 1px solid var(--line);
+      }
+      .ltb .zoom {
+        font-stretch: var(--mono-narrow);
+      }
+
+      .mapcol {
+        grid-column: 1;
+        grid-row: 2;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--line);
+      }
+      .map {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--bg-1);
+      }
+      .stage {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      .edges {
+        position: absolute;
+        left: 0;
+        top: 0;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      /* map: containers and groups */
+      .ctr {
+        position: absolute;
+        border: 1px solid var(--line-2);
+        border-radius: var(--r-1);
+      }
+      .ctr > .lg {
+        position: absolute;
+        top: -8px;
+        left: 8px;
+        padding: 0 4px;
+        background: var(--bg-1);
+        color: var(--fg-1);
+        font-size: var(--fs-map);
+        font-stretch: var(--mono-narrow);
+        line-height: 14px;
+      }
+      .ctr > .lg i {
+        font-style: normal;
+        color: var(--fg-2);
+      }
+      .ghd {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--fg-2);
+        font-size: var(--fs-map);
+        font-stretch: var(--mono-narrow);
+        border-bottom: 1px solid var(--line);
+      }
+      .ghd .p {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-left: 2px;
+      }
+      .ghd .ct {
+        margin-left: auto;
+        font-size: var(--fs-xs);
+        flex: none;
+      }
+      .ghd .ct b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+
+      /* map: nodes (one cell per file) */
+      .node {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-right: 6px;
+        background: var(--bg-2);
+        border: 1px solid var(--line-2);
+        border-radius: var(--r-1);
+        font-size: var(--fs-map);
+        font-stretch: var(--mono-narrow);
+        white-space: nowrap;
+        color: var(--fg-1);
+        transition:
+          border-color var(--dur-2) var(--ease-out),
+          background-color var(--dur-2) var(--ease-out),
+          color var(--dur-2) var(--ease-out);
+      }
+      .node .sign {
+        flex: none;
+        width: 18px;
+        align-self: stretch;
+        display: grid;
+        place-items: center;
+        border-right: 1px solid var(--line);
+        color: var(--st-idle);
+      }
+      .node .nm {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .node .meta {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex: none;
+        color: var(--fg-2);
+        font-size: var(--fs-xs);
+      }
+      .node .dk {
+        display: flex;
+        gap: 2px;
+      }
+      .node .dk .g {
+        width: 10px;
+        height: 10px;
+      }
+      .diff {
+        border: 1px solid currentColor;
+        padding: 0 3px;
+        line-height: 12px;
+        font-size: var(--fs-xs);
+      }
+
+      .node.s-idle .nm {
+        color: var(--fg-2);
+      }
+      .node.s-reading {
+        border-style: dashed;
+        border-color: var(--st-reading);
+      }
+      .node.s-reading .sign {
+        color: var(--st-reading);
+        border-right-style: dashed;
+        border-right-color: var(--st-reading);
+      }
+      .node.s-writing {
+        border: 2px solid var(--st-writing);
+      }
+      .node.s-writing .sign {
+        color: var(--st-writing);
+        border-right-color: var(--st-writing);
+      }
+      .node.s-writing .meta {
+        color: var(--st-writing);
+      }
+      .node.s-running {
+        border-color: var(--st-running);
+      }
+      .node.s-running .sign {
+        color: var(--st-running);
+      }
+      .node.s-running .meta {
+        color: var(--st-running);
+      }
+      .node.s-waiting {
+        background: var(--st-waiting);
+        border-color: var(--st-waiting-edge);
+        color: var(--on-waiting);
+      }
+      .node.s-waiting .sign {
+        color: var(--on-waiting);
+        border-right-color: var(--on-waiting);
+      }
+      .node.s-waiting .meta {
+        color: var(--on-waiting);
+      }
+      .node.s-error {
+        border-color: var(--st-error);
+      }
+      .node.s-error .sign {
+        color: var(--st-error);
+        border-right-color: var(--st-error);
+      }
+      .node.s-error .meta {
+        color: var(--st-error);
+      }
+      .node.s-error::after {
+        content: '';
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        border-style: solid;
+        border-width: 0 7px 7px 0;
+        border-color: transparent var(--st-error) transparent transparent;
+      }
+      .node.s-done {
+        border-color: var(--line-3);
+      }
+      .node.s-done .sign {
+        color: var(--st-done);
+      }
+      .trail {
+        display: flex;
+        gap: 1px;
+        align-items: center;
+      }
+      .trail i {
+        width: 2px;
+        height: 8px;
+        background: var(--st-done);
+      }
+      .trail i:nth-child(2) {
+        height: 6px;
+      }
+      .trail i:nth-child(3) {
+        height: 4px;
+      }
+      .prog {
+        position: absolute;
+        left: 18px;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .prog::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 34%;
+        background: var(--st-running);
+      }
+
+      /* temporary nodes (commands, local jobs) */
+      .node.temp {
+        border-left-width: 3px;
+        border-left-style: double;
+      }
+      .node.temp .nm::before {
+        content: attr(data-pre);
+        color: inherit;
+      }
+      .node.folder {
+        border-bottom-width: 3px;
+        border-bottom-style: double;
+        color: var(--fg-2);
+      }
+      .node.folder .nm {
+        color: var(--fg-2);
+      }
+
+      /* agent chips on the map rail */
+      .chip {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 6px;
+        background: var(--bg-0);
+        border: 1px solid var(--line-3);
+        border-radius: var(--r-1);
+        font-size: var(--fs-map);
+        font-stretch: var(--mono-narrow);
+        white-space: nowrap;
+      }
+      .chip .g.id {
+        color: var(--ag);
+      }
+      .chip .nmx {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chip .st {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--fg-2);
+      }
+      .chip.s-waiting {
+        background: var(--bg-0);
+        color: var(--fg-1);
+        border-color: var(--st-waiting-edge);
+      }
+      .chip.s-waiting .st {
+        color: var(--st-waiting-text);
+      }
+      .chip.s-writing {
+        border: 1px solid var(--st-writing);
+      }
+      .chip.s-writing .st {
+        color: var(--st-writing);
+      }
+      .chip.s-reading {
+        border-style: dashed;
+        border-color: var(--st-reading);
+      }
+      .chip.s-reading .st {
+        color: var(--st-reading);
+      }
+      .chip.s-running .st {
+        color: var(--st-running);
+      }
+      .chip.s-running {
+        border-color: var(--st-running);
+      }
+      .chip.s-done .st {
+        color: var(--st-done);
+      }
+      .chip.s-done .nmx {
+        color: var(--fg-2);
+      }
+      .ag-claude {
+        --ag: var(--ag-claude);
+      }
+      .ag-sub {
+        --ag: var(--ag-sub);
+      }
+      .ag-local {
+        --ag: var(--ag-local);
+      }
+
+      /* edges */
+      .e {
+        fill: none;
+        stroke-width: 1.25;
+        shape-rendering: crispEdges;
+      }
+      .e-write {
+        stroke: var(--st-writing);
+        stroke-width: 1.5;
+      }
+      .e-read {
+        stroke: var(--st-reading);
+        stroke-dasharray: 3 3;
+      }
+      .e-attach {
+        stroke: var(--line-3);
+      }
+      .e-attach.w {
+        stroke: var(--st-waiting-edge);
+      }
+      .e-attach.r {
+        stroke: var(--st-running);
+      }
+      .e-end {
+        stroke: none;
+      }
+      .e-end.write {
+        fill: var(--st-writing);
+      }
+      .e-end.read {
+        fill: var(--st-reading);
+      }
+
+      /* minimap + readout */
+      .minimap {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        width: 148px;
+        height: 92px;
+        background: var(--bg-0);
+        border: 1px solid var(--line-2);
+      }
+      .minimap svg {
+        width: 100%;
+        height: 100%;
+      }
+      .mm-n {
+        fill: var(--line-3);
+      }
+      .mm-c {
+        fill: none;
+        stroke: var(--line-2);
+        stroke-width: 1;
+      }
+      .mm-v {
+        fill: none;
+        stroke: var(--fg-1);
+        stroke-width: 1;
+      }
+      .mm-ph {
+        fill: var(--line-2);
+      }
+      .readout {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        display: flex;
+        border: 1px solid var(--line);
+        background: var(--bg-1);
+        color: var(--fg-2);
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+      }
+      .readout span {
+        padding: 2px 7px;
+      }
+      .readout span + span {
+        border-left: 1px solid var(--line);
+      }
+      .readout b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+
+      /* timeline (logic-analyzer lanes) */
+      .tl {
+        flex: none;
+        border-top: 1px solid var(--line-2);
+        background: var(--bg-1);
+        position: relative;
+      }
+      .tlh {
+        display: flex;
+        align-items: center;
+        height: 22px;
+        border-bottom: 1px solid var(--line);
+        color: var(--fg-2);
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+      }
+      .tlh > span {
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 100%;
+      }
+      .tlh > span + span {
+        border-left: 1px solid var(--line);
+      }
+      .tlh b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+      .tlh .r {
+        margin-left: auto;
+      }
+      .tl svg {
+        display: block;
+      }
+      .tl text {
+        font-family: var(--font-mono);
+        font-stretch: var(--mono-narrow);
+        font-size: var(--fs-xs);
+        fill: var(--fg-2);
+      }
+      .tl .ax-t {
+        fill: var(--fg-2);
+      }
+      .tl .ax-l {
+        stroke: var(--line-2);
+        shape-rendering: crispEdges;
+      }
+      .tl .lane-sep {
+        stroke: var(--line);
+        shape-rendering: crispEdges;
+      }
+      .tl .bus {
+        stroke: var(--line-3);
+        stroke-width: 1;
+        shape-rendering: crispEdges;
+      }
+      .tl .fork {
+        stroke: var(--line-3);
+        fill: none;
+        shape-rendering: crispEdges;
+      }
+      .tl .fork-dot {
+        fill: var(--fg-2);
+      }
+      .tl .ln-name {
+        fill: var(--fg-1);
+        font-size: var(--fs-s);
+      }
+      .tl .ln-sub {
+        fill: var(--fg-2);
+      }
+      .tl .gid {
+        color: var(--ag);
+      }
+      .ev {
+        stroke-width: 1;
+        shape-rendering: geometricPrecision;
+      }
+      .ev-bg {
+        fill: var(--bg-1);
+        stroke: none;
+      }
+      .ev-rd {
+        fill: none;
+        stroke: var(--fg-2);
+        stroke-dasharray: 2 2;
+      }
+      .ev-sh {
+        fill: none;
+        stroke: var(--fg-2);
+      }
+      .ev-ed {
+        fill: var(--bg-3);
+        stroke: var(--fg-2);
+      }
+      .ev-err {
+        fill: none;
+        stroke: var(--st-error);
+        stroke-width: 1.5;
+      }
+      .ev-reading {
+        fill: none;
+        stroke: var(--st-reading);
+        stroke-dasharray: 3 2;
+        stroke-width: 1.25;
+      }
+      .ev-writing {
+        fill: none;
+        stroke: var(--st-writing);
+        stroke-width: 2;
+      }
+      .ev-running {
+        fill: url(#hatch);
+        stroke: var(--st-running);
+        stroke-width: 1.25;
+      }
+      .ev-wait {
+        fill: var(--st-waiting);
+        stroke: var(--st-waiting-edge);
+      }
+      .tl .lb {
+        fill: var(--fg-2);
+      }
+      .tl .lb-ed {
+        fill: var(--fg-1);
+      }
+      .tl .lb-err {
+        fill: var(--st-error);
+      }
+      .tl .lb-reading {
+        fill: var(--st-reading);
+      }
+      .tl .lb-writing {
+        fill: var(--st-writing);
+      }
+      .tl .lb-running {
+        fill: var(--st-running);
+      }
+      .tl .lb-wait {
+        fill: var(--on-waiting);
+      }
+      .tl .plate {
+        fill: var(--bg-1);
+      }
+      .tl .cur {
+        fill: var(--on-waiting);
+      }
+      .hatch-l {
+        stroke: var(--st-running);
+        stroke-width: 1;
+      }
+      .tl .cp-l {
+        stroke: var(--fg-1);
+        stroke-dasharray: 1 2;
+        shape-rendering: crispEdges;
+      }
+      .tl .cp-f {
+        fill: var(--bg-1);
+        stroke: var(--fg-1);
+      }
+      .tl .cp-t {
+        fill: var(--fg-1);
+      }
+      .tl .now-l {
+        stroke: var(--accent);
+        shape-rendering: crispEdges;
+      }
+      .tl .now-f {
+        fill: var(--accent);
+      }
+      .tl .now-t {
+        fill: var(--on-accent);
+      }
+      .tl .done-g {
+        stroke: var(--st-done);
+        fill: none;
+        stroke-width: 1.5;
+      }
+      .tl .err-g {
+        stroke: var(--st-error);
+        stroke-width: 1.5;
+      }
+
+      /* bottom dock tab strip (dock closed) */
+      .btab {
+        grid-column: 1/3;
+        grid-row: 3;
+        display: flex;
+        align-items: stretch;
+        border-top: 1px solid var(--line);
+        background: var(--bg-0);
+        color: var(--fg-2);
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+      }
+      .btab span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 10px;
+        border-right: 1px solid var(--line);
+      }
+      .btab .er {
+        color: var(--st-error);
+      }
+      .btab .r {
+        margin-left: auto;
+        border-right: 0;
+        border-left: 1px solid var(--line);
+      }
+
+      /* agents column */
+      .agcol {
+        grid-column: 2;
+        grid-row: 2;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-2);
+      }
+      .tabs {
+        display: flex;
+        height: 28px;
+        border-bottom: 1px solid var(--line);
+        flex: none;
+      }
+      .tabs button {
+        position: relative;
+        padding: 0 12px;
+        color: var(--fg-2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .tabs button[aria-selected='true'] {
+        color: var(--fg-1);
+      }
+      .tabs button[aria-selected='true']::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        height: 2px;
+        background: var(--accent);
+      }
+      .tabs .n {
+        color: var(--fg-2);
+        font-size: var(--fs-xs);
+      }
+      .aglist {
+        overflow: hidden;
+        flex: 1;
+      }
+      .ag {
+        position: relative;
+        border-bottom: 1px solid var(--line);
+        padding: var(--card-pad) var(--card-pad) var(--card-pad) calc(var(--card-pad) + 6px);
+      }
+      .ag::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: transparent;
+      }
+      .ag.s-waiting::before {
+        background: var(--st-waiting);
+      }
+      .ag.s-writing::before {
+        background: var(--st-writing);
+      }
+      .ag.s-reading::before {
+        background: repeating-linear-gradient(
+          to bottom,
+          var(--st-reading) 0 3px,
+          transparent 3px 6px
+        );
+      }
+      .ag.s-running::before {
+        background: var(--st-running);
+      }
+      .ag.s-error::before {
+        background: var(--st-error);
+      }
+      .ag.sel {
+        background: var(--bg-1);
+      }
+      .ag-h {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 18px;
+      }
+      .ag-h .g.id {
+        color: var(--ag);
+      }
+      .ag-h .nm {
+        color: var(--fg-1);
+        font-size: var(--fs-s);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .ag-h .where,
+      .ag-h .g {
+        flex: none;
+      }
+      .ag-h .state {
+        flex: none;
+      }
+      .ag-h .where {
+        color: var(--fg-2);
+        font-size: var(--fs-xs);
+        border: 1px solid var(--line-2);
+        padding: 0 3px;
+        line-height: 13px;
+        font-stretch: var(--mono-narrow);
+      }
+      .ag-h .where.loc {
+        border-style: solid;
+        border-color: var(--fg-2);
+        color: var(--fg-1);
+      }
+      .state {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+        color: var(--fg-2);
+      }
+      .state.s-reading {
+        color: var(--st-reading);
+      }
+      .state.s-writing {
+        color: var(--st-writing);
+      }
+      .state.s-running {
+        color: var(--st-running);
+      }
+      .state.s-error {
+        color: var(--st-error);
+      }
+      .state.s-done {
+        color: var(--st-done);
+      }
+      .state.s-waiting {
+        background: var(--st-waiting);
+        color: var(--on-waiting);
+        padding: 1px 5px;
+        border: 1px solid var(--st-waiting-edge);
+      }
+      .ag-now {
+        margin-top: 4px;
+        display: flex;
+        gap: 6px;
+        align-items: baseline;
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+        color: var(--fg-2);
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .ag-now b {
+        font-weight: 400;
+        color: var(--fg-1);
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ag-task {
+        margin-top: 4px;
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+        font-size: var(--fs-m);
+        color: var(--fg-1);
+        line-height: 1.3;
+      }
+      .rd {
+        margin-top: 6px;
+        display: grid;
+        grid-template-columns: auto 1fr auto 1fr;
+        border: 1px solid var(--line);
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+      }
+      .rd dt,
+      .rd dd {
+        padding: 2px 6px;
+        border-bottom: 1px solid var(--line);
+      }
+      .rd dt {
+        color: var(--fg-2);
+        border-right: 1px solid var(--line);
+      }
+      .rd dd {
+        color: var(--fg-1);
+        border-right: 1px solid var(--line);
+      }
+      .rd dd:nth-of-type(2n) {
+        border-right: 0;
+      }
+      .rd .last {
+        border-bottom: 0;
+      }
+      .rd dd.span {
+        grid-column: 2/5;
+        border-right: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .acts {
+        margin-top: 8px;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 22px;
+        padding: 0 7px;
+        border: 1px solid var(--line-3);
+        color: var(--fg-1);
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+        border-radius: var(--r-1);
+      }
+      .btn:hover {
+        background: var(--bg-3);
+      }
+      .req {
+        margin-top: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+        color: var(--fg-1);
+        border: 1px solid var(--st-waiting-edge);
+        padding: 2px 6px;
+      }
+      .req .g {
+        color: var(--st-waiting-text);
+      }
+      .ag .prog {
+        left: 0;
+        right: 0;
+        bottom: -1px;
+      }
+      .ag .trail {
+        display: inline-flex;
+        margin-left: 4px;
+      }
+
+      /* session dock */
+      .dock {
+        grid-column: 3;
+        grid-row: 2;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-2);
+        border-left: 1px solid var(--line-2);
+      }
+      .dk-h {
+        flex: none;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 10px;
+        border-bottom: 1px solid var(--line);
+        color: var(--fg-2);
+      }
+      .dk-h b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+      .dk-h .r {
+        margin-left: auto;
+        display: flex;
+        gap: 2px;
+      }
+      .dk-h .r button {
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        color: var(--fg-2);
+      }
+      .chat {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: var(--pad-x) var(--pad-x) 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .msg {
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+        font-size: var(--fs-m);
+        line-height: 1.45;
+        color: var(--fg-1);
+      }
+      .msg .who {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-mono);
+        font-stretch: var(--mono-narrow);
+        font-size: var(--fs-xs);
+        color: var(--fg-2);
+        margin-bottom: 3px;
+      }
+      .msg .who .g {
+        color: var(--ag-claude);
+      }
+      .msg.user {
+        border-left: 2px solid var(--line-3);
+        padding-left: 8px;
+        color: var(--fg-1);
+      }
+      .msg code {
+        font-family: var(--font-mono);
+        font-stretch: var(--mono-narrow);
+        font-size: 0.86em;
+        padding: 0 2px;
+        border: 1px solid var(--line);
+      }
+      .trace {
+        margin-top: 6px;
+        border: 1px solid var(--line);
+        font-family: var(--font-mono);
+        font-stretch: var(--mono-narrow);
+        font-size: var(--fs-xs);
+        color: var(--fg-2);
+      }
+      .trace div {
+        display: flex;
+        gap: 8px;
+        padding: 2px 6px;
+        align-items: center;
+      }
+      .trace div + div {
+        border-top: 1px solid var(--line);
+      }
+      .trace b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+      .trace .k {
+        width: 16px;
+        color: var(--fg-2);
+      }
+      .trace .x {
+        margin-left: auto;
+      }
+      .trace .er {
+        color: var(--st-error);
+      }
+
+      .perm {
+        flex: none;
+        margin: 12px var(--pad-x) 0;
+        border: 1px solid var(--st-waiting-edge);
+        background: var(--bg-1);
+      }
+      .perm-h {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 26px;
+        padding: 0 8px;
+        background: var(--st-waiting);
+        color: var(--on-waiting);
+        border-bottom: 1px solid var(--st-waiting-edge);
+      }
+      .perm-h .t {
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+        font-weight: 600;
+        font-size: var(--fs-m);
+        white-space: nowrap;
+      }
+      .perm-h .t {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .perm-h .r {
+        white-space: nowrap;
+        flex: none;
+      }
+      .perm-h .r {
+        margin-left: auto;
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .perm-h .g {
+        color: var(--on-waiting);
+      }
+      .perm dl {
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        font-size: var(--fs-xs);
+      }
+      .perm dt {
+        padding: 5px 8px;
+        color: var(--fg-2);
+        border-bottom: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+        font-stretch: var(--mono-narrow);
+      }
+      .perm dd {
+        padding: 5px 8px;
+        border-bottom: 1px solid var(--line);
+        color: var(--fg-1);
+        min-width: 0;
+      }
+      .perm dd.cmd {
+        font-size: var(--fs-l);
+        font-stretch: var(--mono-wide);
+        padding: 6px 8px;
+      }
+      .perm dd.cmd::before {
+        content: '$ ';
+        color: var(--fg-2);
+      }
+      .perm dd.why {
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+        font-size: var(--fs-m);
+      }
+      .perm .btns {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 8px;
+      }
+      .perm .b {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        height: 28px;
+        padding: 0 8px;
+        border: 1px solid var(--line-3);
+        font-size: var(--fs-s);
+        font-stretch: var(--mono-narrow);
+      }
+      .perm .b .kbd {
+        border-color: currentColor;
+        color: inherit;
+      }
+      .perm .b.pri {
+        background: var(--accent);
+        color: var(--on-accent);
+        border-color: var(--accent);
+      }
+      .perm .b.wide {
+        grid-column: auto;
+      }
+      .perm .note {
+        padding: 0 8px 8px;
+        font-size: var(--fs-xs);
+        color: var(--fg-2);
+        font-stretch: var(--mono-narrow);
+      }
+
+      .composer {
+        flex: none;
+        margin-top: 10px;
+        border-top: 1px solid var(--line);
+        padding: 8px var(--pad-x) 10px;
+      }
+      .ctx {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 6px;
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+      }
+      .ctx span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--line-2);
+        padding: 1px 6px;
+        color: var(--fg-2);
+      }
+      .ctx span b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+      .ctx .on::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: var(--fg-1);
+      }
+      .inp {
+        height: 54px;
+        border: 1px solid var(--line-2);
+        background: var(--bg-1);
+        padding: 6px 8px;
+        font-family: var(--font-sans);
+        font-stretch: 100%;
+        font-size: var(--fs-m);
+        color: var(--fg-3);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .inp .kbd {
+        opacity: 0.7;
+        color: var(--fg-3);
+        border-color: var(--line-2);
+        align-self: flex-end;
+      }
+
+      /* status bar */
+      .status {
+        grid-column: 1/4;
+        grid-row: 3;
+        display: flex;
+        align-items: stretch;
+        background: var(--bg-0);
+        border-top: 1px solid var(--line-2);
+        font-size: var(--fs-xs);
+        font-stretch: var(--mono-narrow);
+        color: var(--fg-2);
+        white-space: nowrap;
+      }
+      .status > span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 9px;
+        border-right: 1px solid var(--line);
+      }
+      .status b {
+        font-weight: 400;
+        color: var(--fg-1);
+      }
+      .status .g {
+        width: 10px;
+        height: 10px;
+      }
+      .status .sess .g {
+        color: var(--fg-1);
+      }
+      .status .agt .g.id {
+        color: var(--ag-claude);
+      }
+      .status .wait {
+        background: var(--st-waiting);
+        color: var(--on-waiting);
+        border-right: 1px solid var(--st-waiting-edge);
+        border-left: 1px solid var(--st-waiting-edge);
+        font-stretch: var(--mono-wide);
+      }
+      .status .wait b {
+        color: var(--on-waiting);
+        font-weight: 600;
+      }
+      .status .wait .cur {
+        width: 6px;
+        height: 11px;
+        background: var(--on-waiting);
+      }
+      .status .err {
+        color: var(--st-error);
+      }
+      .status .err b {
+        color: var(--st-error);
+      }
+      .vram {
+        display: inline-flex;
+        gap: 1px;
+      }
+      .vram i {
+        width: 5px;
+        height: 9px;
+        border: 1px solid var(--fg-2);
+      }
+      .vram i.f {
+        background: var(--fg-1);
+        border-color: var(--fg-1);
+      }
+      .status .push {
+        margin-left: auto;
+        border-left: 1px solid var(--line);
+      }
+
+      /* ===================================================================
+   motion — only where state lives; none at rest
+   =================================================================== */
+      @media (prefers-reduced-motion: no-preference) {
+        .blink {
+          animation: blink var(--blink) steps(1, end) infinite;
+        }
+        .node.s-running .prog::after,
+        .ag.s-running .prog::after {
+          animation: indet 1200ms linear infinite;
+        }
+        .s-reading .sign svg {
+          animation: readtick var(--dur-3) var(--ease-out) 600ms 1 both;
+        }
+        .s-done .sign {
+          animation: afterglow var(--dur-3) var(--ease-out) 400ms 1 both;
+        }
+        .s-done .trail i {
+          animation: trail var(--dur-3) var(--ease-out) 400ms 1 both;
+        }
+        .ag,
+        .chip,
+        .state {
+          transition:
+            background-color var(--dur-2) var(--ease-out),
+            border-color var(--dur-2) var(--ease-out);
+        }
+      }
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+      @keyframes indet {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(300%);
+        }
+      }
+      @keyframes readtick {
+        0% {
+          opacity: 0.35;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      @keyframes afterglow {
+        from {
+          color: var(--st-writing);
+        }
+        to {
+          color: var(--st-done);
+        }
+      }
+      @keyframes trail {
+        from {
+          background: var(--st-writing);
+        }
+        to {
+          background: var(--st-done);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .prog::after {
+          width: 100%;
+          background: repeating-linear-gradient(
+            90deg,
+            var(--st-running) 0 4px,
+            transparent 4px 7px
+          );
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============ icon sprite ============ -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <!-- state glyphs, 12x12 -->
+        <symbol id="s-idle" viewBox="0 0 12 12">
+          <rect x="4.5" y="4.5" width="3" height="3" fill="currentColor" />
+        </symbol>
+        <symbol id="s-reading" viewBox="0 0 12 12">
+          <path
+            d="M3 2.2 7.2 6 3 9.8M6.5 2.2 10.7 6 6.5 9.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+        </symbol>
+        <symbol id="s-writing" viewBox="0 0 12 12">
+          <path d="M1.5 10.5 2.2 7.6 8.3 1.5 10.5 3.7 4.4 9.8Z" fill="currentColor" />
+        </symbol>
+        <symbol id="s-running" viewBox="0 0 12 12">
+          <rect
+            x="1"
+            y="3.8"
+            width="10"
+            height="4.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+          <rect x="1" y="3.8" width="5" height="4.4" fill="currentColor" />
+        </symbol>
+        <symbol id="s-waiting" viewBox="0 0 12 12">
+          <path
+            d="M6 1.3 11.2 10.7H.8Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linejoin="miter"
+          />
+          <rect x="5.3" y="4.5" width="1.4" height="3.1" fill="currentColor" />
+          <rect x="5.3" y="8.3" width="1.4" height="1.3" fill="currentColor" />
+        </symbol>
+        <symbol id="s-error" viewBox="0 0 12 12">
+          <path d="M2.3 2.3 9.7 9.7M9.7 2.3 2.3 9.7" stroke="currentColor" stroke-width="1.9" />
+        </symbol>
+        <symbol id="s-done" viewBox="0 0 12 12">
+          <path
+            d="M1.8 6.3 4.7 9.1 10.3 2.9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+          />
+        </symbol>
+        <!-- agent identity glyphs, 12x12 -->
+        <symbol id="a-claude" viewBox="0 0 12 12">
+          <path d="M6 .6 11.4 6 6 11.4.6 6Z" fill="currentColor" />
+        </symbol>
+        <symbol id="a-sub" viewBox="0 0 12 12">
+          <path
+            d="M6 1.3 10.7 6 6 10.7 1.3 6Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+          <rect x="4.9" y="4.9" width="2.2" height="2.2" fill="currentColor" />
+        </symbol>
+        <symbol id="a-local" viewBox="0 0 12 12">
+          <rect x="2.5" y="2.5" width="7" height="7" fill="currentColor" />
+          <path
+            d="M4 .5V2.5M8 .5V2.5M4 9.5V11.5M8 9.5V11.5M.5 4H2.5M.5 8H2.5M9.5 4H11.5M9.5 8H11.5"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+        </symbol>
+        <!-- ui icons, 16x16 -->
+        <symbol id="i-live" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <rect x="1.5" y="2" width="5" height="3.5" />
+            <rect x="9.5" y="2" width="5" height="3.5" />
+            <rect x="5.5" y="10.5" width="5" height="3.5" />
+            <path d="M4 5.5V8H12V5.5M8 8V10.5" />
+          </g>
+        </symbol>
+        <symbol id="i-infra" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <rect x="2" y="2" width="12" height="5" />
+            <rect x="2" y="9" width="12" height="5" />
+          </g>
+          <rect x="4" y="4" width="2" height="1.2" fill="currentColor" />
+          <rect x="4" y="11" width="2" height="1.2" fill="currentColor" />
+        </symbol>
+        <symbol id="i-chip" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <rect x="4" y="4" width="8" height="8" />
+            <path
+              d="M6 1.5V4M10 1.5V4M6 12V14.5M10 12V14.5M1.5 6H4M1.5 10H4M12 6H14.5M12 10H14.5"
+            />
+          </g>
+        </symbol>
+        <symbol id="i-mcp" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <path d="M5.5 1.5V5M10.5 1.5V5M3.5 5H12.5V8A4.5 4.5 0 0 1 3.5 8Z M8 12.5V15" />
+          </g>
+        </symbol>
+        <symbol id="i-git" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="4.5" cy="3.5" r="1.7" />
+            <circle cx="4.5" cy="12.5" r="1.7" />
+            <circle cx="11.5" cy="5.5" r="1.7" />
+            <path d="M4.5 5.2V10.8M11.5 7.2C11.5 10 4.5 8.5 4.5 10.8" />
+          </g>
+        </symbol>
+        <symbol id="i-tele" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <path d="M1.5 14.5H14.5" />
+            <rect x="2.5" y="8" width="2.5" height="6.5" />
+            <rect x="6.75" y="4" width="2.5" height="10.5" />
+            <rect x="11" y="10" width="2.5" height="4.5" />
+          </g>
+        </symbol>
+        <symbol id="i-gear" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="8" cy="8" r="2.3" />
+            <path
+              d="M8 1.5V4M8 12V14.5M1.5 8H4M12 8H14.5M3.4 3.4 5.2 5.2M10.8 10.8 12.6 12.6M3.4 12.6 5.2 10.8M10.8 5.2 12.6 3.4"
+            />
+          </g>
+        </symbol>
+        <symbol id="i-chev" viewBox="0 0 16 16">
+          <path d="M4 6 8 10 12 6" fill="none" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+        <symbol id="i-branch" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="4.5" cy="3.5" r="1.6" />
+            <circle cx="4.5" cy="12.5" r="1.6" />
+            <circle cx="11.5" cy="4.5" r="1.6" />
+            <path d="M4.5 5.1V10.9M11.5 6.1C11.5 9 4.5 8 4.5 10.9" />
+          </g>
+        </symbol>
+        <symbol id="i-follow" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="8" cy="8" r="4.5" />
+            <path d="M8 1V4.5M8 11.5V15M1 8H4.5M11.5 8H15" />
+          </g>
+        </symbol>
+        <symbol id="i-filter" viewBox="0 0 16 16">
+          <path
+            d="M2 3H14L9.5 8.5V13L6.5 14.5V8.5Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.25"
+          />
+        </symbol>
+        <symbol id="i-fit" viewBox="0 0 16 16">
+          <path
+            d="M2 6V2H6M10 2H14V6M14 10V14H10M6 14H2V10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.25"
+          />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 16 16">
+          <path d="M4.5 3 12.5 8 4.5 13Z" fill="currentColor" />
+        </symbol>
+        <symbol id="i-min" viewBox="0 0 16 16">
+          <path d="M3 8.5H13" stroke="currentColor" stroke-width="1" />
+        </symbol>
+        <symbol id="i-max" viewBox="0 0 16 16">
+          <rect
+            x="3.5"
+            y="3.5"
+            width="9"
+            height="9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+          />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 16 16">
+          <path d="M3.5 3.5 12.5 12.5M12.5 3.5 3.5 12.5" stroke="currentColor" stroke-width="1" />
+        </symbol>
+        <symbol id="i-dl" viewBox="0 0 16 16">
+          <rect
+            x="1.5"
+            y="2.5"
+            width="13"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+          <rect x="1.5" y="2.5" width="4" height="11" fill="currentColor" />
+        </symbol>
+        <symbol id="i-db" viewBox="0 0 16 16">
+          <rect
+            x="1.5"
+            y="2.5"
+            width="13"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+          <rect x="1.5" y="9.5" width="13" height="4" fill="currentColor" opacity=".35" />
+          <path d="M1.5 9.5H14.5" stroke="currentColor" stroke-width="1.1" />
+        </symbol>
+        <symbol id="i-dr" viewBox="0 0 16 16">
+          <rect
+            x="1.5"
+            y="2.5"
+            width="13"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+          <rect x="10.5" y="2.5" width="4" height="11" fill="currentColor" />
+        </symbol>
+        <symbol id="i-hist" viewBox="0 0 16 16">
+          <g fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M8 4.5V8L10.5 9.5" />
+          </g>
+        </symbol>
+        <symbol id="i-more" viewBox="0 0 16 16">
+          <g fill="currentColor">
+            <rect x="3" y="7.3" width="1.6" height="1.6" />
+            <rect x="7.2" y="7.3" width="1.6" height="1.6" />
+            <rect x="11.4" y="7.3" width="1.6" height="1.6" />
+          </g>
+        </symbol>
+        <symbol id="i-term" viewBox="0 0 16 16">
+          <path
+            d="M3 4.5 6.5 8 3 11.5M8 12H13"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.25"
+          />
+        </symbol>
+        <symbol id="i-dot" viewBox="0 0 12 12">
+          <circle cx="6" cy="6" r="3.2" fill="currentColor" />
+        </symbol>
+        <symbol id="i-folder" viewBox="0 0 12 12">
+          <path
+            d="M1 2.5H4.5L5.5 3.5H11V9.5H1Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.1"
+          />
+        </symbol>
+        <symbol id="i-fold" viewBox="0 0 12 12">
+          <path d="M4 2.5 7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- ============ toggle bar (outside the simulated window) ============ -->
+    <div class="toggles" role="toolbar" aria-label="Mockup controls">
+      <span class="id">precisione · Live view · 1440×900</span>
+      <span class="grp"
+        >theme
+        <span class="seg" data-k="theme"
+          ><button data-v="dark">dark</button><button data-v="light">light</button></span
+        ></span
+      >
+      <span class="grp"
+        >density
+        <span class="seg" data-k="density"
+          ><button data-v="compact">compact</button
+          ><button data-v="comfortable">comfortable</button></span
+        ></span
+      >
+      <span class="grp"
+        >scenario
+        <span class="seg" data-k="scenario"
+          ><button data-v="normal">normal</button><button data-v="dense">dense</button></span
+        ></span
+      >
+      <span class="grp"
+        >gray
+        <span class="seg" data-k="gray"
+          ><button data-v="0">off</button><button data-v="1">on</button></span
+        ></span
+      >
+    </div>
+
+    <!-- ============ simulated window ============ -->
+    <div class="win" id="win">
+      <aside class="act" aria-label="Sections">
+        <div class="ws" title="Workspace: control-center"><span>cc</span></div>
+        <nav>
+          <a aria-current="page" title="Live  Ctrl+1"
+            ><svg class="ic"><use href="#i-live" /></svg
+          ></a>
+          <a title="Infra  Ctrl+2"
+            ><svg class="ic"><use href="#i-infra" /></svg
+          ></a>
+          <a title="Local agents  Ctrl+3"
+            ><svg class="ic"><use href="#i-chip" /></svg
+          ></a>
+          <a title="MCP &amp; Skills  Ctrl+4"
+            ><svg class="ic"><use href="#i-mcp" /></svg
+          ></a>
+          <a title="Git  Ctrl+5"
+            ><svg class="ic"><use href="#i-git" /></svg
+            ><span class="badge" id="gitBadge">2</span></a
+          >
+          <a title="Telemetry  Ctrl+6"
+            ><svg class="ic"><use href="#i-tele" /></svg
+          ></a>
+        </nav>
+        <div class="bottom">
+          <nav>
+            <a title="Settings  Ctrl+7"
+              ><svg class="ic"><use href="#i-gear" /></svg
+            ></a>
+          </nav>
+        </div>
+      </aside>
+
+      <header class="title">
+        <div class="crumbs">
+          <span class="wsname"
+            >control-center<svg class="ic" style="width: 12px; height: 12px; color: var(--fg-2)">
+              <use href="#i-chev" /></svg
+          ></span>
+          <span class="branch"
+            ><svg class="ic" style="width: 13px; height: 13px"><use href="#i-branch" /></svg
+            >feat/live-map</span
+          >
+          <span class="sess">Refactor IPC client <small id="sessClock">2m14</small></span>
+        </div>
+        <div class="spacer"></div>
+        <div class="docks">
+          <button aria-pressed="false" title="Activity bar  Ctrl+B">
+            <svg class="ic"><use href="#i-dl" /></svg>
+          </button>
+          <button aria-pressed="false" title="Bottom dock  Ctrl+J">
+            <svg class="ic"><use href="#i-db" /></svg>
+          </button>
+          <button aria-pressed="true" title="Session dock  Ctrl+Alt+B">
+            <svg class="ic"><use href="#i-dr" /></svg>
+          </button>
+        </div>
+        <div class="wctl">
+          <button title="Minimize">
+            <svg class="ic"><use href="#i-min" /></svg>
+          </button>
+          <button title="Maximize">
+            <svg class="ic"><use href="#i-max" /></svg>
+          </button>
+          <button title="Close">
+            <svg class="ic"><use href="#i-close" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="live" aria-label="Live">
+        <div class="ltb">
+          <button class="tool">
+            <svg class="ic"><use href="#i-follow" /></svg>Follow
+            <svg class="g"><use href="#a-claude" /></svg><b>Claude</b
+            ><svg class="ic" style="width: 12px; height: 12px"><use href="#i-chev" /></svg>
+          </button>
+          <button class="tool">
+            <svg class="ic"><use href="#i-filter" /></svg>Filters
+            <span class="kbd">touched + neighbours</span>
+          </button>
+          <button class="tool">
+            <svg class="ic"><use href="#i-fit" /></svg>Fit <span class="kbd">0</span>
+          </button>
+          <button class="tool">
+            <svg class="ic" style="width: 12px; height: 12px"><use href="#i-play" /></svg>Replay
+          </button>
+          <div class="right">
+            <span class="tool zoom">view <b>human</b> <span class="kbd">R</span></span>
+            <span class="tool zoom">zoom <b>100%</b></span>
+          </div>
+        </div>
+
+        <div class="mapcol">
+          <div class="map" id="map">
+            <div class="stage" id="stage"></div>
+            <div class="readout" id="readout"></div>
+            <div class="minimap" aria-label="Minimap">
+              <svg id="mm" viewBox="0 0 148 92" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+          <div class="tl" id="tl">
+            <div class="tlh">
+              <span><b>Timeline</b></span>
+              <span id="tlRange">0:00 – 2:14</span>
+              <span id="tlCount">14 events</span>
+              <span class="r"
+                ><span class="kbd">Space</span> play <span class="kbd">←</span
+                ><span class="kbd">→</span> step <span class="kbd">End</span> live</span
+              >
+            </div>
+            <svg id="tlsvg" width="100" height="100"></svg>
+          </div>
+        </div>
+
+        <section class="agcol" aria-label="Agents and inspector">
+          <div class="tabs" role="tablist">
+            <button role="tab" aria-selected="true">
+              Agents <span class="n" id="agCount">3</span>
+            </button>
+            <button role="tab" aria-selected="false">Inspector</button>
+          </div>
+          <div class="aglist" id="aglist"></div>
+        </section>
+
+        <div class="btab">
+          <span
+            ><svg class="ic" style="width: 12px; height: 12px"><use href="#i-term" /></svg
+            >Terminal</span
+          >
+          <span>Logs</span>
+          <span class="er"
+            >Problems <svg class="g" style="width: 10px; height: 10px"><use href="#s-error" /></svg
+            ><b id="probCount" style="font-weight: 400">2</b></span
+          >
+          <span class="r"><span class="kbd">Ctrl+J</span> open dock</span>
+        </div>
+      </main>
+
+      <aside class="dock" aria-label="Session">
+        <div class="dk-h">
+          <b>Session</b><span>claude · opus-5.5</span>
+          <span class="r"
+            ><button title="Past sessions">
+              <svg class="ic" style="width: 14px; height: 14px"><use href="#i-hist" /></svg></button
+            ><button title="More">
+              <svg class="ic" style="width: 14px; height: 14px"><use href="#i-more" /></svg></button
+          ></span>
+        </div>
+        <div class="chat">
+          <div class="msg user">
+            <div class="who">you · 0:00</div>
+            Refactor the IPC client to use the typed channels from ipc-contract
+          </div>
+          <div class="msg">
+            <div class="who">
+              <svg class="g"><use href="#a-claude" /></svg>Claude · 2:02
+            </div>
+            I moved <code>client.ts</code> onto the typed channel map and updated
+            <code>server.ts</code> to match. Explore is checking the channel names; qwen is drafting
+            tests locally. Two schema tests fail, so I want to run the IPC suite before touching
+            them.
+            <div class="trace">
+              <div><span class="k">cp</span><b>checkpoint 1</b><span class="x">0:57</span></div>
+              <div>
+                <span class="k">ed</span><b>src/ipc/client.ts</b><span class="x">+12 −3</span>
+              </div>
+              <div>
+                <span class="k">ed</span><b>src/ipc/server.ts</b><span class="x">+4 −1</span>
+              </div>
+              <div class="er">
+                <span class="k"
+                  ><svg class="g" style="width: 10px; height: 10px">
+                    <use href="#s-error" /></svg></span
+                ><b style="color: inherit">schema.test.ts</b><span class="x">2 failing</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="perm" role="dialog" aria-label="Permission request">
+          <div class="perm-h">
+            <svg class="g"><use href="#s-waiting" /></svg
+            ><span class="t">Claude wants to run a command</span
+            ><span class="r">waiting <b id="waitClock" style="font-weight: 600">0:12</b></span>
+          </div>
+          <dl>
+            <dt>tool</dt>
+            <dd>Bash</dd>
+            <dt>command</dt>
+            <dd class="cmd">npm test -- ipc</dd>
+            <dt>cwd</dt>
+            <dd>C:\dev\control-center</dd>
+            <dt>reason</dt>
+            <dd class="why">Run the IPC tests to verify the refactor</dd>
+          </dl>
+          <div class="btns">
+            <button class="b pri">Approve <span class="kbd">Ctrl+Enter</span></button>
+            <button class="b">Deny <span class="kbd">Ctrl+Backspace</span></button>
+            <button class="b wide">
+              Always this session <span class="kbd">Ctrl+Shift+Enter</span>
+            </button>
+          </div>
+          <div class="note">Esc closes without denying</div>
+        </section>
+
+        <div class="composer">
+          <div class="ctx">
+            <span><b>opus-5.5</b></span
+            ><span><b>3</b> MCP</span><span class="on">Checkpoint on</span>
+          </div>
+          <div class="inp" aria-disabled="true">
+            Waiting for your decision…<span class="kbd">Enter</span>
+          </div>
+        </div>
+      </aside>
+
+      <footer class="status" id="status" aria-label="Status bar"></footer>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+        var NS = 'http://www.w3.org/2000/svg';
+        var DEF = { theme: 'dark', density: 'compact', scenario: 'normal', gray: '0' };
+        var OK = {
+          theme: ['dark', 'light'],
+          density: ['compact', 'comfortable'],
+          scenario: ['normal', 'dense'],
+          gray: ['0', '1'],
+        };
+        var P = {};
+        var root = document.documentElement;
+        var win = document.getElementById('win');
+
+        function readParams() {
+          var q = new URLSearchParams(location.search);
+          Object.keys(DEF).forEach(function (k) {
+            var v = q.get(k);
+            P[k] = v !== null && OK[k].indexOf(v) >= 0 ? v : DEF[k];
+          });
+        }
+        function writeParams() {
+          var q = new URLSearchParams();
+          Object.keys(P).forEach(function (k) {
+            if (P[k] !== DEF[k]) q.set(k, P[k]);
+          });
+          var s = q.toString();
+          try {
+            history.replaceState(null, '', location.pathname + (s ? '?' + s : ''));
+          } catch (e) {
+            /* file:// may refuse; params still apply */
+          }
+        }
+        function apply() {
+          root.setAttribute('data-theme', P.theme);
+          root.setAttribute('data-density', P.density);
+          root.setAttribute('data-scenario', P.scenario);
+          win.classList.toggle('gray', P.gray === '1');
+          document.querySelectorAll('.seg').forEach(function (seg) {
+            var k = seg.getAttribute('data-k');
+            seg.querySelectorAll('button').forEach(function (b) {
+              b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === P[k]));
+            });
+          });
+          render();
+        }
+        document.querySelectorAll('.seg button').forEach(function (b) {
+          b.addEventListener('click', function () {
+            P[b.parentNode.getAttribute('data-k')] = b.getAttribute('data-v');
+            writeParams();
+            apply();
+          });
+        });
+
+        /* ------------------------------------------------------------------
+     data — identical across directions (BRIEF.md)
+     ------------------------------------------------------------------ */
+        var AG = {
+          claude: { name: 'Claude', type: 'claude' },
+          claude2: { name: 'Claude #2', type: 'claude' },
+          explore: { name: 'Explore', type: 'sub' },
+          plan: { name: 'Plan', type: 'sub' },
+          qwen: { name: 'qwen2.5-coder:14b', type: 'local' },
+        };
+        var GLY = { claude: 'a-claude', sub: 'a-sub', local: 'a-local' };
+        var CLS = { claude: 'ag-claude', sub: 'ag-sub', local: 'ag-local' };
+        var STATE_WORD = {
+          idle: 'idle',
+          reading: 'reading',
+          writing: 'writing',
+          running: 'running',
+          waiting: 'waiting',
+          error: 'error',
+          done: 'done',
+        };
+
+        function f(name, st, o) {
+          o = o || {};
+          o.name = name;
+          o.st = st;
+          return o;
+        }
+
+        var SC = {
+          normal: {
+            T: 134,
+            clock: '2m14',
+            gitBadge: '2',
+            problems: '2',
+            cols: [
+              {
+                x: 0,
+                w: 212,
+                blocks: [
+                  {
+                    type: 'ctr',
+                    id: 'packages',
+                    label: 'packages/',
+                    groups: [
+                      {
+                        path: 'ipc-contract/src/',
+                        total: 6,
+                        files: [
+                          f('channels.ts', 'reading', { id: 'channels', dock: ['explore'] }),
+                          f('schema.test.ts', 'error', { note: '2 failing' }),
+                        ],
+                      },
+                    ],
+                  },
+                  { type: 'gap', h: 18 },
+                  { type: 'file', file: f('README.md', 'idle') },
+                  { type: 'folder', name: 'docs/', count: 14 },
+                ],
+              },
+              {
+                x: 248,
+                w: 214,
+                blocks: [
+                  {
+                    type: 'ctr',
+                    id: 'src',
+                    label: 'src/',
+                    groups: [
+                      {
+                        path: 'ipc/',
+                        total: 5,
+                        files: [
+                          f('client.ts', 'writing', {
+                            id: 'client',
+                            diff: '+12 −3',
+                            dock: ['claude', 'qwen'],
+                          }),
+                          f('server.ts', 'done', { diff: '+4 −1' }),
+                        ],
+                      },
+                      { path: 'main/', total: 3, files: [f('index.ts', 'idle')] },
+                      { path: 'preload/', total: 1, files: [f('index.ts', 'idle')] },
+                    ],
+                  },
+                ],
+              },
+              {
+                x: 500,
+                w: 228,
+                rail: true,
+                blocks: [
+                  {
+                    type: 'agent',
+                    ag: 'claude',
+                    st: 'waiting',
+                    temp: f('npm test -- ipc', 'waiting', { pre: '$ ', note: '0:12' }),
+                  },
+                  { type: 'agent', ag: 'explore', st: 'reading' },
+                  {
+                    type: 'agent',
+                    ag: 'qwen',
+                    st: 'running',
+                    temp: f('ollama: draft tests', 'running', { note: '38 tok/s' }),
+                  },
+                ],
+              },
+            ],
+            edges: [
+              { from: 'claude', to: 'client', k: 'write' },
+              { from: 'qwen', to: 'client', k: 'read' },
+              { from: 'explore', to: 'channels', k: 'read' },
+            ],
+            lanes: [
+              {
+                ag: 'claude',
+                born: 0,
+                ev: [
+                  [2, 7, 'rd', 'package.json'],
+                  [9, 15, 'rd', 'invoke(', 'gr'],
+                  [18, 24, 'rd', 'client.ts'],
+                  [28, 35, 'rd', 'channels', 'gr'],
+                  [40, 47, 'rd', 'server.ts'],
+                  [60, 68, 'ed', 'client.ts', '+12 −3'],
+                  [74, 82, 'ed', 'server.ts', '+4 −1'],
+                  [96, 112, 'err', 'vitest schema', '2 failing'],
+                  [122, null, 'wait', 'npm test -- ipc'],
+                ],
+              },
+              {
+                ag: 'qwen',
+                parent: 0,
+                born: 70,
+                ev: [[72, null, 'running', 'draft tests', '38 tok/s']],
+              },
+              { ag: 'explore', parent: 0, born: 90, ev: [[93, null, 'reading', 'channels.ts']] },
+            ],
+            cps: [[57, 'cp1']],
+            agents: [
+              {
+                ag: 'claude',
+                st: 'waiting',
+                sel: true,
+                where: 'cloud',
+                model: 'opus-5.5',
+                task: 'Refactor IPC client to typed channels',
+                tool: 'Bash',
+                target: 'npm test -- ipc',
+                time: '2m14',
+                tok: '41k tok',
+                last: 'src/ipc/client.ts +12 −3',
+              },
+              {
+                ag: 'explore',
+                st: 'reading',
+                where: 'cloud',
+                sub: 'subagent of Claude',
+                tool: 'Read',
+                target: 'packages/ipc-contract/src/channels.ts',
+                time: '0m41',
+                tok: '6k tok',
+              },
+              {
+                ag: 'qwen',
+                st: 'running',
+                where: 'local',
+                task: 'Draft tests for client.ts',
+                tool: 'generate',
+                rate: '38 tok/s',
+                time: '1m02',
+                tok: '2.4k tok',
+              },
+            ],
+            status: {
+              agent: 'waiting',
+              more: '+2',
+              err: '2',
+              changed: '2 changed',
+              tok: '182k',
+              local: '31k',
+              vram: [3, '9.1/16 GB'],
+            },
+          },
+
+          dense: {
+            T: 232,
+            clock: '3m52',
+            gitBadge: '7',
+            problems: '3',
+            cols: [
+              {
+                x: 0,
+                w: 146,
+                blocks: [
+                  {
+                    type: 'ctr',
+                    id: 'packages',
+                    label: 'packages/',
+                    groups: [
+                      {
+                        path: 'ipc-contract/src/',
+                        total: 7,
+                        files: [
+                          f('channels.ts', 'reading', { id: 'channels', dock: ['explore'] }),
+                          f('schema.ts', 'idle'),
+                          f('schema.test.ts', 'error', { note: '2 failing' }),
+                          f('errors.ts', 'idle'),
+                          f('index.ts', 'idle'),
+                        ],
+                      },
+                      {
+                        path: 'event-schema/src/',
+                        total: 6,
+                        files: [
+                          f('agent-event.ts', 'idle'),
+                          f('agent-event.test.ts', 'idle'),
+                          f('migrations.ts', 'idle'),
+                          f('version.ts', 'done', { diff: '+3 −1' }),
+                          f('index.ts', 'idle'),
+                        ],
+                      },
+                    ],
+                  },
+                  { type: 'gap', h: 16 },
+                  { type: 'file', file: f('README.md', 'idle') },
+                  { type: 'file', file: f('package.json', 'idle') },
+                  { type: 'folder', name: 'docs/', count: 14 },
+                ],
+              },
+              {
+                x: 164,
+                w: 184,
+                blocks: [
+                  {
+                    type: 'ctr',
+                    id: 'src',
+                    label: 'src/',
+                    groups: [
+                      {
+                        path: 'main/',
+                        total: 9,
+                        files: [
+                          f('index.ts', 'idle'),
+                          f('window.ts', 'idle'),
+                          f('ipc-handlers.ts', 'reading', { id: 'handlers', dock: ['explore'] }),
+                          f('menu.ts', 'idle'),
+                          f('paths.ts', 'idle'),
+                          f('updater.ts', 'idle'),
+                        ],
+                      },
+                      {
+                        path: 'renderer/components/',
+                        total: 23,
+                        files: [
+                          f('AgentCard.tsx', 'idle'),
+                          f('LiveMap.tsx', 'idle'),
+                          f('Timeline.tsx', 'idle'),
+                          f('StatusBar.tsx', 'idle'),
+                          f('SessionDock.tsx', 'idle'),
+                          f('PermissionDialog.tsx', 'done', { diff: '+22 −5' }),
+                          f('Minimap.tsx', 'idle'),
+                          f('Toolbar.tsx', 'idle'),
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                x: 366,
+                w: 186,
+                blocks: [
+                  {
+                    type: 'ctr',
+                    id: 'src',
+                    groups: [
+                      {
+                        path: 'ipc/',
+                        total: 11,
+                        files: [
+                          f('client.ts', 'writing', {
+                            id: 'client',
+                            diff: '+31 −9',
+                            dock: ['claude', 'qwen'],
+                          }),
+                          f('types.ts', 'writing', {
+                            id: 'types',
+                            diff: '+14 −0',
+                            dock: ['claude'],
+                          }),
+                          f('server.ts', 'done', { diff: '+4 −1' }),
+                          f('transport.ts', 'idle'),
+                          f('retry.ts', 'idle'),
+                          f('errors.ts', 'idle'),
+                          f('index.ts', 'idle'),
+                          f('client.test.ts', 'error', { note: '1 failing' }),
+                        ],
+                      },
+                      {
+                        path: 'preload/',
+                        total: 2,
+                        files: [f('index.ts', 'idle'), f('bridge.ts', 'done', { diff: '+6 −2' })],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                x: 570,
+                w: 170,
+                rail: true,
+                blocks: [
+                  {
+                    type: 'agent',
+                    ag: 'claude',
+                    st: 'writing',
+                    temp: f('npm test -- ipc', 'waiting', { pre: '$ ', note: '0:18' }),
+                  },
+                  {
+                    type: 'agent',
+                    ag: 'claude2',
+                    st: 'running',
+                    temp: f('pnpm typecheck', 'running', { pre: '$ ' }),
+                  },
+                  { type: 'agent', ag: 'explore', st: 'reading' },
+                  { type: 'agent', ag: 'plan', st: 'done' },
+                  {
+                    type: 'agent',
+                    ag: 'qwen',
+                    st: 'running',
+                    temp: f('ollama: draft tests', 'running', { note: '41 tok/s' }),
+                  },
+                ],
+              },
+            ],
+            edges: [
+              { from: 'claude', to: 'client', k: 'write' },
+              { from: 'claude', to: 'types', k: 'write' },
+              { from: 'qwen', to: 'client', k: 'read' },
+              { from: 'explore', to: 'handlers', k: 'read' },
+              { from: 'explore', to: 'channels', k: 'read' },
+            ],
+            lanes: [
+              {
+                ag: 'claude',
+                born: 0,
+                ev: [
+                  [2, 6, 'rd', 'package.json'],
+                  [8, 13, 'rd', 'invoke(', 'gr'],
+                  [15, 19, 'rd', 'client.ts'],
+                  [21, 25, 'rd', 'types.ts'],
+                  [28, 32, 'rd', 'ipcMain', 'gr'],
+                  [34, 38, 'rd', 'server.ts'],
+                  [41, 45, 'rd', 'channels.ts'],
+                  [54, 63, 'ed', 'client.ts', '+18 −6'],
+                  [65, 71, 'ed', 'types.ts', '+9'],
+                  [73, 79, 'ed', 'server.ts', '+4 −1'],
+                  [83, 97, 'sh', 'vitest ipc'],
+                  [101, 105, 'rd', 'bridge.ts'],
+                  [107, 113, 'ed', 'bridge.ts', '+6 −2'],
+                  [117, 126, 'ed', 'PermissionDialog.tsx', '+22 −5'],
+                  [130, 146, 'err', 'vitest schema', '2 failing'],
+                  [150, 154, 'rd', 'Version', 'gr'],
+                  [160, 166, 'ed', 'version.ts', '+3 −1'],
+                  [169, 180, 'err', 'vitest client', '1 failing'],
+                  [183, 187, 'rd', 'client.test.ts'],
+                  [192, null, 'writing', 'client.ts', '+31 −9', 0],
+                  [214, null, 'wait', 'npm test -- ipc', null, 1],
+                ],
+              },
+              {
+                ag: 'plan',
+                parent: 0,
+                born: 20,
+                end: 222,
+                ev: [
+                  [23, 27, 'rd', 'architettura.md'],
+                  [30, 34, 'rd', 'channel', 'gr'],
+                  [37, 41, 'rd', 'schema.ts'],
+                  [45, 50, 'rd', 'index.ts'],
+                  [62, 66, 'rd', 'invoke', 'gr'],
+                  [80, 85, 'rd', 'preload'],
+                  [110, 116, 'rd', 'renderer'],
+                  [140, 146, 'rd', 'event-schema'],
+                  [200, 206, 'rd', 'types.ts'],
+                  [212, 221, 'sh', 'write plan'],
+                ],
+              },
+              {
+                ag: 'qwen',
+                parent: 0,
+                born: 128,
+                ev: [
+                  [130, 158, 'sh', 'draft tests'],
+                  [162, null, 'running', 'draft tests', '41 tok/s'],
+                ],
+              },
+              {
+                ag: 'explore',
+                parent: 0,
+                born: 176,
+                ev: [
+                  [178, 183, 'rd', 'register', 'gr'],
+                  [185, 190, 'rd', 'index.ts'],
+                  [196, null, 'reading', 'ipc-handlers.ts', null, 1],
+                  [205, null, 'reading', 'channels.ts', null, 0],
+                ],
+              },
+              {
+                ag: 'claude2',
+                born: 45,
+                ev: [
+                  [47, 51, 'rd', 'tsconfig.json'],
+                  [54, 58, 'rd', 'strict', 'gr'],
+                  [62, 66, 'rd', 'event-schema'],
+                  [70, 76, 'rd', 'agent-event.ts'],
+                  [80, 92, 'sh', 'pnpm lint'],
+                  [98, 102, 'rd', 'migrations.ts'],
+                  [106, 111, 'rd', 'schemaVersion', 'gr'],
+                  [118, 140, 'sh', 'pnpm test'],
+                  [146, 150, 'rd', 'version.ts'],
+                  [156, 161, 'rd', 'TS2322', 'gr'],
+                  [166, 171, 'rd', 'index.ts'],
+                  [176, 186, 'sh', 'pnpm build'],
+                  [190, null, 'running', 'pnpm typecheck'],
+                ],
+              },
+            ],
+            cps: [
+              [52, 'cp1'],
+              [158, 'cp2'],
+            ],
+            agents: [
+              {
+                ag: 'claude',
+                st: 'writing',
+                sel: true,
+                where: 'cloud',
+                model: 'opus-5.5',
+                task: 'Refactor IPC client to typed channels',
+                tool: 'Edit',
+                target: 'src/ipc/client.ts +31 −9',
+                time: '3m52',
+                tok: '118k tok',
+                last: 'src/ipc/types.ts +14',
+                req: 'npm test -- ipc',
+              },
+              {
+                ag: 'claude2',
+                st: 'running',
+                where: 'cloud',
+                sub: 'opus-5.5 · Tighten event-schema types',
+                tool: 'Bash',
+                target: 'pnpm typecheck',
+                time: '0m42',
+                tok: '64k tok',
+              },
+              {
+                ag: 'explore',
+                st: 'reading',
+                where: 'cloud',
+                sub: 'subagent of Claude',
+                tool: 'Read ×2',
+                target: 'channels.ts, ipc-handlers.ts',
+                time: '0m56',
+                tok: '9k tok',
+              },
+              {
+                ag: 'plan',
+                st: 'done',
+                where: 'cloud',
+                sub: 'subagent of Claude',
+                tool: 'finished',
+                target: 'plan written · 0:10 ago',
+                time: '3m22',
+                tok: '22k tok',
+              },
+              {
+                ag: 'qwen',
+                st: 'running',
+                where: 'local',
+                task: 'Draft tests for client.ts',
+                tool: 'generate',
+                rate: '41 tok/s',
+                time: '1m10',
+                tok: '5.1k tok',
+              },
+            ],
+            status: {
+              agent: 'writing',
+              more: '+4',
+              err: '3',
+              changed: '7 changed',
+              tok: '412k',
+              local: '96k',
+              vram: [4, '13.8/16 GB'],
+            },
+          },
+        };
+
+        /* ------------------------------------------------------------------
+     helpers
+     ------------------------------------------------------------------ */
+        function el(tag, cls, html) {
+          var e = document.createElement(tag);
+          if (cls) e.className = cls;
+          if (html != null) e.innerHTML = html;
+          return e;
+        }
+        function use(id, cls) {
+          return '<svg class="' + (cls || 'g') + '"><use href="#' + id + '"/></svg>';
+        }
+        function cssPx(name) {
+          return parseFloat(getComputedStyle(root).getPropertyValue(name)) || 0;
+        }
+        function fmt(t) {
+          var m = Math.floor(t / 60),
+            s = Math.round(t % 60);
+          return m + ':' + (s < 10 ? '0' : '') + s;
+        }
+        function esc(s) {
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        }
+
+        /* ------------------------------------------------------------------
+     map
+     ------------------------------------------------------------------ */
+        function nodeHTML(n, temp) {
+          var meta = '';
+          if (n.diff)
+            meta +=
+              '<span class="diff' + (n.st === 'writing' ? '' : ' opt') + '">' + n.diff + '</span>';
+          if (n.note)
+            meta +=
+              '<span class="opt" data-short="' +
+              (n.st === 'error' ? n.note.split(' ')[0] : '') +
+              '">' +
+              n.note +
+              '</span>';
+          if (n.st === 'done')
+            meta += '<span class="trail" aria-hidden="true"><i></i><i></i><i></i></span>';
+          if (n.dock)
+            meta +=
+              '<span class="dk">' +
+              n.dock
+                .map(function (a) {
+                  var t = AG[a].type;
+                  return (
+                    '<svg class="g ' +
+                    CLS[t] +
+                    '" style="color:var(--ag)"><use href="#' +
+                    GLY[t] +
+                    '"/></svg>'
+                  );
+                })
+                .join('') +
+              '</span>';
+          return (
+            '<span class="sign" title="' +
+            STATE_WORD[n.st] +
+            '">' +
+            use('s-' + n.st) +
+            '</span>' +
+            '<span class="nm"' +
+            (temp && n.pre ? ' data-pre="' + n.pre + '"' : '') +
+            '>' +
+            esc(n.name) +
+            '</span>' +
+            (meta ? '<span class="meta">' + meta + '</span>' : '') +
+            (n.st === 'running' ? '<span class="prog"></span>' : '')
+          );
+        }
+
+        function renderMap(sc) {
+          var stage = document.getElementById('stage');
+          stage.innerHTML = '';
+          var R = cssPx('--row'),
+            G = cssPx('--row-gap');
+          var PAD = 6,
+            TOP = 44; /* TOP leaves room for edge buses above the columns */
+          var nodes = {},
+            chips = {},
+            ctrs = {},
+            boxes = [],
+            count = 0;
+          var railX = 0;
+
+          sc.cols.forEach(function (col) {
+            var y = TOP;
+            if (col.rail) railX = col.x;
+            col.blocks.forEach(function (b) {
+              if (b.type === 'ctr') {
+                var top = y;
+                y += PAD + 4;
+                b.groups.forEach(function (g, gi) {
+                  var hd = el(
+                    'div',
+                    'ghd',
+                    '<span class="p">' +
+                      g.path +
+                      '</span><span class="ct"><b>' +
+                      g.files.length +
+                      '</b>/' +
+                      g.total +
+                      '</span>',
+                  );
+                  hd.style.cssText =
+                    'left:' +
+                    (col.x + PAD) +
+                    'px;top:' +
+                    y +
+                    'px;width:' +
+                    (col.w - 2 * PAD) +
+                    'px;height:' +
+                    R +
+                    'px';
+                  stage.appendChild(hd);
+                  y += R + 3;
+                  g.files.forEach(function (n) {
+                    var d = el('div', 'node s-' + n.st, nodeHTML(n));
+                    d.style.cssText =
+                      'left:' +
+                      (col.x + PAD) +
+                      'px;top:' +
+                      y +
+                      'px;width:' +
+                      (col.w - 2 * PAD) +
+                      'px;height:' +
+                      R +
+                      'px';
+                    stage.appendChild(d);
+                    count++;
+                    if (n.id)
+                      nodes[n.id] = {
+                        x: col.x + PAD,
+                        y: y,
+                        w: col.w - 2 * PAD,
+                        h: R,
+                        colRight: col.x + col.w,
+                      };
+                    boxes.push({ x: col.x + PAD, y: y, w: col.w - 2 * PAD, h: R, st: n.st });
+                    y += R + G;
+                  });
+                  if (gi < b.groups.length - 1) y += 8;
+                });
+                y += PAD;
+                var c =
+                  ctrs[b.id] ||
+                  (ctrs[b.id] = { x1: 1e9, y1: 1e9, x2: -1e9, y2: -1e9, label: b.label });
+                if (b.label) c.label = b.label;
+                c.x1 = Math.min(c.x1, col.x);
+                c.x2 = Math.max(c.x2, col.x + col.w);
+                c.y1 = Math.min(c.y1, top);
+                c.y2 = Math.max(c.y2, y);
+                y += 14;
+              } else if (b.type === 'gap') {
+                y += b.h;
+              } else if (b.type === 'file' || b.type === 'folder') {
+                var n = b.file || { name: b.name, st: 'idle', note: b.count + ' files' };
+                var d2 = el(
+                  'div',
+                  'node s-' + n.st + (b.type === 'folder' ? ' folder' : ''),
+                  b.type === 'folder'
+                    ? '<span class="sign">' +
+                        use('i-fold') +
+                        '</span><span class="nm">' +
+                        n.name +
+                        '</span><span class="meta"><span>' +
+                        n.note +
+                        '</span></span>'
+                    : nodeHTML(n),
+                );
+                d2.style.cssText =
+                  'left:' + col.x + 'px;top:' + y + 'px;width:' + col.w + 'px;height:' + R + 'px';
+                stage.appendChild(d2);
+                count++;
+                boxes.push({ x: col.x, y: y, w: col.w, h: R, st: n.st });
+                y += R + G + (b.type === 'folder' ? 2 : 0);
+              } else if (b.type === 'agent') {
+                var a = AG[b.ag];
+                var ch = el(
+                  'div',
+                  'chip ' + CLS[a.type] + ' s-' + b.st,
+                  '<svg class="g id"><use href="#' +
+                    GLY[a.type] +
+                    '"/></svg><span class="nmx">' +
+                    a.name.replace(/2\.5-coder:14b/, '2.5-coder') +
+                    '</span>' +
+                    '<span class="st">' +
+                    use('s-' + b.st) +
+                    '<span class="opt">' +
+                    STATE_WORD[b.st] +
+                    '</span></span>',
+                );
+                ch.style.cssText =
+                  'left:' + col.x + 'px;top:' + y + 'px;width:' + col.w + 'px;height:' + R + 'px';
+                stage.appendChild(ch);
+                chips[b.ag] = { x: col.x, y: y, w: col.w, h: R };
+                y += R;
+                if (b.temp) {
+                  y += 8;
+                  var t = el('div', 'node temp s-' + b.temp.st, nodeHTML(b.temp, true));
+                  t.style.cssText =
+                    'left:' +
+                    (col.x + 8) +
+                    'px;top:' +
+                    y +
+                    'px;width:' +
+                    (col.w - 8) +
+                    'px;height:' +
+                    R +
+                    'px';
+                  stage.appendChild(t);
+                  count++;
+                  boxes.push({ x: col.x + 8, y: y, w: col.w - 8, h: R, st: b.temp.st });
+                  chips[b.ag].temp = { x: col.x + 8, y: y, h: R, st: b.temp.st };
+                  y += R;
+                }
+                y += 14;
+              }
+            });
+          });
+
+          /* containers, drawn behind */
+          Object.keys(ctrs).forEach(function (id) {
+            var c = ctrs[id];
+            var d = el('div', 'ctr', '<span class="lg">' + c.label + '</span>');
+            d.style.cssText =
+              'left:' +
+              c.x1 +
+              'px;top:' +
+              c.y1 +
+              'px;width:' +
+              (c.x2 - c.x1) +
+              'px;height:' +
+              (c.y2 - c.y1) +
+              'px';
+            stage.insertBefore(d, stage.firstChild);
+          });
+
+          /* edges: orthogonal traces routed through gutters and buses above the columns */
+          var W = 0,
+            H = 0;
+          boxes.forEach(function (b) {
+            W = Math.max(W, b.x + b.w);
+            H = Math.max(H, b.y + b.h);
+          });
+          Object.keys(chips).forEach(function (k) {
+            var c = chips[k];
+            W = Math.max(W, c.x + c.w);
+          });
+          var svg = '<svg class="edges" width="' + W + '" height="' + (H + 4) + '">';
+          var agentOrder = [];
+          sc.edges.forEach(function (e) {
+            if (agentOrder.indexOf(e.from) < 0) agentOrder.push(e.from);
+          });
+          sc.edges.forEach(function (e, i) {
+            var c = chips[e.from],
+              n = nodes[e.to];
+            if (!c || !n) return;
+            var ai = agentOrder.indexOf(e.from);
+            var cy = Math.round(c.y + c.h / 2) + 0.5;
+            var ny =
+              Math.round(n.y + n.h / 2) +
+              0.5 +
+              (e.k === 'read' ? 3 : -3) * (n.dock && n.dock.length > 1 ? 1 : 0);
+            var nx = n.x + n.w;
+            var gx = Math.round(n.colRight + 5 + ai * 4) + 0.5;
+            var d;
+            if (n.colRight + 60 >= railX) {
+              d = 'M' + c.x + ' ' + cy + 'H' + gx + 'V' + ny + 'H' + nx;
+            } else {
+              var rx = Math.round(railX - 8 - ai * 3) + 0.5;
+              var by = 10.5 + ai * 6;
+              d = 'M' + c.x + ' ' + cy + 'H' + rx + 'V' + by + 'H' + gx + 'V' + ny + 'H' + nx;
+            }
+            svg += '<path class="e e-' + e.k + '" d="' + d + '"/>';
+            svg +=
+              '<rect class="e-end ' +
+              e.k +
+              '" x="' +
+              nx +
+              '" y="' +
+              (ny - 2.5) +
+              '" width="3" height="5"/>';
+          });
+          /* chip → temporary node connectors */
+          Object.keys(chips).forEach(function (k) {
+            var c = chips[k];
+            if (!c.temp) return;
+            var x = c.x + 3.5;
+            svg +=
+              '<path class="e e-attach ' +
+              (c.temp.st === 'waiting' ? 'w' : c.temp.st === 'running' ? 'r' : '') +
+              '" d="M' +
+              x +
+              ' ' +
+              (c.y + c.h) +
+              'V' +
+              (c.temp.y + c.temp.h / 2) +
+              'H' +
+              c.temp.x +
+              '"/>';
+          });
+          svg += '</svg>';
+          stage.insertAdjacentHTML('afterbegin', svg);
+          /* containers must sit under the edge layer but the edge layer under nodes */
+          var edgeEl = stage.querySelector('.edges');
+          stage.querySelectorAll('.ctr').forEach(function (c) {
+            stage.insertBefore(c, edgeEl);
+          });
+
+          /* semantic priority: when a name would be cut, drop optional meta first
+       (an error note shortens to its count; done diffs and rail state words hide) */
+          stage.querySelectorAll('.node,.chip').forEach(function (nd) {
+            var nm = nd.querySelector('.nm,.nmx');
+            if (!nm) return;
+            var opts = Array.prototype.slice.call(nd.querySelectorAll('.opt')).reverse();
+            for (var i = 0; i < opts.length && nm.scrollWidth > nm.clientWidth + 1; i++) {
+              var o = opts[i],
+                sh = o.getAttribute('data-short');
+              if (sh) {
+                o.setAttribute('title', o.textContent);
+                o.textContent = sh;
+                continue;
+              }
+              o.style.display = 'none';
+            }
+          });
+
+          /* centre the stage in the viewport (what Fit does at 100%) */
+          var map = document.getElementById('map');
+          var mw = map.clientWidth,
+            mh = map.clientHeight;
+          var ox = Math.max(8, Math.round((mw - W) / 2));
+          var oy = Math.max(0, Math.round((mh - H - 40) / 2) - 4);
+          stage.style.transform = 'translate(' + ox + 'px,' + oy + 'px)';
+
+          /* readout */
+          var edgesN = sc.edges.length;
+          document.getElementById('readout').innerHTML =
+            '<span><b>' +
+            count +
+            '</b> nodes</span><span><b>' +
+            edgesN +
+            '</b> edges</span><span>following <b>Claude</b></span>';
+
+          /* minimap: world = visible graph + collapsed rest of the project */
+          var mm = document.getElementById('mm');
+          var worldW = W * 1.55,
+            worldH = (H + 40) * 1.5;
+          var sx = 148 / worldW,
+            sy = 92 / worldH;
+          var offx = 6,
+            offy = 6;
+          var s = '';
+          Object.keys(ctrs).forEach(function (id) {
+            var c = ctrs[id];
+            s +=
+              '<rect class="mm-c" x="' +
+              (offx + c.x1 * sx) +
+              '" y="' +
+              (offy + c.y1 * sy) +
+              '" width="' +
+              (c.x2 - c.x1) * sx +
+              '" height="' +
+              (c.y2 - c.y1) * sy +
+              '"/>';
+          });
+          boxes.forEach(function (b) {
+            var fill = b.st === 'idle' ? '' : ' style="fill:var(--st-' + b.st + ')"';
+            s +=
+              '<rect class="mm-n"' +
+              fill +
+              ' x="' +
+              (offx + b.x * sx) +
+              '" y="' +
+              (offy + b.y * sy) +
+              '" width="' +
+              Math.max(2, b.w * sx) +
+              '" height="' +
+              Math.max(1.5, b.h * sy * 0.7) +
+              '"/>';
+          });
+          [
+            [0.72, 0.1],
+            [0.8, 0.42],
+            [0.7, 0.74],
+            [0.12, 0.8],
+            [0.4, 0.84],
+          ].forEach(function (p) {
+            s +=
+              '<rect class="mm-ph" x="' +
+              p[0] * 148 +
+              '" y="' +
+              p[1] * 92 +
+              '" width="22" height="4"/>';
+          });
+          s +=
+            '<rect class="mm-v" x="' +
+            (offx - 3.5) +
+            '" y="' +
+            (offy - 3.5) +
+            '" width="' +
+            (W * sx + 7) +
+            '" height="' +
+            (H * sy + 7) +
+            '"/>';
+          mm.innerHTML = s;
+        }
+
+        /* ------------------------------------------------------------------
+     timeline — logic-analyzer lanes with protocol-decode cells
+     ------------------------------------------------------------------ */
+        var CODE = {
+          rd: 'rd',
+          gr: 'gr',
+          ed: 'ed',
+          sh: 'sh',
+          err: 'sh',
+          reading: 'rd',
+          writing: 'ed',
+          running: 'run',
+          wait: 'sh',
+        };
+        function renderTimeline(sc) {
+          var svg = document.getElementById('tlsvg');
+          var W = svg.parentNode.clientWidth;
+          var LANE = cssPx('--lane'),
+            AX = 22,
+            LBL = 136,
+            PADR = 14;
+          var H = AX + sc.lanes.length * LANE + 6;
+          svg.setAttribute('width', W);
+          svg.setAttribute('height', H);
+          svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+          var x0 = LBL + 8,
+            x1 = W - PADR,
+            T = sc.T;
+          function X(t) {
+            return x0 + (t / T) * (x1 - x0);
+          }
+          function laneMid(i) {
+            return AX + i * LANE + LANE / 2;
+          }
+
+          var s =
+            '<defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hatch-l" x1="0" y1="0" x2="0" y2="5"/></pattern></defs>';
+
+          /* axis */
+          var step = T > 180 ? 30 : 15;
+          s +=
+            '<line class="ax-l" x1="' +
+            x0 +
+            '" y1="' +
+            (AX - 0.5) +
+            '" x2="' +
+            x1 +
+            '" y2="' +
+            (AX - 0.5) +
+            '"/>';
+          for (var t = 0; t <= T; t += step) {
+            var xx = Math.round(X(t)) + 0.5;
+            if (x1 - xx < 70 && t !== 0) continue;
+            if (
+              sc.cps.some(function (cp) {
+                return Math.abs(X(cp[0]) - xx) < 30;
+              })
+            )
+              continue;
+            s +=
+              '<line class="ax-l" x1="' +
+              xx +
+              '" y1="' +
+              (AX - 5) +
+              '" x2="' +
+              xx +
+              '" y2="' +
+              AX +
+              '"/>';
+            s +=
+              '<text class="ax-t" x="' + (xx + 3) + '" y="' + (AX - 8) + '">' + fmt(t) + '</text>';
+          }
+
+          /* lanes */
+          var nEv = 0;
+          sc.lanes.forEach(function (L, i) {
+            var a = AG[L.ag],
+              mid = laneMid(i),
+              top = AX + i * LANE;
+            if (i > 0)
+              s +=
+                '<line class="lane-sep" x1="0" y1="' +
+                (top + 0.5) +
+                '" x2="' +
+                W +
+                '" y2="' +
+                (top + 0.5) +
+                '"/>';
+            var indent = L.parent != null ? 16 : 6;
+            if (L.parent != null)
+              s +=
+                '<path class="fork" d="M' +
+                (indent - 8.5) +
+                ' ' +
+                (mid - 7) +
+                'V' +
+                (mid + 0.5) +
+                'H' +
+                (indent - 2) +
+                '"/>';
+            s +=
+              '<g class="' +
+              CLS[a.type] +
+              '" style="color:var(--ag)"><use href="#' +
+              GLY[a.type] +
+              '" x="' +
+              indent +
+              '" y="' +
+              (mid - 6) +
+              '" width="12" height="12"/></g>';
+            var nm = a.name.length > 14 ? a.name.slice(0, 13) + '…' : a.name;
+            s +=
+              '<text class="ln-name" x="' +
+              (indent + 17) +
+              '" y="' +
+              (mid + 4) +
+              '">' +
+              nm +
+              '</text>';
+
+            /* idle bus line from birth to end/now */
+            var bx0 = X(L.born),
+              bx1 = X(L.end != null ? L.end : T);
+            s +=
+              '<line class="bus" x1="' +
+              bx0 +
+              '" y1="' +
+              (mid + 0.5) +
+              '" x2="' +
+              bx1 +
+              '" y2="' +
+              (mid + 0.5) +
+              '"/>';
+            if (L.end != null) {
+              s += '<path class="done-g" d="M' + (bx1 + 3) + ' ' + mid + 'l3 3 6-7' + '"/>';
+            }
+            /* fork from parent */
+            if (L.parent != null) {
+              var pm = laneMid(L.parent),
+                fx = Math.round(bx0) + 0.5;
+              s += '<path class="fork" d="M' + fx + ' ' + (pm + 0.5) + 'V' + (mid + 0.5) + '"/>';
+              s +=
+                '<rect class="fork-dot" x="' +
+                (fx - 2) +
+                '" y="' +
+                (pm - 1.5) +
+                '" width="4" height="4"/>';
+            }
+
+            L.ev.forEach(function (ev) {
+              nEv++;
+              var t0 = ev[0],
+                t1 = ev[1] == null ? T : ev[1],
+                kind = ev[2],
+                label = ev[3],
+                extra = ev[4],
+                row = ev[5];
+              var open = ev[1] == null;
+              var h = LANE - 12,
+                yT = top + 6,
+                yB = top + 6 + h;
+              if (row === 0) {
+                yB = mid - 1;
+              }
+              if (row === 1) {
+                yT = mid + 1;
+              }
+              var ym = (yT + yB) / 2;
+              var a0 = X(t0),
+                a1 = X(t1);
+              var k = Math.min(4, (a1 - a0) / 2);
+              var pts = open
+                ? [
+                    [a0, ym],
+                    [a0 + k, yT],
+                    [a1, yT],
+                    [a1, yB],
+                    [a0 + k, yB],
+                  ]
+                : [
+                    [a0, ym],
+                    [a0 + k, yT],
+                    [a1 - k, yT],
+                    [a1, ym],
+                    [a1 - k, yB],
+                    [a0 + k, yB],
+                  ];
+              var cls = {
+                rd: 'ev-rd',
+                sh: 'ev-sh',
+                ed: 'ev-ed',
+                err: 'ev-err',
+                reading: 'ev-reading',
+                writing: 'ev-writing',
+                running: 'ev-running',
+                wait: 'ev-wait',
+              }[kind];
+              var ptsStr = pts
+                .map(function (p) {
+                  return p[0].toFixed(1) + ',' + p[1].toFixed(1);
+                })
+                .join(' ');
+              s += '<polygon class="ev-bg" points="' + ptsStr + '"/>';
+              s +=
+                '<polygon class="ev ' +
+                cls +
+                '" points="' +
+                pts
+                  .map(function (p) {
+                    return p[0].toFixed(1) + ',' + p[1].toFixed(1);
+                  })
+                  .join(' ') +
+                '"/>';
+
+              /* label inside the cell when it fits */
+              var code = kind === 'rd' && extra === 'gr' ? 'gr' : CODE[kind];
+              var full = code + ' ' + label + (extra && extra !== 'gr' ? '  ' + extra : '');
+              var lbcls = {
+                rd: 'lb',
+                sh: 'lb',
+                ed: 'lb-ed',
+                err: 'lb-err',
+                reading: 'lb-reading',
+                writing: 'lb-writing',
+                running: 'lb-running',
+                wait: 'lb-wait',
+              }[kind];
+              var avail = a1 - a0 - 2 * k - 6 - (kind === 'err' ? 12 : 0) - (open ? 10 : 0);
+              var cw = charW();
+              var txt = full.length * cw <= avail ? full : code.length * cw <= avail ? code : '';
+              var lx = a0 + k + 3;
+              if (kind === 'err') {
+                s += '<path class="err-g" d="M' + lx + ' ' + (ym - 3.5) + 'l7 7m0 -7l-7 7' + '"/>';
+                lx += 12;
+              }
+              if (txt && kind === 'running')
+                s +=
+                  '<rect class="plate" x="' +
+                  (lx - 2).toFixed(1) +
+                  '" y="' +
+                  (ym - 6).toFixed(1) +
+                  '" width="' +
+                  (txt.length * cw + 4).toFixed(1) +
+                  '" height="12"/>';
+              if (txt)
+                s +=
+                  '<text class="' +
+                  lbcls +
+                  '" x="' +
+                  lx.toFixed(1) +
+                  '" y="' +
+                  (ym + 3.5).toFixed(1) +
+                  '">' +
+                  esc(txt) +
+                  '</text>';
+              if (kind === 'wait') {
+                s +=
+                  '<rect class="cur" x="' +
+                  (a1 - 8) +
+                  '" y="' +
+                  (yT + 3) +
+                  '" width="5" height="' +
+                  (yB - yT - 6) +
+                  '"/>';
+              }
+            });
+          });
+
+          /* checkpoints */
+          sc.cps.forEach(function (cp) {
+            var cx = Math.round(X(cp[0])) + 0.5;
+            s +=
+              '<line class="cp-l" x1="' +
+              cx +
+              '" y1="' +
+              AX +
+              '" x2="' +
+              cx +
+              '" y2="' +
+              (H - 4) +
+              '"/>';
+            s +=
+              '<path class="cp-f" d="M' +
+              (cx - 11) +
+              ' 2.5H' +
+              (cx + 11) +
+              'V' +
+              (AX - 7) +
+              'L' +
+              cx +
+              ' ' +
+              (AX - 1) +
+              'L' +
+              (cx - 11) +
+              ' ' +
+              (AX - 7) +
+              'Z"/>';
+            s += '<text class="cp-t" x="' + (cx - 8.5) + '" y="12.5">' + cp[1] + '</text>';
+          });
+
+          /* scrubber at the present */
+          var nx = Math.round(X(T)) + 0.5;
+          s += '<line class="now-l" x1="' + nx + '" y1="2" x2="' + nx + '" y2="' + (H - 2) + '"/>';
+          var lw = Math.ceil(charW() * 9 + 12);
+          s +=
+            '<rect class="now-f" x="' +
+            (nx - lw) +
+            '" y="2" width="' +
+            lw +
+            '" height="' +
+            (AX - 6) +
+            '"/>';
+          s += '<text class="now-t" x="' + (nx - lw + 6) + '" y="13.5">Live ' + fmt(T) + '</text>';
+
+          svg.innerHTML = s;
+          document.getElementById('tlRange').textContent = '0:00 – ' + fmt(T);
+          document.getElementById('tlCount').innerHTML =
+            '<b>' +
+            nEv +
+            '</b> events · <b>' +
+            sc.cps.length +
+            '</b> checkpoint' +
+            (sc.cps.length > 1 ? 's' : '');
+        }
+        var _cw = 0;
+        function charW() {
+          if (_cw) return _cw;
+          var probe = document.createElementNS(NS, 'svg');
+          probe.setAttribute('width', '10');
+          probe.setAttribute('height', '10');
+          probe.style.position = 'absolute';
+          probe.style.visibility = 'hidden';
+          probe.innerHTML =
+            '<text style="font-family:var(--font-mono);font-stretch:var(--mono-narrow);font-size:var(--fs-xs)">0123456789</text>';
+          document.getElementById('tl').appendChild(probe);
+          var w = probe.firstChild.getComputedTextLength() / 10;
+          probe.parentNode.removeChild(probe);
+          _cw = w || 6.2;
+          return _cw;
+        }
+
+        /* ------------------------------------------------------------------
+     agents column
+     ------------------------------------------------------------------ */
+        function renderAgents(sc) {
+          var list = document.getElementById('aglist');
+          list.innerHTML = '';
+          sc.agents.forEach(function (x) {
+            var a = AG[x.ag],
+              t = a.type;
+            var where =
+              x.where === 'local'
+                ? '<span class="where loc">local</span>'
+                : '<span class="where">cloud</span>';
+            var stTag =
+              '<span class="state s-' +
+              x.st +
+              '">' +
+              use('s-' + x.st) +
+              STATE_WORD[x.st] +
+              (x.st === 'done' ? '<span class="trail"><i></i><i></i><i></i></span>' : '') +
+              '</span>';
+            var h =
+              '<div class="ag-h"><svg class="g id"><use href="#' +
+              GLY[t] +
+              '"/></svg><span class="nm">' +
+              a.name +
+              '</span>' +
+              where +
+              stTag +
+              '</div>';
+            if (x.sel) {
+              h += '<div class="ag-task">' + x.task + '</div>';
+              h +=
+                '<dl class="rd"><dt>model</dt><dd>' +
+                x.model +
+                '</dd><dt>tool</dt><dd>' +
+                x.tool +
+                '</dd>' +
+                '<dt>now</dt><dd class="span">' +
+                x.target +
+                '</dd>' +
+                '<dt>last</dt><dd class="span">' +
+                x.last +
+                '</dd>' +
+                '<dt class="last">time</dt><dd class="last">' +
+                x.time +
+                '</dd><dt class="last">tokens</dt><dd class="last">' +
+                x.tok +
+                '</dd></dl>';
+              if (x.req)
+                h +=
+                  '<div class="req">' +
+                  use('s-waiting') +
+                  'also waiting for you: <b style="font-weight:400">' +
+                  x.req +
+                  '</b></div>';
+              h +=
+                '<div class="acts"><button class="btn">Interrupt <span class="kbd">Ctrl+.</span></button><button class="btn">Open log</button><button class="btn">Follow on map <span class="kbd">F</span></button></div>';
+            } else {
+              if (x.task)
+                h += '<div class="ag-task" style="font-size:var(--fs-s)">' + x.task + '</div>';
+              if (x.sub) h += '<div class="ag-now">' + x.sub + '</div>';
+              if (x.target)
+                h += '<div class="ag-now"><span>' + x.tool + '</span><b>' + x.target + '</b></div>';
+              h +=
+                '<div class="ag-now"><span>time</span><b>' +
+                x.time +
+                '</b><span>tok</span><b>' +
+                x.tok +
+                '</b>' +
+                (x.rate ? '<span>rate</span><b>' + x.rate + '</b>' : '') +
+                '</div>';
+            }
+            var d = el(
+              'div',
+              'ag s-' + x.st + (x.sel ? ' sel' : '') + ' ' + CLS[t],
+              h + (x.st === 'running' ? '<span class="prog"></span>' : ''),
+            );
+            list.appendChild(d);
+          });
+          document.getElementById('agCount').textContent = sc.agents.length;
+        }
+
+        /* ------------------------------------------------------------------
+     status bar
+     ------------------------------------------------------------------ */
+        function renderStatus(sc) {
+          var st = sc.status,
+            vr = '';
+          for (var i = 0; i < 4; i++) vr += '<i class="' + (i < st.vram[0] ? 'f' : '') + '"></i>';
+          document.getElementById('status').innerHTML =
+            '<span><b>control-center</b> · feat/live-map</span>' +
+            '<span class="sess">' +
+            use('i-dot') +
+            'Session active</span>' +
+            '<span class="agt">' +
+            '<svg class="g id"><use href="#a-claude"/></svg><b>Claude</b> · ' +
+            st.agent +
+            ' · ' +
+            st.more +
+            '</span>' +
+            '<span class="wait" role="status">' +
+            use('s-waiting') +
+            'Waiting for you: <b>npm test -- ipc</b><i class="cur blink"></i></span>' +
+            '<span class="err">' +
+            use('s-error') +
+            '<b>' +
+            st.err +
+            '</b></span>' +
+            '<span><b>' +
+            st.changed.split(' ')[0] +
+            '</b> changed</span>' +
+            '<span><b>' +
+            st.tok +
+            '</b> tok · <b>' +
+            st.local +
+            '</b> local</span>' +
+            '<span class="push"><span class="vram">' +
+            vr +
+            '</span><b>' +
+            st.vram[1] +
+            '</b></span>' +
+            '<span>Docker · <b>4</b></span>';
+        }
+
+        /* ------------------------------------------------------------------ */
+        function render() {
+          var sc = SC[P.scenario];
+          _cw = 0;
+          document.getElementById('gitBadge').textContent = sc.gitBadge;
+          document.getElementById('probCount').textContent = sc.problems;
+          document.getElementById('sessClock').textContent = sc.clock;
+          document.getElementById('waitClock').textContent =
+            P.scenario === 'dense' ? '0:18' : '0:12';
+          renderAgents(sc);
+          renderStatus(sc);
+          renderTimeline(sc);
+          renderMap(sc);
+        }
+
+        readParams();
+        apply();
+        if (document.fonts && document.fonts.ready)
+          document.fonts.ready.then(function () {
+            render();
+          });
+      })();
+    </script>
+  </body>
+</html>

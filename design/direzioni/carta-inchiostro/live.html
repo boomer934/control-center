@@ -1,0 +1,3816 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="compact" data-scenario="normal" data-gray="0">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Control Center · Live · carta-inchiostro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // read params before first paint
+      (function () {
+        var q = new URLSearchParams(location.search),
+          r = document.documentElement;
+        var ok = {
+          theme: ['dark', 'light'],
+          density: ['compact', 'comfortable'],
+          scenario: ['normal', 'dense'],
+        };
+        Object.keys(ok).forEach(function (k) {
+          var v = q.get(k);
+          if (ok[k].indexOf(v) > -1) r.dataset[k] = v;
+        });
+        r.dataset.gray = q.get('gray') === '1' ? '1' : '0';
+      })();
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      :root {
+        --sans: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+        --serif: 'Alegreya', Georgia, 'Times New Roman', serif;
+        --mono: 'Courier Prime', 'Courier New', ui-monospace, monospace;
+        --dur-1: 150ms;
+        --dur-2: 220ms;
+        --dur-3: 300ms;
+        --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+        --ease-io: cubic-bezier(0.45, 0, 0.25, 1);
+        --s-1: 2px;
+        --s-2: 4px;
+        --s-3: 6px;
+        --s-4: 8px;
+        --s-5: 12px;
+        --s-6: 16px;
+        --s-7: 24px;
+        --r-1: 2px;
+        --r-2: 3px;
+        --w-act: 48px;
+        --gutter: 168px;
+      }
+      :root[data-theme='light'] {
+        --surface-0: #f3eee1;
+        --surface-1: #ece5d4;
+        --surface-2: #e2d9c3;
+        --surface-raised: #fbf8f1;
+        --ink: #1d2130;
+        --ink-2: #4e4c47;
+        --ink-3: #6f6a5f;
+        --rule: #cec4ac;
+        --rule-strong: #7c7360;
+        --accent: #8a4310;
+        --on-accent: #fbf8f1;
+        --reading: #24509a;
+        --writing: #8a4310;
+        --running: #1d2130;
+        --waiting: #6b4f00;
+        --highlight: #f4d53a;
+        --on-highlight: #1d2130;
+        --error: #ae2318;
+        --done: #5e5a50;
+        --trail: #e6d2b6;
+        --idle: #6f6a5f;
+        --claude: #5b3a8c;
+        --sub: #5b3a8c;
+        --ollama: #2b6642;
+        --page: #d8cfba;
+        --page-ink: #1d2130;
+        --page-ink-2: #4e4c47;
+        --grid: #e7dfcc;
+        --tree: #8a816c;
+        color-scheme: light;
+      }
+      :root[data-theme='dark'] {
+        --surface-0: #211d18;
+        --surface-1: #27221c;
+        --surface-2: #1a1713;
+        --surface-raised: #302a23;
+        --ink: #eee6d4;
+        --ink-2: #bdb39e;
+        --ink-3: #958b77;
+        --rule: #3b342b;
+        --rule-strong: #7a705d;
+        --accent: #e3a262;
+        --on-accent: #1a1713;
+        --reading: #8fb2ee;
+        --writing: #e3a262;
+        --running: #eee6d4;
+        --waiting: #f2d45c;
+        --highlight: #e9cb3c;
+        --on-highlight: #1a1713;
+        --error: #f2837a;
+        --done: #b3aa96;
+        --trail: #4a3826;
+        --idle: #958b77;
+        --claude: #bca3ec;
+        --sub: #bca3ec;
+        --ollama: #7ec79a;
+        --page: #100e0b;
+        --page-ink: #eee6d4;
+        --page-ink-2: #bdb39e;
+        --grid: #332d25;
+        --tree: #7a705d;
+        color-scheme: dark;
+      }
+      :root[data-density='compact'] {
+        --h-title: 34px;
+        --h-status: 24px;
+        --h-toolbar: 34px;
+        --w-dock: 336px;
+        --w-agents: 284px;
+        --fs-xs: 10.5px;
+        --fs-s: 11.5px;
+        --fs-ui: 12.5px;
+        --fs-body: 13.5px;
+        --fs-title: 15px;
+        --fs-display: 19px;
+        --pad: 10px;
+        --gap: 8px;
+        --row: 24px;
+        --axis-h: 20px;
+        --lane-h: 34px;
+        --tl-head: 26px;
+        --btn-h: 26px;
+        --tab-h: 20px;
+      }
+      :root[data-density='comfortable'] {
+        --h-title: 40px;
+        --h-status: 28px;
+        --h-toolbar: 40px;
+        --w-dock: 352px;
+        --w-agents: 300px;
+        --fs-xs: 11.5px;
+        --fs-s: 12.5px;
+        --fs-ui: 13.5px;
+        --fs-body: 14.5px;
+        --fs-title: 16.5px;
+        --fs-display: 21px;
+        --pad: 14px;
+        --gap: 12px;
+        --row: 30px;
+        --axis-h: 22px;
+        --lane-h: 40px;
+        --tl-head: 32px;
+        --btn-h: 30px;
+        --tab-h: 22px;
+      }
+      :root[data-scenario='dense'][data-density='compact'] {
+        --lane-h: 30px;
+      }
+      :root[data-scenario='dense'][data-density='comfortable'] {
+        --lane-h: 35px;
+      }
+      [data-scenario='normal'] .only-dense,
+      [data-scenario='dense'] .only-normal {
+        display: none !important;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--page-ink);
+        font-family: var(--sans);
+      }
+      body {
+        min-width: 1480px;
+        padding: 0 20px 28px;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+
+      /* ---------- harness (outside the window) ---------- */
+      .harness {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        width: 1440px;
+        margin: 0 auto;
+        padding: 12px 0 10px;
+        font-size: 13px;
+        color: var(--page-ink-2);
+      }
+      .harness h1 {
+        margin: 0 auto 0 0;
+        font: italic 500 16px/1 var(--serif);
+        color: var(--page-ink);
+      }
+      .harness .grp {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .harness .grp > span {
+        font-style: italic;
+        font-family: var(--serif);
+      }
+      .harness .seg {
+        display: inline-flex;
+        border: 1px solid var(--rule-strong);
+        border-radius: var(--r-1);
+      }
+      .harness .seg button {
+        border: 0;
+        background: transparent;
+        padding: 3px 9px;
+        cursor: pointer;
+        color: var(--page-ink-2);
+      }
+      .harness .seg button + button {
+        border-left: 1px solid var(--rule-strong);
+      }
+      .harness .seg button[aria-pressed='true'] {
+        background: var(--page-ink);
+        color: var(--page);
+      }
+      .harness button:focus-visible {
+        outline: 2px solid var(--reading);
+        outline-offset: 2px;
+      }
+      .harness label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .harness input {
+        accent-color: var(--page-ink);
+      }
+
+      /* ---------- window ---------- */
+      .stage {
+        width: 1440px;
+        margin: 0 auto;
+      }
+      .win {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+        position: relative;
+        display: grid;
+        grid-template-columns: var(--w-act) minmax(0, 1fr) var(--w-dock);
+        grid-template-rows: var(--h-title) minmax(0, 1fr) var(--h-status);
+        background: var(--surface-0);
+        color: var(--ink);
+        font-size: var(--fs-ui);
+        line-height: 1.35;
+        border: 1px solid var(--rule-strong);
+      }
+      :root[data-gray='1'] .win {
+        filter: grayscale(1);
+      }
+      .ic {
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .num,
+      .mono {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums lining-nums;
+      }
+      kbd {
+        font: 400 var(--fs-xs)/1 var(--mono);
+        color: var(--ink-2);
+        border: 1px solid var(--rule-strong);
+        border-bottom-width: 2px;
+        border-radius: var(--r-1);
+        padding: 2px 4px;
+        background: var(--surface-raised);
+        white-space: nowrap;
+      }
+
+      /* seals: identity of agents. round = cloud, square = local; solid = main, hollow = subagent */
+      .seal {
+        display: inline-grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        flex: none;
+        border-radius: 50%;
+      }
+      .seal .sg {
+        width: 11px;
+        height: 11px;
+      }
+      .seal-claude {
+        background: var(--claude);
+        color: var(--surface-raised);
+      }
+      .seal-sub {
+        background: var(--surface-raised);
+        color: var(--sub);
+        border: 1.5px solid var(--sub);
+      }
+      .seal-ollama {
+        border-radius: var(--r-1);
+        background: var(--surface-raised);
+        color: var(--ollama);
+        border: 1.5px solid var(--ollama);
+        background-image: repeating-linear-gradient(135deg, transparent 0 3px, var(--rule) 3px 4px);
+      }
+      .seal.sm {
+        width: 16px;
+        height: 16px;
+      }
+      .seal.sm .sg {
+        width: 8px;
+        height: 8px;
+      }
+      .seal.is-waiting {
+        outline: 3px solid var(--highlight);
+        outline-offset: 1px;
+      }
+
+      /* ---------- title bar ---------- */
+      .titlebar {
+        grid-column: 1/-1;
+        display: flex;
+        align-items: stretch;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--rule);
+        font-size: var(--fs-ui);
+      }
+      .tb-mark {
+        width: var(--w-act);
+        display: grid;
+        place-items: center;
+        font: italic 700 15px/1 var(--serif);
+        color: var(--ink);
+      }
+      .tb-mark span {
+        border-bottom: 1.5px solid var(--accent);
+        padding-bottom: 1px;
+      }
+      .tb-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-left: 4px;
+      }
+      .tb-ws {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-weight: 700;
+        color: var(--ink);
+        background: none;
+        border: 0;
+        padding: 3px 4px;
+        border-radius: var(--r-1);
+        cursor: default;
+      }
+      .tb-branch {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--ink-2);
+        font-family: var(--mono);
+        font-size: var(--fs-s);
+      }
+      .tb-sep {
+        width: 1px;
+        align-self: center;
+        height: 14px;
+        background: var(--rule-strong);
+      }
+      .tb-session {
+        font: italic 500 var(--fs-body)/1 var(--serif);
+        color: var(--ink);
+      }
+      .tb-drag {
+        flex: 1;
+      }
+      .tb-docks {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding-right: 8px;
+      }
+      .tb-docks button {
+        width: 28px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        background: none;
+        color: var(--ink-2);
+        border-radius: var(--r-1);
+      }
+      .tb-docks button[aria-pressed='true'] {
+        color: var(--ink);
+        background: var(--surface-1);
+      }
+      .winctl {
+        display: flex;
+      }
+      .winctl button {
+        width: 46px;
+        border: 0;
+        background: none;
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+      }
+      .winctl .ic {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* ---------- activity bar ---------- */
+      .activity {
+        grid-row: 2;
+        background: var(--surface-2);
+        border-right: 1px solid var(--rule);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 0;
+        gap: 2px;
+      }
+      .ws-seal {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        background: var(--ink);
+        color: var(--surface-0);
+        font: italic 700 14px/1 var(--serif);
+        border-radius: var(--r-1);
+        margin-bottom: 10px;
+      }
+      .act {
+        position: relative;
+        width: 48px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        background: none;
+        color: var(--ink-3);
+      }
+      .act .ic {
+        width: 21px;
+        height: 21px;
+      }
+      .act[aria-current='page'] {
+        color: var(--ink);
+      }
+      .act[aria-current='page']::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 9px;
+        bottom: 9px;
+        width: 2.5px;
+        background: var(--ink);
+      }
+      .act .badge {
+        position: absolute;
+        top: 6px;
+        right: 7px;
+        min-width: 15px;
+        height: 15px;
+        padding: 0 3px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: var(--surface-2);
+        font: 700 10px/15px var(--mono);
+        text-align: center;
+      }
+      .act-spacer {
+        flex: 1;
+      }
+
+      /* ---------- live ---------- */
+      .live {
+        grid-row: 2;
+        grid-column: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--w-agents);
+        min-height: 0;
+      }
+      .live-main {
+        display: grid;
+        grid-template-rows: var(--h-toolbar) minmax(0, 1fr) auto var(--tab-h);
+        min-height: 0;
+        min-width: 0;
+        border-right: 1px solid var(--rule);
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 var(--pad);
+        border-bottom: 1px solid var(--rule);
+        background: var(--surface-0);
+      }
+      .tbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: var(--btn-h);
+        padding: 0 8px;
+        border: 1px solid transparent;
+        border-radius: var(--r-1);
+        background: none;
+        color: var(--ink);
+        font-size: var(--fs-ui);
+        cursor: default;
+      }
+      .tbtn .ic {
+        width: 14px;
+        height: 14px;
+        color: var(--ink-2);
+      }
+      .tbtn.follow {
+        border-color: var(--rule-strong);
+      }
+      .tbtn.follow b {
+        font: italic 600 var(--fs-body)/1 var(--serif);
+      }
+      .toolbar .caption {
+        margin-left: auto;
+        font: italic 400 var(--fs-s)/1.2 var(--serif);
+        color: var(--ink-2);
+      }
+
+      .map {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--surface-0);
+        background-image: radial-gradient(circle at 1px 1px, var(--grid) 1.1px, transparent 1.3px);
+        background-size: 16px 16px;
+      }
+      .map-ink {
+        position: absolute;
+        inset: 0;
+      }
+      .map-lines {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .map-lines path {
+        fill: none;
+      }
+      .tree {
+        stroke: var(--tree);
+        stroke-width: 1;
+      }
+      .arc-write {
+        stroke: var(--writing);
+        stroke-width: 1.6;
+      }
+      .arc-read {
+        stroke: var(--reading);
+        stroke-width: 1.6;
+        stroke-dasharray: 0.5 4.5;
+        stroke-linecap: round;
+      }
+      .arc-link {
+        stroke: var(--ink-3);
+        stroke-width: 1;
+        stroke-dasharray: 3 3;
+      }
+      .arc-spawn {
+        stroke: var(--sub);
+        stroke-width: 1;
+        stroke-dasharray: 2 3;
+      }
+      .mk-write {
+        fill: var(--writing);
+      }
+      .mk-read {
+        stroke: var(--reading);
+        stroke-width: 1.6;
+      }
+
+      .folder {
+        position: absolute;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font: italic 500 14px/1 var(--serif);
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .folder.root {
+        font: 700 15px/1 var(--serif);
+        letter-spacing: 0.01em;
+      }
+      .folder.collapsed {
+        color: var(--ink-2);
+      }
+      .fold-count {
+        font: 400 11px/1 var(--mono);
+        color: var(--ink-2);
+        border: 1px solid var(--rule-strong);
+        padding: 2px 4px;
+        font-style: normal;
+      }
+      .folder.collapsed::before {
+        content: '';
+        position: absolute;
+        left: -4px;
+        right: -4px;
+        bottom: -2px;
+        border-bottom: 1px dashed var(--rule-strong);
+      }
+
+      /* nodes: file name in mono; the state is an ink mark around it */
+      .node {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 20px;
+        padding: 0 6px 0 4px;
+        font: 400 12px/1 var(--mono);
+        color: var(--ink-2);
+        white-space: nowrap;
+        border: 1.5px solid transparent;
+      }
+      .node .fn {
+        position: relative;
+      }
+      .node .mk {
+        width: 10px;
+        height: 10px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 1.3px solid var(--idle);
+      }
+      .node .mk-ic {
+        width: 11px;
+        height: 11px;
+      }
+      .node .diff {
+        font: 700 11px/16px var(--mono);
+        padding: 0 4px;
+        border-radius: var(--r-1);
+        font-variant-numeric: tabular-nums;
+      }
+      .node .note {
+        font: italic 500 12.5px/1 var(--serif);
+        margin-left: 6px;
+      }
+      .node.temp .fn {
+        font-style: italic;
+      }
+
+      .s-reading {
+        color: var(--ink);
+      }
+      .s-reading .mk {
+        background: var(--reading);
+        border-color: var(--reading);
+      }
+      .s-reading .fn::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -4px;
+        height: 2px;
+        background: var(--reading);
+        transform-origin: left;
+        animation: read-pulse 3.2s var(--ease-out) 1;
+      }
+      @keyframes read-pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scaleX(1);
+        }
+        4% {
+          opacity: 0.35;
+          transform: scaleX(0.6);
+        }
+        9% {
+          opacity: 1;
+          transform: scaleX(1);
+        }
+      }
+
+      .s-writing {
+        color: var(--ink);
+        border-color: var(--writing);
+        background: var(--surface-raised);
+        font-weight: 700;
+      }
+      .s-writing .mk {
+        border-radius: 1px;
+        background: var(--writing);
+        border-color: var(--writing);
+        width: 9px;
+        height: 9px;
+      }
+      .s-writing .diff {
+        background: var(--writing);
+        color: var(--on-accent);
+      }
+
+      .s-running {
+        color: var(--ink);
+        border-style: dashed;
+        border-color: var(--running);
+        overflow: hidden;
+      }
+      .s-running .mk {
+        border-color: var(--running);
+        background: linear-gradient(90deg, var(--running) 50%, transparent 50%);
+      }
+      .s-running::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: calc(100% + 12px);
+        height: 2px;
+        background: repeating-linear-gradient(90deg, var(--running) 0 6px, transparent 6px 12px);
+        animation: march 0.9s linear infinite;
+      }
+      @keyframes march {
+        to {
+          transform: translateX(-12px);
+        }
+      }
+
+      .s-waiting {
+        color: var(--on-highlight);
+        font-weight: 700;
+        background: var(--highlight);
+        border-color: transparent;
+        border-bottom: 2px solid var(--waiting);
+        border-radius: 2px 7px 3px 6px / 6px 3px 7px 2px;
+      }
+      .s-waiting .mk {
+        border: 0;
+        border-radius: 0;
+        color: var(--on-highlight);
+      }
+
+      .s-error {
+        color: var(--ink);
+      }
+      .s-error .mk {
+        border: 0;
+        color: var(--error);
+      }
+      .s-error .fn::after {
+        content: '';
+        position: absolute;
+        inset: -6px -9px -6px -8px;
+        border: 1.5px solid var(--error);
+        border-radius: 48% 52% 46% 54% / 58% 44% 56% 42%;
+        transform: rotate(-2deg);
+      }
+      .s-error .note {
+        color: var(--error);
+      }
+
+      .s-done {
+        color: var(--ink-2);
+        background: linear-gradient(90deg, var(--trail), transparent 85%);
+      }
+      .s-done .mk {
+        border: 0;
+        color: var(--done);
+      }
+      .s-done .diff {
+        color: var(--done);
+        border: 1px solid var(--rule-strong);
+        line-height: 14px;
+        font-weight: 400;
+      }
+
+      .mav {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .mav .mav-name {
+        font: italic 600 13px/1 var(--serif);
+        color: var(--ink);
+      }
+      .mav.below {
+        flex-direction: column;
+        gap: 3px;
+      }
+      .mav.below .mav-name {
+        font-size: 12px;
+      }
+      .mav.left {
+        flex-direction: row-reverse;
+      }
+      .mav.a-done .mav-name::after {
+        content: ' · done';
+        font-style: normal;
+        font-weight: 400;
+        color: var(--ink-2);
+        font-family: var(--sans);
+        font-size: 11.5px;
+      }
+
+      .margin {
+        position: absolute;
+        font: italic 400 12.5px/1 var(--serif);
+        white-space: nowrap;
+      }
+      .margin.m-waiting {
+        color: var(--waiting);
+      }
+      .margin.m-running {
+        color: var(--ink-2);
+      }
+
+      .minimap {
+        position: absolute;
+        right: 12px;
+        bottom: 34px;
+        width: 144px;
+        height: 96px;
+        background: var(--surface-raised);
+        border: 1px solid var(--rule-strong);
+      }
+      .minimap .mm-label {
+        position: absolute;
+        left: 6px;
+        bottom: 3px;
+        font: italic 400 10.5px/1 var(--serif);
+        color: var(--ink-2);
+      }
+      .mm-n,
+      .mm-f {
+        position: absolute;
+        height: 2px;
+        background: var(--ink-3);
+      }
+      .mm-f {
+        background: var(--tree);
+        height: 1.5px;
+      }
+      .mm-n.m-writing {
+        background: var(--writing);
+        height: 3px;
+      }
+      .mm-n.m-reading {
+        background: var(--reading);
+        height: 3px;
+      }
+      .mm-n.m-error {
+        background: var(--error);
+        height: 3px;
+      }
+      .mm-n.m-waiting {
+        background: var(--waiting);
+        height: 4px;
+      }
+      .mm-n.m-running {
+        background: var(--running);
+        height: 3px;
+      }
+      .mm-view {
+        position: absolute;
+        border: 1px solid var(--ink);
+      }
+
+      .key {
+        position: absolute;
+        left: 12px;
+        bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 2px 6px 2px 4px;
+        background: var(--surface-0);
+        border: 1px solid var(--rule);
+      }
+      .key > span:first-child {
+        font: italic 500 12px/1 var(--serif);
+        color: var(--ink-2);
+        margin-right: 4px;
+      }
+      .key .node {
+        position: relative;
+        font-family: var(--sans);
+        font-size: var(--fs-s);
+        height: 18px;
+        padding: 0 5px 0 3px;
+      }
+      .key .node .fn {
+        font-style: normal;
+      }
+      .key .s-error .fn::after {
+        inset: -4px -6px -4px -6px;
+      }
+      .key .s-reading .fn::after {
+        animation: none;
+      }
+
+      /* ---------- timeline ---------- */
+      .timeline {
+        position: relative;
+        border-top: 1px solid var(--rule-strong);
+        background: var(--surface-1);
+        padding-bottom: 8px;
+      }
+      .tl-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: var(--tl-head);
+        padding: 0 var(--pad);
+      }
+      .tl-head h2 {
+        margin: 0;
+        font: italic 600 var(--fs-title)/1 var(--serif);
+      }
+      .tl-head .hint {
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+      }
+      .tl-head .tl-ctl {
+        margin-left: auto;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font: 700 var(--fs-s)/1 var(--sans);
+        color: var(--ink);
+        padding: 3px 7px;
+        border: 1px solid var(--ink);
+        border-radius: var(--r-1);
+      }
+      .live-pill i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+      .tl-body {
+        position: relative;
+      }
+      .tl-axis {
+        display: grid;
+        grid-template-columns: var(--gutter) minmax(0, 1fr);
+        height: var(--axis-h);
+      }
+      .tl-gutter {
+        display: flex;
+        align-items: center;
+        padding-left: var(--pad);
+      }
+      .tl-range {
+        font: 400 var(--fs-xs)/1 var(--mono);
+        color: var(--ink-2);
+      }
+      .tl-scale {
+        position: relative;
+        margin-right: 28px;
+        border-bottom: 1px solid var(--rule-strong);
+      }
+      .tick {
+        position: absolute;
+        bottom: 0;
+        width: 1px;
+        height: 4px;
+        background: var(--rule-strong);
+      }
+      .tick.major {
+        height: 8px;
+        background: var(--ink-2);
+      }
+      .tick-l {
+        position: absolute;
+        top: 2px;
+        transform: translateX(3px);
+        font: 400 var(--fs-xs)/1 var(--mono);
+        color: var(--ink-2);
+      }
+      .tick-l.now {
+        transform: translateX(-100%) translateX(-4px);
+        color: var(--ink);
+      }
+      .lane {
+        display: grid;
+        grid-template-columns: var(--gutter) minmax(0, 1fr);
+        height: var(--lane-h);
+      }
+      .lane + .lane {
+        border-top: 1px dotted var(--rule);
+      }
+      .lane-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-left: var(--pad);
+        min-width: 0;
+        position: relative;
+      }
+      .depth-1 .lane-label {
+        padding-left: calc(var(--pad) + 14px);
+      }
+      .lane-elbow {
+        position: absolute;
+        left: calc(var(--pad) + 6px);
+        top: 0;
+        height: 50%;
+        width: 7px;
+        border-left: 1px solid var(--tree);
+        border-bottom: 1px solid var(--tree);
+      }
+      .lane-name {
+        font: italic 600 var(--fs-body)/1 var(--serif);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .lane-state:not(.st-waiting) {
+        display: none;
+      }
+      .lane-state {
+        font-size: var(--fs-xs);
+        color: var(--ink-2);
+        white-space: nowrap;
+        margin-left: auto;
+        padding-right: 8px;
+      }
+      .lane-state.st-waiting {
+        color: var(--on-highlight);
+        background: var(--highlight);
+        padding: 1px 4px;
+        border-radius: 2px;
+        margin-right: 6px;
+      }
+      .lane-track {
+        position: relative;
+        margin-right: 28px;
+      }
+      .lane-track::before {
+        content: '';
+        position: absolute;
+        left: var(--born, 0%);
+        right: 0;
+        top: 50%;
+        border-top: 1px solid var(--rule-strong);
+      }
+      .ended .lane-track::before {
+        right: auto;
+        width: calc(var(--end) - var(--born));
+        border-top-style: dashed;
+      }
+      .ev {
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .ev.row-top {
+        top: 27%;
+      }
+      .ev.row-bottom {
+        top: 75%;
+      }
+      .ev-read {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1.5px solid var(--reading);
+        background: var(--surface-1);
+      }
+      .ev-grep {
+        width: 2px;
+        height: 12px;
+        background: var(--reading);
+      }
+      .ev-tool {
+        transform: translateY(-50%);
+        height: 8px;
+        border: 1px solid var(--ink-2);
+        background: var(--surface-1);
+      }
+      .ev-edit {
+        transform: translateY(-50%);
+        height: 12px;
+        background: var(--writing);
+      }
+      .ev-edit.open {
+        background: repeating-linear-gradient(90deg, var(--writing) 0 70%, transparent 70% 100%);
+        background: var(--writing);
+      }
+      .ev-error {
+        display: grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--error);
+        border-radius: 50%;
+        background: var(--surface-1);
+        color: var(--error);
+      }
+      .ev-error .ev-ic {
+        width: 9px;
+        height: 9px;
+      }
+      .ev-done {
+        display: grid;
+        place-items: center;
+        width: 16px;
+        height: 16px;
+        color: var(--done);
+        background: var(--surface-1);
+      }
+      .ev-done .ev-ic {
+        width: 12px;
+        height: 12px;
+      }
+      .ev-label {
+        position: absolute;
+        top: 2px;
+        transform: translateX(0);
+        font: 400 var(--fs-xs)/1 var(--mono);
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+      .ev-label.err {
+        color: var(--error);
+        transform: translateX(10px);
+      }
+      .ev-label.below {
+        top: auto;
+        bottom: 1px;
+        transform: translateX(-50%);
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: var(--fs-s);
+      }
+      .ev-wait,
+      .ev-run,
+      .ev-reading {
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 16px;
+        padding: 0 6px;
+        font: 700 var(--fs-xs)/1 var(--mono);
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .ev-wait {
+        background: var(--highlight);
+        color: var(--on-highlight);
+        border-bottom: 2px solid var(--waiting);
+        border-radius: 2px 6px 3px 5px / 5px 3px 6px 2px;
+      }
+      .ev-wait .ev-ic {
+        width: 11px;
+        height: 11px;
+        flex: none;
+      }
+      .ev-run {
+        border: 1.5px dashed var(--running);
+        color: var(--ink);
+        font-weight: 400;
+        background: var(--surface-1);
+      }
+      .ev-run::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: calc(100% + 12px);
+        height: 2px;
+        background: repeating-linear-gradient(90deg, var(--running) 0 6px, transparent 6px 12px);
+        animation: march 0.9s linear infinite;
+      }
+      .ev-reading {
+        color: var(--reading);
+        font-weight: 400;
+        border-bottom: 2px dotted var(--reading);
+        height: 14px;
+        padding: 0 2px;
+      }
+      .ev.row-top.ev-run,
+      .ev.row-bottom.ev-wait {
+        height: 11px;
+        font-size: 10px;
+        line-height: 1;
+      }
+      .ev.row-top.ev-run {
+        border-width: 1px;
+      }
+      .ev.row-bottom.ev-wait {
+        border-bottom-width: 1.5px;
+      }
+      :root[data-scenario='dense'] .ev-read {
+        width: 7px;
+        height: 7px;
+      }
+      :root[data-scenario='dense'] .ev-edit {
+        height: 10px;
+      }
+      .tl-overlay {
+        position: absolute;
+        left: var(--gutter);
+        right: 28px;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+      }
+      .branch {
+        position: absolute;
+        width: 10px;
+        border-left: 1px solid var(--tree);
+        border-bottom: 1px solid var(--tree);
+        border-bottom-left-radius: 6px;
+      }
+      .checkpoint {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        border-left: 1px dashed var(--ink-2);
+      }
+      .checkpoint .cp-ic {
+        position: absolute;
+        bottom: -4px;
+        left: -7px;
+        width: 13px;
+        height: 13px;
+        color: var(--ink);
+        background: var(--surface-1);
+      }
+      .scrubber {
+        position: absolute;
+        left: 100%;
+        top: 0;
+        bottom: 0;
+        border-left: 1.5px solid var(--ink);
+      }
+      .scrub-tag {
+        position: absolute;
+        top: 2px;
+        left: 4px;
+        font: 700 10px/1 var(--sans);
+        background: var(--ink);
+        color: var(--surface-1);
+        padding: 2px 4px;
+        border-radius: var(--r-1);
+      }
+
+      .dock-tab {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 var(--pad);
+        border-top: 1px solid var(--rule);
+        background: var(--surface-2);
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+      }
+      .dock-tab .ic {
+        width: 12px;
+        height: 12px;
+      }
+      .dock-tab b {
+        font-weight: 500;
+        color: var(--ink);
+      }
+      .dock-tab .cnt {
+        font-family: var(--mono);
+        color: var(--error);
+        font-weight: 700;
+      }
+
+      /* ---------- agents column ---------- */
+      .agents {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--surface-1);
+      }
+      .tabs {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        height: var(--h-toolbar);
+        padding: 0 var(--pad);
+        border-bottom: 1px solid var(--rule);
+      }
+      .tab {
+        border: 0;
+        background: none;
+        padding: 0 0 7px;
+        font-size: var(--fs-body);
+        color: var(--ink-2);
+        border-bottom: 2px solid transparent;
+        cursor: default;
+      }
+      .tab[aria-selected='true'] {
+        color: var(--ink);
+        border-bottom-color: var(--ink);
+        font-weight: 700;
+      }
+      .tab .num {
+        font-size: var(--fs-xs);
+        font-weight: 400;
+        color: var(--ink-2);
+        margin-left: 3px;
+      }
+      .cast {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .who {
+        position: relative;
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        column-gap: 8px;
+        row-gap: 3px;
+        padding: var(--pad) var(--pad) calc(var(--pad) - 1px);
+        border-bottom: 1px solid var(--rule);
+      }
+      .who > .seal {
+        grid-row: 1/3;
+        margin-top: 1px;
+      }
+      .who .name {
+        font: italic 600 var(--fs-title)/1.15 var(--serif);
+        color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .who .time {
+        font: 400 var(--fs-s)/1.4 var(--mono);
+        color: var(--ink-2);
+        text-align: right;
+      }
+      .who .role {
+        grid-column: 2/4;
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+      }
+      .who .role .mono {
+        font-size: var(--fs-xs);
+      }
+      .who .doing {
+        grid-column: 2/4;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--fs-ui);
+        margin-top: 3px;
+        min-width: 0;
+      }
+      .who .doing .what {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .who .doing .mono {
+        font-size: var(--fs-s);
+      }
+      .who .task {
+        grid-column: 2/4;
+        font: 400 var(--fs-body)/1.3 var(--serif);
+        color: var(--ink);
+        margin-top: 4px;
+      }
+      .who .facts {
+        grid-column: 2/4;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+        margin-top: 2px;
+      }
+      .who .facts b {
+        font: 400 var(--fs-s)/1.35 var(--mono);
+        color: var(--ink);
+      }
+      .who .acts {
+        grid-column: 2/4;
+        display: flex;
+        gap: 4px;
+        margin-top: 6px;
+        margin-left: -6px;
+      }
+      .lnk {
+        border: 0;
+        background: none;
+        padding: 3px 6px;
+        font-size: var(--fs-ui);
+        color: var(--ink);
+        text-decoration: underline;
+        text-decoration-color: var(--rule-strong);
+        text-underline-offset: 3px;
+        border-radius: var(--r-1);
+        cursor: default;
+      }
+      .lnk.danger {
+        color: var(--error);
+        text-decoration-color: currentColor;
+      }
+      .who.selected::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--ink);
+      }
+      .state {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--fs-s);
+        font-weight: 700;
+        white-space: nowrap;
+        padding: 0 4px;
+        flex: none;
+      }
+      .state .ic {
+        width: 11px;
+        height: 11px;
+      }
+      .state.st-waiting {
+        background: var(--highlight);
+        color: var(--on-highlight);
+        border-bottom: 2px solid var(--waiting);
+        border-radius: 2px 6px 3px 5px / 5px 3px 6px 2px;
+      }
+      .state.st-reading {
+        color: var(--reading);
+        border-bottom: 2px solid var(--reading);
+        padding: 0;
+      }
+      .state.st-writing {
+        color: var(--writing);
+        border: 1.5px solid var(--writing);
+      }
+      .state.st-running {
+        color: var(--ink);
+        border: 1.5px dashed var(--running);
+      }
+      .state.st-done {
+        color: var(--done);
+        font-weight: 400;
+        padding: 0;
+      }
+      .state.st-error {
+        color: var(--error);
+      }
+      .state.st-idle {
+        color: var(--ink-2);
+        font-weight: 400;
+        padding: 0;
+      }
+      .bar {
+        position: relative;
+        flex: 1;
+        max-width: 80px;
+        height: 3px;
+        background: var(--rule);
+        overflow: hidden;
+      }
+      .bar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        width: calc(100% + 12px);
+        background: repeating-linear-gradient(90deg, var(--running) 0 6px, transparent 6px 12px);
+        animation: march 0.9s linear infinite;
+      }
+      .compact-who .task {
+        display: none;
+      }
+
+      /* ---------- session dock ---------- */
+      .dock {
+        grid-row: 2;
+        grid-column: 3;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: var(--h-toolbar) minmax(0, 1fr) auto auto;
+        min-height: 0;
+        background: var(--surface-1);
+        border-left: 1px solid var(--rule);
+      }
+      .dock-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 var(--pad);
+        border-bottom: 1px solid var(--rule);
+      }
+      .dock-head h2 {
+        margin: 0;
+        font: 600 var(--fs-title)/1 var(--serif);
+      }
+      .dock-head .sub {
+        font: italic 400 var(--fs-ui)/1 var(--serif);
+        color: var(--ink-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dock-head .ibtns {
+        margin-left: auto;
+        display: flex;
+        gap: 2px;
+      }
+      .ibtn {
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        background: none;
+        color: var(--ink-2);
+        border-radius: var(--r-1);
+      }
+      .ibtn .ic {
+        width: 14px;
+        height: 14px;
+      }
+      .chat {
+        overflow: hidden;
+        padding: var(--pad) var(--pad) 0;
+        display: flex;
+        flex-direction: column;
+        gap: var(--gap);
+      }
+      .msg {
+        display: grid;
+        grid-template-columns: 20px minmax(0, 1fr);
+        column-gap: 8px;
+      }
+      .msg .who-s {
+        grid-column: 1/3;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 3px;
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+      }
+      .msg .who-s b {
+        font: italic 600 var(--fs-body)/1 var(--serif);
+        color: var(--ink);
+      }
+      .msg .who-s .you {
+        font: 700 var(--fs-s)/1 var(--sans);
+        color: var(--ink);
+      }
+      .msg p {
+        grid-column: 2;
+        margin: 0;
+        overflow-wrap: anywhere;
+        font: 400 var(--fs-body)/1.45 var(--serif);
+        color: var(--ink);
+        max-width: 62ch;
+      }
+      .msg.user p {
+        font-family: var(--sans);
+        border-left: 2px solid var(--rule-strong);
+        padding-left: 8px;
+        grid-column: 1/3;
+      }
+      .toolrow {
+        grid-column: 2;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 5px;
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+      }
+      .toolrow .ic {
+        width: 11px;
+        height: 11px;
+      }
+      .toolrow .mono {
+        color: var(--ink);
+        font-size: var(--fs-s);
+      }
+      .toolrow .d {
+        font: 700 var(--fs-xs)/1 var(--mono);
+        color: var(--writing);
+      }
+      .toolrow .d.past {
+        color: var(--done);
+        font-weight: 400;
+      }
+
+      .permit {
+        margin: var(--gap) var(--pad) 0;
+        background: var(--surface-raised);
+        border: 1.5px solid var(--ink);
+        position: relative;
+      }
+      .permit::before {
+        content: '';
+        position: absolute;
+        left: -1.5px;
+        right: -1.5px;
+        top: -1.5px;
+        height: 6px;
+        background: var(--highlight);
+        border-bottom: 1.5px solid var(--waiting);
+      }
+      .permit-in {
+        padding: calc(var(--pad) + 6px) var(--pad) var(--pad);
+      }
+      .permit h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 8px;
+        font: 600 var(--fs-display)/1.15 var(--serif);
+      }
+      .permit h3 .ic {
+        width: 16px;
+        height: 16px;
+        color: var(--waiting);
+      }
+      .permit dl {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 5px 12px;
+        margin: 0 0 10px;
+        font-size: var(--fs-s);
+      }
+      .permit dt {
+        color: var(--ink-2);
+        font-style: italic;
+        font-family: var(--serif);
+        font-size: var(--fs-ui);
+      }
+      .permit dd {
+        margin: 0;
+        color: var(--ink);
+        min-width: 0;
+      }
+      .permit .cmd {
+        display: block;
+        font: 700 14px/1.3 var(--mono);
+        color: var(--ink);
+        background: var(--surface-0);
+        border: 1px solid var(--rule-strong);
+        padding: 7px 9px;
+        margin: 0 0 10px;
+      }
+      .permit .cmd::before {
+        content: '$ ';
+        color: var(--ink-3);
+        font-weight: 400;
+      }
+      .permit .reason {
+        font: italic 400 var(--fs-body)/1.35 var(--serif);
+      }
+      .actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+      }
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        height: calc(var(--btn-h) + 6px);
+        padding: 0 10px;
+        border-radius: var(--r-1);
+        font-size: var(--fs-ui);
+        font-weight: 700;
+        border: 1.5px solid var(--ink);
+        background: var(--surface-raised);
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .btn kbd {
+        font-weight: 400;
+      }
+      .btn.primary {
+        background: var(--ink);
+        color: var(--surface-raised);
+      }
+      .btn.primary kbd {
+        background: transparent;
+        color: var(--surface-raised);
+        border-color: var(--ink-3);
+      }
+      .btn.wide {
+        border-color: var(--rule-strong);
+        font-weight: 500;
+      }
+      .btn:focus-visible {
+        outline: 2px solid var(--reading);
+        outline-offset: 2px;
+      }
+      .permit .note {
+        margin: 8px 0 0;
+        font: italic 400 var(--fs-s)/1.3 var(--serif);
+        color: var(--ink-2);
+      }
+      .composer {
+        padding: var(--gap) var(--pad) var(--pad);
+      }
+      .meta {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        border: 1px solid var(--rule-strong);
+        border-radius: var(--r-1);
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+      }
+      .chip .mono {
+        color: var(--ink);
+        font-size: var(--fs-s);
+      }
+      .chip .on {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+      .input {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        min-height: 58px;
+        padding: 8px 8px 8px 10px;
+        border: 1px dashed var(--rule-strong);
+        background: var(--surface-0);
+        font: italic 400 var(--fs-body)/1.3 var(--serif);
+        color: var(--ink-3);
+      }
+      .input span {
+        flex: 1;
+        align-self: flex-start;
+      }
+      .input .ibtn {
+        color: var(--ink-3);
+      }
+
+      /* ---------- status bar ---------- */
+      .status {
+        grid-column: 1/-1;
+        display: flex;
+        align-items: stretch;
+        background: var(--surface-2);
+        border-top: 1px solid var(--rule-strong);
+        font-size: var(--fs-s);
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+      .seg {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 10px;
+        border-right: 1px solid var(--rule);
+      }
+      .seg .ic {
+        width: 12px;
+        height: 12px;
+      }
+      .seg .num {
+        font-size: var(--fs-s);
+      }
+      .seg.ws {
+        color: var(--ink);
+      }
+      .seg .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ink);
+      }
+      .seg .sg {
+        width: 9px;
+        height: 9px;
+        color: var(--claude);
+      }
+      .seg.wait {
+        position: relative;
+        color: var(--on-highlight);
+        font-weight: 700;
+        background: var(--highlight);
+        border-right: 0;
+        padding: 0 12px;
+        box-shadow: inset 0 -2px 0 var(--waiting);
+      }
+      .seg.wait .ic {
+        width: 13px;
+        height: 13px;
+      }
+      .seg.wait::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border: 2px solid var(--waiting);
+        opacity: 0;
+        animation: wait-ring 1.6s var(--ease-io) infinite;
+      }
+      @keyframes wait-ring {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      .seg.err {
+        color: var(--error);
+        font-weight: 700;
+      }
+      .seg.err .ic {
+        width: 10px;
+        height: 10px;
+      }
+      .vram {
+        display: inline-flex;
+        gap: 2px;
+      }
+      .vram i {
+        width: 4px;
+        height: 10px;
+        border: 1px solid var(--ink-2);
+      }
+      .vram i.f {
+        background: var(--ink-2);
+      }
+      .seg.last {
+        margin-left: auto;
+        border-left: 1px solid var(--rule);
+        border-right: 0;
+      }
+
+      /* ---------- motion & focus ---------- */
+      .lnk,
+      .tbtn,
+      .btn,
+      .ibtn,
+      .act,
+      .tab {
+        transition:
+          background-color var(--dur-1) var(--ease-out),
+          color var(--dur-1) var(--ease-out);
+      }
+      .lnk:hover,
+      .tbtn:hover,
+      .ibtn:hover {
+        background: var(--surface-2);
+      }
+      .btn.primary:hover {
+        background: var(--ink-2);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="g-claude" viewBox="0 0 12 12">
+          <path d="M6 .8 11.2 6 6 11.2.8 6Z" fill="currentColor" />
+        </symbol>
+        <symbol id="g-sub" viewBox="0 0 12 12">
+          <path
+            d="M6 1.6 10.4 6 6 10.4 1.6 6Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          />
+        </symbol>
+        <symbol id="g-ollama" viewBox="0 0 12 12">
+          <path d="M6 1.2 11.2 10.6H.8Z" fill="currentColor" />
+        </symbol>
+        <symbol id="i-warn" viewBox="0 0 16 16">
+          <path
+            d="M8 1.8 15 14.2H1Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+          />
+          <path d="M8 6.2v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <circle cx="8" cy="12.2" r="1" fill="currentColor" />
+        </symbol>
+        <symbol id="i-err" viewBox="0 0 16 16">
+          <path
+            d="M3.5 3.5l9 9M12.5 3.5l-9 9"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 16 16">
+          <path
+            d="M2.5 8.6 6.4 12.4 13.6 3.6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-live" viewBox="0 0 24 24">
+          <path
+            d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20Z M9 4v13.5 M15 6.5V20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-infra" viewBox="0 0 24 24">
+          <rect
+            x="4"
+            y="4"
+            width="16"
+            height="5"
+            rx="1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <rect
+            x="4"
+            y="10.5"
+            width="16"
+            height="5"
+            rx="1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path d="M4 17h16v3H4z" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="7.5" cy="6.5" r=".9" fill="currentColor" />
+          <circle cx="7.5" cy="13" r=".9" fill="currentColor" />
+        </symbol>
+        <symbol id="i-local" viewBox="0 0 24 24">
+          <rect
+            x="5"
+            y="5"
+            width="14"
+            height="14"
+            rx="1.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="M12 8.5 15.5 15h-7Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M9 2.5V5M15 2.5V5M9 19v2.5M15 19v2.5M2.5 9H5M2.5 15H5M19 9h2.5M19 15h2.5"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+        </symbol>
+        <symbol id="i-mcp" viewBox="0 0 24 24">
+          <path
+            d="M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0Z M12 17v4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="i-git" viewBox="0 0 24 24">
+          <circle cx="7" cy="5.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="7" cy="18.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="17" cy="8.5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <path
+            d="M7 7.7v8.6M17 10.7c0 4-10 2.5-10 5.6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+        </symbol>
+        <symbol id="i-tele" viewBox="0 0 24 24">
+          <path
+            d="M3.5 20.5h17M5 16l4.5-5 3.5 3 6-7.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24">
+          <path
+            d="M4 7h9M17 7h3M4 17h3M11 17h9"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <circle cx="15" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="9" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+        </symbol>
+        <symbol id="i-branch" viewBox="0 0 16 16">
+          <circle cx="4.5" cy="3.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="4.5" cy="12.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="11.5" cy="5.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <path
+            d="M4.5 5.1v5.8M11.5 7.1c0 3-7 1.6-7 3.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+          />
+        </symbol>
+        <symbol id="i-follow" viewBox="0 0 16 16">
+          <circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="1.3" />
+          <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+          <path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15" stroke="currentColor" stroke-width="1.3" />
+        </symbol>
+        <symbol id="i-filter" viewBox="0 0 16 16">
+          <path
+            d="M2 3.5h12M4.5 8h7M7 12.5h2"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="i-fit" viewBox="0 0 16 16">
+          <path
+            d="M2 5.5V2h3.5M10.5 2H14v3.5M14 10.5V14h-3.5M5.5 14H2v-3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 16 16">
+          <path d="M5 3.2 12.5 8 5 12.8Z" fill="currentColor" />
+        </symbol>
+        <symbol id="i-caret" viewBox="0 0 16 16">
+          <path
+            d="M4.5 6.5 8 10l3.5-3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-dock-left" viewBox="0 0 16 16">
+          <rect
+            x="2"
+            y="3"
+            width="12"
+            height="10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M6 3v10" stroke="currentColor" stroke-width="1.2" />
+        </symbol>
+        <symbol id="i-dock-bottom" viewBox="0 0 16 16">
+          <rect
+            x="2"
+            y="3"
+            width="12"
+            height="10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M2 9.5h12" stroke="currentColor" stroke-width="1.2" />
+        </symbol>
+        <symbol id="i-dock-right" viewBox="0 0 16 16">
+          <rect
+            x="2"
+            y="3"
+            width="12"
+            height="10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          />
+          <path d="M9.5 3v10" stroke="currentColor" stroke-width="1.2" />
+          <path d="M9.5 3H14v10H9.5Z" fill="currentColor" opacity=".35" />
+        </symbol>
+        <symbol id="i-min" viewBox="0 0 16 16">
+          <path d="M3 8h10" stroke="currentColor" stroke-width="1" />
+        </symbol>
+        <symbol id="i-max" viewBox="0 0 16 16">
+          <rect
+            x="3.5"
+            y="3.5"
+            width="9"
+            height="9"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+          />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 16 16">
+          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1" />
+        </symbol>
+        <symbol id="i-chev" viewBox="0 0 16 16">
+          <path
+            d="M6 4l4 4-4 4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-up" viewBox="0 0 16 16">
+          <path
+            d="M4.5 10 8 6.5l3.5 3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-send" viewBox="0 0 16 16">
+          <path
+            d="M2.5 8h10M9 4.5 12.5 8 9 11.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-history" viewBox="0 0 16 16">
+          <path
+            d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v2.6h2.6M8 5v3.2l2 1.3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 16 16">
+          <path
+            d="M8 3v10M3 8h10"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="i-section" viewBox="0 0 16 16">
+          <path
+            d="M10.5 3.6C10 2.6 9 2 7.8 2 6.3 2 5.2 2.9 5.2 4.1c0 2.8 5.6 2.4 5.6 5.4 0 1-.7 1.8-1.7 2.1M5.5 12.4c.5 1 1.5 1.6 2.7 1.6 1.5 0 2.6-.9 2.6-2.1 0-2.8-5.6-2.4-5.6-5.4 0-1 .7-1.8 1.7-2.1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <marker
+          id="m-write"
+          viewBox="0 0 10 10"
+          refX="8.5"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M0 1 9 5 0 9 2.5 5Z" class="mk-write" />
+        </marker>
+        <marker
+          id="m-read"
+          viewBox="0 0 10 10"
+          refX="8.5"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M1 1.5 9 5 1 8.5" fill="none" class="mk-read" />
+        </marker>
+      </defs>
+    </svg>
+    <div class="harness" role="toolbar" aria-label="Mockup controls">
+      <h1>Carta e inchiostro · Live view mockup</h1>
+      <div class="grp">
+        <span>Theme</span>
+        <div class="seg" data-k="theme">
+          <button data-v="light">light</button><button data-v="dark">dark</button>
+        </div>
+      </div>
+      <div class="grp">
+        <span>Density</span>
+        <div class="seg" data-k="density">
+          <button data-v="compact">compact</button><button data-v="comfortable">comfortable</button>
+        </div>
+      </div>
+      <div class="grp">
+        <span>Scenario</span>
+        <div class="seg" data-k="scenario">
+          <button data-v="normal">normal</button><button data-v="dense">dense</button>
+        </div>
+      </div>
+      <label><input type="checkbox" id="gray" /> grayscale</label>
+    </div>
+
+    <div class="stage">
+      <div class="win" id="win">
+        <header class="titlebar">
+          <div class="tb-mark" aria-hidden="true"><span>Cc</span></div>
+          <div class="tb-left">
+            <button class="tb-ws">
+              control-center<svg class="ic" aria-hidden="true"><use href="#i-caret" /></svg>
+            </button>
+            <span class="tb-branch"
+              ><svg class="ic" aria-hidden="true"><use href="#i-branch" /></svg>feat/live-map</span
+            >
+            <span class="tb-sep"></span>
+            <span class="tb-session">Refactor IPC client</span>
+          </div>
+          <div class="tb-drag"></div>
+          <div class="tb-docks">
+            <button aria-label="Toggle activity bar">
+              <svg class="ic" aria-hidden="true"><use href="#i-dock-left" /></svg>
+            </button>
+            <button aria-label="Toggle bottom dock" aria-pressed="false">
+              <svg class="ic" aria-hidden="true"><use href="#i-dock-bottom" /></svg>
+            </button>
+            <button aria-label="Toggle Session dock" aria-pressed="true">
+              <svg class="ic" aria-hidden="true"><use href="#i-dock-right" /></svg>
+            </button>
+          </div>
+          <div class="winctl">
+            <button aria-label="Minimize">
+              <svg class="ic" aria-hidden="true"><use href="#i-min" /></svg></button
+            ><button aria-label="Maximize">
+              <svg class="ic" aria-hidden="true"><use href="#i-max" /></svg></button
+            ><button aria-label="Close">
+              <svg class="ic" aria-hidden="true"><use href="#i-close" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <nav class="activity" aria-label="Sections">
+          <div class="ws-seal" title="Workspace: control-center">cc</div>
+          <button class="act" aria-current="page" title="Live (Ctrl+1)">
+            <svg class="ic" aria-hidden="true"><use href="#i-live" /></svg>
+          </button>
+          <button class="act" title="Infra (Ctrl+2)">
+            <svg class="ic" aria-hidden="true"><use href="#i-infra" /></svg>
+          </button>
+          <button class="act" title="Local agents (Ctrl+3)">
+            <svg class="ic" aria-hidden="true"><use href="#i-local" /></svg>
+          </button>
+          <button class="act" title="MCP &amp; Skills (Ctrl+4)">
+            <svg class="ic" aria-hidden="true"><use href="#i-mcp" /></svg>
+          </button>
+          <button class="act" title="Git (Ctrl+5) · 2 changed">
+            <svg class="ic" aria-hidden="true"><use href="#i-git" /></svg
+            ><span class="badge"
+              ><span class="only-normal">2</span><span class="only-dense">7</span></span
+            >
+          </button>
+          <button class="act" title="Telemetry (Ctrl+6)">
+            <svg class="ic" aria-hidden="true"><use href="#i-tele" /></svg>
+          </button>
+          <span class="act-spacer"></span>
+          <button class="act" title="Settings (Ctrl+7)">
+            <svg class="ic" aria-hidden="true"><use href="#i-settings" /></svg>
+          </button>
+        </nav>
+
+        <main class="live" aria-label="Live">
+          <section class="live-main">
+            <div class="toolbar">
+              <button class="tbtn follow">
+                <svg class="ic" aria-hidden="true"><use href="#i-follow" /></svg>Follow <b>Claude</b
+                ><svg class="ic" aria-hidden="true"><use href="#i-caret" /></svg>
+              </button>
+              <button class="tbtn">
+                <svg class="ic" aria-hidden="true"><use href="#i-filter" /></svg>Filters
+              </button>
+              <button class="tbtn">
+                <svg class="ic" aria-hidden="true"><use href="#i-fit" /></svg>Fit
+              </button>
+              <button class="tbtn">
+                <svg class="ic" aria-hidden="true"><use href="#i-play" /></svg>Replay
+              </button>
+              <span class="caption only-normal"
+                >Files touched this session and their neighbours</span
+              >
+              <span class="caption only-dense">34 files shown · 3 folders collapsed</span>
+            </div>
+            <div class="map" aria-label="Map">
+              <div class="only-normal">
+                <div class="map-ink">
+                  <svg class="map-lines" aria-hidden="true">
+                    <path class="tree" d="M25 33 V61 Q25 66 30 66 H31" />
+                    <path class="tree" d="M130.39999999999998 24 H434 Q439 24 439 29 V55" />
+                    <path class="tree" d="M25 33 V415 Q25 420 30 420 H31" />
+                    <path class="tree" d="M25 33 V453 Q25 458 30 458 H31" />
+                    <path class="tree" d="M41 75 V99 Q41 104 46 104 H53" />
+                    <path class="tree" d="M41 75 V217 Q41 222 46 222 H53" />
+                    <path class="tree" d="M41 75 V293 Q41 298 46 298 H53" />
+                    <path class="tree" d="M63 113 V133 Q63 138 68 138 H75" />
+                    <path class="tree" d="M63 113 V173 Q63 178 68 178 H75" />
+                    <path class="tree" d="M63 231 V251 Q63 256 68 256 H75" />
+                    <path class="tree" d="M63 307 V327 Q63 332 68 332 H75" />
+                    <path class="tree" d="M439 75 V99 Q439 104 444 104 H451" />
+                    <path class="tree" d="M461 113 V133 Q461 138 466 138 H473" />
+                    <path class="tree" d="M461 113 V177 Q461 182 466 182 H473" />
+                    <path
+                      class="arc-write"
+                      d="M308.0 254.0 Q245.1 211.2 224.4 138.0"
+                      marker-end="url(#m-write)"
+                    />
+                    <path class="arc-link" d="M318.0 274.0 Q318.0 299.0 318.0 324.0" />
+                    <path
+                      class="arc-read"
+                      d="M613.0 138.0 Q598.1 148.0 583.2 138.0"
+                      marker-end="url(#m-read)"
+                    />
+                    <path class="arc-link" d="M486.0 324.0 Q486.0 345.0 486.0 366.0" />
+                  </svg>
+                  <div class="folder root" style="left: 18px; top: 14px">control-center</div>
+                  <div class="folder" style="left: 34px; top: 56px">src/</div>
+                  <div class="folder" style="left: 56px; top: 94px">ipc/</div>
+                  <div class="folder" style="left: 56px; top: 212px">main/</div>
+                  <div class="folder" style="left: 56px; top: 288px">preload/</div>
+                  <div class="folder" style="left: 432px; top: 56px">packages/</div>
+                  <div class="folder" style="left: 454px; top: 94px">ipc-contract/src/</div>
+                  <div class="folder collapsed" style="left: 34px; top: 448px">
+                    docs/<span class="fold-count">14 files</span>
+                  </div>
+                  <div
+                    class="node s-writing"
+                    style="left: 78px; top: 128px"
+                    title="src/ipc/client.ts · writing"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">client.ts</span
+                    ><b class="diff">+12 −3</b>
+                  </div>
+                  <div
+                    class="node s-done"
+                    style="left: 78px; top: 168px"
+                    title="src/ipc/server.ts · done"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                    ><span class="fn">server.ts</span><b class="diff">+4 −1</b>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 78px; top: 246px"
+                    title="src/main/index.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 78px; top: 322px"
+                    title="src/preload/index.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span>
+                  </div>
+                  <div
+                    class="node s-reading"
+                    style="left: 476px; top: 128px"
+                    title="packages/ipc-contract/src/channels.ts · reading"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">channels.ts</span>
+                  </div>
+                  <div
+                    class="node s-error"
+                    style="left: 476px; top: 172px"
+                    title="packages/ipc-contract/src/schema.test.ts · error"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                    ><span class="fn">schema.test.ts</span><em class="note">2 failing</em>
+                  </div>
+                  <div class="node s-idle" style="left: 34px; top: 410px" title="README.md · idle">
+                    <i class="mk" aria-hidden="true"></i><span class="fn">README.md</span>
+                  </div>
+                  <div
+                    class="node s-waiting temp"
+                    style="left: 266px; top: 326px"
+                    title="Bash: npm test -- ipc · waiting for you"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-warn" /></svg></i
+                    ><span class="fn">$ npm test -- ipc</span>
+                  </div>
+                  <div
+                    class="node s-running temp"
+                    style="left: 470px; top: 368px"
+                    title="Ollama task: Draft tests for client.ts · running"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">ollama: draft tests</span>
+                  </div>
+                  <div
+                    class="mav a-waiting"
+                    style="left: 306px; top: 250px"
+                    title="Claude · waiting for you"
+                  >
+                    <span class="seal seal-claude is-waiting" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                    ><span class="mav-name">Claude</span>
+                  </div>
+                  <div
+                    class="mav a-reading"
+                    style="left: 614px; top: 126px"
+                    title="Explore · reading channels.ts"
+                  >
+                    <span class="seal seal-sub" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg></span
+                    ><span class="mav-name">Explore</span>
+                  </div>
+                  <div
+                    class="mav a-running"
+                    style="left: 474px; top: 300px"
+                    title="qwen2.5-coder:14b · running · 38 tok/s"
+                  >
+                    <span class="seal seal-ollama" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-ollama" /></svg></span
+                    ><span class="mav-name">qwen2.5-coder:14b</span>
+                  </div>
+                  <em class="margin m-waiting" style="left: 266px; top: 352px"
+                    >needs your approval</em
+                  ><em class="margin m-running" style="left: 470px; top: 394px"
+                    >drafting tests for client.ts</em
+                  >
+                </div>
+                <div class="minimap" title="Minimap">
+                  <span class="mm-label">Overview</span
+                  ><i class="mm-n m-writing" style="left: 16.2px; top: 22.8px; width: 19px"></i
+                  ><i class="mm-n m-done" style="left: 16.2px; top: 28.1px; width: 18.1px"></i
+                  ><i class="mm-n m-idle" style="left: 16.2px; top: 38.3px; width: 11px"></i
+                  ><i class="mm-n m-idle" style="left: 16.2px; top: 48.3px; width: 11px"></i
+                  ><i class="mm-n m-reading" style="left: 68.5px; top: 22.8px; width: 13.8px"></i
+                  ><i class="mm-n m-error" style="left: 68.5px; top: 28.6px; width: 16.6px"></i
+                  ><i class="mm-n m-idle" style="left: 10.5px; top: 59.8px; width: 11.9px"></i
+                  ><i class="mm-n m-waiting" style="left: 40.9px; top: 48.8px; width: 19.5px"></i
+                  ><i class="mm-n m-running" style="left: 67.7px; top: 54.3px; width: 21.4px"></i
+                  ><i class="mm-f" style="left: 8.4px; top: 7.8px; width: 14px"></i
+                  ><i class="mm-f" style="left: 10.5px; top: 13.4px; width: 3.8px"></i
+                  ><i class="mm-f" style="left: 13.4px; top: 18.3px; width: 3.8px"></i
+                  ><i class="mm-f" style="left: 13.4px; top: 33.8px; width: 4.7px"></i
+                  ><i class="mm-f" style="left: 13.4px; top: 43.8px; width: 7.6px"></i
+                  ><i class="mm-f" style="left: 62.7px; top: 13.4px; width: 8.5px"></i
+                  ><i class="mm-f" style="left: 65.6px; top: 18.3px; width: 16.1px"></i
+                  ><i class="mm-f" style="left: 10.5px; top: 64.8px; width: 13.9px"></i
+                  ><i class="mm-f" style="left: 11.3px; top: 74.3px; width: 21px"></i
+                  ><i class="mm-f" style="left: 11.3px; top: 79.5px; width: 15.8px"></i
+                  ><i class="mm-f" style="left: 45.4px; top: 84.8px; width: 26.3px"></i
+                  ><i
+                    class="mm-view"
+                    style="left: 6px; top: 6px; width: 101.1px; height: 73.5px"
+                  ></i>
+                </div>
+              </div>
+              <div class="only-dense">
+                <div class="map-ink">
+                  <svg class="map-lines" aria-hidden="true">
+                    <path class="tree" d="M21 27 V41 Q21 46 26 46 H25" />
+                    <path class="tree" d="M126.39999999999999 18 H502 Q507 18 507 23 V7" />
+                    <path class="tree" d="M21 27 V433 Q21 438 26 438 H25" />
+                    <path class="tree" d="M21 27 V454 Q21 459 26 459 H25" />
+                    <path class="tree" d="M21 27 V475 Q21 480 26 480 H25" />
+                    <path class="tree" d="M35 55 V62 Q35 67 40 67 H45" />
+                    <path class="tree" d="M35 55 V255 Q35 260 40 260 H45" />
+                    <path class="tree" d="M35 55 V385 Q35 390 40 390 H45" />
+                    <path class="tree" d="M62.8 46 H284 Q289 46 289 51 V35" />
+                    <path class="tree" d="M55 76 V83 Q55 88 60 88 H65" />
+                    <path class="tree" d="M55 76 V104 Q55 109 60 109 H65" />
+                    <path class="tree" d="M55 76 V125 Q55 130 60 130 H65" />
+                    <path class="tree" d="M55 76 V146 Q55 151 60 151 H65" />
+                    <path class="tree" d="M55 76 V167 Q55 172 60 172 H65" />
+                    <path class="tree" d="M55 76 V188 Q55 193 60 193 H65" />
+                    <path class="tree" d="M55 76 V209 Q55 214 60 214 H65" />
+                    <path class="tree" d="M55 76 V230 Q55 235 60 235 H65" />
+                    <path class="tree" d="M55 269 V276 Q55 281 60 281 H65" />
+                    <path class="tree" d="M55 269 V297 Q55 302 60 302 H65" />
+                    <path class="tree" d="M55 269 V318 Q55 323 60 323 H65" />
+                    <path class="tree" d="M55 269 V339 Q55 344 60 344 H65" />
+                    <path class="tree" d="M55 269 V360 Q55 365 60 365 H65" />
+                    <path class="tree" d="M55 399 V406 Q55 411 60 411 H65" />
+                    <path class="tree" d="M289 55 V62 Q289 67 294 67 H299" />
+                    <path class="tree" d="M289 55 V83 Q289 88 294 88 H299" />
+                    <path class="tree" d="M289 55 V104 Q289 109 294 109 H299" />
+                    <path class="tree" d="M289 55 V125 Q289 130 294 130 H299" />
+                    <path class="tree" d="M289 55 V146 Q289 151 294 151 H299" />
+                    <path class="tree" d="M289 55 V167 Q289 172 294 172 H299" />
+                    <path class="tree" d="M289 55 V188 Q289 193 294 193 H299" />
+                    <path class="tree" d="M507 27 V41 Q507 46 512 46 H511" />
+                    <path class="tree" d="M507 27 V192 Q507 197 512 197 H511" />
+                    <path class="tree" d="M521 55 V62 Q521 67 526 67 H531" />
+                    <path class="tree" d="M521 55 V83 Q521 88 526 88 H531" />
+                    <path class="tree" d="M521 55 V104 Q521 109 526 109 H531" />
+                    <path class="tree" d="M521 55 V125 Q521 130 526 130 H531" />
+                    <path class="tree" d="M521 55 V146 Q521 151 526 151 H531" />
+                    <path class="tree" d="M521 55 V167 Q521 172 526 172 H531" />
+                    <path class="tree" d="M521 206 V213 Q521 218 526 218 H531" />
+                    <path class="tree" d="M521 206 V234 Q521 239 526 239 H531" />
+                    <path class="tree" d="M521 206 V255 Q521 260 526 260 H531" />
+                    <path class="tree" d="M521 206 V276 Q521 281 526 281 H531" />
+                    <path class="tree" d="M521 206 V297 Q521 302 526 302 H531" />
+                    <path
+                      class="arc-write"
+                      d="M220.0 94.0 Q221.6 86.9 214.4 88.0"
+                      marker-end="url(#m-write)"
+                    />
+                    <path
+                      class="arc-write"
+                      d="M220.0 102.0 Q212.3 111.1 200.6 109.0"
+                      marker-end="url(#m-write)"
+                    />
+                    <path
+                      class="arc-read"
+                      d="M675.0 59.0 Q657.2 59.1 641.2 67.0"
+                      marker-end="url(#m-read)"
+                    />
+                    <path
+                      class="arc-read"
+                      d="M675.0 65.0 Q652.6 80.1 626.8 88.0"
+                      marker-end="url(#m-read)"
+                    />
+                    <path class="arc-link" d="M404.0 254.0 Q395.0 269.0 386.0 284.0" />
+                    <path class="arc-link" d="M410.0 256.0 Q440.4 292.6 436.4 340.0" />
+                    <path class="arc-link" d="M540.0 346.0 Q540.0 353.0 540.0 360.0" />
+                  </svg>
+                  <div class="folder root" style="left: 14px; top: 8px">control-center</div>
+                  <div class="folder" style="left: 28px; top: 36px">src/</div>
+                  <div class="folder" style="left: 48px; top: 57px">ipc/</div>
+                  <div class="folder" style="left: 48px; top: 250px">main/</div>
+                  <div class="folder" style="left: 48px; top: 380px">preload/</div>
+                  <div class="folder collapsed" style="left: 28px; top: 470px">
+                    docs/<span class="fold-count">14 files</span>
+                  </div>
+                  <div class="folder" style="left: 282px; top: 36px">renderer/components/</div>
+                  <div class="folder" style="left: 500px; top: 8px">packages/</div>
+                  <div class="folder" style="left: 514px; top: 36px">ipc-contract/src/</div>
+                  <div class="folder" style="left: 514px; top: 187px">event-schema/src/</div>
+                  <div
+                    class="node s-writing"
+                    style="left: 68px; top: 78px"
+                    title="src/ipc/client.ts · writing"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">client.ts</span
+                    ><b class="diff">+18 −5</b>
+                  </div>
+                  <div
+                    class="node s-writing"
+                    style="left: 68px; top: 99px"
+                    title="src/ipc/index.ts · writing"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span
+                    ><b class="diff">+3 −1</b>
+                  </div>
+                  <div
+                    class="node s-done"
+                    style="left: 68px; top: 120px"
+                    title="src/ipc/server.ts · done"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                    ><span class="fn">server.ts</span><b class="diff">+4 −1</b>
+                  </div>
+                  <div
+                    class="node s-done"
+                    style="left: 68px; top: 141px"
+                    title="src/ipc/errors.ts · done"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                    ><span class="fn">errors.ts</span><b class="diff">+6 −0</b>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 162px"
+                    title="src/ipc/transport.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">transport.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 183px"
+                    title="src/ipc/retry.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">retry.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 204px"
+                    title="src/ipc/types.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">types.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 225px"
+                    title="src/ipc/client.test.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">client.test.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 271px"
+                    title="src/main/index.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 292px"
+                    title="src/main/window.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">window.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 313px"
+                    title="src/main/menu.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">menu.ts</span>
+                  </div>
+                  <div
+                    class="node s-done"
+                    style="left: 68px; top: 334px"
+                    title="src/main/ipc-handlers.ts · done"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                    ><span class="fn">ipc-handlers.ts</span><b class="diff">+9 −2</b>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 355px"
+                    title="src/main/bridge.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">bridge.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 68px; top: 401px"
+                    title="src/preload/index.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span>
+                  </div>
+                  <div class="node s-idle" style="left: 28px; top: 428px" title="README.md · idle">
+                    <i class="mk" aria-hidden="true"></i><span class="fn">README.md</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 28px; top: 449px"
+                    title="package.json · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">package.json</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 57px"
+                    title="src/renderer/components/LiveMap.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">LiveMap.tsx</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 78px"
+                    title="src/renderer/components/AgentCard.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">AgentCard.tsx</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 99px"
+                    title="src/renderer/components/Timeline.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">Timeline.tsx</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 120px"
+                    title="src/renderer/components/StatusBar.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">StatusBar.tsx</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 141px"
+                    title="src/renderer/components/Inspector.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">Inspector.tsx</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 162px"
+                    title="src/renderer/components/MiniMap.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">MiniMap.tsx</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 302px; top: 183px"
+                    title="src/renderer/components/PermissionDialog.tsx · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i
+                    ><span class="fn">PermissionDialog.tsx</span>
+                  </div>
+                  <div
+                    class="node s-reading"
+                    style="left: 534px; top: 57px"
+                    title="packages/ipc-contract/src/channels.ts · reading"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">channels.ts</span>
+                  </div>
+                  <div
+                    class="node s-reading"
+                    style="left: 534px; top: 78px"
+                    title="packages/ipc-contract/src/schema.ts · reading"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">schema.ts</span>
+                  </div>
+                  <div
+                    class="node s-error"
+                    style="left: 534px; top: 99px"
+                    title="packages/ipc-contract/src/schema.test.ts · error"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                    ><span class="fn">schema.test.ts</span><em class="note">2 failing</em>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 534px; top: 120px"
+                    title="packages/ipc-contract/src/guards.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">guards.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 534px; top: 141px"
+                    title="packages/ipc-contract/src/index.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 534px; top: 162px"
+                    title="packages/ipc-contract/src/version.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">version.ts</span>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 534px; top: 208px"
+                    title="packages/event-schema/src/agent-event.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">agent-event.ts</span>
+                  </div>
+                  <div
+                    class="node s-done"
+                    style="left: 534px; top: 229px"
+                    title="packages/event-schema/src/migrate.ts · done"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                    ><span class="fn">migrate.ts</span><b class="diff">+5 −2</b>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 534px; top: 250px"
+                    title="packages/event-schema/src/index.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">index.ts</span>
+                  </div>
+                  <div
+                    class="node s-error"
+                    style="left: 534px; top: 271px"
+                    title="packages/event-schema/src/event.test.ts · error"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                    ><span class="fn">event.test.ts</span><em class="note">1 failing</em>
+                  </div>
+                  <div
+                    class="node s-idle"
+                    style="left: 534px; top: 292px"
+                    title="packages/event-schema/src/fixtures.ts · idle"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">fixtures.ts</span>
+                  </div>
+                  <div
+                    class="node s-running temp"
+                    style="left: 286px; top: 286px"
+                    title="Bash: pnpm typecheck · running"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">$ pnpm typecheck</span>
+                  </div>
+                  <div
+                    class="node s-waiting temp"
+                    style="left: 286px; top: 330px"
+                    title="Bash: npm test -- ipc · waiting for you"
+                  >
+                    <i class="mk" aria-hidden="true"
+                      ><svg class="mk-ic" aria-hidden="true"><use href="#i-warn" /></svg></i
+                    ><span class="fn">$ npm test -- ipc</span>
+                  </div>
+                  <div
+                    class="node s-running temp"
+                    style="left: 520px; top: 362px"
+                    title="Ollama task: Draft tests for client.ts · running"
+                  >
+                    <i class="mk" aria-hidden="true"></i><span class="fn">ollama: draft tests</span>
+                  </div>
+                  <div
+                    class="mav below a-writing"
+                    style="left: 220px; top: 86px"
+                    title="Claude · writing client.ts"
+                  >
+                    <span class="seal seal-claude" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                    ><span class="mav-name">Claude</span>
+                  </div>
+                  <div
+                    class="mav a-running"
+                    style="left: 398px; top: 232px"
+                    title="Claude #2 · running pnpm typecheck"
+                  >
+                    <span class="seal seal-claude" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                    ><span class="mav-name">Claude #2</span>
+                  </div>
+                  <div
+                    class="mav below a-reading"
+                    style="left: 676px; top: 50px"
+                    title="Explore · reading channels.ts"
+                  >
+                    <span class="seal seal-sub" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg></span
+                    ><span class="mav-name">Explore</span>
+                  </div>
+                  <div class="mav a-done" style="left: 156px; top: 468px" title="Plan · done">
+                    <span class="seal seal-sub" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg></span
+                    ><span class="mav-name">Plan</span>
+                  </div>
+                  <div
+                    class="mav a-running"
+                    style="left: 528px; top: 322px"
+                    title="qwen2.5-coder:14b · running · 41 tok/s"
+                  >
+                    <span class="seal seal-ollama" aria-hidden="true"
+                      ><svg class="sg" aria-hidden="true"><use href="#g-ollama" /></svg></span
+                    ><span class="mav-name">qwen2.5-coder:14b</span>
+                  </div>
+                </div>
+                <div class="minimap" title="Minimap">
+                  <span class="mm-label">Overview</span
+                  ><i class="mm-n m-writing" style="left: 14.9px; top: 16.2px; width: 19px"></i
+                  ><i class="mm-n m-writing" style="left: 14.9px; top: 19px; width: 17.1px"></i
+                  ><i class="mm-n m-done" style="left: 14.9px; top: 21.8px; width: 18.1px"></i
+                  ><i class="mm-n m-done" style="left: 14.9px; top: 24.5px; width: 18.1px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 27.3px; width: 14.8px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 30px; width: 11px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 32.8px; width: 11px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 35.5px; width: 16.6px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 41.6px; width: 11px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 44.3px; width: 11.9px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 47.1px; width: 10px"></i
+                  ><i class="mm-n m-done" style="left: 14.9px; top: 49.8px; width: 23.8px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 52.6px; width: 11.9px"></i
+                  ><i class="mm-n m-idle" style="left: 14.9px; top: 58.6px; width: 11px"></i
+                  ><i class="mm-n m-idle" style="left: 9.7px; top: 62.2px; width: 11.9px"></i
+                  ><i class="mm-n m-idle" style="left: 9.7px; top: 64.9px; width: 14.8px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 13.5px; width: 13.8px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 16.2px; width: 15.7px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 19px; width: 14.8px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 21.8px; width: 15.7px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 24.5px; width: 15.7px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 27.3px; width: 13.8px"></i
+                  ><i class="mm-n m-idle" style="left: 45.6px; top: 30px; width: 22.3px"></i
+                  ><i class="mm-n m-reading" style="left: 76.1px; top: 13.5px; width: 13.8px"></i
+                  ><i class="mm-n m-reading" style="left: 76.1px; top: 16.2px; width: 11.9px"></i
+                  ><i class="mm-n m-error" style="left: 76.1px; top: 19px; width: 16.6px"></i
+                  ><i class="mm-n m-idle" style="left: 76.1px; top: 21.8px; width: 11.9px"></i
+                  ><i class="mm-n m-idle" style="left: 76.1px; top: 24.5px; width: 11px"></i
+                  ><i class="mm-n m-idle" style="left: 76.1px; top: 27.3px; width: 12.9px"></i
+                  ><i class="mm-n m-idle" style="left: 76.1px; top: 33.3px; width: 16.6px"></i
+                  ><i class="mm-n m-done" style="left: 76.1px; top: 36.1px; width: 19px"></i
+                  ><i class="mm-n m-idle" style="left: 76.1px; top: 38.8px; width: 11px"></i
+                  ><i class="mm-n m-error" style="left: 76.1px; top: 41.6px; width: 15.7px"></i
+                  ><i class="mm-n m-idle" style="left: 76.1px; top: 44.3px; width: 13.8px"></i
+                  ><i class="mm-n m-running" style="left: 43.5px; top: 43.5px; width: 18.5px"></i
+                  ><i class="mm-n m-waiting" style="left: 43.5px; top: 49.3px; width: 19.5px"></i
+                  ><i class="mm-n m-running" style="left: 74.3px; top: 53.5px; width: 21.4px"></i
+                  ><i class="mm-f" style="left: 7.8px; top: 7.1px; width: 14px"></i
+                  ><i class="mm-f" style="left: 9.7px; top: 10.7px; width: 3.8px"></i
+                  ><i class="mm-f" style="left: 12.3px; top: 13.5px; width: 3.8px"></i
+                  ><i class="mm-f" style="left: 12.3px; top: 38.8px; width: 4.7px"></i
+                  ><i class="mm-f" style="left: 12.3px; top: 55.9px; width: 7.6px"></i
+                  ><i class="mm-f" style="left: 9.7px; top: 67.7px; width: 13.9px"></i
+                  ><i class="mm-f" style="left: 43px; top: 10.7px; width: 18.9px"></i
+                  ><i class="mm-f" style="left: 71.6px; top: 7.1px; width: 8.5px"></i
+                  ><i class="mm-f" style="left: 73.5px; top: 10.7px; width: 16.1px"></i
+                  ><i class="mm-f" style="left: 73.5px; top: 30.5px; width: 16.1px"></i
+                  ><i class="mm-f" style="left: 8.6px; top: 76.9px; width: 17.1px"></i
+                  ><i class="mm-f" style="left: 45.4px; top: 79.5px; width: 23.6px"></i
+                  ><i class="mm-f" style="left: 79.5px; top: 84.8px; width: 21px"></i
+                  ><i
+                    class="mm-view"
+                    style="left: 6px; top: 6px; width: 101.1px; height: 73.5px"
+                  ></i>
+                </div>
+              </div>
+              <div class="key" aria-label="Map key">
+                <span>Key</span
+                ><span class="node s-idle"
+                  ><i class="mk" aria-hidden="true"></i><span class="fn">idle</span></span
+                ><span class="node s-reading"
+                  ><i class="mk" aria-hidden="true"></i><span class="fn">reading</span></span
+                ><span class="node s-writing"
+                  ><i class="mk" aria-hidden="true"></i><span class="fn">writing</span></span
+                ><span class="node s-running"
+                  ><i class="mk" aria-hidden="true"></i><span class="fn">running</span></span
+                ><span class="node s-waiting"
+                  ><i class="mk" aria-hidden="true"
+                    ><svg class="mk-ic" aria-hidden="true"><use href="#i-warn" /></svg></i
+                  ><span class="fn">waiting</span></span
+                ><span class="node s-error"
+                  ><i class="mk" aria-hidden="true"
+                    ><svg class="mk-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                  ><span class="fn">error</span></span
+                ><span class="node s-done"
+                  ><i class="mk" aria-hidden="true"
+                    ><svg class="mk-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                  ><span class="fn">done</span></span
+                >
+              </div>
+            </div>
+            <section class="timeline" aria-label="Timeline">
+              <div class="tl-head">
+                <h2>Timeline</h2>
+                <span class="hint">click a mark to inspect it</span>
+                <div class="tl-ctl">
+                  <button class="ibtn" aria-label="Zoom out">
+                    <svg class="ic" aria-hidden="true"><use href="#i-min" /></svg>
+                  </button>
+                  <button class="ibtn" aria-label="Zoom in">
+                    <svg class="ic" aria-hidden="true"><use href="#i-plus" /></svg>
+                  </button>
+                  <span class="live-pill"><i></i>Live</span>
+                </div>
+              </div>
+              <div class="tl-body only-normal">
+                <div class="tl-axis">
+                  <div class="tl-gutter"><span class="tl-range">0:00 – 2:14</span></div>
+                  <div class="tl-scale">
+                    <i class="tick major" style="left: 0%"></i
+                    ><span class="tick-l" style="left: 0%">0:00</span
+                    ><i class="tick" style="left: 7.463%"></i
+                    ><i class="tick" style="left: 14.925%"></i
+                    ><i class="tick major" style="left: 22.388%"></i
+                    ><span class="tick-l" style="left: 22.388%">0:30</span
+                    ><i class="tick" style="left: 29.851%"></i
+                    ><i class="tick" style="left: 37.313%"></i
+                    ><i class="tick major" style="left: 44.776%"></i
+                    ><span class="tick-l" style="left: 44.776%">1:00</span
+                    ><i class="tick" style="left: 52.239%"></i
+                    ><i class="tick" style="left: 59.701%"></i
+                    ><i class="tick major" style="left: 67.164%"></i
+                    ><span class="tick-l" style="left: 67.164%">1:30</span
+                    ><i class="tick" style="left: 74.627%"></i
+                    ><i class="tick" style="left: 82.09%"></i
+                    ><i class="tick major" style="left: 89.552%"></i
+                    ><span class="tick-l" style="left: 89.552%">2:00</span
+                    ><i class="tick" style="left: 97.015%"></i
+                    ><span class="tick-l now" style="left: 100%">2:14</span>
+                  </div>
+                </div>
+                <div class="tl-lanes">
+                  <div class="lane depth-0">
+                    <div class="lane-label">
+                      <span class="seal seal-claude sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                      ><span class="lane-name">Claude</span
+                      ><span class="lane-state st-waiting">waiting</span>
+                    </div>
+                    <div class="lane-track">
+                      <i class="ev ev-read" style="left: 3.731%" title="Read src/ipc/client.ts"></i
+                      ><i class="ev ev-read" style="left: 8.955%" title="Read src/ipc/server.ts"></i
+                      ><i
+                        class="ev ev-grep"
+                        style="left: 14.179%"
+                        title='Grep "invoke(" in src/'
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 20.149%"
+                        title="Read packages/ipc-contract/src/index.ts"
+                      ></i
+                      ><i
+                        class="ev ev-grep"
+                        style="left: 26.119%"
+                        title='Grep "ipcRenderer" in src/'
+                      ></i
+                      ><i
+                        class="ev ev-tool"
+                        style="left: 30.597%; width: 7.463%"
+                        title="Bash: vitest schema.test.ts"
+                      ></i
+                      ><i
+                        class="ev ev-error"
+                        style="left: 38.806%"
+                        title="schema.test.ts · 2 failing"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                      ><span class="ev-label err below" style="left: 38.806%">2 failing</span
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 49.254%; width: 6.716%"
+                        title="Edit src/ipc/server.ts +4 −1"
+                      ></i
+                      ><span class="ev-label" style="left: 49.254%">server.ts</span
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 67.164%; width: 10.448%"
+                        title="Edit src/ipc/client.ts +12 −3"
+                      ></i
+                      ><span class="ev-label" style="left: 67.164%">client.ts</span
+                      ><span
+                        class="ev ev-wait"
+                        style="left: 79.104%; width: calc(100% - 79.104%)"
+                        title="Bash: npm test -- ipc · waiting for your approval"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-warn" /></svg
+                        ><span>npm test -- ipc</span></span
+                      >
+                    </div>
+                  </div>
+                  <div class="lane depth-1">
+                    <div class="lane-label">
+                      <i class="lane-elbow" aria-hidden="true"></i
+                      ><span class="seal seal-ollama sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-ollama" /></svg></span
+                      ><span class="lane-name">qwen2.5-coder:14b</span
+                      ><span class="lane-state st-running">38 tok/s</span>
+                    </div>
+                    <div class="lane-track born" style="--born: 52.239%">
+                      <span
+                        class="ev ev-run"
+                        style="left: 53.731%; width: calc(100% - 53.731%)"
+                        title="Draft tests for client.ts · 38 tok/s · 1m02"
+                        ><span>Draft tests for client.ts</span></span
+                      >
+                    </div>
+                  </div>
+                  <div class="lane depth-1">
+                    <div class="lane-label">
+                      <i class="lane-elbow" aria-hidden="true"></i
+                      ><span class="seal seal-sub sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg></span
+                      ><span class="lane-name">Explore</span
+                      ><span class="lane-state st-reading">reading</span>
+                    </div>
+                    <div class="lane-track born" style="--born: 65.672%">
+                      <span
+                        class="ev ev-reading"
+                        style="left: 69.403%; width: calc(100% - 69.403%)"
+                        title="Read packages/ipc-contract/src/channels.ts · 0m41"
+                        ><span>channels.ts</span></span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="tl-overlay" aria-hidden="true">
+                  <i
+                    class="branch"
+                    style="
+                      left: 52.239%;
+                      top: calc(var(--axis-h) + var(--lane-h) * 0 + var(--lane-h) / 2);
+                      height: calc(var(--lane-h) * 1);
+                    "
+                    aria-hidden="true"
+                  ></i
+                  ><i
+                    class="branch"
+                    style="
+                      left: 65.672%;
+                      top: calc(var(--axis-h) + var(--lane-h) * 0 + var(--lane-h) / 2);
+                      height: calc(var(--lane-h) * 2);
+                    "
+                    aria-hidden="true"
+                  ></i
+                  ><i
+                    class="checkpoint"
+                    style="left: 47.015%"
+                    title="Checkpoint before first edit · 1:03"
+                    ><svg class="cp-ic" aria-hidden="true"><use href="#i-section" /></svg></i
+                  ><i class="scrubber"><span class="scrub-tag">Live</span></i>
+                </div>
+              </div>
+              <div class="tl-body only-dense">
+                <div class="tl-axis">
+                  <div class="tl-gutter"><span class="tl-range">0:00 – 4:52</span></div>
+                  <div class="tl-scale">
+                    <i class="tick major" style="left: 0%"></i
+                    ><span class="tick-l" style="left: 0%">0:00</span
+                    ><i class="tick" style="left: 5.137%"></i
+                    ><i class="tick" style="left: 10.274%"></i
+                    ><i class="tick" style="left: 15.411%"></i
+                    ><i class="tick major" style="left: 20.548%"></i
+                    ><span class="tick-l" style="left: 20.548%">1:00</span
+                    ><i class="tick" style="left: 25.685%"></i
+                    ><i class="tick" style="left: 30.822%"></i
+                    ><i class="tick" style="left: 35.959%"></i
+                    ><i class="tick major" style="left: 41.096%"></i
+                    ><span class="tick-l" style="left: 41.096%">2:00</span
+                    ><i class="tick" style="left: 46.233%"></i
+                    ><i class="tick" style="left: 51.37%"></i
+                    ><i class="tick" style="left: 56.507%"></i
+                    ><i class="tick major" style="left: 61.644%"></i
+                    ><span class="tick-l" style="left: 61.644%">3:00</span
+                    ><i class="tick" style="left: 66.781%"></i
+                    ><i class="tick" style="left: 71.918%"></i
+                    ><i class="tick" style="left: 77.055%"></i
+                    ><i class="tick major" style="left: 82.192%"></i
+                    ><span class="tick-l" style="left: 82.192%">4:00</span
+                    ><i class="tick" style="left: 87.329%"></i
+                    ><i class="tick" style="left: 92.466%"></i
+                    ><i class="tick" style="left: 97.603%"></i
+                    ><span class="tick-l now" style="left: 100%">4:52</span>
+                  </div>
+                </div>
+                <div class="tl-lanes">
+                  <div class="lane depth-0">
+                    <div class="lane-label">
+                      <span class="seal seal-claude sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                      ><span class="lane-name">Claude</span
+                      ><span class="lane-state st-writing">writing</span>
+                    </div>
+                    <div class="lane-track">
+                      <i class="ev ev-read" style="left: 5.137%" title="Read src/ipc/client.ts"></i
+                      ><i class="ev ev-read" style="left: 6.849%" title="Read src/ipc/server.ts"></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 32.534%"
+                        title="Read src/ipc/channels.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 40.753%"
+                        title="Read src/ipc/transport.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 47.603%"
+                        title="Read src/ipc/schema.ts"
+                      ></i
+                      ><i class="ev ev-read" style="left: 48.973%" title="Read src/ipc/index.ts"></i
+                      ><i class="ev ev-read" style="left: 76.37%" title="Read src/ipc/errors.ts"></i
+                      ><i class="ev ev-read" style="left: 81.507%" title="Read src/ipc/retry.ts"></i
+                      ><i class="ev ev-read" style="left: 87.671%" title="Read src/ipc/types.ts"></i
+                      ><i class="ev ev-grep" style="left: 8.904%" title="Grep in src/"></i
+                      ><i class="ev ev-grep" style="left: 32.877%" title="Grep in src/"></i
+                      ><i class="ev ev-grep" style="left: 42.466%" title="Grep in src/"></i
+                      ><i class="ev ev-grep" style="left: 76.027%" title="Grep in src/"></i
+                      ><i
+                        class="ev ev-tool"
+                        style="left: 19.863%; width: 2.74%"
+                        title="Bash: vitest schema.test.ts"
+                      ></i
+                      ><i
+                        class="ev ev-error"
+                        style="left: 22.603%"
+                        title="schema.test.ts · 2 failing"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 23.973%; width: 3.425%"
+                        title="Edit src/ipc/server.ts +4 −1"
+                      ></i
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 35.616%; width: 3.425%"
+                        title="Edit src/ipc/errors.ts +6 −0"
+                      ></i
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 51.37%; width: 3.425%"
+                        title="Edit src/main/ipc-handlers.ts +9 −2"
+                      ></i
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 67.123%; width: 2.74%"
+                        title="Edit src/ipc/index.ts +3 −1"
+                      ></i
+                      ><i
+                        class="ev ev-edit open"
+                        style="left: 89.726%; width: calc(100% - 89.726%)"
+                        title="Edit src/ipc/client.ts +18 −5 (in progress)"
+                      ></i
+                      ><span class="ev-label" style="left: 89.726%">client.ts</span>
+                    </div>
+                  </div>
+                  <div class="lane depth-1 ended">
+                    <div class="lane-label">
+                      <i class="lane-elbow" aria-hidden="true"></i
+                      ><span class="seal seal-sub sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg></span
+                      ><span class="lane-name">Plan</span
+                      ><span class="lane-state st-done">done</span>
+                    </div>
+                    <div class="lane-track born" style="--born: 6.849%; --end: 34.247%">
+                      <i
+                        class="ev ev-read"
+                        style="left: 10.616%"
+                        title="Read docs/architecture.md"
+                      ></i
+                      ><i class="ev ev-read" style="left: 11.986%" title="Read docs/ipc.md"></i
+                      ><i class="ev ev-read" style="left: 16.781%" title="Read docs/PIANO.md"></i
+                      ><i class="ev ev-read" style="left: 26.37%" title="Read docs/adr/0003.md"></i
+                      ><i class="ev ev-read" style="left: 28.767%" title="Read docs/security.md"></i
+                      ><i class="ev ev-read" style="left: 32.534%" title="Read docs/glossary.md"></i
+                      ><i class="ev ev-done" style="left: 34.247%" title="Plan finished · 1m20"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-check" /></svg
+                      ></i>
+                    </div>
+                  </div>
+                  <div class="lane depth-1">
+                    <div class="lane-label">
+                      <i class="lane-elbow" aria-hidden="true"></i
+                      ><span class="seal seal-sub sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg></span
+                      ><span class="lane-name">Explore</span
+                      ><span class="lane-state st-reading">reading</span>
+                    </div>
+                    <div class="lane-track born" style="--born: 17.123%">
+                      <i
+                        class="ev ev-read"
+                        style="left: 23.288%"
+                        title="Read packages/ipc-contract/src/channels.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 24.658%"
+                        title="Read packages/ipc-contract/src/schema.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 34.589%"
+                        title="Read packages/ipc-contract/src/guards.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 46.918%"
+                        title="Read packages/ipc-contract/src/index.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 55.479%"
+                        title="Read packages/ipc-contract/src/version.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 57.534%"
+                        title="Read packages/ipc-contract/src/channels.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 67.123%"
+                        title="Read packages/ipc-contract/src/schema.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 76.712%"
+                        title="Read packages/ipc-contract/src/guards.ts"
+                      ></i
+                      ><i
+                        class="ev ev-grep"
+                        style="left: 37.671%"
+                        title='Grep "z.object" in packages/'
+                      ></i
+                      ><i
+                        class="ev ev-grep"
+                        style="left: 40.411%"
+                        title='Grep "z.object" in packages/'
+                      ></i
+                      ><i
+                        class="ev ev-grep"
+                        style="left: 50.342%"
+                        title='Grep "z.object" in packages/'
+                      ></i
+                      ><i
+                        class="ev ev-error"
+                        style="left: 44.863%"
+                        title="Read failed: docs/ipc-v1.md not found"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                      ><span
+                        class="ev ev-reading"
+                        style="left: 83.562%; width: calc(100% - 83.562%)"
+                        title="Reading channels.ts, schema.ts"
+                        ><span>channels.ts</span></span
+                      >
+                    </div>
+                  </div>
+                  <div class="lane depth-1">
+                    <div class="lane-label">
+                      <i class="lane-elbow" aria-hidden="true"></i
+                      ><span class="seal seal-ollama sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-ollama" /></svg></span
+                      ><span class="lane-name">qwen2.5-coder:14b</span
+                      ><span class="lane-state st-running">41 tok/s</span>
+                    </div>
+                    <div class="lane-track born" style="--born: 24.658%">
+                      <span
+                        class="ev ev-run"
+                        style="left: 25.342%; width: 15.753%"
+                        title="Draft tests for errors.ts · done"
+                        ><span></span></span
+                      ><i class="ev ev-done" style="left: 41.438%" title="Draft for errors.ts ready"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-check" /></svg></i
+                      ><span
+                        class="ev ev-run"
+                        style="left: 67.123%; width: calc(100% - 67.123%)"
+                        title="Draft tests for client.ts · 41 tok/s"
+                        ><span>Draft tests for client.ts</span></span
+                      >
+                    </div>
+                  </div>
+                  <div class="lane depth-0">
+                    <div class="lane-label">
+                      <span class="seal seal-claude sm" aria-hidden="true"
+                        ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                      ><span class="lane-name">Claude #2</span
+                      ><span class="lane-state st-waiting">waiting</span>
+                    </div>
+                    <div class="lane-track born" style="--born: 44.521%">
+                      <i
+                        class="ev ev-read"
+                        style="left: 48.63%"
+                        title="Read packages/event-schema/src/agent-event.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 51.712%"
+                        title="Read packages/event-schema/src/migrate.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 53.425%"
+                        title="Read packages/event-schema/src/index.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 55.479%"
+                        title="Read packages/event-schema/src/fixtures.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 58.562%"
+                        title="Read packages/event-schema/src/event.test.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 60.274%"
+                        title="Read packages/event-schema/src/migrate.ts"
+                      ></i
+                      ><i
+                        class="ev ev-read"
+                        style="left: 63.699%"
+                        title="Read packages/event-schema/src/index.ts"
+                      ></i
+                      ><i class="ev ev-grep" style="left: 48.973%" title='Grep "schemaVersion"'></i
+                      ><i class="ev ev-grep" style="left: 50.685%" title='Grep "schemaVersion"'></i
+                      ><i
+                        class="ev ev-edit"
+                        style="left: 67.808%; width: 3.425%"
+                        title="Edit packages/event-schema/src/migrate.ts +5 −2"
+                      ></i
+                      ><i
+                        class="ev ev-error"
+                        style="left: 72.945%"
+                        title="event.test.ts · 1 failing"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-err" /></svg></i
+                      ><span
+                        class="ev ev-run row-top"
+                        style="left: 76.027%; width: calc(100% - 76.027%)"
+                        title="Bash: pnpm typecheck · running"
+                        ><span>pnpm typecheck</span></span
+                      ><span
+                        class="ev ev-wait row-bottom"
+                        style="left: 78.082%; width: calc(100% - 78.082%)"
+                        title="Bash: npm test -- ipc · waiting for your approval"
+                        ><svg class="ev-ic" aria-hidden="true"><use href="#i-warn" /></svg
+                        ><span>npm test -- ipc</span></span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="tl-overlay" aria-hidden="true">
+                  <i
+                    class="branch"
+                    style="
+                      left: 6.849%;
+                      top: calc(var(--axis-h) + var(--lane-h) * 0 + var(--lane-h) / 2);
+                      height: calc(var(--lane-h) * 1);
+                    "
+                    aria-hidden="true"
+                  ></i
+                  ><i
+                    class="branch"
+                    style="
+                      left: 17.123%;
+                      top: calc(var(--axis-h) + var(--lane-h) * 0 + var(--lane-h) / 2);
+                      height: calc(var(--lane-h) * 2);
+                    "
+                    aria-hidden="true"
+                  ></i
+                  ><i
+                    class="branch"
+                    style="
+                      left: 24.658%;
+                      top: calc(var(--axis-h) + var(--lane-h) * 0 + var(--lane-h) / 2);
+                      height: calc(var(--lane-h) * 3);
+                    "
+                    aria-hidden="true"
+                  ></i
+                  ><i class="checkpoint" style="left: 23.288%" title="Checkpoint cp-1 · 1:08"
+                    ><svg class="cp-ic" aria-hidden="true"><use href="#i-section" /></svg></i
+                  ><i class="checkpoint" style="left: 66.438%" title="Checkpoint cp-2 · 3:14"
+                    ><svg class="cp-ic" aria-hidden="true"><use href="#i-section" /></svg></i
+                  ><i class="scrubber"><span class="scrub-tag">Live</span></i>
+                </div>
+              </div>
+            </section>
+            <div class="dock-tab">
+              <svg class="ic" aria-hidden="true"><use href="#i-up" /></svg><b>Terminal</b
+              ><span>Logs</span
+              ><span
+                >Problems
+                <span class="cnt"
+                  ><span class="only-normal">2</span><span class="only-dense">3</span></span
+                ></span
+              >
+            </div>
+          </section>
+
+          <aside class="agents" aria-label="Agents and inspector">
+            <div class="tabs" role="tablist">
+              <button class="tab" role="tab" aria-selected="true">
+                Agents<span class="num"
+                  ><span class="only-normal">3</span><span class="only-dense">5</span></span
+                >
+              </button>
+              <button class="tab" role="tab" aria-selected="false">Inspector</button>
+            </div>
+            <ul class="cast only-normal">
+              <li class="who selected">
+                <span class="seal seal-claude is-waiting" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg
+                ></span>
+                <span class="name">Claude</span><span class="time num">2m14</span>
+                <span class="role">main agent, cloud · <span class="mono">opus-5.5</span></span>
+                <span class="doing"
+                  ><span class="state st-waiting"
+                    ><svg class="ic" aria-hidden="true"><use href="#i-warn" /></svg>Waiting for
+                    you</span
+                  ><span class="what mono">npm test -- ipc</span></span
+                >
+                <span class="task">Refactor IPC client to typed channels</span>
+                <span class="facts"
+                  ><span>tool <b>Bash</b></span
+                  ><span>tokens <b>41k tok</b></span
+                  ><span>last write <b>client.ts</b></span></span
+                >
+                <span class="acts"
+                  ><button class="lnk danger">Interrupt</button><button class="lnk">Open log</button
+                  ><button class="lnk">Follow on map</button></span
+                >
+              </li>
+              <li class="who">
+                <span class="seal seal-sub" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg
+                ></span>
+                <span class="name">Explore</span><span class="time num">0m41</span>
+                <span class="role">subagent of Claude, cloud</span>
+                <span class="doing"
+                  ><span class="state st-reading">Reading</span
+                  ><span class="what mono">packages/ipc-contract/src/channels.ts</span></span
+                >
+              </li>
+              <li class="who">
+                <span class="seal seal-ollama" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-ollama" /></svg
+                ></span>
+                <span class="name">qwen2.5-coder:14b</span><span class="time num">1m02</span>
+                <span class="role">local model on this machine, via Ollama</span>
+                <span class="doing"
+                  ><span class="state st-running">Running</span
+                  ><span class="bar" aria-hidden="true"></span
+                  ><span class="mono">38 tok/s</span></span
+                >
+                <span class="task">Draft tests for client.ts</span>
+              </li>
+            </ul>
+            <ul class="cast only-dense">
+              <li class="who selected">
+                <span class="seal seal-claude" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg
+                ></span>
+                <span class="name">Claude</span><span class="time num">4m52</span>
+                <span class="role">main agent, cloud · <span class="mono">opus-5.5</span></span>
+                <span class="doing"
+                  ><span class="state st-writing">Writing</span
+                  ><span class="what mono">src/ipc/client.ts</span
+                  ><b class="mono" style="font-size: var(--fs-xs)">+18 −5</b></span
+                >
+                <span class="task">Refactor IPC client to typed channels</span>
+                <span class="facts"
+                  ><span>tool <b>Edit</b></span
+                  ><span>tokens <b>88k tok</b></span></span
+                >
+                <span class="acts"
+                  ><button class="lnk danger">Interrupt</button><button class="lnk">Open log</button
+                  ><button class="lnk">Follow on map</button></span
+                >
+              </li>
+              <li class="who">
+                <span class="seal seal-claude is-waiting" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg
+                ></span>
+                <span class="name">Claude #2</span><span class="time num">2m42</span>
+                <span class="role">second session, cloud · <span class="mono">opus-5.5</span></span>
+                <span class="doing"
+                  ><span class="state st-running">Running</span
+                  ><span class="what mono">pnpm typecheck</span></span
+                >
+                <span class="doing"
+                  ><span class="state st-waiting"
+                    ><svg class="ic" aria-hidden="true"><use href="#i-warn" /></svg>Waiting for
+                    you</span
+                  ><span class="what mono">npm test -- ipc</span></span
+                >
+              </li>
+              <li class="who">
+                <span class="seal seal-sub" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg
+                ></span>
+                <span class="name">Explore</span><span class="time num">4m02</span>
+                <span class="role">subagent of Claude</span>
+                <span class="doing"
+                  ><span class="state st-reading">Reading</span
+                  ><span class="what mono">ipc-contract/src/channels.ts</span></span
+                >
+              </li>
+              <li class="who">
+                <span class="seal seal-sub" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-sub" /></svg
+                ></span>
+                <span class="name">Plan</span><span class="time num">1m20</span>
+                <span class="role">subagent of Claude</span>
+                <span class="doing"
+                  ><span class="state st-done"
+                    ><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg>Done</span
+                  ><span class="what">plan written, now idle</span></span
+                >
+              </li>
+              <li class="who">
+                <span class="seal seal-ollama" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-ollama" /></svg
+                ></span>
+                <span class="name">qwen2.5-coder:14b</span><span class="time num">3m40</span>
+                <span class="role">local model, via Ollama</span>
+                <span class="doing"
+                  ><span class="state st-running">Running</span
+                  ><span class="bar" aria-hidden="true"></span
+                  ><span class="mono">41 tok/s</span></span
+                >
+              </li>
+            </ul>
+          </aside>
+        </main>
+
+        <aside class="dock" aria-label="Session">
+          <div class="dock-head">
+            <h2>Session</h2>
+            <span class="sub">Refactor IPC client</span>
+            <div class="ibtns">
+              <button class="ibtn" aria-label="History">
+                <svg class="ic" aria-hidden="true"><use href="#i-history" /></svg></button
+              ><button class="ibtn" aria-label="New session">
+                <svg class="ic" aria-hidden="true"><use href="#i-plus" /></svg></button
+              ><button class="ibtn" aria-label="Close dock">
+                <svg class="ic" aria-hidden="true"><use href="#i-close" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chat">
+            <div class="msg user">
+              <div class="who-s"><span class="you">You</span><span class="num">0:00</span></div>
+              <p>Refactor the IPC client to use the typed channels from ipc-contract</p>
+            </div>
+            <div class="msg">
+              <div class="who-s">
+                <span class="seal seal-claude sm" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                ><b>Claude</b><span class="num">0:04</span>
+              </div>
+              <p>
+                I'll read the client and the contract package first, then move the calls over one
+                channel at a time.
+              </p>
+              <div class="toolrow">
+                <svg class="ic" aria-hidden="true"><use href="#i-chev" /></svg>Read 3 files,
+                searched 2 times
+              </div>
+            </div>
+            <div class="msg">
+              <div class="who-s">
+                <span class="seal seal-claude sm" aria-hidden="true"
+                  ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg></span
+                ><b>Claude</b><span class="num">1:52</span>
+              </div>
+              <p>
+                client.ts now calls the typed channels from ipc-contract, and server.ts registers
+                the same names. The old payload shape still breaks 2 tests in schema.test.ts. I'd
+                like to run the IPC tests to see the full picture.
+              </p>
+              <div class="toolrow">
+                <svg class="ic" aria-hidden="true"><use href="#i-chev" /></svg>Edit
+                <span class="mono">src/ipc/server.ts</span><span class="d past">+4 −1</span>
+              </div>
+              <div class="toolrow">
+                <svg class="ic" aria-hidden="true"><use href="#i-chev" /></svg>Edit
+                <span class="mono">src/ipc/client.ts</span><span class="d">+12 −3</span>
+              </div>
+            </div>
+          </div>
+          <div class="permit" role="dialog" aria-labelledby="permit-t">
+            <div class="permit-in">
+              <h3 id="permit-t">
+                <svg class="ic" aria-hidden="true"><use href="#i-warn" /></svg
+                ><span
+                  ><span class="only-normal">Claude</span
+                  ><span class="only-dense">Claude #2</span> wants to run a command</span
+                >
+              </h3>
+              <code class="cmd">npm test -- ipc</code>
+              <dl>
+                <dt>Tool</dt>
+                <dd class="mono">Bash</dd>
+                <dt>Folder</dt>
+                <dd class="mono">C:\dev\control-center</dd>
+                <dt>Reason</dt>
+                <dd class="reason">Run the IPC tests to verify the refactor</dd>
+              </dl>
+              <div class="actions">
+                <button class="btn primary">Approve <kbd>Ctrl+Enter</kbd></button>
+                <button class="btn">Deny <kbd>Ctrl+Backspace</kbd></button>
+                <button class="btn wide">Always this session <kbd>Ctrl+Shift+Enter</kbd></button>
+              </div>
+              <p class="note">Esc closes without denying.</p>
+            </div>
+          </div>
+          <div class="composer">
+            <div class="meta">
+              <span class="chip">model <span class="mono">opus-5.5</span></span>
+              <span class="chip"><span class="mono">3</span> MCP</span>
+              <span class="chip"><span class="on"></span>Checkpoint on</span>
+            </div>
+            <div class="input" aria-disabled="true">
+              <span>Waiting for your decision…</span
+              ><button class="ibtn" disabled aria-label="Send">
+                <svg class="ic" aria-hidden="true"><use href="#i-send" /></svg>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <footer class="status" aria-label="Status bar">
+          <span class="seg ws"
+            ><svg class="ic" aria-hidden="true"><use href="#i-branch" /></svg>control-center ·
+            feat/live-map</span
+          >
+          <span class="seg"><i class="dot"></i>Session active</span>
+          <span class="seg only-normal"
+            ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg>Claude · waiting ·
+            +2</span
+          >
+          <span class="seg only-dense"
+            ><svg class="sg" aria-hidden="true"><use href="#g-claude" /></svg>Claude · writing ·
+            +4</span
+          >
+          <span class="seg wait"
+            ><svg class="ic" aria-hidden="true"><use href="#i-warn" /></svg>Waiting for you: npm
+            test -- ipc</span
+          >
+          <span class="seg err"
+            ><svg class="ic" aria-hidden="true"><use href="#i-err" /></svg
+            ><span class="num only-normal">2</span><span class="num only-dense">3</span></span
+          >
+          <span class="seg"
+            ><span class="num only-normal">2</span
+            ><span class="num only-dense">7</span>&nbsp;changed</span
+          >
+          <span class="seg num only-normal">182k tok · 31k local</span>
+          <span class="seg num only-dense">412k tok · 96k local</span>
+          <span class="seg only-normal" aria-label="VRAM 9.1 of 16 GB"
+            ><span class="vram" aria-hidden="true"
+              ><i class="f"></i><i class="f"></i><i class="f"></i><i class=""></i></span
+            ><span class="num">9.1/16 GB</span></span
+          >
+          <span class="seg only-dense" aria-label="VRAM 13.8 of 16 GB"
+            ><span class="vram" aria-hidden="true"
+              ><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span
+            ><span class="num">13.8/16 GB</span></span
+          >
+          <span class="seg">Docker · <span class="num">4</span></span>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var r = document.documentElement;
+        function sync() {
+          document.querySelectorAll('.harness .seg').forEach(function (g) {
+            g.querySelectorAll('button').forEach(function (b) {
+              b.setAttribute('aria-pressed', String(r.dataset[g.dataset.k] === b.dataset.v));
+            });
+          });
+          document.getElementById('gray').checked = r.dataset.gray === '1';
+          var q = new URLSearchParams();
+          q.set('theme', r.dataset.theme);
+          q.set('density', r.dataset.density);
+          q.set('scenario', r.dataset.scenario);
+          if (r.dataset.gray === '1') q.set('gray', '1');
+          try {
+            history.replaceState(null, '', location.pathname + '?' + q.toString());
+          } catch (e) {
+            /* file:// in some browsers */
+          }
+        }
+        document.querySelectorAll('.harness .seg').forEach(function (g) {
+          g.addEventListener('click', function (e) {
+            var b = e.target.closest('button');
+            if (!b) return;
+            r.dataset[g.dataset.k] = b.dataset.v;
+            sync();
+          });
+        });
+        document.getElementById('gray').addEventListener('change', function (e) {
+          r.dataset.gray = e.target.checked ? '1' : '0';
+          sync();
+        });
+        sync();
+      })();
+    </script>
+  </body>
+</html>

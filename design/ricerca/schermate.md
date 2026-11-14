@@ -1,6 +1,6 @@
 # Schermate e stati
 
-> Fase 1a. È l'inventario da disegnare in 1c (Figma) e la lista di controllo per le revisioni impeccable. Etichette dell'interfaccia in inglese, scritte `così`. Struttura e flussi: [`architettura.md`](architettura.md).
+> Fase 1a. È l'inventario da disegnare in 1c (HTML statico in `design/sistema/`) e la lista di controllo per le revisioni impeccable. Etichette dell'interfaccia in inglese, scritte `così`. Struttura e flussi: [`architettura.md`](architettura.md).
 
 ## Definizione degli stati
 
@@ -104,4 +104,4 @@ Si mostra al primo avvio; si riapre da `Settings → General → Run setup again
   - barra di stato completa con il segmento di attesa;
   - nella mappa almeno un nodo per ognuno dei 7 stati semantici;
   - i 3 tipi di agente: Claude, subagent, Ollama.
-- **1c (Figma):** tutte le righe **P0** con tutti i loro stati, poi le **P1**. Le **P2** solo se c'è tempo, partendo dai componenti. Prototipo cliccabile sui flussi F1-F7 di [`architettura.md`](architettura.md#flussi-principali).
+- **1c (HTML statico):** tutte le righe **P0** con tutti i loro stati, poi le **P1**. Le **P2** solo se c'è tempo, partendo dai componenti. I flussi F1-F7 di [`architettura.md`](architettura.md#flussi-principali) si verificano sulla sequenza delle schermate; il prototipo interattivo è quello in codice della 1d.

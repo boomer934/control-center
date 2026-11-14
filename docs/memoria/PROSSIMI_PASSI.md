@@ -10,12 +10,12 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F1b)** Tre direzioni estetiche con /frontend-design (ultracode, effort high, una direzione per agente) → `design/direzioni/`. Ogni direzione disegna la Live in stato normale (ed eventualmente denso) con i contenuti indicati in `design/ricerca/schermate.md` ("Cosa serve a 1b e 1c"). Revisione impeccable e **scelta dell'utente**, decidendo anche densità e nome del prodotto. Branch `feat/design-1b`.
+1. **(F1b)** Revisione dell'utente e merge della PR #12 (`feat/design-1b`). La scelta è fatta: `precisione fluida`, densità `compact`, nome candidato Vernier.
 2. **(F2, in parallelo)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
 
 ## Dopo
 
-3. **(F1c)** Autorizzare Figma (`/mcp`), design system, schermate P0 e P1 in alta fedeltà, prototipo cliccabile sui flussi F1-F7.
+3. **(F1c)** Partendo da `design/direzioni/precisione-fluida/`: `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/`; flussi F1-F7 verificati sulla sequenza delle schermate. Niente Figma.
 4. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
 5. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
 6. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.

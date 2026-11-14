@@ -1,4 +1,26 @@
 {
+  "permissions": {
+    "deny": [
+      "Read(**/node_modules/**)",
+      "Read(**/dist/**)",
+      "Read(**/out/**)",
+      "Read(**/release/**)",
+      "Read(**/coverage/**)",
+      "Read(**/test-results/**)",
+      "Read(**/playwright-report/**)",
+      "Read(**/*.tsbuildinfo)",
+      "Read(**/*.log)",
+      "Read(./pnpm-lock.yaml)",
+      "Read(./packages/fixtures/raw/**)",
+      "Read(./.data/**)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(./design/direzioni/**/screenshot/**)",
+      "Read(**/e2e/screenshots/**)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

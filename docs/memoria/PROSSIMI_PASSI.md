@@ -12,17 +12,21 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 - ✅ **(F2, anticipata)** 5 sessioni reali registrate in `packages/fixtures/raw/` con `scripts/fixtures/capture-hook.mjs`; `check-raw.mjs` verde. PR #16 unita su `main` il 2026-11-14.
 
+- ✅ **(F1d)** Prototipo in codice della Vista Live in `design/prototipo-live/`: replay delle 5 fixture con mappa, chip, timeline con scrubber e movimento ridotto; 11 test Playwright di screenshot e comportamento (solo locali); revisione impeccable senza gravi. Branch `feat/live-prototype`, PR da unire.
+
 ## Ora
 
-1. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
+1. **(F1d)** Revisione del prototipo da parte dell'utente e merge della PR; poi chiudere la Fase 1 (archiviare `FASE_1.md` in `STORIA.md`).
 
 ## Dopo
 
 2. **(F2, facoltativo)** Una sessione interattiva breve nel progetto di prova per catturare `Notification` (attesa utente) e aggiungere l'hook `PostToolUseFailure`.
-3. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
+3. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema; il normalizzatore del prototipo (`design/prototipo-live/src/replay/normalize.ts`) mostra quali campi delle fixture servono davvero.
 4. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
 
 ## Quando capita
+
+- **(F5)** Dalla revisione 1d: regione `aria-live` per `waiting-user` ed `error` nella colonna Agents; zoom massimo più alto a `Fit` per grafi piccoli; `viewAt` indicizzato per 500 nodi.
 
 - Opzionale in locale: `winget install gitleaks` e `npm i -g pnpm@10`.
 - **(F10, prima di rendere pubblica la repo)** Attivare la protezione di `main` e fissare le GitHub Actions a SHA.

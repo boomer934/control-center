@@ -76,6 +76,8 @@ Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisi
 
 ### 1d — Prototipo in codice della Vista Live
 
+**✅ Fatto il 2026-11-14** su `feat/live-prototype` (PR da unire): [`design/prototipo-live/`](../../design/prototipo-live/README.md), revisione in [`REVISIONE.md`](../../design/prototipo-live/REVISIONE.md).
+
 - **Modello:** Opus 5.5 · **effort:** high (xhigh se il movimento o le prestazioni danno problemi) · **ultracode:** no
 - **Bloccante:** almeno una fixture registrata.
 - **Produce:** in `design/prototipo-live/` una pagina React + React Flow alimentata da una fixture, che riproduce la sessione con:

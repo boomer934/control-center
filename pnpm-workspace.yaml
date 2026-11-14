@@ -1,6 +1,8 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  # Phase 1d throwaway prototype (dev-only, never shipped)
+  - 'design/prototipo-live'
 
 onlyBuiltDependencies:
   - simple-git-hooks

@@ -688,7 +688,7 @@
         height: 2px;
         background: var(--reading);
         transform-origin: left;
-        animation: read-pulse 3.2s var(--ease-out) infinite;
+        animation: read-pulse 3.2s var(--ease-out) 1;
       }
       @keyframes read-pulse {
         0%,
@@ -1183,7 +1183,6 @@
         color: var(--on-highlight);
         border-bottom: 2px solid var(--waiting);
         border-radius: 2px 6px 3px 5px / 5px 3px 6px 2px;
-        animation: wait-pulse 1.6s var(--ease-io) infinite;
       }
       .ev-wait .ev-ic {
         width: 11px;
@@ -1856,15 +1855,6 @@
         }
         50% {
           opacity: 1;
-        }
-      }
-      @keyframes wait-pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.72;
         }
       }
       .seg.err {

@@ -125,13 +125,13 @@ In scala di grigi i tre tipi restano diversi per forma (pieno, vuoto, esagono) e
 
 ## Movimento
 
-| Cosa                                                          | Durata e curva                                                   | Quando                              |
-| ------------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------- |
-| Segmento di attesa nella barra di stato (unico che **pulsa**) | ciclo 1.6 s, `cubic-bezier(.45,0,.25,1)`                         | solo se c'è un'attesa               |
-| Blip dei nodi `reading`                                       | lampo di 280 ms in un ciclo di 2.8 s, `cubic-bezier(.2,.7,.2,1)` | solo sui nodi letti in quel momento |
-| Barra indeterminata `running` (nodo e card)                   | 1.3 s lineare                                                    | solo sui comandi e task in corso    |
-| Ritorno al neutro di `done`                                   | 300 ms, una volta                                                | all'arrivo dello stato              |
-| Token di durata                                               | `--dur-1` 150 ms · `--dur-2` 220 ms · `--dur-3` 300 ms           | interazioni                         |
+| Cosa                                                          | Durata e curva                                                                                       | Quando                              |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Segmento di attesa nella barra di stato (unico che **pulsa**) | ciclo 1.6 s, `cubic-bezier(.45,0,.25,1)`                                                             | solo se c'è un'attesa               |
+| Blip dei nodi `reading`                                       | un solo lampo di 280 ms per lettura (animazione di 2.8 s, 1 ripetizione), `cubic-bezier(.2,.7,.2,1)` | solo sui nodi letti in quel momento |
+| Barra indeterminata `running` (nodo e card)                   | 1.3 s lineare                                                                                        | solo sui comandi e task in corso    |
+| Ritorno al neutro di `done`                                   | 300 ms, una volta                                                                                    | all'arrivo dello stato              |
+| Token di durata                                               | `--dur-1` 150 ms · `--dur-2` 220 ms · `--dur-3` 300 ms                                               | interazioni                         |
 
 Nodi idle, cartelle, archi, timeline storica: fermi. Con `prefers-reduced-motion: reduce` tutte le animazioni sono spente (verificato: 0 animazioni attive); la barra `running` diventa un tratteggio statico, il blip sparisce, il segmento d'attesa resta pieno ma non pulsa. Tutto è trasformazione o opacità: nessun blur, nessuna ombra.
 
@@ -181,6 +181,6 @@ In `dense` + `comfortable` la colonna Agents scorre (circa 108 px in più: la li
 - [x] Contrasto AA verificato per testo e indicatori di stato in **entrambi** i temi (rapporti nelle tabelle della palette).
 - [x] Con `gray=1` si distinguono i 7 stati e i 3 tipi di agente.
 - [x] Nessun colore usato fuori dalla palette dichiarata (tutti i colori sono variabili CSS sul tema; scansione del CSS senza colori letterali fuori dai blocchi tema).
-- [x] `prefers-reduced-motion` rispettato: niente impulsi né scie animate; solo il segmento di attesa pulsa quando il movimento è consentito. Nota: con movimento consentito si muovono anche il blip `reading` e la barra `running`, solo nel punto in cui l'agente lavora (come chiede la tabella degli stati).
+- [x] `prefers-reduced-motion` rispettato: niente impulsi né scie animate; solo il segmento di attesa pulsa quando il movimento è consentito. Nota: con movimento consentito si muovono anche il blip `reading` (una volta per lettura) e la barra `running`, solo nel punto in cui l'agente lavora (come chiede la tabella degli stati).
 - [x] Font solo OFL o MIT, con licenza indicata.
 - [x] Nessuna libreria JS, nessuna immagine esterna.

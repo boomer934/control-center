@@ -127,13 +127,13 @@ Sulla mappa gli agenti stanno su una **rotaia** a destra (chip con glifo, nome, 
 
 Il movimento esiste solo dove c'è uno stato; a riposo non si muove nulla.
 
-| Cosa                                                | Come                                                                                                                       | Durata / curva                                         |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| cambio di stato di una cella (bordo, fondo, colore) | transizione                                                                                                                | 200 ms, `cubic-bezier(.2,0,0,1)`                       |
-| reading: impulso leggero                            | il glifo passa da 35 % a 100 % **una volta per lettura**                                                                   | 300 ms, stessa curva                                   |
-| done: scia che sfuma                                | glifo e tre tacche vanno dal colore writing al neutro, una volta                                                           | 300 ms                                                 |
-| running: progresso indeterminato                    | segmento che scorre sul fondo della cella e della card                                                                     | 1200 ms lineare, solo su celle running                 |
-| waiting-user                                        | **cursore a blocco che lampeggia** nel segmento di attesa della barra di stato e in testa alla cella aperta della timeline | 1060 ms `steps(1)` (il ritmo del cursore di un editor) |
+| Cosa                                                | Come                                                                                                                     | Durata / curva                                         |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| cambio di stato di una cella (bordo, fondo, colore) | transizione                                                                                                              | 200 ms, `cubic-bezier(.2,0,0,1)`                       |
+| reading: impulso leggero                            | il glifo passa da 35 % a 100 % **una volta per lettura**                                                                 | 300 ms, stessa curva                                   |
+| done: scia che sfuma                                | glifo e tre tacche vanno dal colore writing al neutro, una volta                                                         | 300 ms                                                 |
+| running: progresso indeterminato                    | segmento che scorre sul fondo della cella e della card                                                                   | 1200 ms lineare, solo su celle running                 |
+| waiting-user                                        | **cursore a blocco che lampeggia** solo nel segmento di attesa della barra di stato (in timeline il cursore resta fisso) | 1060 ms `steps(1)` (il ritmo del cursore di un editor) |
 
 Durate 150-300 ms per tutte le transizioni (`--dur-1/2/3`). Niente blur, ombre o filtri per nodo.
 

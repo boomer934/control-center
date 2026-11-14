@@ -37,7 +37,7 @@ Fonti complete: [`docs/memoria/DESIGN.md`](../../docs/memoria/DESIGN.md), [`arch
   | Stato        | Trattamento richiesto                                  |
   | ------------ | ------------------------------------------------------ |
   | idle         | neutro                                                 |
-  | reading      | colore info, impulso leggero                           |
+  | reading      | colore info, un impulso per evento (mai in ciclo)      |
   | writing      | accento caldo, bordo pieno + badge diff `+N −M`        |
   | running      | progresso indeterminato                                |
   | waiting-user | colore attenzione: **l'unico** che richiama lo sguardo |

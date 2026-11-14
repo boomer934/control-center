@@ -11,20 +11,20 @@ _Ultimo aggiornamento: 2026-11-14_
 | Sotto-fase                        | Stato                                              |
 | --------------------------------- | -------------------------------------------------- |
 | 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
-| 1b Tre direzioni estetiche        | ✅ scelta `precisione fluida`, PR #12 da unire     |
+| 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14 |
 | 1c Design system e schermate HTML | da fare: parte da `precisione-fluida/`             |
 | 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)       |
 
 ## Branch
 
-`feat/design-1b`, pushato, con la PR verso `main` aperta. `main` è fermo a `b9433a8`.
+`main` (a `a85eb11`, merge della PR #12). Per la 1c si apre `feat/design-1c`.
 
 ## Punto di ripresa (1b → 1c)
 
 La 1b è chiusa: l'utente ha scelto **`precisione fluida`** (`design/direzioni/precisione-fluida/`, con `README.md` e 4 screenshot). È `precisione` più fluida e con meno spigoli, con le sigle di canale e la telemetria di `sala-controllo` e la legenda di `carta-inchiostro`. Densità `compact`; nome candidato Vernier.
 
-- Resta da fare: revisione dell'utente e merge della PR #12 con la CI verde.
-- Poi la **1c**: `design/tokens.json` e `design/sistema/` partendo dai token di `precisione-fluida/live.html` e dalle regole di `DESIGN.md` § "Direzioni estetiche". Restano aperti i minori di `REVISIONE.md` elencati nel README della sintesi.
+- PR #12 unita su `main` il 2026-11-14 con squash e CI verde.
+- Prossima: la **1c**, `design/tokens.json` e `design/sistema/` partendo dai token di `precisione-fluida/live.html` e dalle regole di `DESIGN.md` § "Direzioni estetiche". Restano aperti i minori di `REVISIONE.md` elencati nel README della sintesi.
 
 ## Cosa funziona
 
@@ -45,7 +45,6 @@ La 1b è chiusa: l'utente ha scelto **`precisione fluida`** (`design/direzioni/p
 
 ## Cosa manca per chiudere la Fase 1
 
-- 1b: merge della PR #12.
 - 1c: token in `design/tokens.json`, pagina componenti e schermate P0 e P1 in alta fedeltà come HTML statico in `design/sistema/` (Figma tolto dal piano il 2026-11-14).
 - 1d: prototipo in codice della Vista Live su una fixture reale, con i test Playwright.
 

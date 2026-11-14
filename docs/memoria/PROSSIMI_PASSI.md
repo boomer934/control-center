@@ -10,15 +10,18 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 - ✅ **(F1b)** Tre direzioni estetiche, revisione, confronto e scelta dell'utente: `precisione fluida` (`design/direzioni/precisione-fluida/`), densità `compact`, nome candidato Vernier. PR #12 unita su `main` il 2026-11-14.
 - ✅ **(F1c)** Design system e schermate HTML: token, componenti, 9 P0 + 9 P1 con tutti gli stati, flussi F1-F7, 55 screenshot, revisione impeccable (un grave, corretto). Nome deciso: Vernier, con ripiego su Control Center. PR #14 unita su `main` il 2026-11-14.
 
+- ✅ **(F2, anticipata)** 5 sessioni reali registrate in `packages/fixtures/raw/` con `scripts/fixtures/capture-hook.mjs`; `check-raw.mjs` verde. Branch `feat/fixtures-recording`.
+
 ## Ora
 
-1. **(F2, sblocca la F1d)** Registrare le prime 5 sessioni reali di Claude Code (stream-json + hooks) in `packages/fixtures/raw/` (ignorata da git).
+1. **(F2)** Aprire la PR di `feat/fixtures-recording` e unirla con CI verde.
+2. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
 
 ## Dopo
 
-2. **(F1d)** Prototipo in codice della Vista Live sulle fixture.
-3. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
-4. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
+3. **(F2, facoltativo)** Una sessione interattiva breve nel progetto di prova per catturare `Notification` (attesa utente) e aggiungere l'hook `PostToolUseFailure`.
+4. **(F2)** Schema `AgentEvent` completo, normalizzatori, script di pulizia delle fixture. Usare la sezione "Dati necessari" di `design/ricerca/domande-chiave.md` come lista di controllo dello schema.
+5. **(F3)** Shell Electron sicura, logger e Console Errori. Le scorciatoie e gli ambiti di focus partono da `design/ricerca/architettura.md`.
 
 ## Quando capita
 

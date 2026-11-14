@@ -4,6 +4,21 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — F2 anticipata: registrazione delle prime 5 fixture
+
+**Fatto** (branch `feat/fixtures-recording`)
+
+- `scripts/fixtures/capture-hook.mjs`: hook che salva ogni payload in `packages/fixtures/raw/<sessione>.hooks.jsonl`; nome di sessione validato, link simbolici rifiutati, esce sempre 0.
+- `scripts/fixtures/check-raw.mjs`: valida le righe JSON e la copertura delle registrazioni.
+- Progetto di prova `vernier-fixture-lab` fuori dalla repo, con hooks e permessi solo in `.claude/settings.local.json` (nessuna modifica a `~/.claude`).
+- 5 sessioni registrate con Sonnet: rinomina su più file, test rotto e corretto, subagent, permesso negato (`npx tsc`), file mancante.
+
+**Decisioni:** il progetto di prova è in JS con `node --test` invece che TS, per non installare dipendenze; il payload degli hooks è avvolto in `{capturedAt, payload}` perché gli hooks non hanno un orario.
+
+**Problemi:** su Windows Claude ha usato il tool `PowerShell` per il comando negato, non `Bash`: lo schema della F2 deve trattarli entrambi come shell. In `-p` non c'è la richiesta interattiva di permesso, quindi manca l'evento `Notification`.
+
+---
+
 ## 2026-11-14 — Fase 1c (seconda parte): schermate P1, screenshot e revisione impeccable
 
 **Fatto** (branch `feat/design-1c`, commit da `55c5e54` in poi)

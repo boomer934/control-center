@@ -268,7 +268,8 @@
     const state = root.dataset.state;
     document.body.insertAdjacentHTML('afterbegin', SPRITE);
     document.querySelectorAll('[data-when]').forEach((el) => {
-      if (!el.dataset.when.split(' ').includes(state)) el.remove();
+      if (!el.dataset.when.split(' ').includes(cfg.whenState ? cfg.whenState(state) : state))
+        el.remove();
     });
     const chrome = cfg.chrome ? cfg.chrome(state) : {};
     document.querySelectorAll('[data-shell]').forEach((el) => {

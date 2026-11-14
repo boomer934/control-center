@@ -2982,3 +2982,12 @@ svg {
   color: var(--on-waiting);
   border-color: var(--on-waiting);
 }
+
+.tm .sub {
+  text-overflow: ellipsis;
+}
+
+.stack .btn {
+  font-family: var(--font-sans);
+  font-stretch: var(--sans);
+}

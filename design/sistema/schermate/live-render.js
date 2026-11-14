@@ -42,7 +42,7 @@
 
   function map(M) {
     const stage = document.getElementById('stage');
-    if (!M) return;
+    if (!M || !stage) return;
     let h = '';
     for (const c of M.ctr || [])
       h += `<div class="ctr${c.collapsed ? ' collapsed' : ''}" style="left:${px(c.x)};top:${px(c.y)};width:${px(c.w)};height:${px(c.h)}"><span class="lg">${esc(c.label)} <i>· ${esc(c.count)}</i></span></div>`;
@@ -161,7 +161,7 @@
 
   function agents(A) {
     const el = document.getElementById('agents');
-    if (!A) return;
+    if (!A || !el) return;
     el.innerHTML = A.html;
     if (A.more) el.classList.add('more');
     document.getElementById('agn').textContent = A.n ?? '';
@@ -169,14 +169,23 @@
 
   window.renderLive = function (cfg) {
     window.CC.page({
-      id: cfg.id || 'live',
-      name: cfg.name || 'Live',
+      id: (window.PAGE || cfg).id || 'live',
+      name: (window.PAGE || cfg).name || 'Live',
       states: Object.keys(window.LIVE),
-      defaultState: 'normal',
+      defaultState: (window.PAGE || {}).defaultState || 'normal',
       chrome: (s) => window.LIVE[s].chrome,
+      whenState: (s) => window.LIVE[s].base || s,
       after(s) {
         const D = window.LIVE[s];
         document.getElementById('dock').innerHTML = D.dock || '';
+        if (D.noDock) document.querySelector('.win').classList.add('no-dock');
+        if (D.center) document.querySelector('.center').innerHTML = D.center;
+        if (D.bdock) document.querySelector('.btab').outerHTML = D.bdock;
+        if (D.inspector)
+          document
+            .querySelectorAll('.side .tabs > span')
+            .forEach((t, i) => t.setAttribute('aria-selected', String(i === 1)));
+        if (D.overlay) document.querySelector('.win').insertAdjacentHTML('beforeend', D.overlay);
         agents(D.agents);
         window.CC.expand(document);
         timeline(D.tl);

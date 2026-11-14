@@ -689,4 +689,5 @@
       dock: `${DOCK_HEAD('<span class="tag neutral"><i data-ic="offline" class="g"></i>offline</span>')}<div class="chat">${USER_MSG}<div class="msg muted">Claude stopped when the connection dropped at 14:12. The conversation resumes when you are back online.</div></div>${COMPOSER('off')}`,
     },
   };
+  for (const [k, v] of Object.entries(window.LIVE)) v.base = k;
 })();

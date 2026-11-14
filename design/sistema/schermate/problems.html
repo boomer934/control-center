@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="compact">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Control Center · Problems</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,300..700&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../tokens.css" />
+    <link rel="stylesheet" href="../componenti.css" />
+    <script src="../shell.js"></script>
+    <script src="live-data.js"></script>
+    <script src="problems-data.js"></script>
+  </head>
+  <body>
+    <div class="toggles"></div>
+    <div class="win">
+      <header class="title" data-shell="title"></header>
+      <nav class="act" data-shell="act"></nav>
+      <main class="center">
+        <div class="tb">
+          <span class="tool"><b>Live</b></span>
+          <span class="tool" data-when="normal dense error"
+            ><i data-ic="follow"></i>Follow <b>Claude</b><span class="kbd">F</span></span
+          >
+          <span class="tool" data-when="normal dense error offline"
+            ><i data-ic="filter"></i>All agents</span
+          >
+          <span class="tool" data-when="normal dense error offline"
+            >View <b>human</b><span class="kbd">R</span></span
+          >
+          <span class="r">
+            <span class="tool" data-when="normal dense error offline"
+              ><i data-ic="play"></i>Replay</span
+            >
+            <span class="tool"
+              ><i data-ic="fit"></i>Fit <span class="mono" id="zoom">100%</span></span
+            >
+          </span>
+        </div>
+        <div class="banner s-error" data-when="error">
+          <i data-g="s-error"></i
+          ><span
+            ><b>Session ended with an error.</b> claude exited with code 1 after 4:52, during
+            <span class="code-i">npm test</span>.</span
+          >
+          <span class="acts"
+            ><button class="btn">View log</button
+            ><button class="btn pri">Resume session</button></span
+          >
+        </div>
+        <div class="banner offline" data-when="offline">
+          <i data-ic="offline" class="g"></i
+          ><span
+            ><b>Offline: Claude unavailable.</b> Local agents, Docker, ports, Git and replay keep
+            working.</span
+          >
+          <span class="acts"><button class="btn">Open replay</button></span>
+        </div>
+        <div class="body">
+          <div class="col grow" style="gap: 0; min-height: 0">
+            <div class="map" id="map">
+              <div class="stage" id="stage"></div>
+              <div
+                data-when="empty"
+                class="empty"
+                style="
+                  position: absolute;
+                  left: calc(var(--sp-10) * 4);
+                  top: calc(var(--sp-10) * 2);
+                "
+              >
+                <i data-ic="live" class="g"></i>
+                <h2>No session yet</h2>
+                <p>
+                  Start a task: Claude's reads, edits and commands will light up the files they
+                  touch, right here.
+                </p>
+                <button class="btn pri">Start a task <span class="kbd">Ctrl+L</span></button>
+              </div>
+              <div
+                data-when="loading"
+                class="loading-note"
+                style="position: absolute; left: var(--sp-5); top: var(--sp-5)"
+              >
+                <span class="prog run"></span>Scanning acme-api · 1,204 files · src/schema…
+              </div>
+              <div class="legend" id="legend" data-when="normal error offline">
+                <span class="lk">Key</span>
+                <span class="li s-idle"><i data-g="s-idle"></i>idle</span
+                ><span class="li s-reading"><i data-g="s-reading"></i>reading</span
+                ><span class="li s-writing"><i data-g="s-writing"></i>writing</span
+                ><span class="li s-running"><i data-g="s-running"></i>running</span
+                ><span class="li s-waiting"><i data-g="s-waiting"></i>waiting</span
+                ><span class="li s-error"><i data-g="s-error"></i>error</span
+                ><span class="li s-done"><i data-g="s-done"></i>done</span> <span class="sep"></span
+                ><span class="li"
+                  ><svg class="k" style="width: var(--sz-glyph); height: var(--sz-glyph-s)">
+                    <use href="#k-uplink" /></svg
+                  >cloud</span
+                ><span class="li"
+                  ><svg class="k" style="width: var(--sz-glyph); height: var(--sz-glyph-s)">
+                    <use href="#k-ground" /></svg
+                  >local</span
+                >
+              </div>
+              <div class="readout" id="readout" data-when="normal dense error offline"></div>
+              <div class="minimap" data-when="dense">
+                <svg width="100%" height="100%" viewBox="0 0 144 96" id="mini"></svg>
+              </div>
+            </div>
+            <div class="tl" id="tl" data-when="normal dense error offline">
+              <div class="tlh" id="tlh"></div>
+              <svg id="tlsvg" aria-hidden="true"></svg>
+            </div>
+            <div class="tl" data-when="empty loading">
+              <div class="tlh">
+                <span>Timeline</span
+                ><span class="muted">Events appear here when a session starts</span>
+              </div>
+            </div>
+          </div>
+          <aside class="side">
+            <div class="tabs">
+              <span aria-selected="true">Agents <span class="n" id="agn"></span></span
+              ><span>Inspector</span>
+            </div>
+            <div class="list" id="agents"></div>
+          </aside>
+        </div>
+        <div class="btab">
+          <span><i data-ic="term" class="g"></i>Terminal</span
+          ><span><i data-ic="logs" class="g"></i>Logs</span>
+          <span class="er" data-when="error"><i data-g="s-error"></i>Problems 1</span
+          ><span class="er" data-when="dense"><i data-g="s-error"></i>Problems 2</span>
+          <span data-when="empty loading normal offline"
+            ><i data-ic="alert" class="g"></i>Problems</span
+          >
+          <span
+            class="push muted"
+            style="border-left: var(--sz-hair) solid var(--line); border-right: 0"
+            ><span class="kbd">Ctrl+J</span></span
+          >
+        </div>
+      </main>
+      <aside class="dock" id="dock"></aside>
+      <footer class="status" data-shell="status"></footer>
+    </div>
+    <script src="live-render.js"></script>
+  </body>
+</html>

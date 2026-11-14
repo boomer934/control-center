@@ -10,7 +10,7 @@ const recorded = (id: string) => existsSync(join(RAW, `sessione-${id}.jsonl`));
 
 test.skip(
   !['01', '02', '03', '04', '05'].every(recorded),
-  'raw fixtures sessione-01..05 are not recorded on this machine (see docs/memoria/FASE_1.md)',
+  'raw fixtures sessione-01..05 are not recorded on this machine (see scripts/fixtures/README.md)',
 );
 
 const errors: string[] = [];

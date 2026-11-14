@@ -202,7 +202,7 @@ function Live() {
             <div className="banner s-error" role="alert">
               <span>
                 <b>Cannot load the recording.</b> {error}. Record sessions as described in
-                docs/memoria/FASE_1.md.
+                scripts/fixtures/README.md.
               </span>
             </div>
           ) : null}
@@ -212,7 +212,7 @@ function Live() {
                 <h2>No recordings here</h2>
                 <p>
                   The prototype replays the raw sessions in packages/fixtures/raw/, which are not in
-                  git. Record one with scripts/fixtures (see docs/memoria/FASE_1.md).
+                  git. Record one as described in scripts/fixtures/README.md.
                 </p>
               </div>
             </div>

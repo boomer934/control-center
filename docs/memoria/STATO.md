@@ -1,23 +1,18 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-14 (quarta sessione)_
+_Ultimo aggiornamento: 2026-11-14 (quarta sessione, chiusura Fase 1)_
 
 ## Fase
 
 **Fase 0 — Fondamenta della repo**: ✅ completata il 2026-11-13.
 
-**Fase 1 — UX e design: in corso, ultima sotto-fase in revisione.** Il brief operativo è in [`FASE_1.md`](FASE_1.md).
+**Fase 1 — UX e design**: ✅ completata il 2026-11-14 (PR #10, #12, #14, #18). Sintesi in `STORIA.md`, voce "Chiusura Fase 1".
 
-| Sotto-fase                        | Stato                                                    |
-| --------------------------------- | -------------------------------------------------------- |
-| 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13       |
-| 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14       |
-| 1c Design system e schermate HTML | ✅ fatta e revisionata, PR #14 unita il 2026-11-14       |
-| 1d Prototipo in codice Vista Live | fatta su `feat/live-prototype`, da rivedere e unire (PR) |
+**Fase 2 — Schema eventi: da iniziare.** Goal e modello nella sezione "Modello, effort, ultracode e goal" di `PIANO.md`.
 
 ## Branch
 
-`feat/live-prototype`, partito da `main` (`258f87f`).
+`docs/memoria-phase-1-close`, solo per registrare il merge della PR #18 e chiudere la Fase 1. Dopo il suo merge si riparte da `main`.
 
 ## Punto di ripresa
 
@@ -26,8 +21,9 @@ _Ultimo aggiornamento: 2026-11-14 (quarta sessione)_
 - Il dev server normalizza le fixture grezze al volo (`/fixtures/NN.json`): percorsi relativi, home mascherata, nessun contenuto di file. Nulla di derivato viene scritto su disco.
 - **Test:** 13 test unitari del normalizzatore e di `viewAt` su una registrazione sintetica (in `pnpm verify` e in CI); 11 test Playwright (8 screenshot degli stati + scrubbing, `Space`, movimento ridotto), **solo in locale** perché in CI le fixture grezze non ci sono: lì vengono saltati.
 - **Revisione impeccable:** nessun grave, 16/20, in `design/prototipo-live/REVISIONE.md`.
-- **Prossimo:** commit, PR e revisione dell'utente; con la PR unita la Fase 1 è chiusa e si passa alla F2 (schema `AgentEvent`).
-- Nella sessione l'utente ha aggiunto regole `permissions.deny` in `.claude/settings.json` (non committate da me).
+- **PR #18 unita su `main` il 2026-11-14** (`dbaf4d4`, squash), con i 6 check verdi. CodeRabbit non ha revisionato (limite del piano gratuito). L'auto-merge di GitHub non è disponibile su questa repo: il merge si fa a mano a CI verde.
+- **Prossimo:** F2, schema `AgentEvent` (branch `feat/event-schema` da `main`). Registrazione delle fixture in `scripts/fixtures/README.md`.
+- `.claude/settings.json` nega a Claude la lettura di build, lockfile, log, fixture grezze, segreti e screenshot (anche `e2e/screenshots/`): per controllare gli screenshot si usa il browser integrato.
 
 ## Cosa funziona
 
@@ -38,14 +34,14 @@ _Ultimo aggiornamento: 2026-11-14 (quarta sessione)_
 - ✅ Registrazione delle fixture: `scripts/fixtures/capture-hook.mjs` e `scripts/fixtures/check-raw.mjs`.
 - ✅ Design: ricerca UX (1a), direzioni (1b), design system 1c (`design/tokens.json`, `design/sistema/`), prototipo Live 1d.
 
-## Cosa manca per chiudere la Fase 1
+## Cosa manca per chiudere la Fase 2
 
-- Revisione dell'utente del prototipo e merge della PR della 1d.
+- Tutto: schema `AgentEvent` con zod, normalizzatori, script di pulizia, fixture ripulite in `packages/fixtures/sanitized/`.
 
 ## Blocchi e avvertenze
 
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR.
-- Le fixture grezze vivono solo in locale (`packages/fixtures/raw/`): su un'altra macchina il prototipo mostra "No recordings here" e i test Playwright si saltano.
+- Le fixture grezze vivono solo in locale (`packages/fixtures/raw/`): su un'altra macchina o in CI il prototipo mostra "No recordings here" e i test Playwright si saltano.
 - Playwright 1.65 vuole Chromium 1255, in locale c'è il 1248: la config usa quello installato (vedi `PROBLEMI_NOTI.md`).
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
 - I file HTML/JS molto grandi vanno scritti a pezzi: la generazione in un colpo solo si è bloccata.

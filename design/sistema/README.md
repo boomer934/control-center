@@ -19,18 +19,26 @@ Design system della direzione [`precisione fluida`](../direzioni/precisione-flui
 
 ## Schermate
 
-| #     | Pagina                                                                                          | Stati                                                                                 | P   |
-| ----- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --- |
-| 1     | [`live.html`](schermate/live.html)                                                              | `empty` `loading` `normal` `dense` `error` `offline`                                  | P0  |
-| 2     | [`sessione.html`](schermate/sessione.html)                                                      | `empty` `starting` `normal` `dense` `cli-missing` `not-logged-in` `crashed` `offline` | P0  |
-| 3     | [`permesso.html`](schermate/permesso.html)                                                      | `bash` `write` `mcp` `queue` `long`                                                   | P0  |
-| 4     | [`ispettore.html`](schermate/ispettore.html)                                                    | `human` `raw` `error` `ollama` `none`                                                 | P0  |
-| 5     | [`diff.html`](schermate/diff.html)                                                              | `one-file` `many-files` `new-deleted-renamed` `binary` `huge`                         | P0  |
-| 6     | [`conferma.html`](schermate/conferma.html)                                                      | `restore-all` `restore-some` `discard` `stop-container`                               | P0  |
-| 7     | [`git.html`](schermate/git.html)                                                                | `empty` `loading` `normal` `dense` `error` `offline`                                  | P0  |
-| 8     | [`problems.html`](schermate/problems.html)                                                      | `empty` `normal` `dense`                                                              | P0  |
-| 9     | [`palette.html`](schermate/palette.html)                                                        | `recent` `mixed` `prefixes` `no-results` `destructive`                                | P0  |
-| 10-18 | onboarding, replay, infra, local agents, MCP & Skills, settings, terminal, workspace, notifiche | da fare                                                                               | P1  |
+| #   | Pagina                                             | Stati                                                                                       | P   |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------- | --- |
+| 1   | [`live.html`](schermate/live.html)                 | `empty` `loading` `normal` `dense` `error` `offline`                                        | P0  |
+| 2   | [`sessione.html`](schermate/sessione.html)         | `empty` `starting` `normal` `dense` `cli-missing` `not-logged-in` `crashed` `offline`       | P0  |
+| 3   | [`permesso.html`](schermate/permesso.html)         | `bash` `write` `mcp` `queue` `long`                                                         | P0  |
+| 4   | [`ispettore.html`](schermate/ispettore.html)       | `human` `raw` `error` `ollama` `none`                                                       | P0  |
+| 5   | [`diff.html`](schermate/diff.html)                 | `one-file` `many-files` `new-deleted-renamed` `binary` `huge`                               | P0  |
+| 6   | [`conferma.html`](schermate/conferma.html)         | `restore-all` `restore-some` `discard` `stop-container`                                     | P0  |
+| 7   | [`git.html`](schermate/git.html)                   | `empty` `loading` `normal` `dense` `error` `offline`                                        | P0  |
+| 8   | [`problems.html`](schermate/problems.html)         | `empty` `normal` `dense`                                                                    | P0  |
+| 9   | [`palette.html`](schermate/palette.html)           | `recent` `mixed` `prefixes` `no-results` `destructive`                                      | P0  |
+| 10  | [`onboarding.html`](schermate/onboarding.html)     | `project` `project-error` `checking` `claude-ok` `claude-missing` `claude-login` `optional` | P1  |
+| 11  | [`replay.html`](schermate/replay.html)             | `empty` `loading` `normal` `dense` `error` `offline`                                        | P1  |
+| 12  | [`infra.html`](schermate/infra.html)               | `loading` `normal` `dense` `error` `offline`                                                | P1  |
+| 13  | [`local-agents.html`](schermate/local-agents.html) | `empty` `loading` `normal` `dense` `error` `proposal` `approved` `rejected`                 | P1  |
+| 14  | [`mcp-skills.html`](schermate/mcp-skills.html)     | `empty` `loading` `normal` `dense` `error` `offline`                                        | P1  |
+| 15  | [`settings.html`](schermate/settings.html)         | `general` `appearance` `models` `privacy` `shortcuts` `invalid`                             | P1  |
+| 16  | [`terminal.html`](schermate/terminal.html)         | `empty` `loading` `normal` `dense` `error`                                                  | P1  |
+| 17  | [`workspace.html`](schermate/workspace.html)       | `recent` `search` `missing` `none`                                                          | P1  |
+| 18  | [`notifiche.html`](schermate/notifiche.html)       | `toasts` `os-permission` `os-stopped` `os-done`                                             | P1  |
 
 La barra di stato in tutti i suoi stati, la title bar senza workspace e i toast sono in `componenti.html`.
 
@@ -56,3 +64,11 @@ Flussi di [`architettura.md`](../ricerca/architettura.md#flussi-principali), rip
 - Sigle: `CL` sessione principale, subagent con le prime due lettere del nome, modelli locali con la famiglia (`QW`, `LL`); in caso di collisione una cifra (`C2`, `E2`).
 - Le assenze (Docker spento, nessuna GPU, Ollama assente) sono tratteggiate e neutre, mai rosse.
 - Le conferme distruttive non hanno un'azione su `Enter`.
+- Un agente locale non scrive file: le modifiche arrivano come proposta di diff, applicata solo dopo l'approvazione e con un checkpoint prima.
+- Una notifica di Windows non approva nulla: porta alla richiesta, dove si vede il contesto completo.
+- I toggle di MCP valgono per la sessione successiva e non modificano i file di configurazione.
+- Il replay è read-only: le richieste passate mostrano l'esito, non i pulsanti.
+
+## Screenshot
+
+In [`screenshot/`](screenshot/), per ogni pagina: stato predefinito in tema scuro e chiaro, più lo stato `dense` (o lo stato più carico) in tema scuro. Si rigenerano con lo script locale di controllo, che verifica anche console pulita e testo non sotto 11 px.

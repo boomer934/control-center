@@ -101,6 +101,14 @@ claude -p "<compito realistico>" --output-format stream-json --verbose > package
 - Per gli hooks: una configurazione temporanea (`PreToolUse`, `PostToolUse`, `SubagentStop`, `Notification`, `Stop`) che aggiunge il JSON ricevuto su stdin a `packages/fixtures/raw/sessione-01.hooks.jsonl`.
 - `packages/fixtures/raw/` è ignorata da git. **Nulla va committato prima della pulizia** (script della Fase 2).
 
+**✅ Fatto il 2026-11-14:** 5 sessioni `sessione-01..05` (stream-json + hooks) registrate con Sonnet nel progetto di prova `C:\Users\david\Desktop\vernier-fixture-lab` (fuori dalla repo). Strumenti:
+
+- `scripts/fixtures/capture-hook.mjs`: hook `command` che appende `{capturedAt, payload}` a `raw/<VERNIER_HOOKS_SESSION>.hooks.jsonl`;
+- `scripts/fixtures/check-raw.mjs`: valida le righe e controlla la copertura (modifiche, shell, subagent, permesso negato, errore);
+- nel progetto di prova: `.claude/settings.local.json` (hooks + permessi ristretti) e `record.sh NN "<prompt>"`.
+
+Cosa manca: nessuna sessione interattiva, quindi nessun evento `Notification` di attesa utente; nessun hook `PostToolUseFailure` (i tool falliti non hanno un `PostToolUse`).
+
 ## Vincoli da rispettare (riassunto)
 
 - **Stati semantici, identità degli agenti e regole di movimento:** come in `DESIGN.md`. Non si cambiano senza aggiornarlo.

@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-14 (seconda sessione)_
+_Ultimo aggiornamento: 2026-11-14 (terza sessione)_
 
 ## Fase
 
@@ -13,22 +13,19 @@ _Ultimo aggiornamento: 2026-11-14 (seconda sessione)_
 | 1a Ricerca UX e architettura      | ✅ fatta e revisionata, PR #10 unita il 2026-11-13 |
 | 1b Tre direzioni estetiche        | ✅ `precisione fluida`, PR #12 unita il 2026-11-14 |
 | 1c Design system e schermate HTML | ✅ fatta e revisionata, PR #14 unita il 2026-11-14 |
-| 1d Prototipo in codice Vista Live | da fare (bloccata: serve almeno una fixture)       |
+| 1d Prototipo in codice Vista Live | da fare, sbloccata (fixture registrate)            |
 
 ## Branch
 
-`docs/memoria-1c-merge`, solo per registrare il merge della 1c. Dopo il suo merge si riparte da `main`.
+`feat/fixtures-recording`: script di registrazione delle fixture, commit locale, PR ancora da aprire.
 
 ## Punto di ripresa
 
-- **1c finita e unita su `main`** (PR #14, commit `93a8677`, CI verde):
-  - token, componenti, 9 schermate P0 e 9 P1 con tutti gli stati;
-  - flussi F1-F7 e 55 screenshot;
-  - revisione impeccable: un solo grave, corretto (sigillo sul fondo dell'attesa); contrasto AA in tutte le pagine, gli stati e i due temi.
-- **Decisioni chiuse il 2026-11-14:**
-  - nome **Vernier**, con ripiego su Control Center dove le collisioni creano problemi;
-  - le notifiche di Windows non approvano mai.
-- **Prossimo:** registrare le fixture (F2), che sbloccano la 1d. È l'unico blocco rimasto per chiudere la Fase 1.
+- **Fixture registrate (F2 anticipata):** 5 sessioni in `packages/fixtures/raw/` (ignorata da git), stream-json + hooks, coprono modifiche a più file, test, subagent, permesso negato ed errore. `node scripts/fixtures/check-raw.mjs` passa. Dettagli e lacune in `FASE_1.md`, sezione "Fixture per 1d".
+- Il progetto di prova è `C:\Users\david\Desktop\vernier-fixture-lab` (fuori dalla repo); per nuove registrazioni: `./record.sh NN "<prompt>"`.
+- Note per lo schema della F2: su Windows la shell arriva anche come tool `PowerShell`, non solo `Bash`; lo stream-json contiene eventi `system/*` (hook_started, task_progress, permission_denied, ui_panes…) oltre a assistant/user/result.
+- **Prossimo:** aprire la PR di `feat/fixtures-recording`, poi la 1d (prototipo della Vista Live sulle fixture).
+- 1c unita su `main` (PR #14). Decisioni chiuse: nome **Vernier** (ripiego Control Center); le notifiche di Windows non approvano mai.
 - Strumenti locali: `.local/shot.mjs` (screenshot + console + testo < 11 px). La scansione del contrasto pagina × stato × tema era uno script temporaneo; si riscrive facilmente sullo stesso schema di `shot.mjs`.
 
 ## Cosa funziona
@@ -50,6 +47,6 @@ _Ultimo aggiornamento: 2026-11-14 (seconda sessione)_
 ## Blocchi e avvertenze
 
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR.
-- Per la 1d serve almeno una sessione registrata in `packages/fixtures/raw/` (vedi `FASE_1.md`).
+- Le fixture grezze vivono solo in locale (`packages/fixtures/raw/`): su un'altra macchina o in CI vanno registrate di nuovo, finché la F2 non produce le versioni ripulite.
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
 - I file HTML/JS molto grandi vanno scritti a pezzi: la generazione in un colpo solo si è bloccata.

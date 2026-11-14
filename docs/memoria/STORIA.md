@@ -4,6 +4,57 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-14 — Fase 1c (seconda parte): schermate P1, screenshot e revisione impeccable
+
+**Fatto** (branch `feat/design-1c`, commit da `55c5e54` in poi)
+
+- Le **9 schermate P1** con tutti gli stati: onboarding, replay, infra, local-agents, mcp-skills, settings, terminal, workspace, notifiche.
+- `design/sistema/README.md` con le P1 e 55 screenshot WebP in `design/sistema/screenshot/`.
+- **Revisione impeccable** (audit):
+  - rilevatore su tutte le pagine: 0 errori;
+  - scansione del contrasto su ogni pagina × stato × tema, anche del testo attenuato;
+  - unico grave: il sigillo `CL` sul fondo dell'attesa (1,45:1 nel tema scuro, 2,85:1 nel chiaro), corretto con `.perm-h .sig { color: var(--on-waiting) }`;
+  - rigenerato `componenti-dark.webp`, ora a pagina intera.
+
+**Decisioni** (dell'utente, prese in anticipo per non bloccare la sessione)
+
+- Nome **Vernier**, con ripiego su Control Center dove le collisioni creano problemi.
+- La notifica di Windows non approva mai un permesso.
+- I gravi della revisione si correggono subito se non toccano scelte di design.
+
+**Problemi:** nessuno. Gli avvisi del rilevatore (11 px, Instrument Sans, barra indeterminata, righe di `reading`) sono scelte del design system.
+
+---
+
+## 2026-11-14 — Fase 1c (prima parte): token, componenti e schermate P0
+
+**Fatto** (branch `feat/design-1c`, commit da `2f76dc2` a `05ec3f8`, solo in locale)
+
+- `design/tokens.json` in formato DTCG e `scripts/build-tokens.mjs`, che genera `design/sistema/tokens.css` e ha l'opzione `--check`.
+- `componenti.css`, che usa solo token, e `shell.js`, il guscio comune con icone e parametri URL.
+- `componenti.html` con tutti i componenti e i loro stati.
+- Le **9 schermate P0** in `design/sistema/schermate/`, con 49 stati in totale. Sono generate da dati JS e controllate con playwright-core e Chromium 1248: nessun errore di console e nessun testo sotto 11 px.
+- `design/sistema/README.md` con l'elenco delle pagine e la verifica dei flussi F1-F7.
+- ESLint ha ora i globals del browser per `design/**/*.js`.
+
+**Decisioni**
+
+- Chiusi i minori: running va verso il verde-giallo, locale verso il ciano, reading un po' più blu (valori in `DESIGN.md`); l'errore in timeline porta il bersaglio; la timeline `normal` ha Read ×4 + Grep ×2.
+- Nuovi token: scala di spaziatura e cicli.
+- Gli scheletri restano fermi, senza shimmer.
+- Le schermate P0 riusano il guscio della Live con varianti (dock, overlay, area centrale).
+- Verifica di **Vernier**:
+  - marchi `VERNIER…` di Vernier Software & Technology in classe 9;
+  - il pacchetto npm `vernier` esiste già (giugno 2026) ed è un tool di feedback UI per agenti AI;
+  - `vernier.com` e `vernier.dev` sono in uso.
+
+  La decisione spetta all'utente.
+
+**Problemi**
+
+- La generazione di file molto grandi in un colpo solo si è bloccata. Ora i file si scrivono a pezzi.
+- Non ho controllato il WHOIS dei domini, solo il DNS.
+
 ## 2026-11-14 — Fase 1b: scelta della direzione, `precisione fluida`
 
 **Fatto**

@@ -50,6 +50,16 @@ Una sessione o un loop per sotto-fase. Ogni sotto-fase si chiude con la **revisi
 
 ### 1c — Design system e schermate in HTML
 
+> **In corso** (branch `feat/design-1c`, sessione del 2026-11-14).
+>
+> - **Fatti:** `design/tokens.json` + generatore `tokens.css`, `componenti.css`, `shell.js`, `componenti.html` e le **9 schermate P0** con tutti gli stati (0 errori di console, nessun testo sotto 11 px). La verifica dei flussi F1-F7 è in `design/sistema/README.md`.
+> - **Restano:**
+>   - le 9 P1;
+>   - gli screenshot nella repo (scuro, chiaro, denso);
+>   - la revisione impeccable, con i gravi da mostrare all'utente prima di correggerli;
+>   - push e PR.
+> - **Nome:** Vernier verificato, con l'esito in `STORIA.md`; la decisione spetta all'utente.
+
 > Figma tolto dal piano il 2026-11-14 (vedi `STORIA.md`): costava molti token per un passaggio intermedio HTML → Figma → codice. Il design system nasce direttamente come token e pagine HTML statiche, come i mockup della 1b.
 
 - **Modello:** Opus 5.5 · **effort:** high · **ultracode:** no
@@ -101,5 +111,8 @@ claude -p "<compito realistico>" --output-format stream-json --verbose > package
 ## Decisioni aperte da chiudere in questa fase
 
 1. ~~Direzione estetica (1b).~~ ✅ `precisione fluida` (2026-11-14).
-2. Nome del prodotto (1c): candidato Vernier, da verificare (marchi, pacchetto, dominio).
+2. ~~Nome del prodotto (1c).~~ ✅ **Vernier** (decisione dell'utente, 2026-11-14). Dove le collisioni qui sotto creano problemi (nome del pacchetto npm, domini, pubblicazione) si resta con **Control Center**. Da riverificare prima della F10.
+   - **Marchi:** Vernier Software & Technology ha molti marchi `VERNIER…` negli USA, soprattutto in classe 9 (software).
+   - **Pacchetto npm:** `vernier` esiste già (creato a giugno 2026); è un tool locale di feedback UI per agenti AI, cioè un ambito vicino al nostro.
+   - **Domini:** `vernier.com` e `vernier.dev` sono in uso.
 3. ~~Densità predefinita dell'interfaccia.~~ ✅ `compact`, con `Comfortable` nelle impostazioni (2026-11-14).

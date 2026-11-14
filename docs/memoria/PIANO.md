@@ -351,9 +351,12 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 
   > `packages/event-schema` definisce AgentEvent con zod; almeno 5 sessioni registrate e ripulite in `packages/fixtures`; i normalizzatori convertono tutte le fixture senza errori di validazione e i loro test passano in CI; lo script di pulizia non trova segreti; memoria aggiornata.
 
-- **Fase 3**
+- **Fase 3** (tre goal in sequenza; dettagli in `FASE_3.md`)
 
   > L'app Electron si avvia con contextIsolation, sandbox, CSP e Fuses attivi; tutti i canali IPC passano da ipc-contract con validazione zod; la checklist di `SICUREZZA.md` è tutta verificata; la Console Errori mostra con stack sorgente un errore provocato nel main, nel renderer e in un processo figlio (test E2E verdi); temi, command palette e pagina componenti presenti con test visivi verdi; memoria aggiornata.
+  - 3a > `apps/desktop` si avvia con electron-vite; contextIsolation, sandbox, CSP, blocco di navigazione e `window.open` e Fuses sono attivi e verificati da test; tutti i canali IPC passano da `packages/ipc-contract` con validazione zod e controllo del mittente; la checklist Electron di `SICUREZZA.md` è tutta spuntata, ogni voce con il suo test; un test E2E Playwright `_electron` avvia l'app anche in CI; memoria aggiornata.
+  - 3b > Il logger scrive JSONL ruotati e alimenta la Console Errori; un errore provocato nel main, nel renderer e in un processo figlio compare in Console con lo stack del sorgente TypeScript (test E2E verdi); log e report passano da `redactSecrets`; memoria aggiornata.
+  - 3c > Il design system è in codice (token → Tailwind, componenti base della 1c con i loro stati); layout a pannelli, barra di stato, command palette, scorciatoie con ambiti di focus e temi chiaro/scuro/sistema funzionano; la pagina componenti ha test visivi verdi e un E2E apre la palette e cambia tema; revisione impeccable senza gravi; memoria aggiornata.
 
 - **Fase 4**
 

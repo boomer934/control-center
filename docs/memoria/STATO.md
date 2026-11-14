@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-14 (quinta sessione, Fase 2)_
+_Ultimo aggiornamento: 2026-11-14 (chiusura Fase 2)_
 
 ## Fase
 
@@ -8,61 +8,38 @@ _Ultimo aggiornamento: 2026-11-14 (quinta sessione, Fase 2)_
 
 **Fase 1 — UX e design**: ✅ completata il 2026-11-14 (PR #10, #12, #14, #18). Sintesi in `STORIA.md`, voce "Chiusura Fase 1".
 
-**Fase 2 — Schema eventi**: goal raggiunto. La PR #20 ha il CI verde: il verify su Windows ha 110 test verdi e il controllo `sanitize.mjs --check` passa su 11 file. Manca solo il merge, che si fa a mano.
+**Fase 2 — Schema eventi**: ✅ completata il 2026-11-14 (PR #16, #20). Sintesi in `STORIA.md`, voce "Chiusura Fase 2".
+
+**Fase 3 — Shell sicura**: non iniziata. Il brief operativo è pronto in `FASE_3.md`, con tre sotto-fasi (3a shell e IPC, 3b Console Errori, 3c design system in codice) e i loro goal.
 
 ## Branch
 
-`feat/event-schema` (da `main`), PR #20. I commit sono:
-
-- schema e normalizzatori;
-- fixture ripulite e pulizia;
-- memoria;
-- correzione del falso positivo di gitleaks;
-- nota in PROBLEMI_NOTI.
-
-Dopo il merge si riparte da `main`.
+`main` (ultimo merge: `689ce2c`, PR #20). La memoria di chiusura è sul branch `docs/memoria-phase-2-close`. La Fase 3 parte da `main` su un branch nuovo, proposto `feat/desktop-shell`.
 
 ## Punto di ripresa
 
-- **Schema:** `packages/event-schema/src/schema.ts` definisce `AgentEvent`. È un'unione stretta su `type` con 16 tipi; l'envelope ha `seq`, `source`, `provider` e `agentId` (`main`, `sub:<toolUseId>` o `ollama:<modello>`). Le scelte sono nell'ADR 0003.
-- **Percorsi e segreti:**
-  - `path.ts`: `toFileRef` (percorsi relativi al workspace, `external` con home `~`) e `makeTextCleaner`;
-  - `redact.ts`: `redactSecrets` e `findSecrets`, senza dipendenze.
-- **Normalizzatori** (`src/normalize/`):
-  - `normalizeClaudeStream` e `normalizeClaudeHooks`;
-  - `mergeClaudeSession`, che prende il contenuto dallo stream e i tempi dagli hooks; `normalizeClaudeSession` fa i due passi insieme;
-  - `normalizeOllamaChat`, minimo: il bridge vero è in Fase 7.
-- **Fixture:**
-  - `packages/fixtures/sanitized/` contiene le 5 sessioni ripulite più `ollama-chat.synthetic.jsonl`;
-  - `@control-center/fixtures` è il loader;
-  - `scripts/fixtures/sanitize.mjs` fa la pulizia ad allowlist, e con `--check` gira anche in CI e in Vitest.
-- **Test:** 110 test in `pnpm verify`. Coprono:
-  - lo schema;
-  - redazione e percorsi;
-  - i normalizzatori su input sintetici;
-  - le 5 fixture: validazione, invarianti e snapshot della timeline;
-  - la pulizia, incluso `--check` sulle fixture committate.
-- **Prossimo:** merge a mano della PR #20 (squash), poi chiusura della Fase 2 in `STORIA.md` e partenza della Fase 3.
-- `.claude/settings.json` nega a Claude la lettura di `packages/fixtures/raw/`. Le fixture ripulite invece si leggono, e vanno rilette a mano prima di ogni commit.
+- **Prossimo:** sotto-fase 3a, shell Electron sicura e IPC. Opus 5.5, effort xhigh, niente ultracode, niente subagent. Il goal da copiare in `/goal` è in `FASE_3.md`.
+- **Da leggere prima di iniziare:** `FASE_3.md`, `SICUREZZA.md` (checklist Electron), `PIANO.md` §6.
+- **Cosa c'è già da usare:**
+  - `@control-center/event-schema`: `AgentEvent` (16 tipi, ADR 0003), normalizzatori batch, `redactSecrets` e `makeTextCleaner` per log e Console;
+  - `@control-center/fixtures`: le 5 sessioni ripulite e il loader, utili anche come dati finti per la UI;
+  - `design/tokens.json`, `design/sistema/` e `design/ricerca/architettura.md` per la 3c.
+- **Prima di aggiungere dipendenze di runtime** (logger, pannelli, palette) serve un'ADR: l'ADR 0001 copre solo lo stack di base.
 
 ## Cosa funziona
 
-- ✅ Monorepo pnpm con `packages/event-schema`, `packages/fixtures` e, solo per sviluppo, `design/prototipo-live`.
-- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale: 110 test, 0 errori di lint, restano 86 warning del plugin security.
+- ✅ Monorepo pnpm con `packages/event-schema`, `packages/fixtures` e, solo per sviluppo, `design/prototipo-live`. `apps/desktop` contiene solo il README.
+- ✅ `pnpm verify` (format, typecheck, lint, test) verde: 110 test, 0 errori di lint, restano 86 warning del plugin security.
 - ✅ Hook git: lint-staged + gitleaks (se installato) in pre-commit, commitlint in commit-msg.
-- ✅ CI GitHub Actions: verify su Windows, controllo delle fixture ripulite, gitleaks, commitlint, controllo memoria, audit. Il controllo delle fixture è verde dalla PR #20.
-- ✅ Registrazione delle fixture (`capture-hook.mjs`, `check-raw.mjs`), pulizia (`sanitize.mjs`).
-- ✅ Design: ricerca UX (1a), direzioni (1b), design system 1c, prototipo Live 1d.
-
-## Cosa manca per chiudere la Fase 2
-
-- Merge della PR #20 su `main` (CI già verde).
+- ✅ CI GitHub Actions: verify su Windows, controllo delle fixture ripulite (`sanitize.mjs --check`), gitleaks su tutta la cronologia, commitlint, controllo memoria, audit.
+- ✅ Registrazione (`capture-hook.mjs`, `check-raw.mjs`) e pulizia (`sanitize.mjs`) delle fixture.
+- ✅ Design: ricerca UX (1a), direzione `precisione fluida` (1b), design system e schermate (1c), prototipo Live (1d).
 
 ## Blocchi e avvertenze
 
-- **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR.
-- gitleaks non è installato in locale: le fixture ripulite le controlla solo il job CI, oltre a `sanitize.mjs --check`.
-- Mancano fixture reali per `Notification` (sessione interattiva) e `PostToolUseFailure`. I due casi sono coperti solo da test sintetici.
+- **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR, merge a mano a CI verde.
+- gitleaks non è installato in locale: lo controlla il job CI, oltre a `sanitize.mjs --check`.
+- Mancano fixture reali per `Notification` e `PostToolUseFailure`, coperti solo da test sintetici. Servono prima della Fase 4 (richieste di permesso).
 - Le fixture grezze vivono solo in locale. Il prototipo 1d legge ancora quelle, quindi in CI i suoi test Playwright si saltano.
-- Playwright 1.65 vuole Chromium 1255, in locale c'è il 1248 (vedi `PROBLEMI_NOTI.md`).
+- Playwright 1.65 vuole Chromium 1255, in locale c'è il 1248 (vedi `PROBLEMI_NOTI.md`). Per `_electron` in Fase 3 conta invece la versione di Electron.
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.

@@ -15,7 +15,9 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Decisioni:** il progetto di prova è in JS con `node --test` invece che TS, per non installare dipendenze; il payload degli hooks è avvolto in `{capturedAt, payload}` perché gli hooks non hanno un orario.
 
-**Problemi:** su Windows Claude ha usato il tool `PowerShell` per il comando negato, non `Bash`: lo schema della F2 deve trattarli entrambi come shell. In `-p` non c'è la richiesta interattiva di permesso, quindi manca l'evento `Notification`.
+**Problemi:** su Windows Claude ha usato il tool `PowerShell` per il comando negato, non `Bash`: lo schema della F2 deve trattarli entrambi come shell. In `-p` non c'è la richiesta interattiva di permesso, quindi manca l'evento `Notification`. Prima del push ho tolto dalla memoria il percorso personale del progetto di prova (vietato dal modello di PR).
+
+**Merge:** PR #16 unita su `main` il 2026-11-14 (`e111c0a`), con i 6 check verdi. CodeRabbit non ha revisionato: limite del piano gratuito raggiunto.
 
 ---
 

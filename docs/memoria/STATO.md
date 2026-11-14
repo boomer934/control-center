@@ -17,23 +17,24 @@ _Ultimo aggiornamento: 2026-11-14 (terza sessione)_
 
 ## Branch
 
-`feat/fixtures-recording`: script di registrazione delle fixture, commit locale, PR ancora da aprire.
+`docs/memoria-fixtures-merge`, solo per registrare il merge della PR #16. Dopo il suo merge si riparte da `main`.
 
 ## Punto di ripresa
 
-- **Fixture registrate (F2 anticipata):** 5 sessioni in `packages/fixtures/raw/` (ignorata da git), stream-json + hooks, coprono modifiche a più file, test, subagent, permesso negato ed errore. `node scripts/fixtures/check-raw.mjs` passa. Dettagli e lacune in `FASE_1.md`, sezione "Fixture per 1d".
+- **Fixture registrate (F2 anticipata), PR #16 unita su `main` il 2026-11-14** (`e111c0a`, 6 check verdi): 5 sessioni in `packages/fixtures/raw/` (ignorata da git), stream-json + hooks, coprono modifiche a più file, test, subagent, permesso negato ed errore. `node scripts/fixtures/check-raw.mjs` passa. Dettagli e lacune in `FASE_1.md`, sezione "Fixture per 1d".
 - Il progetto di prova è `~/Desktop/vernier-fixture-lab` (fuori dalla repo); per nuove registrazioni: `./record.sh NN "<prompt>"`.
 - Note per lo schema della F2: su Windows la shell arriva anche come tool `PowerShell`, non solo `Bash`; lo stream-json contiene eventi `system/*` (hook_started, task_progress, permission_denied, ui_panes…) oltre a assistant/user/result.
-- **Prossimo:** aprire la PR di `feat/fixtures-recording`, poi la 1d (prototipo della Vista Live sulle fixture).
+- **Prossimo:** la 1d (prototipo della Vista Live sulle fixture), da un branch `feat/live-prototype` partito da `main`.
 - 1c unita su `main` (PR #14). Decisioni chiuse: nome **Vernier** (ripiego Control Center); le notifiche di Windows non approvano mai.
 - Strumenti locali: `.local/shot.mjs` (screenshot + console + testo < 11 px). La scansione del contrasto pagina × stato × tema era uno script temporaneo; si riscrive facilmente sullo stesso schema di `shot.mjs`.
 
 ## Cosa funziona
 
 - ✅ Monorepo pnpm con `packages/event-schema` (busta minima `AgentEvent` + 3 test).
-- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale e in CI. Ci sono 24 warning del plugin security sugli script, nessun errore. In locale servono `.local/*.mjs` formattati con prettier e `/* global document, getComputedStyle */` in testa a `shot.mjs`, altrimenti `verify` fallisce (la CI non li vede).
+- ✅ `pnpm verify` (format, typecheck, lint, test) verde in locale e in CI. Ci sono 28 warning del plugin security sugli script, nessun errore. In locale servono `.local/*.mjs` formattati con prettier e `/* global document, getComputedStyle */` in testa a `shot.mjs`, altrimenti `verify` fallisce (la CI non li vede).
 - ✅ Hook git: lint-staged + gitleaks (se installato) in pre-commit, commitlint in commit-msg.
 - ✅ CI GitHub Actions: verify su Windows, gitleaks, commitlint, controllo memoria, audit. Sulle PR girano anche CodeRabbit e GitGuardian.
+- ✅ Registrazione delle fixture: `scripts/fixtures/capture-hook.mjs` (hooks) e `scripts/fixtures/check-raw.mjs` (validazione e copertura).
 - ✅ Documenti open source, `CLAUDE.md`, memoria, ADR 0001-0002, skill di sessione.
 - ✅ Design:
   - ricerca UX (1a);

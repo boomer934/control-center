@@ -10,7 +10,7 @@
 // Environment:
 //   FAKE_CLAUDE_FIXTURE   name of a recording in ../sanitized (required)
 //   FAKE_CLAUDE_MODE      normal (default) | hang (stops after the first tool call and waits)
-//                         | crash (exits 3 halfway)
+//                         | crash (exits 3 halfway) | permissions (bidirectional chat fixture)
 //   FAKE_CLAUDE_VERSION   version reported in the init line (default: the recorded one)
 //   FAKE_CLAUDE_ARGV_LOG  file to which the received arguments are appended, one JSON per run
 import { spawn } from 'node:child_process';
@@ -80,6 +80,83 @@ function runHook(command, payload) {
 
 const iso = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : undefined);
 
+const emit = (message) => process.stdout.write(JSON.stringify(message) + '\n');
+
+async function permissionTurn(lines, message, resume) {
+  if (flag('--permission-prompt-tool') !== 'stdio' || !argv.includes('--include-partial-messages'))
+    throw new Error('Expected stdio permissions and partial messages');
+  const prompt = message.message.content[0]?.text;
+  const session_id = resume ?? 'fake-chat-session';
+  const assistant = (content) => emit({ type: 'assistant', message: { content }, session_id });
+  emit({ type: 'system', subtype: 'init', session_id, claude_code_version: '2.1.322' });
+  emit({
+    type: 'stream_event',
+    parent_tool_use_id: null,
+    event: {
+      type: 'content_block_delta',
+      delta: { type: 'text_delta', text: 'Waiting for approval. ' },
+    },
+  });
+
+  const requests =
+    prompt === 'Continue the saved chat'
+      ? [['echo repeat', 'allow']]
+      : prompt === 'Stop this turn'
+        ? [['echo waiting', 'deny']]
+        : [
+            ['echo once', 'allow'],
+            ['echo refused', 'deny'],
+            ['echo repeat', 'allow'],
+            ['echo repeat', 'allow'],
+            ['echo changed', 'allow'],
+          ];
+  for (const [i, [command, behavior]] of requests.entries()) {
+    const id = `tool-chat-${i}`;
+    const request_id = `request-${i}`;
+    const input = { command, file_path: `${process.cwd()}\\example.txt` };
+    assistant([{ type: 'tool_use', name: 'Bash', id, input }]);
+    emit({
+      type: 'control_request',
+      request_id,
+      request: { subtype: 'can_use_tool', tool_name: 'Bash', input, tool_use_id: id },
+    });
+    const line = await lines.next();
+    const received = line.done ? null : JSON.parse(line.value);
+    if (
+      received?.type !== 'control_response' ||
+      received.response?.subtype !== 'success' ||
+      received.response?.request_id !== request_id ||
+      received.response?.response?.behavior !== behavior ||
+      (behavior === 'allow' &&
+        JSON.stringify(received.response.response.updatedInput) !== JSON.stringify(input))
+    )
+      throw new Error(`Unexpected decision on request ${i}`);
+    emit({
+      type: 'user',
+      message: {
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: id,
+            content: behavior,
+            is_error: behavior === 'deny',
+          },
+        ],
+      },
+    });
+  }
+
+  assistant([
+    {
+      type: 'text',
+      text: resume
+        ? 'Resumed **saved session**.'
+        : 'Finished **the turn**.\n\n```js\nconst result = true;\n```\n\n<img src="https://example.invalid/pixel">\n\n[link](https://example.invalid/)\n\napi_key=synthetic-secret-password',
+    },
+  ]);
+  emit({ type: 'result', subtype: 'success', is_error: false, session_id });
+}
+
 async function main() {
   const name = process.env.FAKE_CLAUDE_FIXTURE ?? '';
   if (!NAME.test(name)) {
@@ -109,6 +186,11 @@ async function main() {
       resolve();
     });
   });
+  if (mode === 'permissions') {
+    await permissionTurn(lines, message, resume);
+    await closed;
+    return;
+  }
 
   // the recording as one timeline, by the clocks of its two sources
   const stream = readJsonl(`${name}.jsonl`).map((l) => relocate(l, cwd, resume));

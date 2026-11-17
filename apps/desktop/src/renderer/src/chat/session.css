@@ -1,0 +1,206 @@
+.session-dock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.session-heading,
+.session-actions,
+.session-state,
+.session-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.session-heading {
+  justify-content: space-between;
+}
+
+.session-heading .dock-title {
+  margin: 0;
+}
+
+.session-actions .btn,
+.session-empty .btn {
+  flex-shrink: 1;
+  max-width: 100%;
+  height: auto;
+  min-height: var(--sz-ctl);
+  padding-block: var(--sp-1);
+  white-space: normal;
+}
+
+.session-state:empty {
+  display: none;
+}
+
+.session-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
+  overflow: auto;
+}
+
+.session-message {
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-2);
+}
+
+.session-prompt {
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-3);
+  border-radius: var(--r-2);
+}
+
+.session-message h3,
+.session-permission h3 {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-s);
+  font-weight: var(--fw-semibold);
+}
+
+.session-message h4,
+.session-message h5,
+.session-message h6 {
+  font-size: var(--fs-m);
+}
+
+.session-message p,
+.session-permission p,
+.session-tool p {
+  margin: var(--sp-2) 0 0;
+}
+
+.session-prompt p,
+.session-stream {
+  white-space: pre-wrap;
+}
+
+.session-message ul,
+.session-message ol {
+  margin: var(--sp-2) 0;
+  padding-inline-start: var(--sp-6);
+}
+
+.session-message ul {
+  list-style: disc;
+}
+
+.session-message ol {
+  list-style: decimal;
+}
+
+.session-message code,
+.session-tool pre,
+.session-permission pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-s);
+}
+
+.session-message pre,
+.session-permission pre,
+.session-tool pre {
+  margin: var(--sp-3) 0;
+  padding: var(--sp-3);
+  background: var(--bg-1);
+  border-radius: var(--r-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.session-permission pre {
+  max-height: calc(var(--sp-10) * 2);
+  overflow: auto;
+}
+
+.session-permission,
+.session-tool {
+  padding: var(--sp-3) var(--sp-4);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-2);
+}
+
+.session-permission {
+  border-color: var(--st-waiting);
+}
+
+.session-tool summary {
+  cursor: pointer;
+}
+
+.session-composer {
+  display: grid;
+  gap: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: var(--sz-hair) solid var(--line-2);
+}
+
+.session-composer label {
+  font-size: var(--fs-s);
+  color: var(--fg-2);
+}
+
+.session-composer textarea {
+  width: 100%;
+  max-height: calc(var(--sp-10) * 3);
+  padding: var(--sp-3);
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-2);
+  font: inherit;
+  resize: vertical;
+}
+
+.session-composer .session-actions {
+  justify-content: flex-end;
+}
+
+.session-history,
+.session-timeline ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session-history li + li,
+.session-timeline li + li {
+  border-top: var(--sz-hair) solid var(--line);
+}
+
+.session-history .btn {
+  display: grid;
+  width: 100%;
+  height: auto;
+  padding-block: var(--sp-3);
+  justify-items: start;
+  text-align: left;
+  white-space: normal;
+}
+
+.session-history time,
+.session-timeline time {
+  color: var(--fg-3);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-timeline {
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-9);
+  border-top: var(--sz-hair) solid var(--line-2);
+}
+
+.session-timeline li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding-block: var(--sp-2);
+  overflow-wrap: anywhere;
+}

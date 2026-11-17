@@ -83,6 +83,9 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
     claude: {
       start: () => 'workspace-unavailable',
       send: () => 'closed',
+      respond: () => false,
+      listHistory: () => [],
+      readHistory: () => null,
       interrupt: () => false,
       close: () => false,
     },
@@ -119,6 +122,9 @@ describe('contract', () => {
       'terminal:updated',
       'claude:start',
       'claude:send',
+      'claude:respond',
+      'claude:list-history',
+      'claude:read-history',
       'claude:interrupt',
       'claude:close',
       'claude:updated',
@@ -305,7 +311,16 @@ describe('createApi (preload)', () => {
       'openFile',
     ]);
     expect(Object.keys(api.terminal)).toEqual(['start', 'write', 'resize', 'close', 'onUpdated']);
-    expect(Object.keys(api.claude)).toEqual(['start', 'send', 'interrupt', 'close', 'onUpdated']);
+    expect(Object.keys(api.claude)).toEqual([
+      'start',
+      'send',
+      'respond',
+      'listHistory',
+      'readHistory',
+      'interrupt',
+      'close',
+      'onUpdated',
+    ]);
     expect(Object.isFrozen(api)).toBe(true);
     expect(Object.isFrozen(api.app)).toBe(true);
     expect(Object.isFrozen(api.shell)).toBe(true);

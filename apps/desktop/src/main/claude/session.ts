@@ -9,7 +9,12 @@ import { randomUUID } from 'node:crypto';
 import { execFile, execFileSync, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import type { ErrorInput } from '@control-center/app-log';
-import { LiveClaudeSession, type AgentEvent } from '@control-center/event-schema';
+import { LiveClaudeSession, makeTextCleaner, type AgentEvent } from '@control-center/event-schema';
+import {
+  MAX_CLAUDE_PARTIAL_CHARS,
+  type ClaudePermission,
+  type ClaudePermissionChoice,
+} from '@control-center/ipc-contract/claude';
 import {
   createBridgeServer,
   newPipeName,
@@ -20,6 +25,8 @@ import {
 import { z } from 'zod';
 import { superviseChild } from '../errors/children';
 import { TESTED_CLAUDE_VERSIONS, type Program } from './cli';
+import { ClaudeNativeSessionId } from './history';
+import { createClaudePermissions } from './permissions';
 import { writeSessionFiles, type HookRunner, type SessionFiles } from './session-files';
 
 export type ClaudeSessionStatus = 'idle' | 'running' | 'closed';
@@ -40,6 +47,9 @@ export interface ClaudeSessionOptions {
   env?: NodeJS.ProcessEnv;
   report: (input: ErrorInput) => unknown;
   onEvents: (events: AgentEvent[]) => void;
+  onPermissions?: (requests: ClaudePermission[]) => void;
+  onPartial?: (text: string) => void;
+  onSessionId?: (id: string) => void;
   onStatus?: (status: ClaudeSessionStatus) => void;
   testedVersions?: readonly string[];
   now?: () => Date;
@@ -54,6 +64,7 @@ export interface ClaudeSession {
   readonly claudeSessionId: string | undefined;
   /** Sends a user message: starts a run, unless one is running or the session is closed. */
   send(text: string): SendResult;
+  respond(requestId: string, choice: ClaudePermissionChoice): boolean;
   /** Stops the running run. */
   interrupt(): boolean;
   /** Synchronous end of the running run, for app quit: no event is emitted after it. */
@@ -69,8 +80,13 @@ const userMessage = (text: string) => ({
 
 /** What every stream-json line must at least be; the normalizers check the rest field by field. */
 const streamLineSchema = z.looseObject({ type: z.string().min(1).max(64) });
-/** Claude's session id ends up in argv (`--resume`): no leading dash, nothing exotic. */
-const CLAUDE_SESSION_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+const textDelta = z.looseObject({
+  parent_tool_use_id: z.null().optional(),
+  event: z.looseObject({
+    type: z.literal('content_block_delta'),
+    delta: z.looseObject({ type: z.literal('text_delta'), text: z.string() }),
+  }),
+});
 
 export const MAX_LINE_CHARS = 16 * 1024 * 1024;
 export const MAX_MESSAGE_CHARS = 100_000;
@@ -120,10 +136,53 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     options.report({ origin: 'child', source: 'child:claude', ...input });
 
   let status: ClaudeSessionStatus = 'idle';
-  let claudeSessionId =
-    options.resume && CLAUDE_SESSION_ID.test(options.resume) ? options.resume : undefined;
+  let claudeSessionId = ClaudeNativeSessionId.safeParse(options.resume).data;
   let run:
-    { child: ChildProcess; buffer: string; stopping: boolean; done: Promise<void> } | undefined;
+    | {
+        child: ChildProcess;
+        buffer: string;
+        discardingLine: boolean;
+        stopping: boolean;
+        done: Promise<void>;
+      }
+    | undefined;
+
+  const clean = makeTextCleaner(options.cwd);
+  const permissions = createClaudePermissions(
+    clean,
+    (line) => {
+      const current = run;
+      const input = current?.child.stdin;
+      if (!current || current.stopping || !input?.writable) return false;
+      input.write(`${line}\n`, (error) => {
+        if (error && run === current && !current.stopping) killTree(current.child);
+      });
+      return true;
+    },
+    (requests) => options.onPermissions?.(requests),
+  );
+  let partial = '';
+  let previewTimer: NodeJS.Timeout | undefined;
+  const clearPreview = () => {
+    clearTimeout(previewTimer);
+    previewTimer = undefined;
+    if (!partial) return;
+    partial = '';
+    options.onPartial?.('');
+  };
+  const preview = (line: unknown) => {
+    const delta = textDelta.safeParse(line);
+    if (!delta.success || !options.onPartial || partial.length >= MAX_CLAUDE_PARTIAL_CHARS) return;
+    partial += delta.data.event.delta.text.slice(0, MAX_CLAUDE_PARTIAL_CHARS - partial.length);
+    if (!previewTimer) {
+      previewTimer = setTimeout(() => {
+        previewTimer = undefined;
+        // Keep the current word buffered until it can be redacted as a whole.
+        const completeWords = partial.replace(/\S+$/, '');
+        options.onPartial?.(clean(completeWords).slice(0, MAX_CLAUDE_PARTIAL_CHARS));
+      }, 40);
+    }
+  };
 
   const setStatus = (next: ClaudeSessionStatus) => {
     if (status === next) return;
@@ -179,6 +238,10 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
   // ── stream-json from stdout ──
   let droppedLines = 0;
   const onLine = (text: string) => {
+    if (text.length > MAX_LINE_CHARS) {
+      droppedLines++;
+      return;
+    }
     if (!text.trim()) return;
     let value: unknown;
     try {
@@ -193,9 +256,18 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       return;
     }
     const l = line.data;
+    if (run?.stopping && l.type.startsWith('control_')) return;
+    if (permissions.receive(l)) return;
+    if (l.type === 'stream_event') {
+      if (!run?.stopping) preview(l);
+      return;
+    }
     if (l.type === 'system' && l.subtype === 'init') {
-      const sid = typeof l.session_id === 'string' ? l.session_id : undefined;
-      if (sid && CLAUDE_SESSION_ID.test(sid)) claudeSessionId = sid;
+      const sid = ClaudeNativeSessionId.safeParse(l.session_id);
+      if (sid.success && sid.data !== claudeSessionId) {
+        claudeSessionId = sid.data;
+        options.onSessionId?.(sid.data);
+      }
       const version = typeof l.claude_code_version === 'string' ? l.claude_code_version : '';
       if (version && !tested.includes(version) && !warnedVersions.has(version)) {
         warnedVersions.add(version);
@@ -206,12 +278,25 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
         });
       }
     }
-    emit(live.stream(l, now()));
-    if (l.type === 'result') run?.child.stdin?.end(); // the turn is over: let the process exit
+    const events = live.stream(l, now());
+    if (events.some((event) => event.type === 'message.assistant' && event.agentId === 'main'))
+      clearPreview();
+    emit(events);
+    if (l.type === 'result') {
+      clearPreview();
+      permissions.clear();
+      run?.child.stdin?.end(); // the turn is over: let the process exit
+    }
   };
 
   const onStdout = (chunk: string) => {
     if (!run) return;
+    if (run.discardingLine) {
+      const end = chunk.indexOf('\n');
+      if (end < 0) return;
+      run.discardingLine = false;
+      chunk = chunk.slice(end + 1);
+    }
     run.buffer += chunk;
     let nl: number;
     while ((nl = run.buffer.indexOf('\n')) >= 0) {
@@ -221,6 +306,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     }
     if (run.buffer.length > MAX_LINE_CHARS) {
       run.buffer = '';
+      run.discardingLine = true;
       droppedLines++;
     }
   };
@@ -234,11 +320,13 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       '--output-format',
       'stream-json',
       '--verbose',
+      ...(options.onPartial ? ['--include-partial-messages'] : []),
+      ...(options.onPermissions ? ['--permission-prompt-tool', 'stdio'] : []),
       ...(files?.settingsFile ? ['--settings', files.settingsFile] : []),
       ...(claudeSessionId ? ['--resume', claudeSessionId] : []),
     ];
     emit(live.startRun(now()));
-    const state = { buffer: '', stopping: false } as NonNullable<typeof run>;
+    const state = { buffer: '', discardingLine: false, stopping: false } as NonNullable<typeof run>;
     state.done = new Promise<void>((resolve) => {
       state.child = superviseChild({
         name: 'claude',
@@ -253,6 +341,8 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       });
       state.child.on('close', (code) => {
         if (state.buffer) onLine(state.buffer);
+        clearPreview();
+        permissions.clear();
         if (droppedLines > 0) {
           report({
             kind: 'child-stderr',
@@ -292,9 +382,12 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       start(text.length > MAX_MESSAGE_CHARS ? text.slice(0, MAX_MESSAGE_CHARS) : text);
       return 'started';
     },
+    respond: permissions.respond,
     interrupt() {
       if (!run) return false;
       run.stopping = true;
+      clearPreview();
+      permissions.clear();
       killTree(run.child);
       return true;
     },

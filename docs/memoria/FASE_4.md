@@ -114,7 +114,7 @@ Una sessione o un loop per sotto-fase, su un branch `feat/…` con PR e merge a 
 
 ### 4.3 — Chat, permessi e cronologia
 
-- **Branch proposto:** `feat/claude-chat`.
+- **Branch:** `feat/claude-chat`. Implementazione pronta per la revisione incrociata sul flusso dei permessi. Vedi [ADR 0010](../adr/0010-chat-permessi-e-cronologia.md).
 - **Produce:**
   - **chat in streaming:**
     - blocchi tool richiudibili;

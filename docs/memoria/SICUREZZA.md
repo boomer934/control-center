@@ -78,6 +78,13 @@ Test: **B** = `packages/hooks-bridge/src/bridge.test.ts`, **S** = `apps/desktop/
 - **IPC:** la sessione appartiene alla finestra che l'ha aperta. Un'altra finestra non può inviare, interrompere o chiudere (V). Si invia solo mentre il workspace della sessione è attivo (V). Il testo è limitato a 100 000 caratteri e non può essere vuoto (E2E). Gli eventi del push sono `AgentEvent` validati, al massimo 200 per messaggio (V).
 - **Albero dei processi:** interruzione e chiusura terminano anche gli script degli hooks e i comandi dei tool ancora attivi nel workspace (S).
 
+### Chat, permessi e cronologia (4.3, ADR 0010)
+
+- Il controllo dei permessi usa solo le pipe stdin e stdout del processo Claude. Il main valida la richiesta, associa un UUID locale all'ID del protocollo e accetta solo una decisione per richiesta pendente, dal mittente proprietario nel workspace attivo. L'annullamento e la fine del turno invalidano gli ID pendenti. Test in `claude/permissions.test.ts`, `claude/service.test.ts` e `e2e/app/claude.spec.ts`.
+- «Always in this session» conserva in memoria un massimo di 128 impronte dello strumento e degli argomenti originali. Il renderer vede i dettagli ripuliti e il main costruisce la risposta senza argomenti forniti dal renderer.
+- Lo storico viene letto e scritto sotto `userData/claude-history/<workspaceId>/<id>.jsonl`. L'IPC accetta solo un hash di workspace e un UUID. Il servizio controlla il workspace attivo e verifica che i sottopercorsi e i file siano directory e file regolari, rispettivamente. Il JSONL in lettura passa dallo schema della cronologia. Il main passa alla CLI come argomento di `--resume` soltanto un ID validato dallo storico di quel workspace.
+- Il testo finale viene reso con React Markdown e la CSP esistente. Il renderer scarta HTML e immagini e presenta il testo dei link senza navigazione. Lo storico contiene prompt ed eventi ripuliti e l'ID di ripresa. I delta transitori e gli argomenti originali dei permessi restano fuori dal file.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

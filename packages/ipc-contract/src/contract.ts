@@ -8,12 +8,17 @@
 // main process. See docs/memoria/SICUREZZA.md.
 import { z } from 'zod';
 import {
+  ClaudeHistoryListSchema,
+  ClaudeHistorySchema,
+  ClaudeHistoryTargetSchema,
+  ClaudeRespondSchema,
   ClaudeSendResultSchema,
   ClaudeSendSchema,
   ClaudeStartResultSchema,
   ClaudeStartSchema,
   ClaudeTargetSchema,
   ClaudeUpdateSchema,
+  ClaudeWorkspaceSchema,
 } from './claude';
 import {
   TerminalResizeSchema,
@@ -222,6 +227,13 @@ export const contract = {
   claude: {
     start: invoke('claude:start', ClaudeStartSchema, ClaudeStartResultSchema),
     send: invoke('claude:send', ClaudeSendSchema, ClaudeSendResultSchema),
+    respond: invoke('claude:respond', ClaudeRespondSchema, z.boolean()),
+    listHistory: invoke('claude:list-history', ClaudeWorkspaceSchema, ClaudeHistoryListSchema),
+    readHistory: invoke(
+      'claude:read-history',
+      ClaudeHistoryTargetSchema,
+      ClaudeHistorySchema.nullable(),
+    ),
     interrupt: invoke('claude:interrupt', ClaudeTargetSchema, z.boolean()),
     close: invoke('claude:close', ClaudeTargetSchema, z.boolean()),
     updated: event('claude:updated', ClaudeUpdateSchema),

@@ -1,15 +1,18 @@
 // A Claude session end to end, without the real service: the app finds a `claude` npm shim on
 // PATH whose cli.js is the fake claude, which replays a recording and runs the session's hook
 // commands. The renderer drives it through window.api.claude, as the chat of phase 4.3 will.
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
+import { expect, test as base, type ElectronApplication, type Page } from '@playwright/test';
 import { launchApp } from '../launch';
 
 // Playwright loads specs as CommonJS: the fixtures package (ESM) is located by path instead.
 const FAKE_CLAUDE = resolve(__dirname, '../../../../packages/fixtures/bin/fake-claude.mjs');
+const test = base.extend<{ chatMode: 'normal' | 'permissions' }>({
+  chatMode: ['normal', { option: true }],
+});
 
 let app: ElectronApplication;
 let page: Page;
@@ -17,7 +20,7 @@ let fixture: string;
 
 test.skip(process.platform !== 'win32', 'The Claude session targets Windows');
 
-test.beforeEach(async () => {
+test.beforeEach(async ({ chatMode }) => {
   fixture = await mkdtemp(join(tmpdir(), 'cc-claude-e2e-'));
   const bin = join(fixture, 'bin');
   const cli = join(bin, 'node_modules', '@anthropic-ai', 'claude-code');
@@ -37,6 +40,8 @@ test.beforeEach(async () => {
     env: {
       Path: `${bin};${process.env.Path ?? process.env.PATH ?? ''}`,
       FAKE_CLAUDE_FIXTURE: 'sessione-01',
+      FAKE_CLAUDE_MODE: chatMode,
+      FAKE_CLAUDE_ARGV_LOG: join(fixture, 'argv.jsonl'),
     },
   }));
   await app.evaluate(({ dialog }, folder) => {
@@ -45,6 +50,112 @@ test.beforeEach(async () => {
   await page.getByRole('button', { name: 'Switch workspace', exact: true }).click();
   await page.getByRole('dialog', { name: 'Switch workspace' }).getByText('Open folder…').click();
   await expect(page.getByTestId('status-bar')).toContainText('Project');
+});
+
+test.describe('chat dock', () => {
+  test.use({ chatMode: 'permissions' });
+  test('streams the chat, answers permissions, and resumes the saved conversation', async () => {
+    const dock = page.getByRole('complementary', { name: 'Session' });
+    const prompt = dock.getByRole('textbox', { name: 'Message Claude' });
+    const send = async (text: string) => {
+      await prompt.fill(text);
+      await dock.getByRole('button', { name: 'Send', exact: true }).click();
+    };
+    const request = dock.getByRole('region', { name: 'Allow Bash?' });
+
+    await send('Check the workspace with api_key=another-synthetic-password');
+    await expect(dock.getByTestId('claude-streaming')).toContainText('Waiting for approval.');
+    await expect(page.getByTestId('status-bar').getByText('Permission needed')).toBeVisible();
+    await expect(request).toContainText('echo once');
+    await expect(request).toContainText('example.txt');
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(960, 600));
+    await expect(request.getByRole('button', { name: 'Always in this session' })).toBeInViewport();
+    await page.getByTestId('status-bar').getByText('Permission needed').click();
+    await expect(request.getByLabel('Tool arguments')).toBeFocused();
+    await request.getByRole('button', { name: 'Approve', exact: true }).click();
+    await expect(request).toContainText('echo refused');
+    await request.getByRole('button', { name: 'Deny', exact: true }).click();
+    await expect(request).toContainText('echo repeat');
+    await request.getByRole('button', { name: 'Always in this session' }).click();
+    // The second identical request is automatic. Changed arguments require a new decision.
+    await expect(request).toContainText('echo changed');
+    await request.getByRole('button', { name: 'Approve', exact: true }).click();
+
+    await expect(dock.locator('strong')).toHaveText('the turn');
+    await expect(dock.locator('pre code')).toHaveText('const result = true;\n');
+    await expect(dock.locator('img, a')).toHaveCount(0);
+    await expect(dock.getByTestId('claude-streaming')).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Session timeline' })).toContainText(
+      'Turn completed',
+    );
+    const tool = dock.locator('details').filter({ hasText: 'echo refused' });
+    await expect(tool).not.toHaveAttribute('open');
+    await tool.locator('summary').click();
+    await expect(tool).toHaveAttribute('open', '');
+    await expect(dock.getByRole('button', { name: 'New chat' })).toBeEnabled();
+
+    const history = join(fixture, 'user-data', 'claude-history');
+    const [workspaceId] = await readdir(history);
+    if (!workspaceId) throw new Error('Workspace history directory was not created');
+    const root = join(history, workspaceId);
+    const [filename] = await readdir(root);
+    if (!filename) throw new Error('Session JSONL was not created');
+    const saved = await readFile(join(root, filename), 'utf8');
+    expect(saved).toContain('Check the workspace');
+    expect(saved).toContain('Finished **the turn**');
+    expect(saved).toContain('<redacted:assignment>');
+    expect(saved).not.toMatch(
+      /(?:another-synthetic-password|synthetic-secret-password|Waiting for approval)/,
+    );
+    expect(
+      saved
+        .trim()
+        .split('\n')
+        .every((line) => typeof JSON.parse(line) === 'object'),
+    ).toBe(true);
+
+    // Reopen Electron against the same user data, without in-memory session state.
+    await app.close();
+    ({ app, page } = await launchApp({
+      userDataDir: join(fixture, 'user-data'),
+      env: {
+        Path: `${join(fixture, 'bin')};${process.env.Path ?? process.env.PATH ?? ''}`,
+        FAKE_CLAUDE_FIXTURE: 'sessione-01',
+        FAKE_CLAUDE_MODE: 'permissions',
+        FAKE_CLAUDE_ARGV_LOG: join(fixture, 'argv.jsonl'),
+      },
+    }));
+    const reopened = page.getByRole('complementary', { name: 'Session' });
+    await reopened.getByRole('button', { name: 'History', exact: true }).click();
+    await reopened.getByRole('button', { name: /Check the workspace/ }).click();
+    await expect(reopened.locator('strong')).toHaveText('the turn');
+    await reopened.getByRole('button', { name: 'Resume session' }).click();
+    await reopened.getByRole('textbox', { name: 'Message Claude' }).fill('Continue the saved chat');
+    await reopened.getByRole('button', { name: 'Send', exact: true }).click();
+    await reopened.getByRole('button', { name: 'Approve', exact: true }).click();
+    await expect(reopened.locator('strong').last()).toHaveText('saved session');
+    const argv = await readFile(join(fixture, 'argv.jsonl'), 'utf8');
+    expect(argv).toContain('"--resume","fake-chat-session"');
+    expect(await readdir(root)).toEqual([filename]);
+    const continued = await readFile(join(root, filename), 'utf8');
+    expect(continued).toContain('Continue the saved chat');
+    expect(
+      continued
+        .trim()
+        .split('\n')
+        .every((line) => typeof JSON.parse(line) === 'object'),
+    ).toBe(true);
+
+    await reopened.getByRole('textbox', { name: 'Message Claude' }).fill('Stop this turn');
+    await reopened.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(reopened.getByRole('region', { name: 'Allow Bash?' })).toContainText(
+      'echo waiting',
+    );
+    await reopened.getByRole('button', { name: 'Stop', exact: true }).click();
+    await expect(reopened.getByRole('region', { name: 'Allow Bash?' })).toHaveCount(0);
+    await expect(reopened.getByText('Turn stopped.')).toBeVisible();
+    await expect(reopened.getByRole('button', { name: 'New chat' })).toBeEnabled();
+  });
 });
 
 test.afterEach(async () => {
@@ -65,7 +176,7 @@ test('runs a Claude session from the renderer and streams its AgentEvents', asyn
     const stop = api.claude.onUpdated((u) => {
       if (u.id !== id) return;
       if (u.kind === 'events') events.push(...u.events);
-      else {
+      if (u.kind === 'status') {
         statuses.push({ status: u.status, hooks: u.hooks });
         if (u.status === 'idle' && statuses.some((s) => s.status === 'running')) resolveIdle();
       }

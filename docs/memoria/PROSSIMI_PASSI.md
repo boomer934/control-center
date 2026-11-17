@@ -9,13 +9,18 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 1. ✅ **(F3a)** Shell Electron sicura e IPC, unita su `main` con la PR #23 (`985130d`, ADR 0004), E2E e Fuses verdi in CI su `windows-latest`.
 2. ✅ **(F3b)** Logger, cattura errori e Console Errori con stack sorgente, ADR 0005, unita su `main` con la PR #25 (`2c64bf8`), 6 check verdi.
 
+3. ✅ **(F3c)** Design system in codice, pannelli, palette, scorciatoie con ambiti di focus, temi, pagina componenti con test visivi (ADR 0006). Implementata su `feat/desktop-ui`, da committare e mettere in PR.
+
 ## Dopo
 
-3. **(F3c)** Design system in codice, layout a pannelli, command palette, scorciatoie con ambiti di focus (da `design/ricerca/architettura.md`), temi e pagina componenti con test visivi. Branch proposto `feat/desktop-ui`.
+4. **(F3, chiusura)** PR della 3c con CI verde (se gli screenshot falliscono su `windows-latest`, rigenerarli lì); poi sintesi della Fase 3 in `STORIA.md`, archiviare `FASE_3.md`.
+5. **(F4.1)** Bridge degli hooks (Opus 5.5, high).
 
 ## Quando capita
 
-- **(F3c)** Portare la barra di stato e la Console Errori provvisorie nei componenti del design system.
+- **(F3, minore)** Includere i font (Instrument Sans, Martian Mono) nel pacchetto: file locali con `@font-face`, CSP `font-src 'self'` già a posto; decidere la licenza/fonte nell'ADR.
+- **(F3, minore)** `aria-live` per il contatore errori; provare il layout a finestra stretta; title bar personalizzata solo se serve (richiede lavoro nel main).
+- **(F4+)** Prefissi della palette (`/` file, `@` agenti, `#` sessioni, `!` locali) e scorciatoie `Ctrl+O`, `Ctrl+Shift+A`, `Ctrl+L`: arrivano con le funzioni che servono.
 - **(F4)** Metodo IPC per aprire un frame dello stack nell'editor, con i controlli di percorso; valutare un canale push al posto del polling di `errors:list`.
 - **(F10)** Provare a mano la mappatura degli stack nel pacchetto (`app.asar`); decidere se l'installer include le source map.
 

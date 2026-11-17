@@ -4,6 +4,28 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Fase 3c: design system in codice e interfaccia di base (branch `feat/desktop-ui`)
+
+**Fatto**
+
+- Tailwind v4 come ponte dei token (`@theme inline`, niente preflight); `componenti.css` della 1c importato com'è; componenti React in `ui/primitives.tsx` (Button, Kbd, Tag, StateTag, Sigil, Switch, Check, TextInput, Field…) e sprite delle icone generato da `shell.js`.
+- Shell a pannelli (`react-resizable-panels`, layout ricordato), barra attività con link `#/…`, barra di stato del design system, dock destro e dock inferiore (Problems = Console Errori), temi `system|dark|light` e densità.
+- Command palette (`cmdk`, `Ctrl+K` e `Ctrl+Shift+P`), dialog `?` con tutte le scorciatoie, motore di scorciatoie puro con ambiti di focus (terminale, campi, Live, dialog), `Ctrl+1…7`.
+- Pagina componenti (`#/components`, dalla palette) e test visivi con screenshot di riferimento in `ui.spec.ts-snapshots/` (6 sezioni × 2 temi).
+- Test: 19 unitari nuovi (scorciatoie, tema), 17 E2E nuovi; `pnpm verify` verde (203 test), `pnpm e2e` 46 test verdi, `e2e:packaged` 8 verdi.
+
+**Decisioni**
+
+- ADR 0006: `react-resizable-panels` e `cmdk` (devDependencies del renderer); componenti.css non copiato; font non ancora inclusi nel pacchetto.
+- Revisione impeccable in un solo contesto (nessun subagent, per la regola sul consumo): due problemi gravi trovati e corretti, cioè i dialog `aria-modal` senza trappola del focus (ora `useModalInert`) e l'`input` reale senza anello di focus (`.input:focus-within`). Aggiunti test per entrambi.
+
+**Problemi**
+
+- Gli screenshot di riferimento sono di Windows locale: se la CI su `windows-latest` rende i caratteri in modo diverso vanno rigenerati con `--update-snapshots` (non ancora verificato in CI).
+- La title bar personalizzata non c'è: la finestra usa la cornice nativa (la finestra senza cornice richiede lavoro nel main, da fare con la sicurezza della 3a in mente).
+
+---
+
 ## 2026-11-17 — Fase 3b: logger, cattura errori e Console Errori (PR #25, `2c64bf8`)
 
 **Fatto** (branch `feat/errors-console`, commit `faac590`)

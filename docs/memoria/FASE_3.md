@@ -2,7 +2,7 @@
 
 > File di passaggio per la sessione che apre la Fase 3. Va letto insieme a `STATO.md`, alla sezione "Fase 3" di `PIANO.md` (§6) e a `SICUREZZA.md`. Va aggiornato a ogni sotto-fase chiusa e archiviato (spostato in `STORIA.md` in sintesi) a fine fase.
 >
-> **Stato:** 3a completata il 2026-11-17 (PR #23, `985130d`, ADR 0004). 3b completata il 2026-11-17 (PR #25, `2c64bf8`, ADR 0005). 3c da fare. Brief preparato il 2026-11-14, alla chiusura della Fase 2.
+> **Stato:** 3a completata il 2026-11-17 (PR #23, `985130d`, ADR 0004). 3b completata il 2026-11-17 (PR #25, `2c64bf8`, ADR 0005). 3c implementata il 2026-11-17 (branch `feat/desktop-ui`, ADR 0006, in attesa di PR). Brief preparato il 2026-11-14, alla chiusura della Fase 2.
 >
 > **Da sapere per 3b e 3c**, dalla 3a:
 >

@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'electron-vite';
 import type { Plugin, UserConfig } from 'vite';
@@ -33,7 +34,7 @@ const faultsDefine = (enabled: boolean) => ({ __CC_E2E_FAULTS__: JSON.stringify(
 export const rendererConfigFor = (e2eFaults: boolean) =>
   ({
     root: resolve(__dirname, 'src/renderer'),
-    plugins: [react(), cspMeta()],
+    plugins: [react(), tailwindcss(), cspMeta()],
     define: faultsDefine(e2eFaults),
     build: {
       // Source maps ship with the app: the main process maps renderer stacks to TypeScript.

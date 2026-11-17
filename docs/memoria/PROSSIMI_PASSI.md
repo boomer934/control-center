@@ -9,11 +9,11 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 1. ✅ **(F3a)** Shell Electron sicura e IPC, unita su `main` con la PR #23 (`985130d`, ADR 0004), E2E e Fuses verdi in CI su `windows-latest`.
 2. ✅ **(F3b)** Logger, cattura errori e Console Errori con stack sorgente, ADR 0005, unita su `main` con la PR #25 (`2c64bf8`), 6 check verdi.
 
-3. ✅ **(F3c)** Design system in codice, pannelli, palette, scorciatoie con ambiti di focus, temi, pagina componenti con test visivi (ADR 0006). Implementata su `feat/desktop-ui`, da committare e mettere in PR.
+3. ✅ **(F3c)** Design system in codice, pannelli, palette, scorciatoie con ambiti di focus, temi, pagina componenti con test visivi (ADR 0006). Unita su `main` con la PR #27 (`1765186`), 6 check verdi.
 
 ## Dopo
 
-4. **(F3, chiusura)** PR della 3c con CI verde (se gli screenshot falliscono su `windows-latest`, rigenerarli lì); poi sintesi della Fase 3 in `STORIA.md`, archiviare `FASE_3.md`.
+4. **(F3, chiusura)** Sintesi della Fase 3 in `STORIA.md` e archiviazione di `FASE_3.md`.
 5. **(F4.1)** Bridge degli hooks (Opus 5.5, high).
 
 ## Quando capita

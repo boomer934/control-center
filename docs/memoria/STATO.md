@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c implementata, da unire con una PR)_
+_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c unita su `main`)_
 
 ## Fase
 
@@ -14,16 +14,15 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c implementata, da unire con una 
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
-- **3c**, design system in codice: ✅ implementata sul branch `feat/desktop-ui` (ADR 0006), **non ancora committata né in PR**.
+- **3c**, design system in codice: ✅ unita su `main` (PR #27, `1765186`, ADR 0006), 6 check verdi compreso Verify (Windows) con i test visivi.
 
 ## Branch
 
-`feat/desktop-ui`, da `main` + il commit docs `e9f88ae`. Modifiche non committate: tutta la 3c.
+`main` (ultimo merge: `1765186`, PR #27). La Fase 3 è chiusa dal punto di vista del codice; manca solo archiviare `FASE_3.md`.
 
 ## Punto di ripresa
 
-- **Prossimo:** committare la 3c, aprire la PR e aspettare i 6 check; se i test visivi falliscono in CI per differenze di rendering, rigenerare gli screenshot (vedi sotto). Poi chiudere la Fase 3: sintesi in `STORIA.md`, archiviare `FASE_3.md`, rivedere il goal complessivo di `PIANO.md`.
-- **Poi:** Fase 4.1 (bridge degli hooks, Opus 5.5 high).
+- **Prossimo:** chiudere la Fase 3 (sintesi in `STORIA.md`, archiviare `FASE_3.md`, rivedere il goal complessivo in `PIANO.md`), poi la Fase 4.1 (bridge degli hooks, Opus 5.5 high).
 
 ## Cosa funziona
 

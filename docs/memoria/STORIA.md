@@ -4,7 +4,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
-## 2026-11-17 — Fase 3c: design system in codice e interfaccia di base (branch `feat/desktop-ui`)
+## 2026-11-17 — Fase 3c: design system in codice e interfaccia di base (PR #27, `1765186`)
 
 **Fatto**
 

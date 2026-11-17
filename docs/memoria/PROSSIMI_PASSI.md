@@ -10,15 +10,18 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. ✅ **[Utente + Claude] (F2)** Fixture di `Notification`: `sessione-07` unita su `main` (PR #38).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
-3. **[Codex] (F4.2)** Workspace e terminale implementati su `feat/workspace-terminal` (ADR 0008). Revisione Claude `/code-review high` e merge dell'utente a CI verde.
+3. ✅ **[Codex] (F4.2)** Workspace e terminale: uniti su `main` (PR #40, ADR 0008).
 
 ## Dopo
 
 4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: `feat/hooks-bridge`, Opus 5.5, high, sbloccata (fixture su `main`): è il prossimo task della corsia Claude. Il goal è in `FASE_4.md`.
-5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), dopo 4.0, 4.1 e 4.2. Poi 4b.
+5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), dopo la 4.1 (4.0 e 4.2 sono su `main`). Crediti Codex finiti il 2026-11-17: se non tornano, la riassegna Claude. Poi 4b.
 6. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 
 ## Quando capita
+
+- **(F4.2, dalla revisione, da pesare prima o dentro la 4.3)** Primo: filtrare l'ambiente passato al pty (oggi eredita tutto `process.env`, regola 3 sui segreti). Poi: i link dei Problems si risolvono rispetto alla cartella dell'app, quindi aprono solo se il workspace è il repo stesso; i link del terminale non coprono `file.ts(12,5):` né `file.ts:12:5:`; `chooseFolder` lancia un errore per una cartella non disponibile e finisce nei Problems (meglio un risultato esplicito); un `id` duplicato è segnalato come `limit` e il tetto di 8 terminali è globale; una voce dei recenti non più risolvibile non si può togliere; Notepad apre il percorso verificato come stringa (finestra TOCTOU, impatto basso); la regex su xterm in `apps/desktop/xterm-csp.ts` e l'ordine dei passi CI (il pacchetto ricompila node-pty prima dell'E2E) sono fragili.
+- **(F4.2, locale)** Riportare il worktree `..control-center-codex` su `main` (oggi è sul branch unito).
 
 - **(F3, minore)** Includere i font (Instrument Sans, Martian Mono) nel pacchetto: file locali con `@font-face`, CSP `font-src 'self'` già a posto; decidere la licenza/fonte nell'ADR.
 - **(F3, minore)** `aria-live` per il contatore errori; provare il layout a finestra stretta; title bar personalizzata solo se serve (richiede lavoro nel main).

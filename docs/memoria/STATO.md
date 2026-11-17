@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (fixture `Notification` unita su `main`, 4.1 sbloccata; `pnpm verify` verde, 243 test)_
+_Ultimo aggiornamento: 2026-11-17 (4.2 workspace e terminale unita su `main` con la PR #40; `pnpm verify` verde, 256 test; crediti Codex finiti)_
 
 ## Fase
 
@@ -15,6 +15,8 @@ _Ultimo aggiornamento: 2026-11-17 (fixture `Notification` unita su `main`, 4.1 s
 **Fase 4 — Prima versione usabile**: in corso. Il brief è in [`FASE_4.md`](FASE_4.md), con le sotto-fasi 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
+- **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
+- **4.1** (hooks bridge, Claude) e **4.3** (chat e permessi, Codex) restano da fare.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -22,7 +24,7 @@ _Ultimo aggiornamento: 2026-11-17 (fixture `Notification` unita su `main`, 4.1 s
 
 ## Branch
 
-Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-fixture-merge`); `feat/fixture-notification` cancellato in locale dopo il merge di #38. Codex: `feat/workspace-terminal` (il 2026-11-17 il worktree `..control-center-codex` era in detached HEAD su `4c2ef5c` e il branch non era ancora sul remoto). `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37) e la fixture `Notification` (PR #38, `d6d08da`).
+Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-2-merge`). Codex: `feat/workspace-terminal` è unito (PR #40); il worktree `..control-center-codex` va riportato su `main` prima della 4.3. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38) e la 4.2 (PR #40, `4b928ab`).
 
 ## Punto di ripresa
 
@@ -33,15 +35,17 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto:** PR #30 (brief della Fase 4), #31 (`sessione-06`) e #32 (plugin di progetto) unite.
 - **Fatto (fixture `Notification`, PR #38):** `sessione-07` registrata di nuovo il 2026-11-17 e ripulita (12 righe di hooks, nessuno stream): un `Read`, un permesso approvato dopo l'attesa (`Notification` con `notification_type: permission_prompt`) e un rifiuto fatto da una persona. Il blocco della 4.1 è tolto. Due lezioni: `npx --version` e `git log -1` sono di sola lettura e Claude Code non chiede il permesso, quindi non nasce `Notification` (serve un comando che scrive, per esempio `Set-Content`); e `VERNIER_HOOKS_SESSION` va impostata nella stessa finestra PowerShell che lancia `claude`, altrimenti gli hooks finiscono in `unnamed.hooks.jsonl`. Un permesso rifiutato a mano lascia solo `PreToolUse`: `mergeClaudeSession` chiude le chiamate rimaste aperte a fine sessione come `tool.failed` con motivo `interrupted` (è un'inferenza: nel live della 4.1 il rifiuto va letto da un altro segnale). Unita su `main` con la PR #38 (`d6d08da`).
 - **Fatto (4.0):** canale push main → renderer nel contratto (ADR 0007), unito su `main` con la PR #35 (`4c2ef5c`). Eventi `event('ns:nome', schema)` accanto ai metodi; `createEventEmitter` nel main (solo eventi del contratto, payload validato, solo finestre fidate); `window.api.<ns>.onX(listener)` nel preload (un listener `ipcRenderer` per canale, payload rivalidato, mai l'`IpcRendererEvent`). Primo evento `errors:changed`: la Console Errori non interroga più ogni secondo. `/code-review high`: 5 punti trovati e corretti (ciclo di segnalazione da un iscritto che lancia, `targets()` fuori dal `try`, iscritto orfano, test del raggruppamento, E2E con attesa fissa).
-- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-fixture-merge`). Con la 4.0 su `main`, il terminale della 4.2 (Codex) è sbloccato: output del pty come evento nuovo, con raggruppamento nel main.
+- **Fatto (4.2, revisione e CI):** il test dei percorsi su Windows cadeva nel runner perché `tmpdir()` è un percorso corto 8.3 (`RUNNER~1`): corretto nel test con `realpath` (commit `7264c75`, modulo invariato). `/code-review high` sulla PR #40: 9 punti minori, nessuno bloccante.
+- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-4-2-merge`).
 - **Poi:** 4.1 hooks bridge (`feat/hooks-bridge`, Opus 5.5, high), sbloccata: parte subito; poi 5a.
 
 ### Corsia Codex
 
 - **Fatto (2026-11-17):** implementazione 4.2 su `feat/workspace-terminal` (ADR 0008). Dialog nativo, recenti e `Ctrl+P`, layout per workspace, apertura dei file verificati in Notepad, terminali a schede PowerShell e Git Bash con output push. Le schede restano attive durante i cambi di workspace.
 - **Verificato in locale:** `pnpm verify` verde, 51 E2E funzionali, 9 E2E del pacchetto con il prebuild di node-pty. Rivisti selettore e terminale a 960×600 nei due temi, rilevatore impeccable senza rilievi. Gli screenshot di regressione dei componenti vengono verificati in CI.
-- **Ora:** [PR #40](https://github.com/boomer934/control-center/pull/40) per la 4.2, revisione incrociata Claude `/code-review high` e merge dell'utente a CI verde. La build del pacchetto ricompila node-pty per Electron. Per il pacchetto di prova locale si può usare il prebuild perché nell'installazione MSVC locale manca il componente Spectre.
-- **Poi:** 4.3 (dopo 4.0, 4.1 e 4.2 unite), poi 4b.
+- **Fatto:** 4.2 unita (PR #40). La build del pacchetto ricompila node-pty per Electron; per il pacchetto di prova locale si può usare il prebuild perché nell'installazione MSVC locale manca il componente Spectre.
+- **Ora:** nessun task. Crediti Codex finiti il 2026-11-17: riprendere quando tornano.
+- **Poi:** 4.3 (dopo la 4.1; 4.0 e 4.2 sono già su `main`), poi 4b.
 
 ## Cosa funziona
 

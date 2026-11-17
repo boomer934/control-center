@@ -2,7 +2,7 @@
 
 > Questo file passa il lavoro alla sessione che apre la Fase 4. Va letto insieme a `STATO.md`, alla sezione "Fase 4" di `PIANO.md` (§7) e a `SICUREZZA.md`. Si aggiorna a ogni sotto-fase chiusa; a fine fase si archivia, cioè lo si riassume in `STORIA.md` e lo si toglie dalla repo.
 >
-> **Stato:** 4.0 e 4.2 unite su `main`; 4.1 implementata su `feat/hooks-bridge` (ADR 0009); 4.3 da fare.
+> **Stato:** 4.0, 4.1 e 4.2 unite su `main` (PR #35, #42, #40); 4.3 da fare.
 
 ## Obiettivo
 
@@ -73,7 +73,7 @@ Una sessione o un loop per sotto-fase, su un branch `feat/…` con PR e merge a 
 ### 4.1 — Hooks bridge e sessione Claude
 
 - **Branch proposto:** `feat/hooks-bridge`.
-- **Stato:** implementata il 2026-11-17 (ADR 0009). Oltre al brief c'è il namespace IPC `claude` (`start`, `send`, `interrupt`, `close`, evento `claude:updated`), su cui la 4.3 costruisce la chat. Restano per la 4.3 il canale dei permessi su stdin e, per la Fase 10, lo script degli hooks nel pacchetto.
+- **Stato:** unita su `main` il 2026-11-17 (PR #42, `ecb78f3`, ADR 0009). Oltre al brief c'è il namespace IPC `claude` (`start`, `send`, `interrupt`, `close`, evento `claude:updated`), su cui la 4.3 costruisce la chat. Restano per la 4.3 il canale dei permessi su stdin e, per la Fase 10, lo script degli hooks nel pacchetto.
 - **Produce:**
   - `packages/hooks-bridge`:
     - lo script chiamato dagli hooks legge l'evento da stdin;

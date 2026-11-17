@@ -11,11 +11,11 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 1. ✅ **[Utente + Claude] (F2)** Fixture di `Notification`: `sessione-07` unita su `main` (PR #38).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
 3. ✅ **[Codex] (F4.2)** Workspace e terminale: uniti su `main` (PR #40, ADR 0008).
-4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: implementata su `feat/hooks-bridge` (ADR 0009), con `/code-review high` già fatto. Restano CI verde e merge (utente).
+4. ✅ **[Claude] (F4.1)** Hooks bridge e sessione Claude: unita su `main` (PR #42, ADR 0009).
 
 ## Dopo
 
-5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), sul namespace IPC `claude` della 4.1. Servirà il canale dei permessi su stdin (control protocol di stream-json). Crediti Codex finiti il 2026-11-17: se non tornano, la riassegna Claude. Poi 4b.
+5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), sbloccata, sul namespace IPC `claude` della 4.1. Servirà il canale dei permessi su stdin (control protocol di stream-json). Crediti Codex finiti il 2026-11-17: se non tornano, la riassegna Claude. Poi 4b.
 6. **[Codex] (F4.1, revisione)** Seconda opinione di `gpt-6-astra` sulla pipe (`packages/hooks-bridge`), quando tornano i crediti.
 7. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 

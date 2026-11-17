@@ -16,7 +16,13 @@ export function cleanEnv(extra: Record<string, string> = {}): Record<string, str
 
 /** Starts the built app (out/) and waits until the renderer got its first IPC answer. */
 export async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
-  const app = await _electron.launch({ args: [APP_DIR], cwd: APP_DIR, env: cleanEnv() });
+  const app = await _electron.launch({
+    // Fake camera and microphone: CI runners have none, and getUserMedia would fail with
+    // NotFoundError before ever asking for the permission the tests expect to be denied.
+    args: ['--use-fake-device-for-media-stream', APP_DIR],
+    cwd: APP_DIR,
+    env: cleanEnv(),
+  });
   const page = await app.firstWindow();
   await page.getByTestId('app-info').waitFor();
   return { app, page };

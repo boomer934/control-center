@@ -18,7 +18,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Decisioni:** ADR 0004. Le dipendenze dell'app sono tutte `devDependencies` messe in bundle, quindi il pacchetto non ha `node_modules`. Gli E2E girano sulla build non impacchettata, perché il fuse dell'inspector impedisce a Playwright di collegarsi al pacchetto.
 
-**Problemi:** dentro `page.evaluate` DevTools permette `eval` (le prove CSP girano in un timer). `electron-vite dev --rendererOnly` avvia comunque Electron, quindi il test di sviluppo usa `createServer` di Vite. `getLastWebPreferences` manca nei tipi di Electron 45. electron-builder non legge `electron-builder.config.ts` senza `--config`. `@peculiar/utils` usa `tslib` senza dichiararlo. Il test ha scoperto che una cartella passava come asset di `app://`: corretto.
+**Problemi:** dentro `page.evaluate` DevTools permette `eval` (le prove CSP girano in un timer). `electron-vite dev --rendererOnly` avvia comunque Electron, quindi il test di sviluppo usa `createServer` di Vite. `getLastWebPreferences` manca nei tipi di Electron 45. electron-builder non legge `electron-builder.config.ts` senza `--config`. `@peculiar/utils` usa `tslib` senza dichiararlo. Il test ha scoperto che una cartella passava come asset di `app://`: corretto. In CI il test dei permessi falliva perché il runner non ha camera né microfono (`NotFoundError`): ora Electron parte con dispositivi finti. Dopo la correzione E2E e Fuses sono verdi su GitHub (PR #23).
 
 ---
 

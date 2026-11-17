@@ -12,7 +12,7 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3a completata in locale)_
 
 **Fase 3 — Shell sicura**: in corso.
 
-- **3a**, shell sicura e IPC: ✅ fatta sul branch `feat/desktop-shell` (ADR 0004). Manca il merge della PR con la CI verde.
+- **3a**, shell sicura e IPC: ✅ fatta sul branch `feat/desktop-shell` (ADR 0004), PR #23. In CI (corsa 44087946083, `ec7a6db`) sono verdi `pnpm e2e` e `pnpm e2e:packaged`. Manca il merge a mano.
 - **3b**, logger e Console Errori: da fare.
 - **3c**, design system in codice: da fare.
 
@@ -22,7 +22,7 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3a completata in locale)_
 
 ## Punto di ripresa
 
-- **Prossimo:** controllare la CI della PR di `feat/desktop-shell` (job Windows con `pnpm e2e` ed `e2e:packaged`), poi merge a mano. In seguito la 3b (Sonnet 5.5, effort high) in una sessione nuova, su `feat/errors-console`, con il goal di `FASE_3.md`.
+- **Prossimo:** merge a mano della PR #23 se la CI è tutta verde. In seguito la 3b (Sonnet 5.5, effort high) in una sessione nuova, su `feat/errors-console`, con il goal di `FASE_3.md`.
 - **Per la 3b:**
   - i messaggi del gate IPC oggi vanno in `console.warn` (`apps/desktop/src/main/ipc.ts`): li sostituisce il logger;
   - "copia report" non può usare `navigator.clipboard`, perché tutti i permessi web sono negati: serve un metodo IPC o l'apertura esplicita di `clipboard-sanitized-write`;
@@ -39,7 +39,7 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3a completata in locale)_
   - `pnpm e2e`: 19 test verdi (sicurezza + modalità sviluppo);
   - `pnpm e2e:packaged`: 6 test verdi (Fuses);
   - `pnpm audit --audit-level high` passa (2 moderate in `minimatch`, strumenti di sviluppo).
-- ✅ CI: il job Windows ora esegue anche il controllo della versione di Electron, `pnpm e2e` ed `e2e:packaged`. **Non ancora provato su GitHub.**
+- ✅ CI: il job Windows esegue anche il controllo della versione di Electron, `pnpm e2e` (19 E2E `_electron`) ed `e2e:packaged` (Fuses). Sono verdi su GitHub nella corsa 44087946083. La prima corsa era fallita su un solo test: sul runner non ci sono camera né microfono, vedi `PROBLEMI_NOTI.md`.
 - ✅ Già da prima: `@control-center/event-schema` e `@control-center/fixtures`, hook git, gitleaks in CI, design della Fase 1.
 
 ## Blocchi e avvertenze

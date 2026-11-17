@@ -4,6 +4,19 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — 4.0 unita, memoria allineata
+
+**Fatto:**
+
+- la PR #35 (4.0) era già unita con lo squash, memoria compresa; il puntatore alle regole globali in `AGENTS.md`/`CLAUDE.md` era rimasto fuori ed è entrato con la PR #36 insieme alla memoria del merge;
+- cancellato in locale `feat/ipc-push-channel`; `pnpm verify` verde su `main` (237 test).
+
+**Decisioni:** nessuna.
+
+**Problemi:** il worktree di Codex era in detached HEAD su `4c2ef5c`, senza `feat/workspace-terminal` sul remoto: annotato nella riga dei branch di `STATO.md`.
+
+---
+
 ## 2026-11-17 — 4.0: canale push nel contratto IPC
 
 **Fatto:**

@@ -9,6 +9,7 @@ function fakeFs(aliases: ReadonlyMap<string, string> = new Map()) {
     realpath: vi.fn(async (path: string) => aliases.get(path) ?? path),
     isDirectory: vi.fn(async () => true),
     isFile: vi.fn(async () => true),
+    sameDirectory: vi.fn(async () => false),
   };
 }
 
@@ -69,6 +70,20 @@ describe('workspace paths', () => {
     expect(fs.isFile).not.toHaveBeenCalled();
   });
 
+  it('accepts a case alias only when the filesystem identifies the same directory', async () => {
+    const fs = fakeFs();
+    const root = 'C:\\Projects\\App';
+    const workspace = await resolveWorkspaceRoot(root, fs);
+    if (!workspace) throw new Error('Expected a workspace');
+    const differentlyCased = 'C:\\PROJECTS\\APP\\src\\file.txt';
+    await expect(resolveWorkspaceFile(workspace, differentlyCased, fs)).resolves.toBeNull();
+    fs.sameDirectory.mockResolvedValueOnce(true);
+    await expect(resolveWorkspaceFile(workspace, differentlyCased, fs)).resolves.toBe(
+      differentlyCased,
+    );
+    expect(fs.sameDirectory).toHaveBeenCalledWith(root, 'C:\\PROJECTS\\APP');
+  });
+
   it('supports the selected UNC share and refuses other UNC shares before I/O', async () => {
     const fs = fakeFs();
     const workspace = await resolveWorkspaceRoot('\\\\server\\share', fs);
@@ -113,9 +128,13 @@ describe.skipIf(process.platform !== 'win32')('workspace paths on Windows', () =
     await expect(resolveWorkspaceFile(workspace, 'src/file.txt')).resolves.toBe(
       await realpath(file),
     );
-    await expect(resolveWorkspaceFile(workspace, file.toUpperCase())).resolves.toBe(
-      await realpath(file),
-    );
+    // The volume determines whether this case alias exists and how realpath spells it.
+    const alias = file.toUpperCase();
+    const canonicalAlias = await realpath(alias).catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== 'ENOENT') throw error;
+      return null;
+    });
+    await expect(resolveWorkspaceFile(workspace, alias)).resolves.toBe(canonicalAlias);
     await expect(resolveWorkspaceFile(workspace, 'internal/file.txt')).resolves.toBe(
       await realpath(file),
     );

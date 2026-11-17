@@ -4,6 +4,25 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Chiusura Fase 3
+
+**Fatto**
+
+- Fase 3 completata in tre PR: 3a shell sicura e IPC (#23, `985130d`, ADR 0004), 3b logger e Console Errori (#25, `2c64bf8`, ADR 0005), 3c design system in codice (#27, `1765186`, ADR 0006). Memoria registrata con #24, #26, #28.
+- Risultato: `apps/desktop` con contextIsolation, sandbox, CSP, Fuses e blocco di navigazione verificati da test; `packages/ipc-contract` (6 metodi, zod, controllo del mittente); `packages/app-log` e Console Errori con stack sorgente; design system in codice, pannelli, palette, scorciatoie con ambiti di focus, temi e pagina componenti con test visivi. La checklist di `SICUREZZA.md` è tutta spuntata.
+- In CI su `windows-latest`: 6 check verdi sulla PR #27, 46 E2E dell'app e 8 del pacchetto.
+- `FASE_3.md` archiviato qui: le regole (niente subagent su IPC/processi/fs/CSP/Fuses/preload; ADR prima delle dipendenze di runtime; colori e durate solo dai token) restano in `CLAUDE.md` e `SICUREZZA.md`; i punti aperti sono in `PROSSIMI_PASSI.md`.
+
+**Decisioni:** nessuna nuova rispetto alle voci delle tre sotto-fasi. Il goal complessivo di `PIANO.md` è soddisfatto così com'è.
+
+**Problemi aperti**
+
+- Revisione impeccable della 3c in un solo contesto (scelta di risparmio token), non con due subagent isolati.
+- In locale i 12 test visivi falliscono (font diversi): le immagini di riferimento si rigenerano dall'artifact della CI.
+- Font non inclusi nel pacchetto; `aria-live` del contatore errori e prova a finestra stretta da fare.
+
+---
+
 ## 2026-11-17 — Fase 3c: design system in codice e interfaccia di base (PR #27, `1765186`)
 
 **Fatto**

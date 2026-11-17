@@ -363,7 +363,7 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 
   > `packages/event-schema` definisce AgentEvent con zod; almeno 5 sessioni registrate e ripulite in `packages/fixtures`; i normalizzatori convertono tutte le fixture senza errori di validazione e i loro test passano in CI; lo script di pulizia non trova segreti; memoria aggiornata.
 
-- **Fase 3** (tre goal in sequenza; dettagli in `FASE_3.md`)
+- **Fase 3** (tre goal in sequenza; archiviata il 2026-11-17, sintesi in `STORIA.md`)
 
   > L'app Electron si avvia con contextIsolation, sandbox, CSP e Fuses attivi; tutti i canali IPC passano da ipc-contract con validazione zod; la checklist di `SICUREZZA.md` è tutta verificata; la Console Errori mostra con stack sorgente un errore provocato nel main, nel renderer e in un processo figlio (test E2E verdi); temi, command palette e pagina componenti presenti con test visivi verdi; memoria aggiornata.
   - 3a > `apps/desktop` si avvia con electron-vite; contextIsolation, sandbox, CSP, blocco di navigazione e `window.open` e Fuses sono attivi e verificati da test; tutti i canali IPC passano da `packages/ipc-contract` con validazione zod e controllo del mittente; la checklist Electron di `SICUREZZA.md` è tutta spuntata, ogni voce con il suo test; un test E2E Playwright `_electron` avvia l'app anche in CI; memoria aggiornata.

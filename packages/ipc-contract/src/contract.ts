@@ -61,11 +61,88 @@ export const OpenExternalResponseSchema = z
   })
   .strict();
 
+// ── Errors Console (phase 3b) ───────────────────────────────────────────────
+
+export const ERROR_ORIGINS = ['main', 'renderer', 'child', 'ipc'] as const;
+export const ERROR_KINDS = [
+  'uncaught-exception',
+  'unhandled-rejection',
+  'window-error',
+  'render-error',
+  'process-gone',
+  'child-stderr',
+  'child-exit',
+  'child-spawn',
+  'ipc-failure',
+] as const;
+
+export const StackFrameSchema = z
+  .object({
+    fn: z.string().max(300).nullable(),
+    file: z.string().max(500),
+    line: z.number().int().nonnegative().nullable(),
+    column: z.number().int().nonnegative().nullable(),
+    kind: z.enum(['project', 'dependency', 'internal']),
+  })
+  .strict();
+
+export const ErrorGroupSchema = z
+  .object({
+    id: z.string().min(1).max(40),
+    origin: z.enum(ERROR_ORIGINS),
+    source: z.string().max(200),
+    kind: z.enum(ERROR_KINDS),
+    name: z.string().max(200),
+    message: z.string().max(2000),
+    frames: z.array(StackFrameSchema).max(60),
+    count: z.number().int().positive(),
+    firstSeen: z.string().max(40),
+    lastSeen: z.string().max(40),
+  })
+  .strict();
+export type ErrorGroupDto = z.infer<typeof ErrorGroupSchema>;
+
+export const ErrorListSchema = z
+  .object({
+    /** Changes whenever a group is added, counted or cleared. */
+    revision: z.number().int().nonnegative(),
+    groups: z.array(ErrorGroupSchema).max(200),
+  })
+  .strict();
+
+/** What the renderer may report about its own errors. The main process cleans and bounds it. */
+export const RendererErrorReportSchema = z
+  .object({
+    kind: z.enum(['window-error', 'unhandled-rejection', 'render-error']),
+    name: z.string().max(200),
+    message: z.string().max(4000),
+    stack: z.string().max(20_000),
+  })
+  .strict();
+
+export const RendererErrorAckSchema = z.object({ id: z.string().max(40) }).strict();
+export const CopyReportResponseSchema = z
+  .object({ copied: z.boolean(), groups: z.number().int().nonnegative() })
+  .strict();
+export const ClearErrorsResponseSchema = z
+  .object({ cleared: z.number().int().nonnegative() })
+  .strict();
+
 // ── Contract ────────────────────────────────────────────────────────────────
 
 export const contract = {
   app: {
     getInfo: invoke('app:get-info', NoRequest, AppInfoSchema),
+  },
+  errors: {
+    list: invoke('errors:list', NoRequest, ErrorListSchema),
+    reportRenderer: invoke(
+      'errors:report-renderer',
+      RendererErrorReportSchema,
+      RendererErrorAckSchema,
+    ),
+    copyReport: invoke('errors:copy-report', NoRequest, CopyReportResponseSchema),
+    clear: invoke('errors:clear', NoRequest, ClearErrorsResponseSchema),
   },
   shell: {
     openExternal: invoke(

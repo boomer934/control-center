@@ -121,12 +121,12 @@ test('a tampered app.asar is refused (embedded ASAR integrity)', async () => {
 
     const asar = join(copy, 'resources', 'app.asar');
     const bytes = readFileSync(asar);
-    // Change a harmless log prefix of the main bundle: without the integrity check the app
+    // Change a harmless log event name in the main bundle: without the integrity check the app
     // would start normally, so a refusal can only come from the check.
-    const needle = Buffer.from('[ipc] ');
+    const needle = Buffer.from('app-start');
     const at = bytes.indexOf(needle);
     expect(at, 'marker string not found in app.asar').toBeGreaterThan(0);
-    Buffer.from('[IPC] ').copy(bytes, at);
+    Buffer.from('app-sTart').copy(bytes, at);
     writeFileSync(asar, bytes);
 
     const r = await probe(join(copy, EXE_NAME), [], {}, 10_000);

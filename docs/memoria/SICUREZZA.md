@@ -40,6 +40,15 @@ Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/des
 - Istanza singola (`requestSingleInstanceLock`).
 - L'envelope IPC non riporta i valori ricevuti né i messaggi degli errori degli handler (possono contenere percorsi).
 
+### Errori e log (3b, ADR 0005)
+
+- Log JSONL in `<userData>/logs`, mai verso l'esterno. Ogni stringa passa da `makeTextCleaner` (segreti, home → `~`, radice → `.`); i valori sotto chiavi tipo `token`/`secret`/`password` sono sostituiti. Test: `packages/app-log/src/app-log.test.ts`, E2E `errors.spec.ts` ("secrets and personal paths never reach the Console, the log or the report").
+- Il renderer può solo segnalare i propri errori (`errors:report-renderer`: schema stretto, stack ≤ 20 kB, tetto 100 ogni 10 s) e leggere gruppi già ripuliti. "Copia report" scrive negli appunti dal main: i permessi web restano negati.
+- Il gate IPC registra canale e codice, mai il payload; per errori di schema solo percorsi e messaggi (`issues`). Test: E2E "a refused IPC call is recorded without its payload".
+- Le source map si leggono solo dentro `out/` (`resolveAssetPath`): un frame costruito ad arte non legge altri file. Test: `stack-mapper.test.ts` ("never reads a map outside the build").
+- `superviseChild` avvia senza shell, scarta stdout, nome limitato a `[a-z0-9-]`; non esiste un canale IPC per avviare processi.
+- I fault injector dei test esistono solo nella build `--mode e2e`; il pacchetto di produzione non li contiene (`e2e/packaged/build.spec.ts`).
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

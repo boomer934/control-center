@@ -7,12 +7,33 @@ import {
   installAppProtocol,
   registerAppScheme,
 } from './hardening';
+import { installE2eFaults } from '#e2e-faults';
+import { installMainCapture } from './errors/capture';
+import { builtPaths, createErrorsService } from './errors/service';
 import { registerIpc } from './ipc';
 import { parseDevServerUrl } from './security/urls';
 import { createMainWindow } from './window';
 
 // The dev server URL is honoured only in an unpackaged (development) run.
 const devServer = app.isPackaged ? null : parseDevServerUrl(process.env.ELECTRON_RENDERER_URL);
+
+const paths = builtPaths(__dirname);
+const errors = createErrorsService({
+  logDir: join(app.getPath('userData'), 'logs'),
+  projectRoot: app.isPackaged ? app.getAppPath() : paths.projectRoot,
+  builtRoot: paths.builtRoot,
+  rendererSourceRoot: paths.rendererSourceRoot,
+  devServer,
+  meta: () => ({
+    app: 'Control Center',
+    version: app.getVersion(),
+    electron: process.versions.electron,
+    platform: process.platform,
+  }),
+});
+installMainCapture(errors.report, app);
+installE2eFaults(errors.report);
+errors.logger.info('main', 'app-start', { version: app.getVersion(), packaged: app.isPackaged });
 
 // Before `ready`: sandbox every renderer and declare the app:// scheme.
 app.enableSandbox();
@@ -33,7 +54,7 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(() => {
     hardenSession(session.defaultSession, devServer);
     installAppProtocol(session.defaultSession, join(__dirname, '../renderer'));
-    registerIpc(devServer);
+    registerIpc(devServer, errors);
     createMainWindow(devServer);
   });
 

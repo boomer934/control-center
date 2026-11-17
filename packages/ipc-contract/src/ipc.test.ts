@@ -36,10 +36,17 @@ const info: AppInfo = {
   packaged: false,
 };
 
+const errorsStub: Handlers['errors'] = {
+  list: () => ({ revision: 0, groups: [] }),
+  reportRenderer: () => ({ id: 'abc' }),
+  copyReport: () => ({ copied: true, groups: 0 }),
+  clear: () => ({ cleared: 0 }),
+};
+
 function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unknown }> = {}) {
   const getInfo = vi.fn(() => (overrides.getInfo ?? info) as AppInfo);
   const openExternal = vi.fn(({ url }: { url: string }) => ({ opened: url.startsWith('https:') }));
-  const handlers: Handlers = { app: { getInfo }, shell: { openExternal } };
+  const handlers: Handlers = { app: { getInfo }, errors: errorsStub, shell: { openExternal } };
   return { handlers, getInfo, openExternal };
 }
 
@@ -53,7 +60,14 @@ function setup(overrides?: Parameters<typeof makeHandlers>[0]) {
 
 describe('contract', () => {
   it('declares exactly the reviewed channels (adding one must update this test)', () => {
-    expect(listChannels()).toEqual(['app:get-info', 'shell:open-external']);
+    expect(listChannels()).toEqual([
+      'app:get-info',
+      'errors:list',
+      'errors:report-renderer',
+      'errors:copy-report',
+      'errors:clear',
+      'shell:open-external',
+    ]);
   });
 
   it('has no generic or command-like channel', () => {
@@ -152,6 +166,7 @@ describe('registerIpcHandlers (main)', () => {
             throw new Error(`cannot read ${secretPath}`);
           },
         },
+        errors: errorsStub,
         shell: { openExternal: () => ({ opened: false }) },
       },
       { isTrustedSender, onFailure },
@@ -163,6 +178,24 @@ describe('registerIpcHandlers (main)', () => {
     });
     expect(JSON.stringify(res)).not.toContain('secret');
     expect(onFailure.mock.calls[0]?.[0].cause).toBeInstanceOf(Error);
+  });
+
+  it('bounds and validates what the renderer may report about its own errors', async () => {
+    const { ipc } = setup();
+    const ok = { kind: 'window-error', name: 'Error', message: 'x', stack: 'at y' };
+    await expect(ipc.call('errors:report-renderer', trusted, ok)).resolves.toEqual({
+      ok: true,
+      value: { id: 'abc' },
+    });
+    for (const bad of [
+      { ...ok, kind: 'uncaught-exception' },
+      { ...ok, stack: 'x'.repeat(20_001) },
+      { ...ok, extra: 1 },
+      { kind: 'window-error' },
+    ]) {
+      const res = await ipc.call('errors:report-renderer', trusted, bad);
+      expect(res).toMatchObject({ ok: false, error: { code: 'invalid-request' } });
+    }
   });
 
   it('refuses a handler response that does not match the schema', async () => {
@@ -191,8 +224,9 @@ describe('registerIpcHandlers (main)', () => {
 describe('createApi (preload)', () => {
   it('exposes exactly the contract methods, deeply frozen', () => {
     const api = createApi(async () => ({ ok: true, value: null }));
-    expect(Object.keys(api)).toEqual(['app', 'shell']);
+    expect(Object.keys(api)).toEqual(['app', 'errors', 'shell']);
     expect(Object.keys(api.app)).toEqual(['getInfo']);
+    expect(Object.keys(api.errors)).toEqual(['list', 'reportRenderer', 'copyReport', 'clear']);
     expect(Object.keys(api.shell)).toEqual(['openExternal']);
     expect(Object.isFrozen(api)).toBe(true);
     expect(Object.isFrozen(api.app)).toBe(true);

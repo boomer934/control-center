@@ -102,9 +102,13 @@ test.describe('preload', () => {
       };
     });
     expect(shape).toEqual({
-      namespaces: ['app', 'shell'],
-      methods: { app: ['getInfo'], shell: ['openExternal'] },
-      types: ['function', 'function'],
+      namespaces: ['app', 'errors', 'shell'],
+      methods: {
+        app: ['getInfo'],
+        errors: ['list', 'reportRenderer', 'copyReport', 'clear'],
+        shell: ['openExternal'],
+      },
+      types: Array.from({ length: 6 }, () => 'function'),
       frozen: true,
       leaked: [],
     });

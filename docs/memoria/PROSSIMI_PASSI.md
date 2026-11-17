@@ -7,13 +7,17 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 ## Ora
 
 1. ✅ **(F3a)** Shell Electron sicura e IPC, unita su `main` con la PR #23 (`985130d`, ADR 0004), E2E e Fuses verdi in CI su `windows-latest`.
-2. **(F3b)** Logger (con ADR), cattura degli errori e Console Errori con stack sorgente. Branch proposto `feat/errors-console`. Vedi le note per la 3b in `STATO.md` (permesso appunti, `console.warn` del gate IPC).
+2. ✅ **(F3b)** Logger, cattura errori e Console Errori con stack sorgente, completati in locale su `feat/errors-console` (ADR 0005): da committare, aprire in PR e unire a mano a CI verde.
 
 ## Dopo
 
 3. **(F3c)** Design system in codice, layout a pannelli, command palette, scorciatoie con ambiti di focus (da `design/ricerca/architettura.md`), temi e pagina componenti con test visivi. Branch proposto `feat/desktop-ui`.
 
 ## Quando capita
+
+- **(F3c)** Portare la barra di stato e la Console Errori provvisorie nei componenti del design system.
+- **(F4)** Metodo IPC per aprire un frame dello stack nell'editor, con i controlli di percorso; valutare un canale push al posto del polling di `errors:list`.
+- **(F10)** Provare a mano la mappatura degli stack nel pacchetto (`app.asar`); decidere se l'installer include le source map.
 
 - **(F2, prima della F4)** Una sessione interattiva breve nel progetto di prova per catturare `Notification` (attesa utente) e aggiungere l'hook `PostToolUseFailure`. Poi `node scripts/fixtures/sanitize.mjs`, rilettura e aggiornamento degli snapshot (`npx vitest run packages/fixtures -u`).
 - **(F4)** Il ponte degli hooks deve consegnare gli eventi in tempo reale. `normalizeClaudeHooks` collega gli hooks dei subagent alla chiamata `Agent` solo a posteriori; dal vivo l'attribuzione va presa dallo stream (`parent_tool_use_id`). I normalizzatori oggi sono funzioni batch: dal vivo serviranno versioni incrementali.

@@ -1,6 +1,12 @@
 export {
   AppInfoSchema,
   contract,
+  ERROR_KINDS,
+  ERROR_ORIGINS,
+  ErrorGroupSchema,
+  ErrorListSchema,
+  RendererErrorReportSchema,
+  type ErrorGroupDto,
   IPC_ERROR_CODES,
   IpcEnvelopeSchema,
   IpcError,

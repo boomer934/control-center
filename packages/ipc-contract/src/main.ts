@@ -35,6 +35,8 @@ export interface IpcFailure {
   readonly code: IpcErrorCode;
   /** The original error, for the main-process log only: it is never sent to the renderer. */
   readonly cause?: unknown;
+  /** For schema failures: paths and messages only, never the received values. */
+  readonly issues?: string;
 }
 
 export interface RegisterOptions<E> {
@@ -94,8 +96,8 @@ async function gate<E extends IpcSenderEvent>(
   event: E,
   args: unknown[],
 ): Promise<IpcEnvelope> {
-  const report = (code: IpcErrorCode, cause?: unknown) =>
-    options.onFailure?.({ channel: spec.channel, code, cause });
+  const report = (code: IpcErrorCode, cause?: unknown, issues?: string) =>
+    options.onFailure?.({ channel: spec.channel, code, cause, ...(issues ? { issues } : {}) });
 
   let trusted: boolean;
   try {
@@ -116,8 +118,9 @@ async function gate<E extends IpcSenderEvent>(
   }
   const request = spec.request.safeParse(args[0]);
   if (!request.success) {
-    report('invalid-request', request.error);
-    return fail('invalid-request', describeIssues(request.error));
+    const issues = describeIssues(request.error);
+    report('invalid-request', request.error, issues);
+    return fail('invalid-request', issues);
   }
 
   let raw: unknown;
@@ -131,7 +134,7 @@ async function gate<E extends IpcSenderEvent>(
 
   const response = spec.response.safeParse(raw);
   if (!response.success) {
-    report('invalid-response', response.error);
+    report('invalid-response', response.error, describeIssues(response.error));
     return fail('invalid-response', 'Invalid response from main process');
   }
   return { ok: true, value: response.data };

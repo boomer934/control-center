@@ -7,7 +7,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 ## Ora
 
 1. ✅ **(F3a)** Shell Electron sicura e IPC, unita su `main` con la PR #23 (`985130d`, ADR 0004), E2E e Fuses verdi in CI su `windows-latest`.
-2. ✅ **(F3b)** Logger, cattura errori e Console Errori con stack sorgente, completati in locale su `feat/errors-console` (ADR 0005): da committare, aprire in PR e unire a mano a CI verde.
+2. ✅ **(F3b)** Logger, cattura errori e Console Errori con stack sorgente, completati in locale su `feat/errors-console` (ADR 0005): commit locale `faac590`: pushare, aprire la PR e unire a mano a CI verde.
 
 ## Dopo
 

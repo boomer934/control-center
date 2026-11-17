@@ -6,7 +6,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ## 2026-11-17 — Fase 3b: logger, cattura errori e Console Errori
 
-**Fatto** (branch `feat/errors-console`, non ancora committato)
+**Fatto** (branch `feat/errors-console`, commit `faac590`)
 
 - `packages/app-log`: logger JSONL ruotato (1 MiB × 5 file in `<userData>/logs`), parser degli stack V8 con frame `project`/`dependency`/`internal`, `ErrorStore` con raggruppamento e contatore, testo di "copia report". Tutto passa da `makeTextCleaner`/`redactSecrets`.
 - Main: cattura di `uncaughtException`/`unhandledRejection`, `render-process-gone`/`child-process-gone`, errori del gate IPC (al posto di `console.warn`) e `superviseChild` per stderr e uscite dei processi figli. `stack-mapper.ts` riscrive i frame di `out/` con le source map.

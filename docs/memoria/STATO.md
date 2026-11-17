@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b completata su `feat/errors-console`, non ancora committata)_
+_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b completata su `feat/errors-console`, commit `faac590`, non ancora pushata)_
 
 ## Fase
 
@@ -13,16 +13,16 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b completata su `feat/errors-cons
 **Fase 3 — Shell sicura**: in corso.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
-- **3b**, logger e Console Errori: ✅ completata in locale (ADR 0005), da committare, aprire in PR e unire.
+- **3b**, logger e Console Errori: ✅ completata e committata in locale (ADR 0005), da pushare, aprire in PR e unire.
 - **3c**, design system in codice: da fare.
 
 ## Branch
 
-`feat/errors-console` (da `main` a `0ac5fa4`), con le modifiche **non ancora committate**. La 3c parte da `main` dopo il merge, branch proposto `feat/desktop-ui`.
+`feat/errors-console` (da `main` a `0ac5fa4`), un commit locale (`faac590`), **non ancora pushato**. La 3c parte da `main` dopo il merge, branch proposto `feat/desktop-ui`.
 
 ## Punto di ripresa
 
-- **Subito:** `pnpm verify` è verde, quindi committare la 3b (`feat(desktop): phase 3b …`), aprire la PR e unirla a mano a CI verde.
+- **Subito:** `pnpm verify` è verde e la 3b è committata in locale: pushare, aprire la PR e unirla a mano a CI verde.
 - **Poi:** la 3c (Sonnet 5.5, effort medium), con il goal di `FASE_3.md`.
 - **Per la 3c:**
   - la shell attuale (`App.tsx`) ha un layout provvisorio con barra di stato e pannello Errori: la 3c lo sostituisce con pannelli, barra attività e palette, e porta dentro il contatore e la Console;

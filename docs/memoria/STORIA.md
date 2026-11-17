@@ -12,6 +12,8 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Problemi:** l'installazione Visual Studio locale non contiene le librerie MSVC Spectre. Il pacchetto di prova locale può usare il prebuild di node-pty. Il packaging standard richiede la ricompilazione. Il controllo dei percorsi con maiuscole diverse verifica l'identità della directory sul volume.
 
+**Revisione e merge (Claude):** la CI era rossa su un solo test (`paths.test.ts`): nel runner `tmpdir()` è un percorso corto 8.3, quindi l'alias in maiuscolo differiva per grafia dalla radice e veniva rifiutato correttamente. Corretto il test con `realpath` (commit `7264c75`, modulo invariato); CI verde. `/code-review high`: 9 punti minori (ambiente del pty non filtrato, link dei Problems legati alla cartella dell'app, link del terminale per `file(12,5):`, altri in `PROSSIMI_PASSI.md`). PR #40 unita (`4b928ab`). I crediti Codex sono finiti dopo questa fase.
+
 ---
 
 ## 2026-11-17 — Fixture `Notification` (sessione-07), 4.1 sbloccata

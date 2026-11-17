@@ -20,6 +20,7 @@ function setup(
   programs = {
     claude: { command: 'claude.exe', args: [] } as { command: string; args: string[] } | undefined,
   },
+  openGate?: Promise<void>,
 ) {
   const dataDir = mkdtempSync(join(tmpdir(), 'cc-svc-'));
   dirs.push(dataDir);
@@ -31,13 +32,11 @@ function setup(
     }
   > = [];
   const open = (async (options: ClaudeSessionOptions) => {
-    const send = vi.fn((_text: string, onAccepted?: () => void) => {
-      onAccepted?.();
-      return 'started' as const;
-    });
+    const send = vi.fn(() => 'started' as const);
     const close = vi.fn(async () => {});
     const respond = vi.fn(() => true);
     opened.push({ ...options, send, close, respond });
+    await openGate;
     return {
       id: options.sessionId ?? '',
       status: 'idle' as const,
@@ -82,7 +81,7 @@ describe('Claude service', () => {
     await expect(service.close(2, ID)).resolves.toBe(false);
     expect(opened[0]?.send).not.toHaveBeenCalled();
     expect(service.send(1, ID, 'hi', active)).toBe('started');
-    expect(opened[0]?.send).toHaveBeenCalledWith('hi', expect.any(Function));
+    expect(opened[0]?.send).toHaveBeenCalledWith('hi');
     await service.closeAll();
   });
 
@@ -149,13 +148,17 @@ describe('Claude service', () => {
     });
     const session = opened[0]!;
     session.send.mockImplementationOnce(() => 'busy');
+    session.send.mockImplementationOnce(() => {
+      session.onEvents([event(0)]);
+      throw new Error('Could not spawn Claude');
+    });
     let seq = 0;
-    session.send.mockImplementation((_text: string, onAccepted: () => void) => {
-      onAccepted();
+    session.send.mockImplementation(() => {
       session.onEvents([event(seq++)]);
       return 'started';
     });
     expect(service.send(1, ID, 'skip this', active)).toBe('busy');
+    expect(() => service.send(1, ID, 'skip this too', active)).toThrow('Could not spawn Claude');
     expect(service.send(1, ID, 'first prompt', active)).toBe('started');
     expect(service.send(1, ID, 'second prompt', active)).toBe('started');
     const records = [
@@ -211,6 +214,25 @@ describe('Claude service', () => {
     expect(service.send(1, ID, 'hi', active)).toBe('closed');
     await service.closeAll();
     expect(opened[1]?.close).toHaveBeenCalled();
+  });
+
+  it('waits for an opening session to be closed during shutdown', async () => {
+    let finishOpen!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      finishOpen = resolve;
+    });
+    const { service, opened, publish } = setup(undefined, gate);
+    const start = service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await vi.waitFor(() => expect(opened).toHaveLength(1));
+    void service.closeOwner(1);
+    const shutdownDone = vi.fn();
+    const shutdown = service.closeAll().then(shutdownDone);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(shutdownDone).not.toHaveBeenCalled();
+    finishOpen();
+    await expect(start).resolves.toBe('failed');
+    await shutdown;
+    expect(opened[0]?.close).toHaveBeenCalledTimes(1);
   });
 
   it('reports a session that cannot open', async () => {

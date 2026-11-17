@@ -68,6 +68,9 @@ test.describe('chat dock', () => {
     await expect(page.getByTestId('status-bar').getByText('Permission needed')).toBeVisible();
     await expect(request).toContainText('echo once');
     await expect(request.getByLabel('Tool arguments')).toContainText(/… \(truncated, \d+ chars\)/);
+    await expect(request).toContainText(
+      'Approval includes the arguments omitted from this preview.',
+    );
     await expect(request).toContainText('example.txt');
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(960, 600));
     await expect(request.getByRole('button', { name: 'Always in this session' })).toBeInViewport();

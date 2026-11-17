@@ -57,6 +57,7 @@ export function createClaudeHistory(dataDir: string) {
   return {
     writer(workspaceId: string, id: string, resume: boolean, failed: () => void) {
       const path = file(workspaceId, id);
+      let started = resume;
       let created = resume;
       let queuedBytes = 0;
       let accepting = true;
@@ -64,9 +65,9 @@ export function createClaudeHistory(dataDir: string) {
       let checkTail = resume;
       let queue = Promise.resolve();
       return (record: Record) => {
-        if (disabled || !accepting || (!created && queuedBytes === 0 && record.kind !== 'prompt'))
-          return;
-        const first = !created && queuedBytes === 0 && record.kind === 'prompt';
+        if (disabled || !accepting || (!started && record.kind !== 'prompt')) return;
+        const first = !started && record.kind === 'prompt';
+        started = true;
         const metadata = first
           ? JSON.stringify({
               version: 1,

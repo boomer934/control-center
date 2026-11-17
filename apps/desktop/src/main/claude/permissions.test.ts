@@ -45,6 +45,7 @@ describe('Claude control permissions', () => {
     const command = 'x'.repeat(MAX_CLAUDE_PERMISSION_DETAILS + 20);
     permissions.receive(ask('long', command));
     const request = ClaudePermissionSchema.parse(publish.mock.lastCall?.[0]?.[0]);
+    expect(request.truncated).toBe(true);
     const fullLength = JSON.stringify({ command }, null, 2).length;
     expect(request.details).toHaveLength(MAX_CLAUDE_PERMISSION_DETAILS);
     expect(request.details.endsWith(`… (truncated, ${fullLength} chars)`)).toBe(true);
@@ -62,8 +63,11 @@ describe('Claude control permissions', () => {
     const publish = vi.fn();
     const permissions = createClaudePermissions((text) => text, write, publish);
     permissions.receive(ask('same', 'echo first'));
+    const request = ClaudePermissionSchema.parse(publish.mock.lastCall?.[0]?.[0]);
     permissions.receive(ask('same', 'echo duplicate'));
-    expect(publish).toHaveBeenCalledTimes(1);
+    expect(publish).toHaveBeenLastCalledWith([]);
+    expect(permissions.respond(request.requestId, 'approve')).toBe(false);
+    expect(write).toHaveBeenCalledTimes(1);
     expect(JSON.parse(write.mock.calls[0]![0])).toMatchObject({
       type: 'control_response',
       response: { request_id: 'same', subtype: 'error' },

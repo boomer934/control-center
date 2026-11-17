@@ -163,7 +163,12 @@ export function useClaudeChat(workspaceId?: string) {
         }
         if (result === 'closed') {
           owners.current.delete(id);
-          update(workspace, (value) => ({ ...value, id: undefined, status: 'closed' }));
+          update(workspace, (value) => ({
+            ...value,
+            id: undefined,
+            status: 'closed',
+            permissions: [],
+          }));
         }
         update(workspace, (value) => ({
           ...value,
@@ -182,11 +187,12 @@ export function useClaudeChat(workspaceId?: string) {
           const request = value.permissions.find(
             (permission) => permission.requestId === requestId,
           );
-          const error = !request
-            ? 'This permission request is no longer open.'
-            : choice === 'session' && !request.canRemember
-              ? 'This session has reached its approval limit. Choose Approve or Deny.'
-              : 'Could not submit the permission decision. Try again.';
+          const error =
+            !value.id || !request
+              ? 'This permission request is no longer open.'
+              : choice === 'session' && !request.canRemember
+                ? 'This session has reached its approval limit. Choose Approve or Deny.'
+                : 'Could not submit the permission decision. Try again.';
           return { ...value, error };
         });
       }, 'Wait for the current action to finish, then submit your permission decision again.'),

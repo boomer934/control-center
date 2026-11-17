@@ -61,11 +61,14 @@ if (!app.requestSingleInstanceLock()) {
       event.preventDefault();
       if (quitting) return;
       quitting = true;
-      void disposeIpc().finally(() => {
-        app.removeListener('will-quit', drainHistory);
-        // Let Electron finish cancelling the original quit before trying again.
-        setImmediate(() => app.quit());
-      });
+      void Promise.resolve()
+        .then(disposeIpc)
+        .catch(() => errors.logger.error('main', 'app-shutdown-failed'))
+        .finally(() => {
+          app.removeListener('will-quit', drainHistory);
+          // Let Electron finish cancelling the original quit before trying again.
+          setImmediate(() => app.quit());
+        });
     });
     createMainWindow(devServer);
   });

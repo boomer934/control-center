@@ -35,10 +35,13 @@ const MAX_SESSION_APPROVALS = 128;
 const deny = (message: string): Decision => ({ behavior: 'deny', message });
 const allow = (tool: ToolRequest): Decision => ({ behavior: 'allow', updatedInput: tool.input });
 
-function truncateDetails(details: string): string {
-  if (details.length <= MAX_CLAUDE_PERMISSION_DETAILS) return details;
+function displayDetails(details: string): Pick<ClaudePermission, 'details' | 'truncated'> {
+  if (details.length <= MAX_CLAUDE_PERMISSION_DETAILS) return { details, truncated: false };
   const marker = `… (truncated, ${details.length} chars)`;
-  return details.slice(0, MAX_CLAUDE_PERMISSION_DETAILS - marker.length) + marker;
+  return {
+    details: details.slice(0, MAX_CLAUDE_PERMISSION_DETAILS - marker.length) + marker,
+    truncated: true,
+  };
 }
 
 export function createClaudePermissions(
@@ -68,13 +71,16 @@ export function createClaudePermissions(
       const envelope = controlEnvelope.safeParse(line);
       if (!envelope.success) return true;
       const wireId = envelope.data.request_id;
+      const existing = [...pending.values()].find((entry) => entry.wireId === wireId);
       if (line.type === 'control_cancel_request') {
-        const existing = [...pending.values()].find((entry) => entry.wireId === wireId);
         if (existing && pending.delete(existing.view.requestId)) update();
         return true;
       }
-      if ([...pending.values()].some((entry) => entry.wireId === wireId)) {
-        reply(wireId, { subtype: 'error', error: 'Duplicate pending control request ID' });
+      if (existing) {
+        if (reply(wireId, { subtype: 'error', error: 'Duplicate pending control request ID' })) {
+          pending.delete(existing.view.requestId);
+          update();
+        }
         return true;
       }
       const parsed = toolRequest.safeParse(line.request);
@@ -105,7 +111,7 @@ export function createClaudePermissions(
       const view = {
         requestId,
         tool: displayTool,
-        details: truncateDetails(clean(JSON.stringify(tool.input, null, 2))),
+        ...displayDetails(clean(JSON.stringify(tool.input, null, 2))),
       };
       pending.set(requestId, { wireId, tool, fingerprint, view });
       update();

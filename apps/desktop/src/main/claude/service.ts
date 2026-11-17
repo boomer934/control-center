@@ -39,6 +39,7 @@ interface Entry {
   record?: (record: ClaudeHistoryRecord) => void;
   clean: (text: string) => string;
   session?: ClaudeSession;
+  opening?: Promise<ClaudeSession>;
   closed: boolean;
   closing?: Promise<void>;
 }
@@ -62,7 +63,8 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
     entry.closed = true;
     return (entry.closing ??= (async () => {
       try {
-        await entry.session?.close();
+        const session = entry.session ?? (await entry.opening?.catch(() => undefined));
+        await session?.close();
       } finally {
         await history.flush(entry.workspaceId, entry.historyId);
         release(id, entry);
@@ -93,6 +95,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           return 'history-unavailable';
         }
         const { claude, hooks } = await deps.programs();
+        if (entry.closed) return 'failed';
         if (!claude) {
           release(id, entry);
           return 'claude-unavailable';
@@ -111,7 +114,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           write(record);
           publish({ ...record, id });
         };
-        const session = await open({
+        entry.opening = open({
           sessionId: id,
           cwd,
           dataDir: deps.dataDir,
@@ -137,12 +140,11 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           onPartial: (text) => publish({ kind: 'partial', id, text }),
           onSessionId: (nativeId) => write({ kind: 'resume', id: nativeId }),
         });
+        const session = await entry.opening;
+        // The disposer is responsible for closing a session that finishes opening late.
+        if (entry.closed) return 'failed';
+        entry.opening = undefined;
         hooksOn = session.hooks;
-        if (entry.closed) {
-          // the window went away while the session was opening
-          await session.close();
-          return 'failed';
-        }
         entry.session = session;
         publish({ kind: 'status', id, status: 'idle', hooks: hooksOn });
         return 'started';
@@ -169,15 +171,25 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       if (!entry) return 'closed';
       if (!isActive(entry.workspaceId)) return 'workspace-unavailable';
       if (!entry.session) return 'busy';
-      return entry.session.send(text, () => {
-        // The CLI may echo a user message, but it need not. Record exactly what was sent.
-        entry.record?.({
-          kind: 'prompt',
-          text: entry
-            .clean(text.slice(0, MAX_CLAUDE_MESSAGE_CHARS))
-            .slice(0, MAX_CLAUDE_MESSAGE_CHARS),
-        });
+      const record = entry.record;
+      const earlyRecords: ClaudeHistoryRecord[] = [];
+      // The session may emit events synchronously before reporting whether it started the turn.
+      entry.record = (event) => earlyRecords.push(event);
+      let result: ClaudeSendResult;
+      try {
+        result = entry.session.send(text);
+      } finally {
+        entry.record = record;
+      }
+      if (result !== 'started') return result;
+      record?.({
+        kind: 'prompt',
+        text: entry
+          .clean(text.slice(0, MAX_CLAUDE_MESSAGE_CHARS))
+          .slice(0, MAX_CLAUDE_MESSAGE_CHARS),
       });
+      for (const event of earlyRecords) record?.(event);
+      return result;
     },
 
     respond(

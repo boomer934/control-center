@@ -181,7 +181,9 @@ export function registerIpc(
       close() {
         owners.delete(id);
         terminals.closeOwner(id);
-        void claudeSessions.closeOwner(id);
+        void claudeSessions.closeOwner(id).catch(() => {
+          errors.logger.error('main', 'claude-window-close-failed');
+        });
         contents.off('did-start-navigation', onNavigation);
         contents.off('render-process-gone', owner.close);
         contents.off('destroyed', owner.close);

@@ -196,7 +196,7 @@ test.describe('components page (visual)', () => {
       // Nothing may move or be hovered while the screenshots are taken.
       await page.mouse.move(0, 0);
       for (const id of sections) {
-        await expect(page.getByTestId(`gal-${id}`)).toHaveScreenshot(`${id}-${mode}.png`, {
+        await expect.soft(page.getByTestId(`gal-${id}`)).toHaveScreenshot(`${id}-${mode}.png`, {
           animations: 'disabled',
           caret: 'hide',
         });

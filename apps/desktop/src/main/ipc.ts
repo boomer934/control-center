@@ -1,10 +1,17 @@
 // The only file of the main process that touches ipcMain (enforced by ESLint): it registers the
-// handlers of @control-center/ipc-contract behind the sender check.
+// handlers of @control-center/ipc-contract behind the sender check, and pushes the contract
+// events to the trusted windows only (ADR 0007).
 import { app, BrowserWindow, clipboard, ipcMain, type IpcMainInvokeEvent } from 'electron';
-import type { Handlers } from '@control-center/ipc-contract';
-import { registerIpcHandlers } from '@control-center/ipc-contract/main';
+import { contract, type Handlers } from '@control-center/ipc-contract';
+import {
+  createEventEmitter,
+  registerIpcHandlers,
+  type Emit,
+  type EventReceiver,
+} from '@control-center/ipc-contract/main';
 import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
+import { coalesce, makeFailureRouter } from './ipc-events';
 import { isAppUrl } from './security/urls';
 
 /** Windows created by the app itself; IPC from any other WebContents is refused. */
@@ -61,13 +68,46 @@ function makeHandlers(errors: ErrorsService): Handlers {
   };
 }
 
+/**
+ * The receivers of push events: the same windows whose IPC is trusted, still alive and still
+ * showing an app URL. `webContents.send` reaches the top-level frame only.
+ */
+export function trustedReceivers(devServer: URL | null): EventReceiver[] {
+  const out: EventReceiver[] = [];
+  for (const id of trustedWindowIds) {
+    const win = BrowserWindow.fromId(id);
+    if (!win || win.isDestroyed()) continue;
+    const contents = win.webContents;
+    if (contents.isDestroyed() || !isAppUrl(contents.getURL(), devServer)) continue;
+    out.push({ send: (channel, payload) => contents.send(channel, payload) });
+  }
+  return out;
+}
+
+/** At most one `errors:changed` every this many ms: an error storm is one reload, not hundreds. */
+const ERRORS_CHANGED_DELAY_MS = 50;
+
 export function registerIpc(devServer: URL | null, errors: ErrorsService): () => void {
-  return registerIpcHandlers(ipcMain, makeHandlers(errors), {
+  const reportFailure = makeFailureRouter(errors);
+
+  const disposeHandlers = registerIpcHandlers(ipcMain, makeHandlers(errors), {
     isTrustedSender: makeSenderCheck(devServer),
-    onFailure: ({ channel, code, cause, issues }) => {
-      // Never the payload: only the channel, the failure code and the error of the handler.
-      // A zod error would list the received values, so for those only `issues` is kept.
-      errors.reportIpcFailure(channel, code, issues ? undefined : cause, issues);
-    },
+    onFailure: reportFailure,
   });
+
+  const emit: Emit = createEventEmitter({
+    targets: () => trustedReceivers(devServer),
+    onFailure: reportFailure,
+  });
+
+  const errorsChanged = coalesce(ERRORS_CHANGED_DELAY_MS, () =>
+    emit(contract.errors.changed, { revision: errors.store.revision }),
+  );
+  const stopErrors = errors.store.onChange(errorsChanged.trigger);
+
+  return () => {
+    stopErrors();
+    errorsChanged.cancel();
+    disposeHandlers();
+  };
 }

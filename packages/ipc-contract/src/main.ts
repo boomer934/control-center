@@ -7,16 +7,23 @@
 //   4. response validation, so a handler bug can never leak unexpected data to the renderer.
 // Failures become an `{ ok: false }` envelope: no exception ever crosses the IPC boundary.
 //
+// It also builds the emitter of push events (ADR 0007): contract events only, payload validated,
+// delivered only to the targets the app trusts.
+//
 // This module does not import Electron, so the gate is unit-testable with a fake ipcMain.
 import type { z } from 'zod';
 import {
   contract,
+  listEvents,
   listMethods,
+  type EventPayload,
+  type EventSpec,
   type HandlerContext,
   type Handlers,
   type InvokeSpec,
   type IpcEnvelope,
   type IpcErrorCode,
+  type IpcEventFailureCode,
 } from './contract';
 
 /** The part of an IPC event the gate reads. Electron's IpcMainInvokeEvent satisfies it. */
@@ -32,7 +39,7 @@ export interface IpcMainLike<E> {
 
 export interface IpcFailure {
   readonly channel: string;
-  readonly code: IpcErrorCode;
+  readonly code: IpcErrorCode | IpcEventFailureCode;
   /** The original error, for the main-process log only: it is never sent to the renderer. */
   readonly cause?: unknown;
   /** For schema failures: paths and messages only, never the received values. */
@@ -138,6 +145,66 @@ async function gate<E extends IpcSenderEvent>(
     return fail('invalid-response', 'Invalid response from main process');
   }
   return { ok: true, value: response.data };
+}
+
+// ── Push events ─────────────────────────────────────────────────────────────
+
+/** A renderer that may receive events. In the app: the WebContents of a trusted window. */
+export interface EventReceiver {
+  send(channel: string, payload: unknown): void;
+}
+
+export interface EmitterOptions {
+  /** The receivers of an event, chosen by the app (trusted windows only). Read at every emit. */
+  targets(): Iterable<EventReceiver>;
+  /** Called for every event that was refused or could not be delivered (logging). */
+  onFailure?(failure: IpcFailure): void;
+}
+
+/** Pushes one contract event. Returns how many targets received it. */
+export type Emit = <S extends EventSpec>(spec: S, payload: EventPayload<S>) => number;
+
+export function createEventEmitter(options: EmitterOptions): Emit {
+  // Identity, not just the name: a spec built outside the contract is refused even if its
+  // channel string matches.
+  const known = new Set<EventSpec>(listEvents().map(([, , spec]) => spec));
+
+  return (spec, payload) => {
+    const channel = typeof spec?.channel === 'string' ? spec.channel : '(unknown)';
+    if (!known.has(spec)) {
+      options.onFailure?.({ channel, code: 'unknown-event' });
+      return 0;
+    }
+    const parsed = spec.payload.safeParse(payload);
+    if (!parsed.success) {
+      options.onFailure?.({
+        channel,
+        code: 'invalid-event',
+        cause: parsed.error,
+        issues: describeIssues(parsed.error),
+      });
+      return 0;
+    }
+    let targets: EventReceiver[];
+    try {
+      // Never throws out of emit: callers run it from timers, where an exception would be
+      // recorded as an error and could push the next event, and so on.
+      targets = [...options.targets()];
+    } catch (cause) {
+      options.onFailure?.({ channel, code: 'send-failed', cause });
+      return 0;
+    }
+    let delivered = 0;
+    for (const target of targets) {
+      try {
+        target.send(channel, parsed.data);
+        delivered += 1;
+      } catch (cause) {
+        options.onFailure?.({ channel, code: 'send-failed', cause });
+      }
+    }
+    return delivered;
+  };
 }
 
 export { contract };

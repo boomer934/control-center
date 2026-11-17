@@ -8,7 +8,7 @@ Leggere prima di toccare IPC, processi figli, file system, segreti, Docker, brid
 | ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---- |
 | Renderer            | XSS dall'output degli agenti (Markdown, log) → accesso all'IPC  | sandbox, CSP, Markdown sanitizzato, niente HTML raw                                                | 3    |
 | IPC                 | comandi arbitrari dal renderer                                  | canali espliciti in `ipc-contract`, zod, controllo del mittente, nessun "esegui comando" generico  | 3    |
-| Hooks/MCP bridge    | un processo locale invia eventi falsi                           | named pipe con permessi utente + token casuale per sessione, niente TCP                            | 4, 7 |
+| Hooks/MCP bridge    | un processo locale invia eventi falsi                           | named pipe con permessi utente + token casuale per sessione, niente TCP (4.1: ADR 0009)            | 4, 7 |
 | File system         | path traversal, symlink fuori dal workspace                     | normalizzazione + verifica del percorso reale                                                      | 4    |
 | Docker              | il socket equivale a privilegi elevati                          | sola lettura di default, conferma sulle azioni                                                     | 6    |
 | Porte               | esposizione involontaria                                        | solo lettura delle porte locali, avviso su `0.0.0.0`, nessuna scansione remota                     | 6    |
@@ -63,6 +63,20 @@ Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/des
 - `workspace:open-file` ricontrolla il workspace attivo e apre il file canonico come argomento di Notepad, senza applicare associazioni di file. E2E: apertura dal terminale e rifiuto di percorsi esterni.
 - `terminal:start` accetta solo due profili definiti nel main e un ID di workspace attivo. Le operazioni usano ID di pty vincolati al mittente e l'input richiede anche il workspace attivo. Il main chiude ogni pty alla perdita del renderer proprietario. Test: `terminal/service.test.ts` ed E2E.
 - Il main raggruppa i dati ConPTY, con controllo di flusso e payload validati, e li invia solo al proprietario. Il testo del terminale rimane nel buffer di xterm. I link OSC 8 non avviano navigazioni. Gli stili di xterm usano CSSOM con CSP invariata, verificata dall'E2E del terminale.
+
+### Hooks bridge e sessione Claude (4.1, ADR 0009)
+
+Test: **B** = `packages/hooks-bridge/src/bridge.test.ts`, **S** = `apps/desktop/src/main/claude/session.test.ts`, **K** = `apps/desktop/src/main/claude/cli.test.ts`, **V** = `apps/desktop/src/main/claude/service.test.ts`, **E2E** = `apps/desktop/e2e/app/claude.spec.ts`.
+
+- **Pipe:** nome casuale a 128 bit per sessione, niente TCP. Se il nome esiste già, `listen` fallisce: niente pipe-squatting silenzioso (B).
+- **Rifiuti:** il server rifiuta senza token, con token vuoto, sbagliato o troppo lungo (confronto a tempo costante su SHA-256), JSON malformato, campi in più, versione diversa, payload fuori schema, oltre 1 MiB, client muto per 5 s, oltre 16 connessioni (B). Ogni rifiuto va in Console come `bridge-rejected` con il solo codice; il reporter non riceve mai token né payload (B, S con messaggi falsi durante una run vera, che restano fuori dalla timeline).
+- **Token:** 256 bit, solo in `bridge.json` nella cartella dati della sessione, mai nell'ambiente di `claude` né nella riga di comando. La cartella si cancella alla chiusura (S) e quelle rimaste da un crash al primo avvio (K).
+- **Script degli hooks:** esce sempre con 0, non scrive su stdout e non stampa mai il token (B). Accetta solo un percorso assoluto che finisce in `bridge.json`, un file regolare di al massimo 4 KiB, e lo valida con zod.
+- **Comando degli hooks:** tre percorsi tra virgolette, con i caratteri che una shell interpreta rifiutati invece che escapati (K). Gli hooks stanno in un `settings.json` temporaneo passato con `--settings`: `~/.claude*` non si tocca.
+- **Avvio di `claude`:** il processo parte senza shell, nella radice del workspace verificata dal servizio dei workspace. L'ambiente è quello dell'utente senza le variabili `ELECTRON_*`. L'id per `--resume` è validato (niente `-` iniziale). La CLI si cerca solo nelle voci assolute del PATH (K). `taskkill` si avvia dal percorso completo di `System32`.
+- **Stdout:** ogni riga è JSON con un `type` valido (zod) prima dei normalizzatori. Le righe oltre 16 Mi caratteri e quelle non valide vengono scartate e contate in Console (S).
+- **IPC:** la sessione appartiene alla finestra che l'ha aperta. Un'altra finestra non può inviare, interrompere o chiudere (V). Si invia solo mentre il workspace della sessione è attivo (V). Il testo è limitato a 100 000 caratteri e non può essere vuoto (E2E). Gli eventi del push sono `AgentEvent` validati, al massimo 200 per messaggio (V).
+- **Albero dei processi:** interruzione e chiusura terminano anche gli script degli hooks e i comandi dei tool ancora attivi nel workspace (S).
 
 ## Privacy
 

@@ -10,7 +10,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. ✅ **[Utente + Claude] (F2, prima della F4.1)** Fixture di `Notification`: `sessione-07` registrata e ripulita (branch `feat/fixture-notification`, commit `3ec6f97`). Resta il merge della PR a CI verde (l'utente).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
-3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, poi il terminale (sbloccato, la 4.0 è su `main`): l'output del pty è un evento nuovo del contratto (`event(...)`, schema limitato) e il main raggruppa i dati prima di inviarli (ADR 0007).
+3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Risoluzione percorsi e persistenza recenti pronte nel main. Collegare il workspace a IPC e UI, poi aggiungere il terminale con output raggruppato via push (ADR 0007) e verificare i flussi E2E.
 
 ## Dopo
 

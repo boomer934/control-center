@@ -38,7 +38,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
-- **Ora:** 4.2 workspace e terminale (`gpt-6.1-sol`, high), branch `feat/workspace-terminal`, nel worktree `..\control-center-codex`. Prima workspace e modulo dei percorsi; il terminale dopo il merge della 4.0.
+- **Fatto (2026-11-17):** servizi del main per risolvere i percorsi Windows e conservare i workspace recenti con ID stabili. Test su traversal, symlink simulati, junction reali, UNC simulati, ripristino e scritture concorrenti.
+- **Ora:** 4.2 workspace e terminale (`gpt-6.1-sol`, high), branch `feat/workspace-terminal`, nel worktree `..\control-center-codex`. Dopo il merge della 4.0, fare rebase e collegare il servizio tramite il contratto IPC, con dialog nativo, selettore `Ctrl+P`, layout per workspace e apertura file nell'editor. Poi terminale e test E2E.
 - **Poi:** 4.3 (dopo 4.0, 4.1 e 4.2 unite), poi 4b.
 
 ## Cosa funziona

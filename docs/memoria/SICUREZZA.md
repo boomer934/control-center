@@ -56,6 +56,11 @@ Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/des
 - Il preload non passa mai l'`IpcRendererEvent` (il suo `sender` è `ipcRenderer`), rivalida il payload, scarta messaggi con più argomenti e rifiuta listener che non sono funzioni. Test: C `events in createApi`, E `IPC events`.
 - Niente cicli: un errore di un iscritto si segnala una volta sola per errore distinto; un rifiuto di `errors:changed` va solo nel log; `emit` non lancia mai. Test: C e `apps/desktop/src/main/ipc-events.test.ts`.
 
+### Workspace (4.2, servizi del main)
+
+- Il servizio dei recenti ha un ingresso riservato al main per il futuro selettore nativo e usa un ID per riaprire le cartelle già registrate. Al ripristino controlla che il percorso salvato risolva ancora alla stessa cartella canonica. Test: `workspace/service.test.ts`.
+- Il risolutore verifica i confini del workspace prima di risolvere il percorso reale, poi accetta solo file regolari con percorso canonico interno. Rifiuta i percorsi Win32 ambigui, i percorsi di dispositivo e gli stream alternativi. Test: `workspace/paths.test.ts`, con junction reali su Windows e casi symlink e UNC simulati.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude su `feat/hooks-bridge`, in PR; `pnpm verify` verde, 323 test più 1 saltato (prova reale); crediti Codex finiti)_
+_Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude unita su `main` con la PR #42, CI verde; crediti Codex finiti)_
 
 ## Fase
 
@@ -16,7 +16,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude su `feat/h
 
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
-- **4.1**, hooks bridge e sessione Claude: implementata su `feat/hooks-bridge` (ADR 0009). `/code-review high` fatto: 7 punti, 6 corretti. In attesa di CI e merge.
+- **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera.
 - **4.3** (chat e permessi, Codex) resta da fare: parte dal namespace IPC `claude` della 4.1.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
@@ -25,7 +25,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude su `feat/h
 
 ## Branch
 
-Claude: `feat/hooks-bridge` (4.1, PR aperta). Codex: `feat/workspace-terminal` è unito (PR #40); il worktree `..control-center-codex` va riportato su `main` prima della 4.3. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38) e la 4.2 (PR #40, `4b928ab`).
+Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-1-merge`); `feat/hooks-bridge` è unito (PR #42). Codex: `feat/workspace-terminal` è unito (PR #40); il worktree `..control-center-codex` va riportato su `main` prima della 4.3. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38) la 4.2 (PR #40, `4b928ab`) e la 4.1 (PR #42, `ecb78f3`).
 
 ## Punto di ripresa
 
@@ -37,7 +37,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (fixture `Notification`, PR #38):** `sessione-07` registrata di nuovo il 2026-11-17 e ripulita (12 righe di hooks, nessuno stream): un `Read`, un permesso approvato dopo l'attesa (`Notification` con `notification_type: permission_prompt`) e un rifiuto fatto da una persona. Il blocco della 4.1 è tolto. Due lezioni: `npx --version` e `git log -1` sono di sola lettura e Claude Code non chiede il permesso, quindi non nasce `Notification` (serve un comando che scrive, per esempio `Set-Content`); e `VERNIER_HOOKS_SESSION` va impostata nella stessa finestra PowerShell che lancia `claude`, altrimenti gli hooks finiscono in `unnamed.hooks.jsonl`. Un permesso rifiutato a mano lascia solo `PreToolUse`: `mergeClaudeSession` chiude le chiamate rimaste aperte a fine sessione come `tool.failed` con motivo `interrupted` (è un'inferenza: nel live della 4.1 il rifiuto va letto da un altro segnale). Unita su `main` con la PR #38 (`d6d08da`).
 - **Fatto (4.0):** canale push main → renderer nel contratto (ADR 0007), unito su `main` con la PR #35 (`4c2ef5c`). Eventi `event('ns:nome', schema)` accanto ai metodi; `createEventEmitter` nel main (solo eventi del contratto, payload validato, solo finestre fidate); `window.api.<ns>.onX(listener)` nel preload (un listener `ipcRenderer` per canale, payload rivalidato, mai l'`IpcRendererEvent`). Primo evento `errors:changed`: la Console Errori non interroga più ogni secondo. `/code-review high`: 5 punti trovati e corretti (ciclo di segnalazione da un iscritto che lancia, `targets()` fuori dal `try`, iscritto orfano, test del raggruppamento, E2E con attesa fissa).
 - **Fatto (4.2, revisione e CI):** il test dei percorsi su Windows cadeva nel runner perché `tmpdir()` è un percorso corto 8.3 (`RUNNER~1`): corretto nel test con `realpath` (commit `7264c75`, modulo invariato). `/code-review high` sulla PR #40: 9 punti minori, nessuno bloccante.
-- **Fatto (4.1, `feat/hooks-bridge`, ADR 0009):**
+- **Fatto (4.1, PR #42, `ecb78f3`, ADR 0009):**
   - normalizzatori incrementali (`ClaudeStreamNormalizer`, `ClaudeHooksNormalizer`) e merge dal vivo `LiveClaudeSession`, che sulle 7 fixture dà gli stessi fatti del batch;
   - `packages/hooks-bridge`: named pipe e token casuali per sessione. I rifiuti vanno in Console con il solo codice. Lo script degli hooks lo esegue Node dal sorgente TS;
   - sessione nel main:
@@ -56,8 +56,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - `pnpm e2e:packaged` non rieseguito.
 - **Prova con la CLI vera (Claude Code 2.1.326):** una run breve che legge un file. Claude Code ha eseguito il comando degli hooks tra virgolette e la pipe ha accettato tutti i messaggi (zero rifiuti), con `file.read` arrivato dagli hooks. La prova ha mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`: ora il merge dal vivo li trattiene finché arriva `init`, così `session.started` conserva modello e versione. Il test resta nella repo, saltato salvo `CC_REAL_CLAUDE=1` (`real-claude.smoke.test.ts`). La 2.1.326 è stata aggiunta alle versioni testate.
 - **Non verificato:** manca la seconda opinione di Astra sulla pipe (crediti Codex finiti).
-- **Ora:** PR della 4.1 in attesa di CI e merge.
-- **Poi:** 5a.
+- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-4-1-merge`).
+- **Poi:** 5a (Opus 5.5, high). Se i crediti Codex non tornano, la 4.3 passa a Claude e va prima della 5a, perché completa la Fase 4.
 
 ### Corsia Codex
 
@@ -65,13 +65,13 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Verificato in locale:** `pnpm verify` verde, 51 E2E funzionali, 9 E2E del pacchetto con il prebuild di node-pty. Rivisti selettore e terminale a 960×600 nei due temi, rilevatore impeccable senza rilievi. Gli screenshot di regressione dei componenti vengono verificati in CI.
 - **Fatto:** 4.2 unita (PR #40). La build del pacchetto ricompila node-pty per Electron; per il pacchetto di prova locale si può usare il prebuild perché nell'installazione MSVC locale manca il componente Spectre.
 - **Ora:** nessun task. Crediti Codex finiti il 2026-11-17: riprendere quando tornano.
-- **Poi:** 4.3 (dopo la 4.1; 4.0 e 4.2 sono già su `main`), poi 4b.
+- **Poi:** 4.3, sbloccata (4.0, 4.1 e 4.2 sono su `main`); poi 4b. La revisione di Astra sulla pipe della 4.1 è ancora da fare.
 
 ## Cosa funziona
 
 - ✅ `apps/desktop` (electron-vite, Electron 45.3.3, React 19): `pnpm dev`, `pnpm build`, `pnpm e2e`, `pnpm e2e:packaged`.
 - ✅ Renderer da `app://control-center/`, CSP in header e `<meta>`. `packages/ipc-contract` ha i namespace `app`, `errors`, `shell`, `workspace`, `terminal` e `claude` (4.1) e gli eventi push `errors:changed`, `terminal:updated` e `claude:updated`.
-- ✅ Sessione Claude dal main con hooks via named pipe (4.1, su `feat/hooks-bridge`). È provata con il finto `claude` e con una run reale di Claude Code 2.1.326.
+- ✅ Sessione Claude dal main con hooks via named pipe (4.1, su `main`). È provata con il finto `claude` e con una run reale di Claude Code 2.1.326.
 - ✅ Sulla 4.0, il 2026-11-17 (prima del merge): `pnpm verify` verde (237 test, 0 errori di lint); `pnpm e2e` 46 verdi su 48, i 2 rossi sono i test visivi che in locale falliscono sempre per i font (vedi sotto). `pnpm e2e:packaged` non rieseguito.
 - ✅ `packages/app-log` e Console Errori (3b), ora nel dock inferiore "Problems".
 - ✅ Design system in codice (3c): token → Tailwind v4, `componenti.css` importato, componenti base, temi `system|dark|light` (preferenza in `localStorage`, `system` segue l'OS) e densità, shell a pannelli ridimensionabili con layout ricordato, barra attività, barra di stato, command palette (`Ctrl+K`, `Ctrl+Shift+P`), dialog `?`, scorciatoie con ambiti di focus (terminale, campi di testo, Live, dialog), `Ctrl+1…7`, pagina `#/components` con test visivi.

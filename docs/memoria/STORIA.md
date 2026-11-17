@@ -26,6 +26,8 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - la prova con la CLI vera (2.1.326) è riuscita: gli hooks arrivano dalla pipe senza rifiuti. Ha però mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima di `init`, e `session.started` perdeva modello e versione. Ora il merge dal vivo trattiene quegli hooks fino a `init`. La prova resta come test da attivare con `CC_REAL_CLAUDE=1`;
 - la revisione di Astra non c'è perché i crediti Codex sono finiti.
 
+**Merge:** PR #42 unita (`ecb78f3`) con tutti i controlli CI verdi.
+
 ---
 
 ## 2026-11-17 — Workspace e terminale della 4.2

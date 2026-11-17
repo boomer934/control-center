@@ -78,4 +78,4 @@ Skill di progetto:
 
 Ogni fase ha modello, effort, uso di ultracode e un testo da usare con `/goal` in `docs/memoria/PIANO.md` (sezione "Modello, effort, ultracode e goal"). Ogni goal si chiude con la memoria aggiornata.
 
-Il lavoro è diviso in due corsie parallele, Claude e Codex, descritte in `docs/memoria/CORSIE.md` (fase per fase: corsia, modello, effort, revisione). Ogni agente lavora nel proprio worktree e aggiorna solo la propria sezione di `STATO.md`. Per le fasi Codex valgono modello ed effort di `CORSIE.md`.
+Il lavoro è diviso in due corsie parallele, Claude e Codex, descritte in `docs/memoria/CORSIE.md` (fase per fase: corsia, modello, effort, revisione). Ogni agente lavora nel proprio worktree e aggiorna solo la propria sezione di `STATO.md`. Per le fasi Codex valgono modello ed effort di `CORSIE.md`. Le regole generali di convivenza (albero separato, assegnazione automatica, file caldi, revisione incrociata) sono nella sezione "Sviluppo parallelo Claude + Codex" delle istruzioni globali (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`); in caso di conflitto vale `CORSIE.md`.

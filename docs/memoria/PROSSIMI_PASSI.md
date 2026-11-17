@@ -9,8 +9,8 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. **[Utente] (F2, prima della F4.1)** Ripetere la registrazione di `sessione-07`: la prima non ha catturato `Notification` (10 righe di hooks, nessuna `Notification`). Guida in `scripts/fixtures/README.md`, passi 6-11; prima `/hooks` nel progetto di prova per controllare che `Notification` sia caricato, poi lasciare la richiesta di permesso in attesa 10 secondi. Poi `sanitize.mjs`, rilettura a mano e `npx vitest run packages/fixtures -u` (Claude).
-2. **[Claude] (F4.0)** Canale push: fatto su `feat/ipc-push-channel` (ADR 0007). Resta la PR; merge dell'utente a CI verde.
-3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, il terminale dopo il merge della 4.0: l'output del pty è un evento nuovo del contratto (`event(...)`, schema limitato) e il main raggruppa i dati prima di inviarli (ADR 0007).
+2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
+3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, poi il terminale (sbloccato, la 4.0 è su `main`): l'output del pty è un evento nuovo del contratto (`event(...)`, schema limitato) e il main raggruppa i dati prima di inviarli (ADR 0007).
 
 ## Dopo
 

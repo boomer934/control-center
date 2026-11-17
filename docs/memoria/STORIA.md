@@ -4,7 +4,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
-## 2026-11-17 — Fase 3b: logger, cattura errori e Console Errori
+## 2026-11-17 — Fase 3b: logger, cattura errori e Console Errori (PR #25, `2c64bf8`)
 
 **Fatto** (branch `feat/errors-console`, commit `faac590`)
 

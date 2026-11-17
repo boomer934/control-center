@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b completata su `feat/errors-console`, commit `faac590`, non ancora pushata)_
+_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b unita su `main`)_
 
 ## Fase
 
@@ -13,17 +13,16 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b completata su `feat/errors-cons
 **Fase 3 — Shell sicura**: in corso.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
-- **3b**, logger e Console Errori: ✅ completata e committata in locale (ADR 0005), da pushare, aprire in PR e unire.
+- **3b**, logger e Console Errori: ✅ completata, PR #25 unita su `main` (`2c64bf8`, squash) con i 6 check verdi (ADR 0005).
 - **3c**, design system in codice: da fare.
 
 ## Branch
 
-`feat/errors-console` (da `main` a `0ac5fa4`), un commit locale (`faac590`), **non ancora pushato**. La 3c parte da `main` dopo il merge, branch proposto `feat/desktop-ui`.
+`main` (ultimo merge: `2c64bf8`, PR #25). La 3c parte da `main` su un branch nuovo, proposto `feat/desktop-ui`.
 
 ## Punto di ripresa
 
-- **Subito:** `pnpm verify` è verde e la 3b è committata in locale: pushare, aprire la PR e unirla a mano a CI verde.
-- **Poi:** la 3c (Sonnet 5.5, effort medium), con il goal di `FASE_3.md`.
+- **Prossimo:** la 3c (Sonnet 5.5, effort medium), con il goal di `FASE_3.md`.
 - **Per la 3c:**
   - la shell attuale (`App.tsx`) ha un layout provvisorio con barra di stato e pannello Errori: la 3c lo sostituisce con pannelli, barra attività e palette, e porta dentro il contatore e la Console;
   - la Console usa solo token, ma in `shell.css`; da riportare nei componenti del design system;
@@ -40,7 +39,7 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3b completata su `feat/errors-cons
   - `pnpm verify` verde: 184 test, 0 errori di lint, 136 warning del plugin security;
   - `pnpm e2e` (build `--mode e2e`): 29 test verdi, di cui 10 sulla Console Errori;
   - `pnpm e2e:packaged`: 8 test verdi (Fuses, nessun fault injector, source map nel pacchetto).
-- ✅ CI su GitHub: ultima verifica sulla 3a (corsa 44087946083). **La 3b non è ancora passata dalla CI**: in particolare il processo figlio dell'E2E esegue un `.ts` con Node (type stripping, Node 24 in CI) e va controllato lì.
+- ✅ CI su GitHub: i 6 check della PR #25 sono verdi, compreso il processo figlio dell'E2E con Node 24.
 - ✅ Già da prima: `@control-center/event-schema` e `@control-center/fixtures`, hook git, gitleaks in CI, design della Fase 1.
 
 ## Blocchi e avvertenze

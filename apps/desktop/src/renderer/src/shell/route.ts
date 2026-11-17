@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SECTIONS, type SectionId } from '../keys/registry';
 
 /** Views of the app: the seven sections plus the internal components page. */
@@ -16,10 +16,14 @@ export function hrefOf(route: RouteId): string {
 }
 
 /** Hash-based routing: no server, and every view is a real link. */
-export function useRoute(): [RouteId, (route: RouteId) => void] {
-  const [route, setRoute] = useState<RouteId>(() => parseRoute(window.location.hash));
+export function useRoute(restored?: RouteId): [RouteId, (route: RouteId) => void] {
+  const initial = useRef(restored);
+  const [route, setRoute] = useState<RouteId>(
+    () => initial.current ?? parseRoute(window.location.hash),
+  );
 
   useEffect(() => {
+    if (initial.current) window.history.replaceState(null, '', hrefOf(initial.current));
     const onHash = () => setRoute(parseRoute(window.location.hash));
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);

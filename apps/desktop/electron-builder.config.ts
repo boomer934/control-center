@@ -6,11 +6,12 @@ const config: Configuration = {
   appId: 'dev.control-center.app',
   productName: 'Control Center',
   directories: { output: 'release', buildResources: 'build' },
-  // Everything is bundled by electron-vite into out/: no node_modules in the package.
+  // The native terminal module and its worker need real filesystem paths.
   // Source maps stay inside the package: the Errors Console maps stacks to the TypeScript sources.
   files: ['out/**/*', 'package.json'],
   asar: true,
-  npmRebuild: false,
+  asarUnpack: ['**/node_modules/node-pty/**/*'],
+  npmRebuild: process.env.CC_USE_PREBUILT_PTY !== '1',
   // See docs/memoria/SICUREZZA.md (Electron checklist). Verified by e2e/packaged/fuses.spec.ts.
   electronFuses: {
     runAsNode: false,

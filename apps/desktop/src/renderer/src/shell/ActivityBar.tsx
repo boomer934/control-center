@@ -2,12 +2,15 @@ import { Icon } from '../ui/icons';
 import { Badge } from '../ui/primitives';
 import { SECTIONS, shortcutFor } from '../keys/registry';
 import { hrefOf, type RouteId } from './route';
+import type { WorkspaceDto } from '@control-center/ipc-contract/workspace';
 
 interface ActivityBarProps {
   current: RouteId;
   /** Icons only: the numbers on the badges disappear (never the bar itself). */
   compact: boolean;
   errorCount: number;
+  workspace: WorkspaceDto | null;
+  onChooseWorkspace(): void;
 }
 
 function titleOf(id: string, label: string): string {
@@ -15,14 +18,33 @@ function titleOf(id: string, label: string): string {
   return combo ? `${label} (${combo})` : label;
 }
 
-export function ActivityBar({ current, compact, errorCount }: ActivityBarProps) {
+export function ActivityBar({
+  current,
+  compact,
+  errorCount,
+  workspace,
+  onChooseWorkspace,
+}: ActivityBarProps) {
   const main = SECTIONS.filter((s) => s.id !== 'settings');
   const settings = SECTIONS.find((s) => s.id === 'settings');
   return (
     <aside className="act" data-compact={compact || undefined} data-testid="activity-bar">
-      <div className="ws none" title="No workspace">
-        <span>+</span>
-      </div>
+      <button
+        className={workspace ? 'ws' : 'ws none'}
+        type="button"
+        aria-label="Switch workspace"
+        aria-haspopup="dialog"
+        title={workspace ? `${workspace.name} (Ctrl+P)` : 'Open a workspace (Ctrl+P)'}
+        onClick={onChooseWorkspace}
+      >
+        <span>
+          {workspace ? (
+            [...workspace.name].slice(0, 2).join('').toUpperCase()
+          ) : (
+            <Icon name="plus" />
+          )}
+        </span>
+      </button>
       <nav aria-label="Sections">
         {main.map((s) => (
           <a

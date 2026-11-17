@@ -64,7 +64,23 @@ const errorsStub: Handlers['errors'] = {
 function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unknown }> = {}) {
   const getInfo = vi.fn(() => (overrides.getInfo ?? info) as AppInfo);
   const openExternal = vi.fn(({ url }: { url: string }) => ({ opened: url.startsWith('https:') }));
-  const handlers: Handlers = { app: { getInfo }, errors: errorsStub, shell: { openExternal } };
+  const handlers: Handlers = {
+    app: { getInfo },
+    errors: errorsStub,
+    shell: { openExternal },
+    workspace: {
+      getState: () => ({ active: null, recent: [] }),
+      chooseFolder: () => null,
+      selectRecent: () => null,
+      openFile: () => false,
+    },
+    terminal: {
+      start: () => 'workspace-unavailable',
+      write: () => false,
+      resize: () => false,
+      close: () => false,
+    },
+  };
   return { handlers, getInfo, openExternal };
 }
 
@@ -86,8 +102,20 @@ describe('contract', () => {
       'errors:clear',
       'errors:changed',
       'shell:open-external',
+      'workspace:get-state',
+      'workspace:choose-folder',
+      'workspace:select-recent',
+      'workspace:open-file',
+      'terminal:start',
+      'terminal:write',
+      'terminal:resize',
+      'terminal:close',
+      'terminal:updated',
     ]);
-    expect(listEvents().map(([, , spec]) => spec.channel)).toEqual(['errors:changed']);
+    expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
+      'errors:changed',
+      'terminal:updated',
+    ]);
     expect(listMethods()).toHaveLength(listChannels().length - listEvents().length);
   });
 
@@ -185,12 +213,12 @@ describe('registerIpcHandlers (main)', () => {
     registerIpcHandlers(
       ipc,
       {
+        ...makeHandlers().handlers,
         app: {
           getInfo: () => {
             throw new Error(`cannot read ${secretPath}`);
           },
         },
-        errors: errorsStub,
         shell: { openExternal: () => ({ opened: false }) },
       },
       { isTrustedSender, onFailure },
@@ -248,7 +276,7 @@ describe('registerIpcHandlers (main)', () => {
 describe('createApi (preload)', () => {
   it('exposes exactly the contract methods, deeply frozen', () => {
     const api = createApi(async () => ({ ok: true, value: null }), noSubscribe);
-    expect(Object.keys(api)).toEqual(['app', 'errors', 'shell']);
+    expect(Object.keys(api)).toEqual(['app', 'errors', 'shell', 'workspace', 'terminal']);
     expect(Object.keys(api.app)).toEqual(['getInfo']);
     expect(Object.keys(api.errors)).toEqual([
       'list',
@@ -258,6 +286,13 @@ describe('createApi (preload)', () => {
       'onChanged',
     ]);
     expect(Object.keys(api.shell)).toEqual(['openExternal']);
+    expect(Object.keys(api.workspace)).toEqual([
+      'getState',
+      'chooseFolder',
+      'selectRecent',
+      'openFile',
+    ]);
+    expect(Object.keys(api.terminal)).toEqual(['start', 'write', 'resize', 'close', 'onUpdated']);
     expect(Object.isFrozen(api)).toBe(true);
     expect(Object.isFrozen(api.app)).toBe(true);
     expect(Object.isFrozen(api.shell)).toBe(true);

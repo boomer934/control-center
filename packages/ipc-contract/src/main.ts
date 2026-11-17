@@ -29,6 +29,7 @@ import {
 /** The part of an IPC event the gate reads. Electron's IpcMainInvokeEvent satisfies it. */
 export interface IpcSenderEvent {
   readonly senderFrame?: { readonly url: string } | null;
+  readonly sender?: { readonly id: number };
 }
 
 /** The part of Electron's ipcMain the registrar uses. */
@@ -132,7 +133,10 @@ async function gate<E extends IpcSenderEvent>(
 
   let raw: unknown;
   try {
-    raw = await handler(request.data, { senderUrl });
+    raw = await handler(request.data, {
+      senderUrl,
+      ...(event.sender ? { senderId: event.sender.id } : {}),
+    });
   } catch (cause) {
     report('handler-failed', cause);
     // The message stays generic: handler errors may carry paths or other local details.

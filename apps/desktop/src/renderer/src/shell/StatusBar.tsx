@@ -1,5 +1,6 @@
 import { Glyph, Icon } from '../ui/icons';
 import type { Density, ThemePref } from '../theme/theme';
+import type { WorkspaceDto } from '@control-center/ipc-contract/workspace';
 
 interface StatusBarProps {
   errorCount: number;
@@ -8,6 +9,7 @@ interface StatusBarProps {
   theme: ThemePref;
   density: Density;
   onCycleTheme(): void;
+  workspace: WorkspaceDto | null;
 }
 
 /**
@@ -21,9 +23,15 @@ export function StatusBar({
   theme,
   density,
   onCycleTheme,
+  workspace,
 }: StatusBarProps) {
   return (
     <footer className="status" data-testid="status-bar">
+      {workspace && (
+        <span className="status-workspace" title={workspace.root}>
+          {workspace.name}
+        </span>
+      )}
       <span>No session</span>
       <span className={errorCount > 0 ? 'err' : undefined}>
         <button

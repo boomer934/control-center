@@ -78,6 +78,15 @@ export async function createWorkspaceService(stateFile: string) {
 
   return {
     state,
+    isActive(id: string): boolean {
+      return active !== null && workspaceId(active) === id;
+    },
+    async activeRootFor(id: string): Promise<WorkspaceRoot | null> {
+      const root = active;
+      if (!root || workspaceId(root) !== id) return null;
+      const current = await resolveWorkspaceRoot(root);
+      return current === root && active === root ? current : null;
+    },
     /** The directory comes from the main process's native picker. */
     openSelectedFolder(selected: string) {
       return enqueue(async () => {

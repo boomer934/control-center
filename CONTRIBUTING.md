@@ -11,6 +11,8 @@ pnpm verify         # format check, typecheck, lint, unit tests
 
 Optional but recommended: install [gitleaks](https://github.com/gitleaks/gitleaks) (`winget install gitleaks`) so secrets are caught before you commit.
 
+The Windows package rebuilds node-pty with Electron's headers. Install the Visual Studio C++ desktop workload with the matching x64 Spectre-mitigated libraries to run this build locally. Use `pnpm --filter @control-center/desktop rebuild:native` to rebuild it separately. Development can use the prebuild provided by node-pty. Set `CC_USE_PREBUILT_PTY=1` to test the unpacked package with that prebuild on a machine without the Spectre libraries.
+
 ## Workflow
 
 - Branch from `main` with a short-lived branch: `feat/…`, `fix/…`, `docs/…`, `chore/…`.

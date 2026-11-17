@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const WorkspaceIdSchema = z.hash('sha256', { enc: 'hex' });
-const WorkspacePathSchema = z.string().min(1).max(32_767);
+export const WorkspacePathSchema = z.string().min(1).max(32_767);
 export const MAX_RECENT_WORKSPACES = 20;
 
 export const RecentWorkspaceRootsSchema = z.array(WorkspacePathSchema).max(MAX_RECENT_WORKSPACES);

@@ -10,7 +10,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. ✅ **[Utente + Claude] (F2, prima della F4.1)** Fixture di `Notification`: `sessione-07` registrata e ripulita (branch `feat/fixture-notification`, commit `3ec6f97`). Resta il merge della PR a CI verde (l'utente).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
-3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Risoluzione percorsi e persistenza recenti pronte nel main. Collegare il workspace a IPC e UI, poi aggiungere il terminale con output raggruppato via push (ADR 0007) e verificare i flussi E2E.
+3. **[Codex] (F4.2)** Workspace e terminale implementati su `feat/workspace-terminal` (ADR 0008). Revisione Claude `/code-review high` e merge dell'utente a CI verde.
 
 ## Dopo
 
@@ -23,7 +23,6 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 - **(F3, minore)** Includere i font (Instrument Sans, Martian Mono) nel pacchetto: file locali con `@font-face`, CSP `font-src 'self'` già a posto; decidere la licenza/fonte nell'ADR.
 - **(F3, minore)** `aria-live` per il contatore errori; provare il layout a finestra stretta; title bar personalizzata solo se serve (richiede lavoro nel main).
 - **(F4+)** Prefissi della palette (`/` file, `@` agenti, `#` sessioni, `!` locali) e scorciatoie `Ctrl+O`, `Ctrl+Shift+A`, `Ctrl+L`: arrivano con le funzioni che servono.
-- **(F4)** Metodo IPC per aprire un frame dello stack nell'editor, con i controlli di percorso.
 - **(F10)** Provare a mano la mappatura degli stack nel pacchetto (`app.asar`); decidere se l'installer include le source map.
 
 - **(F4)** Il ponte degli hooks deve consegnare gli eventi in tempo reale. `normalizeClaudeHooks` collega gli hooks dei subagent alla chiamata `Agent` solo a posteriori; dal vivo l'attribuzione va presa dallo stream (`parent_tool_use_id`). I normalizzatori oggi sono funzioni batch: dal vivo serviranno versioni incrementali.

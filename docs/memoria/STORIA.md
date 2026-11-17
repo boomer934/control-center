@@ -4,6 +4,16 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Workspace e terminale della 4.2
+
+**Fatto:** dialog nativo, recenti, selettore `Ctrl+P`, ripristino del layout, percorsi canonici verificati, link al file e terminali a schede in PowerShell e Git Bash. L'output usa il canale push della 4.0.
+
+**Decisioni:** ADR 0008. Notepad apre i file come testo. Ogni pty appartiene alla finestra e al workspace. Gli stili del terminale usano CSSOM con la CSP invariata.
+
+**Problemi:** l'installazione Visual Studio locale non contiene le librerie MSVC Spectre. Il pacchetto di prova locale può usare il prebuild di node-pty. Il packaging standard richiede la ricompilazione.
+
+---
+
 ## 2026-11-17 — 4.0 unita, memoria allineata
 
 **Fatto:**

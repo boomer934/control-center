@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./main": "./src/main.ts",
     "./preload": "./src/preload.ts",
-    "./workspace": "./src/workspace.ts"
+    "./workspace": "./src/workspace.ts",
+    "./terminal": "./src/terminal.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

@@ -7,6 +7,15 @@
 // capability means adding a channel here, with its own narrow schemas, and reviewed code in the
 // main process. See docs/memoria/SICUREZZA.md.
 import { z } from 'zod';
+import {
+  TerminalResizeSchema,
+  TerminalResultSchema,
+  TerminalStartSchema,
+  TerminalTargetSchema,
+  TerminalUpdateSchema,
+  TerminalWriteSchema,
+} from './terminal';
+import { WorkspaceIdSchema, WorkspacePathSchema, WorkspaceStateSchema } from './workspace';
 
 /** One request/response method: renderer → main, answered by a single handler. */
 export interface InvokeSpec<
@@ -175,6 +184,31 @@ export const contract = {
       OpenExternalResponseSchema,
     ),
   },
+  workspace: {
+    getState: invoke('workspace:get-state', NoRequest, WorkspaceStateSchema),
+    chooseFolder: invoke('workspace:choose-folder', NoRequest, WorkspaceStateSchema.nullable()),
+    selectRecent: invoke(
+      'workspace:select-recent',
+      z.strictObject({ id: WorkspaceIdSchema }),
+      WorkspaceStateSchema.nullable(),
+    ),
+    openFile: invoke(
+      'workspace:open-file',
+      z.strictObject({
+        workspaceId: WorkspaceIdSchema,
+        path: WorkspacePathSchema,
+        source: z.enum(['terminal', 'problems']),
+      }),
+      z.boolean(),
+    ),
+  },
+  terminal: {
+    start: invoke('terminal:start', TerminalStartSchema, TerminalResultSchema),
+    write: invoke('terminal:write', TerminalWriteSchema, z.boolean()),
+    resize: invoke('terminal:resize', TerminalResizeSchema, z.boolean()),
+    close: invoke('terminal:close', TerminalTargetSchema, z.boolean()),
+    updated: event('terminal:updated', TerminalUpdateSchema),
+  },
 } as const;
 
 export type Contract = typeof contract;
@@ -304,6 +338,8 @@ type MethodKeys<NS extends Namespace> = {
 export interface HandlerContext {
   /** URL of the frame that sent the request. */
   readonly senderUrl: string;
+  /** ID of the trusted Electron WebContents, when provided by the IPC transport. */
+  readonly senderId?: number;
 }
 
 /** One handler per contract method: the main process must implement all of them. */

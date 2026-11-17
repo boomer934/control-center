@@ -43,7 +43,7 @@ function readAsar(path: string): Array<[string, Buffer]> {
 
 test('the production code has no E2E fault injectors', () => {
   const files = readAsar(ASAR);
-  const code = files.filter(([p]) => p.endsWith('.js'));
+  const code = files.filter(([p]) => p.startsWith('/out/') && p.endsWith('.js'));
   // main, preload and the renderer bundle
   expect(code.map(([p]) => p).sort()).toEqual([
     expect.stringMatching(/^\/out\/main\/index\.js$/),
@@ -64,4 +64,13 @@ test('source maps ship inside the package, so the Errors Console can map stacks'
   expect(names).toContain('/out/main/index.js.map');
   expect(names).toContain('/out/preload/index.js.map');
   expect(names.some((p) => /^\/out\/renderer\/assets\/index-[\w-]+\.js\.map$/.test(p))).toBe(true);
+});
+
+test('node-pty ships unpacked with its native ConPTY module and worker', () => {
+  const pty = join(ASAR + '.unpacked', 'node_modules', 'node-pty');
+  expect(existsSync(join(pty, 'lib', 'worker', 'conoutSocketWorker.js'))).toBe(true);
+  expect(
+    existsSync(join(pty, 'build', 'Release', 'conpty.node')) ||
+      existsSync(join(pty, 'prebuilds', 'win32-x64', 'conpty.node')),
+  ).toBe(true);
 });

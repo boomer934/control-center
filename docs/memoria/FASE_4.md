@@ -95,6 +95,7 @@ Una sessione o un loop per sotto-fase, su un branch `feat/…` con PR e merge a 
 ### 4.2 — Workspace e terminale
 
 - **Branch proposto:** `feat/workspace-terminal`.
+- **Stato:** implementazione pronta sul branch, con revisione e merge dalla PR. Vedi [ADR 0008](../adr/0008-workspace-e-terminale.md).
 - **Produce:**
   - **workspace:**
     - elenco dei recenti e aggiunta da cartella (dialog nativo nel main);

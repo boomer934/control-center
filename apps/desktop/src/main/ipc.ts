@@ -261,6 +261,14 @@ export function registerIpc(
     },
     send: async ({ id, text }, { senderId }) =>
       claudeSessions.send(senderId, id, text, (await getWorkspaces()).isActive),
+    respond: async (request, { senderId }) =>
+      claudeSessions.respond(senderId, request, (await getWorkspaces()).isActive),
+    listHistory: async ({ workspaceId }) =>
+      (await getWorkspaces()).isActive(workspaceId) ? claudeSessions.listHistory(workspaceId) : [],
+    readHistory: async ({ workspaceId, historyId }) =>
+      (await getWorkspaces()).isActive(workspaceId)
+        ? claudeSessions.readHistory(workspaceId, historyId)
+        : null,
     interrupt: ({ id }, { senderId }) => claudeSessions.interrupt(senderId, id),
     close: ({ id }, { senderId }) => claudeSessions.close(senderId, id),
   };

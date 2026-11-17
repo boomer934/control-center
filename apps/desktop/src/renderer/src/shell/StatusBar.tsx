@@ -10,11 +10,13 @@ interface StatusBarProps {
   density: Density;
   onCycleTheme(): void;
   workspace: WorkspaceDto | null;
+  sessionOpen: boolean;
+  waiting: boolean;
+  onShowSession(): void;
 }
 
 /**
  * Status bar of the design system. Segments by priority, from the left: wait, problems, session…
- * Only what exists today is shown (no session, no agents yet); absences are neutral, never red.
  */
 export function StatusBar({
   errorCount,
@@ -24,15 +26,25 @@ export function StatusBar({
   density,
   onCycleTheme,
   workspace,
+  sessionOpen,
+  waiting,
+  onShowSession,
 }: StatusBarProps) {
   return (
     <footer className="status" data-testid="status-bar">
+      {waiting && (
+        <span className="s-waiting">
+          <button type="button" className="status-btn" onClick={onShowSession}>
+            <Glyph name="s-waiting" /> Permission needed
+          </button>
+        </span>
+      )}
       {workspace && (
         <span className="status-workspace" title={workspace.root}>
           {workspace.name}
         </span>
       )}
-      <span>No session</span>
+      <span>{sessionOpen ? 'Claude session' : 'No session'}</span>
       <span className={errorCount > 0 ? 'err' : undefined}>
         <button
           type="button"

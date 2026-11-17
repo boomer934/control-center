@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (4.1 chiusa: PR #42, memoria #43, correzione del test instabile #44, tutte su `main`; crediti Codex finiti)_
+_Ultimo aggiornamento: 2026-11-17 (4.3 implementata su `feat/claude-chat`, in attesa della revisione incrociata)_
 
 ## Fase
 
@@ -17,7 +17,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.1 chiusa: PR #42, memoria #43, correzione d
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
-- **4.3** (chat e permessi, Codex) resta da fare: parte dal namespace IPC `claude` della 4.1.
+- **4.3**, chat, permessi e cronologia: implementata su `feat/claude-chat` (ADR 0010). Revisione Claude sul flusso dei permessi prima del merge.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -25,7 +25,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.1 chiusa: PR #42, memoria #43, correzione d
 
 ## Branch
 
-Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-1-chiusura`); `feat/hooks-bridge` (PR #42), `docs/memoria-4-1-merge` (PR #43) e `fix/session-test-cleanup` (PR #44) sono uniti. Codex: `feat/workspace-terminal` è unito (PR #40); il worktree `..control-center-codex` va riportato su `main` prima della 4.3. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38) la 4.2 (PR #40, `4b928ab`) e la 4.1 (PR #42, `ecb78f3`, con la correzione del test #44, `54bce84`).
+Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-1-chiusura`); `feat/hooks-bridge` (PR #42), `docs/memoria-4-1-merge` (PR #43) e `fix/session-test-cleanup` (PR #44) sono uniti. Codex: `feat/claude-chat` nel worktree `..control-center-codex`, a partire da `origin/main` (`41fc09c`). `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38), la 4.2 (PR #40, `4b928ab`) e la 4.1 (PR #42, `ecb78f3`, con la correzione del test #44, `54bce84`).
 
 ## Punto di ripresa
 
@@ -61,11 +61,11 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
-- **Fatto (2026-11-17):** implementazione 4.2 su `feat/workspace-terminal` (ADR 0008). Dialog nativo, recenti e `Ctrl+P`, layout per workspace, apertura dei file verificati in Notepad, terminali a schede PowerShell e Git Bash con output push. Le schede restano attive durante i cambi di workspace.
-- **Verificato in locale:** `pnpm verify` verde, 51 E2E funzionali, 9 E2E del pacchetto con il prebuild di node-pty. Rivisti selettore e terminale a 960×600 nei due temi, rilevatore impeccable senza rilievi. Gli screenshot di regressione dei componenti vengono verificati in CI.
-- **Fatto:** 4.2 unita (PR #40). La build del pacchetto ricompila node-pty per Electron; per il pacchetto di prova locale si può usare il prebuild perché nell'installazione MSVC locale manca il componente Spectre.
-- **Ora:** nessun task. Crediti Codex finiti il 2026-11-17: riprendere quando tornano.
-- **Poi:** 4.3, sbloccata (4.0, 4.1 e 4.2 sono su `main`); poi 4b. La revisione di Astra sulla pipe della 4.1 è ancora da fare.
+- **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
+- **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.
+- **Verifica visiva:** Electron a 960×600 nei due temi. Le azioni dei permessi e il focus sugli argomenti sono verificati dall'E2E. Rilevatore Impeccable senza rilievi.
+- **Ora:** revisione incrociata Claude Opus `high` sul flusso dei permessi della 4.3, poi merge dell'utente a CI verde.
+- **Poi:** 4b. La revisione di Astra sulla pipe della 4.1 è ancora da fare.
 
 ## Cosa funziona
 

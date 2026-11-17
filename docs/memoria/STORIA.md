@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Chat, permessi e cronologia (4.3)
+
+**Fatto:** dock Session con testo in streaming, Markdown, codice e strumenti richiudibili. La timeline usa gli eventi normalizzati. Lo storico JSONL viene ricaricato dopo il riavvio e una conversazione salvata può continuare con `--resume`. Il finto eseguibile verifica approvazione, rifiuto, ripetizione identica, argomenti diversi e interruzione.
+
+**Decisioni:** ADR 0010 per React Markdown, il protocollo stdin e lo storico ripulito. Il ricordo di un permesso è limitato allo stesso strumento con gli stessi argomenti e alla stessa sessione aperta.
+
+**Verifiche e problemi:** `pnpm verify` verde con 326 test, 53 E2E funzionali verdi. A 960×600 le azioni dei permessi potevano uscire dall'area visibile della chat. La richiesta ora occupa una sezione fissa e la barra di stato può portare il focus agli argomenti. Impeccable senza rilievi, controllo visivo nei due temi. Resta la revisione Claude sul flusso dei permessi prima del merge.
+
 ## 2026-11-17 — Hooks bridge e sessione Claude (4.1)
 
 **Fatto:**

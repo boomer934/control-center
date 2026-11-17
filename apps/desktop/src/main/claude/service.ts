@@ -3,16 +3,21 @@
 // Like the terminals (4.2), every session belongs to the window that opened it (`owner`): only
 // that window can drive it, only that window receives its updates, and the session closes with
 // the window. A message is sent only while the session's workspace is still the active one.
+import { randomUUID } from 'node:crypto';
 import type { ErrorInput } from '@control-center/app-log';
-import type { AgentEvent } from '@control-center/event-schema';
+import { makeTextCleaner, type AgentEvent } from '@control-center/event-schema';
 import {
   CLAUDE_EVENTS_PER_UPDATE,
+  MAX_CLAUDE_MESSAGE_CHARS,
   MAX_CLAUDE_SESSIONS,
+  type ClaudeHistoryRecord,
+  type ClaudePermissionChoice,
   type ClaudeSendResult,
   type ClaudeStartResult,
   type ClaudeUpdate,
 } from '@control-center/ipc-contract/claude';
 import type { Program } from './cli';
+import { createClaudeHistory } from './history';
 import { openClaudeSession, type ClaudeSession } from './session';
 import { removeStaleSessions, type HookRunner } from './session-files';
 
@@ -30,6 +35,9 @@ export interface ClaudeServiceDeps {
 interface Entry {
   owner: number;
   workspaceId: string;
+  historyId: string;
+  record?: (record: ClaudeHistoryRecord) => void;
+  clean: (text: string) => string;
   session?: ClaudeSession;
   closed: boolean;
 }
@@ -37,56 +45,94 @@ interface Entry {
 export function createClaudeService(deps: ClaudeServiceDeps) {
   const open = deps.open ?? openClaudeSession;
   const sessions = new Map<string, Entry>();
+  const history = createClaudeHistory(deps.dataDir);
   // folders left by a crash go before the first session writes its own
   const cleaned = removeStaleSessions(deps.dataDir).catch(() => 0);
 
   const owned = (owner: number | undefined, id: string) => {
     const entry = sessions.get(id);
-    return entry && entry.owner === owner ? entry : undefined;
+    return entry && !entry.closed && entry.owner === owner ? entry : undefined;
   };
 
+  const release = (id: string, entry: Entry) => {
+    if (sessions.get(id) === entry) sessions.delete(id);
+  };
   const dispose = async (id: string, entry: Entry) => {
+    if (entry.closed) return;
     entry.closed = true;
-    sessions.delete(id);
-    await entry.session?.close();
+    try {
+      await entry.session?.close();
+    } finally {
+      release(id, entry);
+    }
   };
 
   return {
     async start(
       owner: number,
-      request: { id: string; workspaceId: string },
+      request: { id: string; workspaceId: string; historyId?: string },
       cwd: string,
       publish: Publish,
     ): Promise<ClaudeStartResult> {
       const { id, workspaceId } = request;
       if (sessions.has(id) || sessions.size >= MAX_CLAUDE_SESSIONS) return 'limit';
-      const entry: Entry = { owner, workspaceId, closed: false };
+      const historyId = request.historyId ?? randomUUID();
+      if ([...sessions.values()].some((entry) => entry.historyId === historyId))
+        return 'history-unavailable';
+      const clean = makeTextCleaner(cwd);
+      const entry: Entry = { owner, workspaceId, historyId, clean, closed: false };
       sessions.set(id, entry);
       try {
         await cleaned;
+        const previous = request.historyId ? await history.read(workspaceId, historyId) : null;
+        if (request.historyId && !previous?.resume) {
+          release(id, entry);
+          return 'history-unavailable';
+        }
         const { claude, hooks } = await deps.programs();
         if (!claude) {
-          sessions.delete(id);
+          release(id, entry);
           return 'claude-unavailable';
         }
         let hooksOn = false;
+        const write = history.writer(workspaceId, historyId, previous !== null, () =>
+          deps.report({
+            origin: 'main',
+            source: 'claude',
+            kind: 'claude-setup',
+            name: 'HistoryWriteFailed',
+            message: 'Could not save Claude session history',
+          }),
+        );
+        entry.record = (record) => {
+          write(record);
+          publish({ ...record, id });
+        };
         const session = await open({
           sessionId: id,
           cwd,
           dataDir: deps.dataDir,
           claude,
           hooks,
+          resume: previous?.resume,
           env: deps.env,
           report: deps.report,
           onEvents: (events: AgentEvent[]) => {
-            for (let i = 0; i < events.length; i += CLAUDE_EVENTS_PER_UPDATE)
-              publish({
-                kind: 'events',
-                id,
-                events: events.slice(i, i + CLAUDE_EVENTS_PER_UPDATE),
-              });
+            for (let i = 0; i < events.length; i += CLAUDE_EVENTS_PER_UPDATE) {
+              const batch = events.slice(i, i + CLAUDE_EVENTS_PER_UPDATE);
+              // Some upstream event labels and IDs are free text. Clean them before disk I/O.
+              const safe = JSON.parse(
+                JSON.stringify(batch, (_key, value: unknown) =>
+                  typeof value === 'string' ? clean(value) : value,
+                ),
+              ) as AgentEvent[];
+              entry.record?.({ kind: 'events', events: safe });
+            }
           },
           onStatus: (status) => publish({ kind: 'status', id, status, hooks: hooksOn }),
+          onPermissions: (requests) => publish({ kind: 'permissions', id, requests }),
+          onPartial: (text) => publish({ kind: 'partial', id, text }),
+          onSessionId: (nativeId) => write({ kind: 'resume', id: nativeId }),
         });
         hooksOn = session.hooks;
         if (entry.closed) {
@@ -98,7 +144,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
         publish({ kind: 'status', id, status: 'idle', hooks: hooksOn });
         return 'started';
       } catch (error) {
-        sessions.delete(id);
+        release(id, entry);
         deps.report({
           origin: 'main',
           source: 'claude',
@@ -120,7 +166,27 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       if (!entry) return 'closed';
       if (!isActive(entry.workspaceId)) return 'workspace-unavailable';
       if (!entry.session) return 'busy';
-      return entry.session.send(text);
+      const result = entry.session.send(text);
+      if (result === 'started') {
+        // The CLI may echo a user message, but it need not. Record exactly what was sent.
+        entry.record?.({
+          kind: 'prompt',
+          text: entry
+            .clean(text.slice(0, MAX_CLAUDE_MESSAGE_CHARS))
+            .slice(0, MAX_CLAUDE_MESSAGE_CHARS),
+        });
+      }
+      return result;
+    },
+
+    respond(
+      owner: number | undefined,
+      request: { id: string; requestId: string; choice: ClaudePermissionChoice },
+      isActive: (workspaceId: string) => boolean,
+    ): boolean {
+      const entry = owned(owner, request.id);
+      if (!entry?.session || !isActive(entry.workspaceId)) return false;
+      return entry.session.respond(request.requestId, request.choice);
     },
 
     interrupt(owner: number | undefined, id: string): boolean {
@@ -146,6 +212,12 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
 
     closeAll(): Promise<void> {
       return Promise.all([...sessions].map(([id, e]) => dispose(id, e))).then(() => undefined);
+    },
+
+    listHistory: history.list,
+    async readHistory(workspaceId: string, id: string) {
+      const result = await history.read(workspaceId, id);
+      return result && { records: result.records, resumable: result.resume !== undefined };
     },
   };
 }

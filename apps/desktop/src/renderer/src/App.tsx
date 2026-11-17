@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import type { AppInfo } from '@control-center/ipc-contract';
 import type { WorkspaceState } from '@control-center/ipc-contract/workspace';
+import { SessionDock, SessionTimeline } from './chat/SessionDock';
+import { useClaudeChat } from './chat/useClaudeChat';
 import { ErrorBoundary } from './errors/ErrorBoundary';
 import { ErrorConsole } from './errors/ErrorConsole';
 import { FaultProbe } from './errors/faults';
@@ -138,6 +140,8 @@ function AppShell({
 }) {
   const [info, setInfo] = useState<InfoState>({ kind: 'loading' });
   const workspaceId = workspaces.active?.id;
+  const chat = useClaudeChat(workspaceId);
+  const [permissionFocus, setPermissionFocus] = useState(0);
   const { layout, setLayout } = useWorkspaceLayout(workspaceId);
   const { bottomOpen, bottomDock, rightOpen, compactBar } = layout;
   const [route, go] = useRoute(workspaceId ? (layout.route ?? 'live') : undefined);
@@ -316,7 +320,10 @@ function AppShell({
 
   const view =
     route === 'live' ? (
-      <LiveView state={info} />
+      <>
+        <LiveView state={info} />
+        <SessionTimeline records={chat.records} />
+      </>
     ) : route === 'components' ? (
       <ComponentsPage />
     ) : (
@@ -416,16 +423,13 @@ function AppShell({
             <>
               <Separator className="sep sep-v" />
               <Panel id="right" defaultSize="26%" minSize="15%" maxSize="50%">
-                <aside
-                  className="dock-fill dock-side"
-                  aria-label="Session"
-                  data-testid="right-dock"
-                >
-                  <h2 className="dock-title">Session</h2>
-                  <p className="shell-muted">
-                    No session yet. The session dock arrives in Phase 4.
-                  </p>
-                </aside>
+                <SessionDock
+                  key={workspaceId}
+                  workspace={workspaceId}
+                  chat={chat}
+                  chooseWorkspace={toggleWorkspaces}
+                  permissionFocus={permissionFocus}
+                />
               </Panel>
             </>
           )}
@@ -436,6 +440,12 @@ function AppShell({
         problemsOpen={bottomOpen && bottomDock === 'problems'}
         onToggleProblems={toggleProblems}
         workspace={workspaces.active}
+        sessionOpen={Boolean(chat.id)}
+        waiting={chat.permissions.length > 0}
+        onShowSession={() => {
+          setLayout((value) => ({ ...value, rightOpen: true }));
+          setPermissionFocus((value) => value + 1);
+        }}
         theme={theme.theme}
         density={theme.density}
         onCycleTheme={() => theme.setTheme(nextThemePref(theme.theme))}

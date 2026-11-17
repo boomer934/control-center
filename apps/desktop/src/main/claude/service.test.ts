@@ -24,18 +24,24 @@ function setup(
   const dataDir = mkdtempSync(join(tmpdir(), 'cc-svc-'));
   dirs.push(dataDir);
   const opened: Array<
-    ClaudeSessionOptions & { send: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> }
+    ClaudeSessionOptions & {
+      send: ReturnType<typeof vi.fn>;
+      close: ReturnType<typeof vi.fn>;
+      respond: ReturnType<typeof vi.fn>;
+    }
   > = [];
   const open = (async (options: ClaudeSessionOptions) => {
     const send = vi.fn(() => 'started' as const);
     const close = vi.fn(async () => {});
-    opened.push({ ...options, send, close });
+    const respond = vi.fn(() => true);
+    opened.push({ ...options, send, close, respond });
     return {
       id: options.sessionId ?? '',
       status: 'idle' as const,
       hooks: true,
       claudeSessionId: undefined,
       send,
+      respond,
       interrupt: () => true,
       terminate: () => {},
       close,
@@ -74,6 +80,17 @@ describe('Claude service', () => {
     await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
     expect(service.send(1, ID, 'hi', () => false)).toBe('workspace-unavailable');
     expect(opened[0]?.send).not.toHaveBeenCalled();
+  });
+
+  it('accepts permission decisions only from the session owner in the active workspace', async () => {
+    const { service, opened, publish } = setup();
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    const decision = { id: ID, requestId: OTHER, choice: 'approve' as const };
+    expect(service.respond(2, decision, active)).toBe(false);
+    expect(service.respond(1, decision, () => false)).toBe(false);
+    expect(opened[0]?.respond).not.toHaveBeenCalled();
+    expect(service.respond(1, decision, active)).toBe(true);
+    expect(opened[0]?.respond).toHaveBeenCalledWith(OTHER, 'approve');
   });
 
   it('refuses a reused id, too many sessions and a missing claude', async () => {

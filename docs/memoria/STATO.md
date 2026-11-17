@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (4.3 implementata su `feat/claude-chat`, in attesa della revisione incrociata)_
+_Ultimo aggiornamento: 2026-11-18 (Fase 4 chiusa: 4.3 unita con la PR #47; release `control-center-v1.0.0` unita con la PR #46)_
 
 ## Fase
 
@@ -12,12 +12,12 @@ _Ultimo aggiornamento: 2026-11-17 (4.3 implementata su `feat/claude-chat`, in at
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
-**Fase 4 — Prima versione usabile**: in corso. Il brief è in [`FASE_4.md`](FASE_4.md), con le sotto-fasi 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
+**Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
-- **4.3**, chat, permessi e cronologia: implementata su `feat/claude-chat` (ADR 0010). Revisione Claude sul flusso dei permessi prima del merge.
+- **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, nessuno bloccante e nessuno ancora corretto, in `PROSSIMI_PASSI.md` (in testa i due di gravità media).
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -25,7 +25,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.3 implementata su `feat/claude-chat`, in at
 
 ## Branch
 
-Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-1-chiusura`); `feat/hooks-bridge` (PR #42), `docs/memoria-4-1-merge` (PR #43) e `fix/session-test-cleanup` (PR #44) sono uniti. Codex: `feat/claude-chat` nel worktree `..control-center-codex`, a partire da `origin/main` (`41fc09c`). `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38), la 4.2 (PR #40, `4b928ab`) e la 4.1 (PR #42, `ecb78f3`, con la correzione del test #44, `54bce84`).
+Claude: nessun branch di lavoro aperto (solo memoria su `docs/chiusura-fase-4`). Codex: `feat/claude-chat` (PR #47) è unito; il worktree `..control-center-codex` va riportato su `main` prima della 4b. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38), la 4.2 (PR #40, `4b928ab`), la 4.1 (PR #42, `ecb78f3`, con la correzione del test #44, `54bce84`), la 4.3 (PR #47, `fe3cb61`) e la release 1.0.0 (PR #46, `a5845be`).
 
 ## Punto di ripresa
 
@@ -56,15 +56,18 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - `pnpm e2e:packaged` non rieseguito.
 - **Prova con la CLI vera (Claude Code 2.1.326):** una run breve che legge un file. Claude Code ha eseguito il comando degli hooks tra virgolette e la pipe ha accettato tutti i messaggi (zero rifiuti), con `file.read` arrivato dagli hooks. La prova ha mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`: ora il merge dal vivo li trattiene finché arriva `init`, così `session.started` conserva modello e versione. Il test resta nella repo, saltato salvo `CC_REAL_CLAUDE=1` (`real-claude.smoke.test.ts`). La 2.1.326 è stata aggiunta alle versioni testate.
 - **Non verificato:** manca la seconda opinione di Astra sulla pipe (crediti Codex finiti).
-- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-4-1-chiusura`).
-- **Poi:** 5a (Opus 5.5, high). Se i crediti Codex non tornano, la 4.3 passa a Claude e va prima della 5a, perché completa la Fase 4.
+- **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi), 9 punti commentati sulla PR e riportati in `PROSSIMI_PASSI.md`. Due punti di gravità media: i permessi con dettagli oltre 16 KiB sono sempre rifiutati e l'ordine di `run.start`/`prompt` nello storico può invertirsi o perdersi.
+- **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
+- **Ora:** nessun task aperto; PR della sola memoria (`docs/chiusura-fase-4`).
+- **Poi:** correzione dei due rilievi medi della 4.3 (piccola, Sonnet 5.5 medium) e 5a (Opus 5.5, high).
 
 ### Corsia Codex
 
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.
 - **Verifica visiva:** Electron a 960×600 nei due temi. Le azioni dei permessi e il focus sugli argomenti sono verificati dall'E2E. Rilevatore Impeccable senza rilievi.
-- **Ora:** revisione incrociata Claude Opus `high` sul flusso dei permessi della 4.3, poi merge dell'utente a CI verde.
+- **Fatto:** 4.3 unita (PR #47, `fe3cb61`); revisione incrociata di Claude fatta dopo il merge (9 punti, in `PROSSIMI_PASSI.md`).
+- **Ora:** nessun task. Crediti Codex finiti il 2026-11-17: riprendere quando tornano.
 - **Poi:** 4b. La revisione di Astra sulla pipe della 4.1 è ancora da fare.
 
 ## Cosa funziona
@@ -72,6 +75,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - ✅ `apps/desktop` (electron-vite, Electron 45.3.3, React 19): `pnpm dev`, `pnpm build`, `pnpm e2e`, `pnpm e2e:packaged`.
 - ✅ Renderer da `app://control-center/`, CSP in header e `<meta>`. `packages/ipc-contract` ha i namespace `app`, `errors`, `shell`, `workspace`, `terminal` e `claude` (4.1) e gli eventi push `errors:changed`, `terminal:updated` e `claude:updated`.
 - ✅ Sessione Claude dal main con hooks via named pipe (4.1, su `main`). È provata con il finto `claude` e con una run reale di Claude Code 2.1.326.
+- ✅ Chat, permessi e cronologia (4.3, su `main`): dock Session con streaming, Markdown, strumenti richiudibili, Approva/Rifiuta/Sempre, Stop, cronologia JSONL per workspace con ripresa, timeline semplice nella Vista Live. Sulla PR #47: `pnpm verify` 326 test, 53 E2E funzionali verdi (snapshot visivi esclusi in locale), impeccable senza rilievi.
 - ✅ Sulla 4.0, il 2026-11-17 (prima del merge): `pnpm verify` verde (237 test, 0 errori di lint); `pnpm e2e` 46 verdi su 48, i 2 rossi sono i test visivi che in locale falliscono sempre per i font (vedi sotto). `pnpm e2e:packaged` non rieseguito.
 - ✅ `packages/app-log` e Console Errori (3b), ora nel dock inferiore "Problems".
 - ✅ Design system in codice (3c): token → Tailwind v4, `componenti.css` importato, componenti base, temi `system|dark|light` (preferenza in `localStorage`, `system` segue l'OS) e densità, shell a pannelli ridimensionabili con layout ricordato, barra attività, barra di stato, command palette (`Ctrl+K`, `Ctrl+Shift+P`), dialog `?`, scorciatoie con ambiti di focus (terminale, campi di testo, Live, dialog), `Ctrl+1…7`, pagina `#/components` con test visivi.
@@ -84,7 +88,6 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ## Blocchi e avvertenze
 
-- **Release Please fallisce su ogni push su `main`** (almeno dal 2026-11-17): "GitHub Actions is not permitted to create or approve pull requests". Serve un'impostazione della repo, che deve attivare l'utente (vedi `PROBLEMI_NOTI.md`). Non blocca le PR.
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR, merge a mano a CI verde.
 - **Screenshot di riferimento** (`apps/desktop/e2e/app/ui.spec.ts-snapshots/`): sono quelli del runner `windows-latest` (artifact `playwright-results` del run 44100672540), perché i caratteri locali differivano di circa il 4% dei pixel. **In locale i 12 test visivi falliscono**: per rigenerarli o confrontarli si usa l'artifact della CI, non `--update-snapshots` locale. Le asserzioni sono `expect.soft`, così un run fallito salva tutti i candidati.
 - **Font non inclusi:** Instrument Sans e Martian Mono non sono nel pacchetto (la CSP vieta Google Fonts); l'app usa i font di ripiego dei token. Vedi `PROSSIMI_PASSI.md`.

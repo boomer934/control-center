@@ -21,6 +21,8 @@
   "devDependencies": {
     "@control-center/app-log": "workspace:*",
     "@control-center/event-schema": "workspace:*",
+    "@control-center/fixtures": "workspace:*",
+    "@control-center/hooks-bridge": "workspace:*",
     "@control-center/ipc-contract": "workspace:*",
     "@electron/fuses": "^2.1.3",
     "@playwright/test": "^1.65.1",
@@ -39,6 +41,7 @@
     "react-dom": "^19.3.1",
     "react-resizable-panels": "^4.24.0",
     "tailwindcss": "^4.3.5",
-    "vite": "^8.3.8"
+    "vite": "^8.3.8",
+    "zod": "^4.6.7"
   }
 }

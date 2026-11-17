@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 export const SANITIZED_DIR = fileURLToPath(new URL('../sanitized/', import.meta.url));
 
+/** The fake `claude` executable for tests: replays a recording (see bin/fake-claude.mjs). */
+export const FAKE_CLAUDE = fileURLToPath(new URL('../bin/fake-claude.mjs', import.meta.url));
+
 const NAME = /^[a-z0-9][a-z0-9-]{0,63}$/i;
 
 function readJsonl(file: string): unknown[] {

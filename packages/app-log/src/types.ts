@@ -13,7 +13,9 @@ export type ErrorKind =
   | 'child-stderr'
   | 'child-exit'
   | 'child-spawn'
-  | 'ipc-failure';
+  | 'ipc-failure'
+  | 'bridge-rejected'
+  | 'claude-setup';
 
 /** `project`: our own source. `dependency`: inside node_modules. `internal`: Node, Electron, V8. */
 export type FrameKind = 'project' | 'dependency' | 'internal';

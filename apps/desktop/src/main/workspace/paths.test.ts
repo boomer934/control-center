@@ -111,7 +111,9 @@ describe.skipIf(process.platform !== 'win32')('workspace paths on Windows', () =
   });
 
   it('resolves regular files and internal junctions and rejects external or replaced roots', async () => {
-    fixture = await mkdtemp(join(tmpdir(), 'cc-workspace-paths-'));
+    // tmpdir() can be an 8.3 short path (RUNNER~1) on CI; canonicalize it so the case alias below
+    // differs only by case, not by spelling.
+    fixture = await realpath(await mkdtemp(join(tmpdir(), 'cc-workspace-paths-')));
     const directory = join(fixture, 'App');
     const src = join(directory, 'src');
     const outside = join(fixture, 'Outside');

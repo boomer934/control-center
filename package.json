@@ -17,6 +17,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "pnpm -r --if-present build",
+    "e2e": "pnpm --filter @control-center/desktop e2e",
+    "e2e:packaged": "pnpm --filter @control-center/desktop e2e:packaged",
+    "dev": "pnpm --filter @control-center/desktop dev",
     "verify": "pnpm format:check && pnpm typecheck && pnpm lint && pnpm test",
     "prepare": "simple-git-hooks"
   },

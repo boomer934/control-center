@@ -23,13 +23,22 @@ Leggere prima di toccare IPC, processi figli, file system, segreti, Docker, brid
 
 ## Checklist Electron (Fase 3: tutte verificate in test)
 
-- [ ] `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSecurity: true`
-- [ ] CSP restrittiva (niente `unsafe-eval`, niente sorgenti remote)
-- [ ] `setWindowOpenHandler` → deny; `will-navigate` bloccato; link esterni solo `https:` tramite `shell.openExternal` dopo verifica
-- [ ] Permessi web (camera, microfono, notifiche…) negati di default
-- [ ] Electron Fuses: `RunAsNode` off, `EnableNodeOptionsEnvironmentVariable` off, `EnableNodeCliInspectArguments` off, integrità ASAR on, `OnlyLoadAppFromAsar` on
-- [ ] Preload espone solo `window.api` tipizzato
-- [ ] Electron entro le ultime 2 major supportate
+Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/desktop/src/main/security/security.test.ts`, **E** = `apps/desktop/e2e/app/security.spec.ts`, **F** = `apps/desktop/e2e/packaged/fuses.spec.ts`, **C** = `packages/ipc-contract/src/ipc.test.ts`.
+
+- [x] `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSecurity: true`. Test: U `secureWebPreferences`; E `webPreferences` (legge le preferenze effettive della finestra) e "the renderer has no Node.js globals". In più `app.enableSandbox()` per ogni renderer.
+- [x] CSP restrittiva (niente `unsafe-eval`, niente sorgenti remote). Test: U `buildCsp` (produzione e dev); E `Content-Security-Policy` (header e `<meta>`, blocco di `eval`, `new Function`, timer stringa, script inline e remoti, fetch e iframe remoti); `e2e/app/dev.spec.ts` per la CSP di sviluppo.
+- [x] `setWindowOpenHandler` → deny; `will-navigate` bloccato; link esterni solo `https:` tramite `shell.openExternal` dopo verifica. Test: U `URL rules`; E `navigation and new windows` (`window.open`, `target=_blank`, navigazione verso https, `file:` e loopback). Bloccati anche `will-frame-navigate`, `will-redirect` e `<webview>`.
+- [x] Permessi web (camera, microfono, notifiche…) negati di default. Test: U `web permissions`; E `web permissions` (notifiche, geolocalizzazione, camera e microfono negati davvero).
+- [x] Electron Fuses: `RunAsNode` off, `EnableNodeOptionsEnvironmentVariable` off, `EnableNodeCliInspectArguments` off, integrità ASAR on, `OnlyLoadAppFromAsar` on. Test: F (fuse wire letto dal binario, più prove dall'esterno: `ELECTRON_RUN_AS_NODE`, `--inspect`, `NODE_OPTIONS`, `app.asar` manomesso rifiutato). Anche `EnableCookieEncryption` on e `GrantFileProtocolExtraPrivileges` off.
+- [x] Preload espone solo `window.api` tipizzato. Test: C `createApi` e gate del main (mittente, richiesta, risposta, envelope); E `preload` e `IPC gate` (forma congelata di `window.api`, nessun `ipcRenderer`, payload invalidi rifiutati, finestra non creata dall'app rifiutata come mittente); `scripts/eslint-ipc-rules.test.mjs` (IPC grezzo vietato fuori dai due file ponte, Electron e Node vietati nel renderer).
+- [x] Electron entro le ultime 2 major supportate. Test: `scripts/check-electron-support.mjs` in CI (confronto con l'ultima stabile su npm) con `scripts/check-electron-support.test.mjs`; E "runs the Electron version installed in node_modules".
+
+### Altre difese della shell (3a)
+
+- Il renderer di produzione arriva da `app://control-center/` (schema privilegiato), non da `file://`. Il gestore serve solo file regolari dentro `out/renderer`: percorso normalizzato, `realpath` dentro la radice, niente `..`, separatori codificati o NUL (test U `resolveAssetPath`, E `app:// protocol`). Header `X-Content-Type-Options`, `Cross-Origin-Opener-Policy`, `Referrer-Policy`.
+- Il dev server (`ELECTRON_RENDERER_URL`) è accettato solo se l'app non è impacchettata e solo su `http` loopback.
+- Istanza singola (`requestSingleInstanceLock`).
+- L'envelope IPC non riporta i valori ricevuti né i messaggi degli errori degli handler (possono contenere percorsi).
 
 ## Privacy
 

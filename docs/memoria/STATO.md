@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (fixture `Notification` registrata, 4.1 sbloccata; `main` `17ce01a`)_
+_Ultimo aggiornamento: 2026-11-17 (fixture `Notification` unita su `main`, 4.1 sbloccata; `pnpm verify` verde, 243 test)_
 
 ## Fase
 
@@ -22,7 +22,7 @@ _Ultimo aggiornamento: 2026-11-17 (fixture `Notification` registrata, 4.1 sblocc
 
 ## Branch
 
-Claude: `feat/fixture-notification` (fixture `sessione-07` con `Notification`, PR #38); `feat/ipc-push-channel` cancellato in locale dopo i merge di #35 e #36, e `docs/memoria-4.0-merge` è superato. Codex: `feat/workspace-terminal` (il 2026-11-17 il worktree `..control-center-codex` era in detached HEAD su `4c2ef5c` e il branch non era ancora sul remoto). `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35) e la sua memoria (PR #36, #37).
+Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-fixture-merge`); `feat/fixture-notification` cancellato in locale dopo il merge di #38. Codex: `feat/workspace-terminal` (il 2026-11-17 il worktree `..control-center-codex` era in detached HEAD su `4c2ef5c` e il branch non era ancora sul remoto). `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37) e la fixture `Notification` (PR #38, `d6d08da`).
 
 ## Punto di ripresa
 
@@ -31,10 +31,10 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 ### Corsia Claude
 
 - **Fatto:** PR #30 (brief della Fase 4), #31 (`sessione-06`) e #32 (plugin di progetto) unite.
-- **Fatto (fixture `Notification`):** `sessione-07` registrata di nuovo il 2026-11-17 e ripulita (12 righe di hooks, nessuno stream): un `Read`, un permesso approvato dopo l'attesa (`Notification` con `notification_type: permission_prompt`) e un rifiuto fatto da una persona. Il blocco della 4.1 è tolto. Due lezioni: `npx --version` e `git log -1` sono di sola lettura e Claude Code non chiede il permesso, quindi non nasce `Notification` (serve un comando che scrive, per esempio `Set-Content`); e `VERNIER_HOOKS_SESSION` va impostata nella stessa finestra PowerShell che lancia `claude`, altrimenti gli hooks finiscono in `unnamed.hooks.jsonl`. Un permesso rifiutato a mano lascia solo `PreToolUse`: `mergeClaudeSession` chiude le chiamate rimaste aperte a fine sessione come `tool.failed` con motivo `interrupted` (è un'inferenza: nel live della 4.1 il rifiuto va letto da un altro segnale). Branch `feat/fixture-notification`, commit `3ec6f97`, PR #38.
+- **Fatto (fixture `Notification`, PR #38):** `sessione-07` registrata di nuovo il 2026-11-17 e ripulita (12 righe di hooks, nessuno stream): un `Read`, un permesso approvato dopo l'attesa (`Notification` con `notification_type: permission_prompt`) e un rifiuto fatto da una persona. Il blocco della 4.1 è tolto. Due lezioni: `npx --version` e `git log -1` sono di sola lettura e Claude Code non chiede il permesso, quindi non nasce `Notification` (serve un comando che scrive, per esempio `Set-Content`); e `VERNIER_HOOKS_SESSION` va impostata nella stessa finestra PowerShell che lancia `claude`, altrimenti gli hooks finiscono in `unnamed.hooks.jsonl`. Un permesso rifiutato a mano lascia solo `PreToolUse`: `mergeClaudeSession` chiude le chiamate rimaste aperte a fine sessione come `tool.failed` con motivo `interrupted` (è un'inferenza: nel live della 4.1 il rifiuto va letto da un altro segnale). Unita su `main` con la PR #38 (`d6d08da`).
 - **Fatto (4.0):** canale push main → renderer nel contratto (ADR 0007), unito su `main` con la PR #35 (`4c2ef5c`). Eventi `event('ns:nome', schema)` accanto ai metodi; `createEventEmitter` nel main (solo eventi del contratto, payload validato, solo finestre fidate); `window.api.<ns>.onX(listener)` nel preload (un listener `ipcRenderer` per canale, payload rivalidato, mai l'`IpcRendererEvent`). Primo evento `errors:changed`: la Console Errori non interroga più ogni secondo. `/code-review high`: 5 punti trovati e corretti (ciclo di segnalazione da un iscritto che lancia, `targets()` fuori dal `try`, iscritto orfano, test del raggruppamento, E2E con attesa fissa).
-- **Ora:** PR #38 di `feat/fixture-notification` (fixture e chiusura delle chiamate aperte); il merge lo fa l'utente a CI verde. Con la 4.0 su `main`, il terminale della 4.2 (Codex) è sbloccato: output del pty come evento nuovo, con raggruppamento nel main.
-- **Poi:** 4.1 hooks bridge (`feat/hooks-bridge`, Opus 5.5, high), sbloccata: parte dopo il merge della PR delle fixture; poi 5a.
+- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-fixture-merge`). Con la 4.0 su `main`, il terminale della 4.2 (Codex) è sbloccato: output del pty come evento nuovo, con raggruppamento nel main.
+- **Poi:** 4.1 hooks bridge (`feat/hooks-bridge`, Opus 5.5, high), sbloccata: parte subito; poi 5a.
 
 ### Corsia Codex
 
@@ -64,7 +64,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - Mappatura degli stack nel pacchetto (`app.asar`) provata solo in `out/` e con test unitari, non end to end: vedi `PROBLEMI_NOTI.md`.
 - "Clic su un frame → apri l'editor" della Console non c'è: serve un metodo IPC che apra file, da progettare con i controlli di percorso della Fase 4.
 - gitleaks non è installato in locale: lo controlla il job CI.
-- La fixture reale di `Notification` c'è (`sessione-07`, branch `feat/fixture-notification`); `PostToolUseFailure` è in `sessione-06`, già su `main`. La 4.1 non è più bloccata.
+- La fixture reale di `Notification` c'è (`sessione-07`, su `main`); `PostToolUseFailure` è in `sessione-06`, già su `main`. La 4.1 non è più bloccata.
 - Il prototipo 1d legge ancora le fixture grezze: in CI i suoi test Playwright si saltano.
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
 - Le cartelle `node_modules`, `out/`, `release/` e `test-results/` sono escluse dalla lettura nei permessi di Claude: le build si verificano con i test.

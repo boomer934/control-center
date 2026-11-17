@@ -2,19 +2,11 @@
 
 In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatte restano segnate con ✅ finché la fase non si chiude; poi passano in `STORIA.md`.
 
-> Le Fasi 1 e 2 sono chiuse (2026-11-14): sintesi in `STORIA.md`, voci "Chiusura Fase 1" e "Chiusura Fase 2". Il brief della Fase 3 è in [`FASE_3.md`](FASE_3.md).
+> Le Fasi 1, 2 e 3 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1", "Chiusura Fase 2" e "Chiusura Fase 3".
 
 ## Ora
 
-1. ✅ **(F3a)** Shell Electron sicura e IPC, unita su `main` con la PR #23 (`985130d`, ADR 0004), E2E e Fuses verdi in CI su `windows-latest`.
-2. ✅ **(F3b)** Logger, cattura errori e Console Errori con stack sorgente, ADR 0005, unita su `main` con la PR #25 (`2c64bf8`), 6 check verdi.
-
-3. ✅ **(F3c)** Design system in codice, pannelli, palette, scorciatoie con ambiti di focus, temi, pagina componenti con test visivi (ADR 0006). Unita su `main` con la PR #27 (`1765186`), 6 check verdi.
-
-## Dopo
-
-4. **(F3, chiusura)** Sintesi della Fase 3 in `STORIA.md` e archiviazione di `FASE_3.md`.
-5. **(F4.1)** Bridge degli hooks (Opus 5.5, high).
+1. **(F4.1)** Bridge degli hooks (Opus 5.5, high). Da leggere: `PIANO.md`, sezione Fase 4, e `SICUREZZA.md` (processi figli, file system).
 
 ## Quando capita
 

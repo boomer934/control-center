@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c unita su `main`)_
+_Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa)_
 
 ## Fase
 
@@ -10,7 +10,7 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c unita su `main`)_
 
 **Fase 2 — Schema eventi**: ✅ completata il 2026-11-14 (PR #16, #20). Sintesi in `STORIA.md`, voce "Chiusura Fase 2".
 
-**Fase 3 — Shell sicura**: quasi chiusa.
+**Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -18,11 +18,11 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c unita su `main`)_
 
 ## Branch
 
-`main` (ultimo merge: `1765186`, PR #27). La Fase 3 è chiusa dal punto di vista del codice; manca solo archiviare `FASE_3.md`.
+`main` (ultimo merge: `eb97793`, PR #28). Nessun lavoro aperto.
 
 ## Punto di ripresa
 
-- **Prossimo:** chiudere la Fase 3 (sintesi in `STORIA.md`, archiviare `FASE_3.md`, rivedere il goal complessivo in `PIANO.md`), poi la Fase 4.1 (bridge degli hooks, Opus 5.5 high).
+- **Prossimo:** Fase 4.1, bridge degli hooks (Opus 5.5, high). Prima, se possibile, le fixture mancanti `Notification` e `PostToolUseFailure`.
 
 ## Cosa funziona
 
@@ -34,7 +34,7 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3c unita su `main`)_
   - `pnpm verify` verde: 203 test (19 nuovi), 0 errori di lint;
   - `pnpm e2e`: 46 test verdi (17 nuovi in `ui.spec.ts`, di cui 12 screenshot di 6 sezioni in 2 temi);
   - `pnpm e2e:packaged`: 8 test verdi.
-- ✅ Revisione impeccable (un solo contesto, senza detector né subagent): trovati e corretti 2 problemi gravi (trappola del focus nei dialog, anello di focus dell'input). Restano come osservazioni minori: nessun `aria-live` per il contatore errori, nessuna prova su schermo piccolo.
+- ✅ Revisione impeccable della 3c (un solo contesto, con detector: sorgente pulito): 2 problemi gravi trovati e corretti (trappola del focus nei dialog, anello di focus dell'input). Minori aperti: `aria-live` per il contatore errori, prova a finestra stretta.
 - ✅ Già da prima: `@control-center/event-schema` e `@control-center/fixtures`, hook git, gitleaks in CI, design della Fase 1.
 
 ## Blocchi e avvertenze

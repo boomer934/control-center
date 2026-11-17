@@ -21,6 +21,8 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 ## Quando capita
 
+- **[Utente] (F0)** Far ripartire Release Please: GitHub → Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to create and approve pull requests". Oggi fallisce su ogni push su `main`.
+
 - **(F4.2, dalla revisione, da pesare prima o dentro la 4.3)** Primo: filtrare l'ambiente passato al pty (oggi eredita tutto `process.env`, regola 3 sui segreti). Poi: i link dei Problems si risolvono rispetto alla cartella dell'app, quindi aprono solo se il workspace è il repo stesso; i link del terminale non coprono `file.ts(12,5):` né `file.ts:12:5:`; `chooseFolder` lancia un errore per una cartella non disponibile e finisce nei Problems (meglio un risultato esplicito); un `id` duplicato è segnalato come `limit` e il tetto di 8 terminali è globale; una voce dei recenti non più risolvibile non si può togliere; Notepad apre il percorso verificato come stringa (finestra TOCTOU, impatto basso); la regex su xterm in `apps/desktop/xterm-csp.ts` e l'ordine dei passi CI (il pacchetto ricompila node-pty prima dell'E2E) sono fragili.
 - **(F4.2, locale)** Riportare il worktree `..control-center-codex` su `main` (oggi è sul branch unito).
 - **(F4.2, test)** `workspace-terminal.spec.ts` › "opens a canonical workspace file…" è instabile nella suite completa in locale (passaggio del mouse sul link di xterm); da solo è verde.

@@ -26,7 +26,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - la prova con la CLI vera (2.1.326) è riuscita: gli hooks arrivano dalla pipe senza rifiuti. Ha però mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima di `init`, e `session.started` perdeva modello e versione. Ora il merge dal vivo trattiene quegli hooks fino a `init`. La prova resta come test da attivare con `CC_REAL_CLAUDE=1`;
 - la revisione di Astra non c'è perché i crediti Codex sono finiti.
 
-**Merge:** PR #42 unita (`ecb78f3`) con tutti i controlli CI verdi.
+**Merge:** PR #42 unita (`ecb78f3`) con tutti i controlli CI verdi. La PR della memoria #43 è fallita in CI per un test della sessione instabile sul runner: la cartella del workspace restava occupata dopo `taskkill /T`. La PR #44 (`54bce84`) l'ha corretta con una pulizia che riprova e l'uccisione al punto di attesa del finto claude. Entrambe sono unite. Release Please fallisce su `main` per un permesso della repo, già da prima di questa fase.
 
 ---
 

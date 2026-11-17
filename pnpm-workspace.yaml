@@ -14,3 +14,10 @@ packageExtensions:
   '@peculiar/utils@2':
     dependencies:
       tslib: ^2.8.1
+
+# picomatch ReDoS (GHSA-fc5q-39xc-vjpf): only reachable through lint-staged (dev tool, matches our own
+# file names, never untrusted input, never shipped) and no patched version exists yet. Remove this
+# entry once picomatch has a fix. See docs/memoria/PROBLEMI_NOTI.md.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf

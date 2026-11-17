@@ -27,6 +27,10 @@ interface Run {
   open: Map<string, EventOf<'tool.called'>>;
   hookStart?: EventOf<'session.started'>;
   hookEnd?: EventOf<'session.ended'>;
+  /** Hook events that arrived before the stream's `init` (Claude Code runs SessionStart and
+   * UserPromptSubmit before it prints `init`): they wait, so `session.started` keeps the model
+   * and CLI version only the stream knows. */
+  early: AgentEvent[];
   started: boolean;
   ended: boolean;
 }
@@ -80,6 +84,7 @@ export class LiveClaudeSession {
       hooks: new ClaudeHooksNormalizer(norm, { startAt, holdAmbiguous: true }),
       seen: new Set(),
       open: new Map(),
+      early: [],
       started: false,
       ended: false,
     };
@@ -115,7 +120,7 @@ export class LiveClaudeSession {
     if (!run) return [];
     const out: AgentEvent[] = [];
     for (const e of run.hooks.flush()) this.take(run, e, 'hooks', out);
-    if (!run.ended && (run.started || run.hookStart)) {
+    if (!run.ended && (run.started || run.hookStart || run.early.length > 0)) {
       this.ensureStarted(run, at ?? this.last, out);
       const timestamp = at ?? this.last;
       this.closeOpen(run, timestamp, out);
@@ -158,6 +163,13 @@ export class LiveClaudeSession {
     if (run.started) return;
     run.started = true;
     this.emit(run.hookStart ?? { ...this.envelope(timestamp), type: 'session.started' }, out);
+    this.releaseEarly(run, out);
+  }
+
+  private releaseEarly(run: Run, out: AgentEvent[]): void {
+    const early = run.early;
+    run.early = [];
+    for (const e of early) this.take(run, e, 'hooks', out);
   }
 
   private take(run: Run, e: AgentEvent, from: 'stream' | 'hooks', out: AgentEvent[]): void {
@@ -171,6 +183,7 @@ export class LiveClaudeSession {
       run.started = true;
       const earlier = run.hookStart && run.hookStart.timestamp < e.timestamp;
       this.emit(earlier && run.hookStart ? { ...e, timestamp: run.hookStart.timestamp } : e, out);
+      this.releaseEarly(run, out);
       return;
     }
     if (e.type === 'session.ended') {
@@ -183,6 +196,10 @@ export class LiveClaudeSession {
       run.ended = true;
       const reason = e.reason ?? run.hookEnd?.reason;
       this.emit(reason === undefined ? e : { ...e, reason }, out);
+      return;
+    }
+    if (!run.started && from === 'hooks') {
+      run.early.push(e);
       return;
     }
     this.ensureStarted(run, e.timestamp, out);

@@ -33,4 +33,5 @@ La 4.1 porta nell'app una sessione Claude Code dal vivo. Lo stream-json di `clau
 - Ogni hook aggiunge alla chiamata di un tool l'avvio di Node, circa 100 ms. È accettabile per l'osservazione; se pesa, si valuterà uno script precompilato.
 - Una `PreToolUse` attende la risposta della pipe (timeout 3 s nel client), quindi un'app bloccata rallenta l'agente ma non lo ferma.
 - La 4.3 usa `claude:*` così com'è. Per i permessi servirà un canale di risposta su stdin (control protocol di stream-json), da progettare lì.
-- Le versioni della CLI testate sono quelle delle fixture (oggi 2.1.322). Una versione nuova va registrata e aggiunta a `TESTED_CLAUDE_VERSIONS`.
+- Le versioni della CLI testate sono quelle delle fixture (2.1.322) e quelle provate con `real-claude.smoke.test.ts` (2.1.326). Il test resta saltato salvo `CC_REAL_CLAUDE=1`. Una versione nuova va provata con quel test e poi aggiunta a `TESTED_CLAUDE_VERSIONS`.
+- Con la CLI vera, `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`. Il merge dal vivo trattiene gli eventi degli hooks fino a `init`, così `session.started` viene dallo stream con modello e versione.

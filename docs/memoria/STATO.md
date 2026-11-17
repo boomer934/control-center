@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude su `feat/hooks-bridge`, in PR; `pnpm verify` verde, 321 test; crediti Codex finiti)_
+_Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude su `feat/hooks-bridge`, in PR; `pnpm verify` verde, 323 test più 1 saltato (prova reale); crediti Codex finiti)_
 
 ## Fase
 
@@ -48,17 +48,16 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - namespace IPC `claude` (`start`, `send`, `interrupt`, `close`, evento `claude:updated`);
   - finto `claude` (`packages/fixtures/bin/fake-claude.mjs`).
 - **Verificato in locale:**
-  - `pnpm verify` verde: 321 test, 0 errori di lint;
+  - `pnpm verify` verde: 323 test (più la prova reale, saltata senza `CC_REAL_CLAUDE=1`), 0 errori di lint;
   - E2E `claude.spec.ts` verde (IPC → main → finto claude → hooks → pipe);
   - suite `app`: 51 verdi e 3 rossi:
     - i 2 test visivi, che in locale falliscono sempre;
     - il test dell'editor di `workspace-terminal.spec.ts`, instabile nella suite completa ma verde da solo e insieme a `claude.spec.ts`;
   - `pnpm e2e:packaged` non rieseguito.
-- **Non verificato:**
-  - la CLI vera non è mai stata avviata: non è provato che Claude Code su Windows esegua il comando degli hooks tra virgolette (`"node" "bin.ts" "bridge.json"`);
-  - manca la seconda opinione di Astra sulla pipe (crediti Codex finiti).
+- **Prova con la CLI vera (Claude Code 2.1.326):** una run breve che legge un file. Claude Code ha eseguito il comando degli hooks tra virgolette e la pipe ha accettato tutti i messaggi (zero rifiuti), con `file.read` arrivato dagli hooks. La prova ha mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`: ora il merge dal vivo li trattiene finché arriva `init`, così `session.started` conserva modello e versione. Il test resta nella repo, saltato salvo `CC_REAL_CLAUDE=1` (`real-claude.smoke.test.ts`). La 2.1.326 è stata aggiunta alle versioni testate.
+- **Non verificato:** manca la seconda opinione di Astra sulla pipe (crediti Codex finiti).
 - **Ora:** PR della 4.1 in attesa di CI e merge.
-- **Poi:** prova manuale con la CLI vera (una run breve); poi la 5a.
+- **Poi:** 5a.
 
 ### Corsia Codex
 
@@ -72,7 +71,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 - ✅ `apps/desktop` (electron-vite, Electron 45.3.3, React 19): `pnpm dev`, `pnpm build`, `pnpm e2e`, `pnpm e2e:packaged`.
 - ✅ Renderer da `app://control-center/`, CSP in header e `<meta>`. `packages/ipc-contract` ha i namespace `app`, `errors`, `shell`, `workspace`, `terminal` e `claude` (4.1) e gli eventi push `errors:changed`, `terminal:updated` e `claude:updated`.
-- ✅ Sessione Claude dal main con hooks via named pipe (4.1, su `feat/hooks-bridge`): provata solo con il finto `claude`.
+- ✅ Sessione Claude dal main con hooks via named pipe (4.1, su `feat/hooks-bridge`). È provata con il finto `claude` e con una run reale di Claude Code 2.1.326.
 - ✅ Sulla 4.0, il 2026-11-17 (prima del merge): `pnpm verify` verde (237 test, 0 errori di lint); `pnpm e2e` 46 verdi su 48, i 2 rossi sono i test visivi che in locale falliscono sempre per i font (vedi sotto). `pnpm e2e:packaged` non rieseguito.
 - ✅ `packages/app-log` e Console Errori (3b), ora nel dock inferiore "Problems".
 - ✅ Design system in codice (3c): token → Tailwind v4, `componenti.css` importato, componenti base, temi `system|dark|light` (preferenza in `localStorage`, `system` segue l'OS) e densità, shell a pannelli ridimensionabili con layout ricordato, barra attività, barra di stato, command palette (`Ctrl+K`, `Ctrl+Shift+P`), dialog `?`, scorciatoie con ambiti di focus (terminale, campi di testo, Live, dialog), `Ctrl+1…7`, pagina `#/components` con test visivi.

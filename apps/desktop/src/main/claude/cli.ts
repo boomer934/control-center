@@ -13,8 +13,11 @@ export interface Program {
   args: readonly string[];
 }
 
-/** Claude Code versions the normalizers were checked against (the recorded fixtures). */
-export const TESTED_CLAUDE_VERSIONS: readonly string[] = ['2.1.322'];
+/**
+ * Claude Code versions the normalizers were checked against: the recorded fixtures (2.1.322) and
+ * the manual smoke run of `real-claude.smoke.test.ts` (2.1.326).
+ */
+export const TESTED_CLAUDE_VERSIONS: readonly string[] = ['2.1.322', '2.1.326'];
 
 /** The hook script runs from TypeScript source: Node strips the types by itself from 22.18. */
 export const MIN_NODE_FOR_HOOKS: readonly [number, number] = [22, 18];

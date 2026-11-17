@@ -136,6 +136,47 @@ describe('LiveClaudeSession', () => {
     expect(r1[0]?.source).toBe('stream');
   });
 
+  it('keeps the stream session.started when hooks arrive before init, as with the real CLI', () => {
+    const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
+    const at = '2026-11-17T10:00:00.000Z';
+    const hook = (name: string, extra: object = {}) => ({
+      capturedAt: at,
+      payload: { hook_event_name: name, session_id: 'c', cwd: CWD, ...extra },
+    });
+    const out = [
+      ...live.hook(hook('SessionStart')),
+      ...live.hook(hook('UserPromptSubmit', { prompt: 'hello' })),
+    ];
+    expect(out).toEqual([]);
+    out.push(
+      ...live.stream(
+        {
+          type: 'system',
+          subtype: 'init',
+          cwd: CWD,
+          model: 'claude-x',
+          claude_code_version: '2.1.326',
+        },
+        '2026-11-17T10:00:01.000Z',
+      ),
+    );
+    expect(out.map((e) => [e.type, e.source])).toEqual([
+      ['session.started', 'stream'],
+      ['message.user', 'hooks'],
+    ]);
+    expect(out[0]).toMatchObject({ model: 'claude-x', cliVersion: '2.1.326', timestamp: at });
+  });
+
+  it('releases early hooks when the run ends without any stream', () => {
+    const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
+    live.hook({
+      capturedAt: '2026-11-17T10:00:00.000Z',
+      payload: { hook_event_name: 'UserPromptSubmit', session_id: 'c', prompt: 'hi' },
+    });
+    const out = live.endRun('2026-11-17T10:00:05.000Z');
+    expect(out.map((e) => e.type)).toEqual(['session.started', 'message.user', 'session.ended']);
+  });
+
   it('ends a run whose process died and keeps numbering across runs', () => {
     const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
     const first = [

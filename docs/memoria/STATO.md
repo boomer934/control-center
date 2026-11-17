@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude unita su `main` con la PR #42, CI verde; crediti Codex finiti)_
+_Ultimo aggiornamento: 2026-11-17 (4.1 chiusa: PR #42, memoria #43, correzione del test instabile #44, tutte su `main`; crediti Codex finiti)_
 
 ## Fase
 
@@ -16,7 +16,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude unita su `
 
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
-- **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera.
+- **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3** (chat e permessi, Codex) resta da fare: parte dal namespace IPC `claude` della 4.1.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
@@ -25,7 +25,7 @@ _Ultimo aggiornamento: 2026-11-17 (4.1 hooks bridge e sessione Claude unita su `
 
 ## Branch
 
-Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-1-merge`); `feat/hooks-bridge` è unito (PR #42). Codex: `feat/workspace-terminal` è unito (PR #40); il worktree `..control-center-codex` va riportato su `main` prima della 4.3. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38) la 4.2 (PR #40, `4b928ab`) e la 4.1 (PR #42, `ecb78f3`).
+Claude: nessun branch di lavoro aperto (solo memoria su `docs/memoria-4-1-chiusura`); `feat/hooks-bridge` (PR #42), `docs/memoria-4-1-merge` (PR #43) e `fix/session-test-cleanup` (PR #44) sono uniti. Codex: `feat/workspace-terminal` è unito (PR #40); il worktree `..control-center-codex` va riportato su `main` prima della 4.3. `main` include la ripartizione in corsie (PR #33), la 4.0 (PR #35, #36, #37), la fixture `Notification` (PR #38) la 4.2 (PR #40, `4b928ab`) e la 4.1 (PR #42, `ecb78f3`, con la correzione del test #44, `54bce84`).
 
 ## Punto di ripresa
 
@@ -56,7 +56,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - `pnpm e2e:packaged` non rieseguito.
 - **Prova con la CLI vera (Claude Code 2.1.326):** una run breve che legge un file. Claude Code ha eseguito il comando degli hooks tra virgolette e la pipe ha accettato tutti i messaggi (zero rifiuti), con `file.read` arrivato dagli hooks. La prova ha mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`: ora il merge dal vivo li trattiene finché arriva `init`, così `session.started` conserva modello e versione. Il test resta nella repo, saltato salvo `CC_REAL_CLAUDE=1` (`real-claude.smoke.test.ts`). La 2.1.326 è stata aggiunta alle versioni testate.
 - **Non verificato:** manca la seconda opinione di Astra sulla pipe (crediti Codex finiti).
-- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-4-1-merge`).
+- **Ora:** nessun task aperto; PR della sola memoria (`docs/memoria-4-1-chiusura`).
 - **Poi:** 5a (Opus 5.5, high). Se i crediti Codex non tornano, la 4.3 passa a Claude e va prima della 5a, perché completa la Fase 4.
 
 ### Corsia Codex
@@ -84,6 +84,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ## Blocchi e avvertenze
 
+- **Release Please fallisce su ogni push su `main`** (almeno dal 2026-11-17): "GitHub Actions is not permitted to create or approve pull requests". Serve un'impostazione della repo, che deve attivare l'utente (vedi `PROBLEMI_NOTI.md`). Non blocca le PR.
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR, merge a mano a CI verde.
 - **Screenshot di riferimento** (`apps/desktop/e2e/app/ui.spec.ts-snapshots/`): sono quelli del runner `windows-latest` (artifact `playwright-results` del run 44100672540), perché i caratteri locali differivano di circa il 4% dei pixel. **In locale i 12 test visivi falliscono**: per rigenerarli o confrontarli si usa l'artifact della CI, non `--update-snapshots` locale. Le asserzioni sono `expect.soft`, così un run fallito salva tutti i candidati.
 - **Font non inclusi:** Instrument Sans e Martian Mono non sono nel pacchetto (la CSP vieta Google Fonts); l'app usa i font di ripiego dei token. Vedi `PROSSIMI_PASSI.md`.

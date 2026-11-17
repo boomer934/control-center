@@ -9,8 +9,8 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. **[Utente] (F2, prima della F4.1)** Ripetere la registrazione di `sessione-07`: la prima non ha catturato `Notification` (10 righe di hooks, nessuna `Notification`). Guida in `scripts/fixtures/README.md`, passi 6-11; prima `/hooks` nel progetto di prova per controllare che `Notification` sia caricato, poi lasciare la richiesta di permesso in attesa 10 secondi. Poi `sanitize.mjs`, rilettura a mano e `npx vitest run packages/fixtures -u` (Claude).
-2. **[Claude] (F4.0)** Canale push nel contratto IPC: ADR, `feat/ipc-push-channel`, Opus 5.5, high.
-3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, il terminale dopo la 4.0.
+2. **[Claude] (F4.0)** Canale push: fatto su `feat/ipc-push-channel` (ADR 0007). Resta la PR; merge dell'utente a CI verde.
+3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, il terminale dopo il merge della 4.0: l'output del pty è un evento nuovo del contratto (`event(...)`, schema limitato) e il main raggruppa i dati prima di inviarli (ADR 0007).
 
 ## Dopo
 
@@ -23,7 +23,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 - **(F3, minore)** Includere i font (Instrument Sans, Martian Mono) nel pacchetto: file locali con `@font-face`, CSP `font-src 'self'` già a posto; decidere la licenza/fonte nell'ADR.
 - **(F3, minore)** `aria-live` per il contatore errori; provare il layout a finestra stretta; title bar personalizzata solo se serve (richiede lavoro nel main).
 - **(F4+)** Prefissi della palette (`/` file, `@` agenti, `#` sessioni, `!` locali) e scorciatoie `Ctrl+O`, `Ctrl+Shift+A`, `Ctrl+L`: arrivano con le funzioni che servono.
-- **(F4)** Metodo IPC per aprire un frame dello stack nell'editor, con i controlli di percorso; valutare un canale push al posto del polling di `errors:list`.
+- **(F4)** Metodo IPC per aprire un frame dello stack nell'editor, con i controlli di percorso.
 - **(F10)** Provare a mano la mappatura degli stack nel pacchetto (`app.asar`); decidere se l'installer include le source map.
 
 - **(F4)** Il ponte degli hooks deve consegnare gli eventi in tempo reale. `normalizeClaudeHooks` collega gli hooks dei subagent alla chiamata `Agent` solo a posteriori; dal vivo l'attribuzione va presa dallo stream (`parent_tool_use_id`). I normalizzatori oggi sono funzioni batch: dal vivo serviranno versioni incrementali.

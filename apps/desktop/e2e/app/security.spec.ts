@@ -105,10 +105,10 @@ test.describe('preload', () => {
       namespaces: ['app', 'errors', 'shell'],
       methods: {
         app: ['getInfo'],
-        errors: ['list', 'reportRenderer', 'copyReport', 'clear'],
+        errors: ['list', 'reportRenderer', 'copyReport', 'clear', 'onChanged'],
         shell: ['openExternal'],
       },
-      types: Array.from({ length: 6 }, () => 'function'),
+      types: Array.from({ length: 7 }, () => 'function'),
       frozen: true,
       leaked: [],
     });
@@ -182,8 +182,94 @@ test.describe('IPC gate', () => {
       ),
     );
     expect(result).toContain('[untrusted-sender]');
+
+    // Push events reach only the app's own windows: the rogue one subscribes but hears nothing.
+    await rogue.evaluate(() => {
+      const w = window as unknown as { __heard: number };
+      w.__heard = 0;
+      window.api.errors.onChanged(() => (w.__heard += 1));
+    });
+    const trustedHeard = page.evaluate(
+      () =>
+        new Promise<number>((done) => {
+          const off = window.api.errors.onChanged(({ revision }) => {
+            off();
+            done(revision);
+          });
+        }),
+    );
+    await page.evaluate(() =>
+      window.api.errors.reportRenderer({
+        kind: 'window-error',
+        name: 'Error',
+        message: 'e2e push to trusted windows only',
+        stack: '',
+      }),
+    );
+    expect(await trustedHeard).toBeGreaterThan(0);
+    expect(await rogue.evaluate(() => (window as unknown as { __heard: number }).__heard)).toBe(0);
+
     await app.evaluate(({ BrowserWindow }, id) => BrowserWindow.fromId(id)?.destroy(), rogueId);
     expect(await windowCount()).toBe(1);
+  });
+});
+
+test.describe('IPC events', () => {
+  test('a pushed event carries only its validated payload', async () => {
+    const received = page.evaluate(
+      () =>
+        new Promise<{ count: number; keys: string[]; revision: unknown }>((done) => {
+          const off = window.api.errors.onChanged((...args: unknown[]) => {
+            off();
+            const payload = args[0] as Record<string, unknown>;
+            done({ count: args.length, keys: Object.keys(payload), revision: payload.revision });
+          });
+        }),
+    );
+    await page.evaluate(() =>
+      window.api.errors.reportRenderer({
+        kind: 'window-error',
+        name: 'Error',
+        message: 'e2e push payload shape',
+        stack: '',
+      }),
+    );
+    const got = await received;
+    expect(got.count).toBe(1);
+    expect(got.keys).toEqual(['revision']);
+    expect(typeof got.revision).toBe('number');
+  });
+
+  test('a subscription can be stopped, and a non-function listener is refused', async () => {
+    const result = await page.evaluate(async () => {
+      let heard = 0;
+      const off = window.api.errors.onChanged(() => (heard += 1));
+      off();
+      off();
+      // A second subscriber that stays: once it hears the event, the removed one would have too.
+      const delivered = new Promise<void>((done) => {
+        const stay = window.api.errors.onChanged(() => {
+          stay();
+          done();
+        });
+      });
+      await window.api.errors.reportRenderer({
+        kind: 'window-error',
+        name: 'Error',
+        message: 'e2e push after unsubscribe',
+        stack: '',
+      });
+      await delivered;
+      let refused = '';
+      try {
+        (window.api.errors.onChanged as (l: unknown) => unknown)('not a function');
+      } catch (e) {
+        refused = (e as Error).message;
+      }
+      return { heard, refused };
+    });
+    expect(result.heard).toBe(0);
+    expect(result.refused).toContain('listener must be a function');
   });
 });
 

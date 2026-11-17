@@ -4,6 +4,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — 4.0: canale push nel contratto IPC
+
+**Fatto:**
+
+- `packages/ipc-contract`: eventi main → renderer accanto ai metodi (`event(...)`, `listEvents`, tipi `Api` con `onX` e `Handlers` solo per i metodi); `createEventEmitter` nel main; `createApi(invoke, subscribe)` nel preload;
+- `ErrorStore.onChange` in `app-log`; il main emette `errors:changed` (al massimo uno ogni 50 ms) e la Console ricarica `errors:list` solo a revisione più nuova: niente più polling;
+- test: 237 unitari (emitter, iscrizioni, raggruppamento, instradamento dei rifiuti), E2E sulla forma di `window.api`, sul payload ricevuto e sulla finestra non fidata che non riceve eventi.
+
+**Decisioni:** ADR 0007. Destinatari = finestre create dall'app con URL dell'app; il renderer non vede mai l'`IpcRendererEvent`; niente `MessagePort` per ora; chi emette flussi veloci raggruppa i dati.
+
+**Problemi:** la revisione high ha trovato due possibili cicli (iscritto che lancia → segnalazione → nuovo evento; `targets()` che lancia dentro un timer) e un iscritto orfano: corretti con test.
+
+---
+
 ## 2026-11-17 — Due corsie, Claude e Codex
 
 **Fatto:**

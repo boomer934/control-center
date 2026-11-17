@@ -34,14 +34,38 @@ export class ErrorStore {
   private readonly groups = new Map<string, ErrorGroup>();
   private readonly maxGroups: number;
   private rev = 0;
+  private readonly changeListeners = new Set<{ fn: (revision: number) => void }>();
 
   constructor(private readonly options: ErrorStoreOptions) {
     this.maxGroups = options.maxGroups ?? 200;
   }
 
-  /** Increases at every change: lets a poller skip work when nothing happened. */
+  /** Increases at every change: lets a reader skip work when nothing happened. */
   get revision(): number {
     return this.rev;
+  }
+
+  /**
+   * Called after every change with the new revision. A listener that throws is ignored: the
+   * store is fed by the error capture itself, so it must never fail because of a reader.
+   */
+  onChange(listener: (revision: number) => void): () => void {
+    const entry = { fn: listener };
+    this.changeListeners.add(entry);
+    return () => {
+      this.changeListeners.delete(entry);
+    };
+  }
+
+  private changed(): void {
+    this.rev += 1;
+    for (const entry of [...this.changeListeners]) {
+      try {
+        entry.fn(this.rev);
+      } catch {
+        // see onChange
+      }
+    }
   }
 
   record(input: ErrorInput): ErrorGroup {
@@ -89,7 +113,7 @@ export class ErrorStore {
       if (oldest === undefined) break;
       this.groups.delete(oldest);
     }
-    this.rev += 1;
+    this.changed();
     return group;
   }
 
@@ -101,7 +125,7 @@ export class ErrorStore {
   clear(): number {
     const n = this.groups.size;
     this.groups.clear();
-    this.rev += 1;
+    this.changed();
     return n;
   }
 }

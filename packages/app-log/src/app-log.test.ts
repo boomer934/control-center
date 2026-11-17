@@ -140,6 +140,30 @@ describe('ErrorStore', () => {
     expect(g.message).not.toContain('C:\\Users');
     expect(g.frames[0]?.file).toBe('~/lib.ts');
   });
+
+  it('notifies every change with the new revision, until unsubscribed', () => {
+    const store = new ErrorStore({ projectRoot: ROOT, clean });
+    const seen: number[] = [];
+    const off = store.onChange((rev) => seen.push(rev));
+    store.record({ ...base, message: 'a' });
+    store.record({ ...base, message: 'a' });
+    store.clear();
+    off();
+    store.record({ ...base, message: 'b' });
+    expect(seen).toEqual([1, 2, 3]);
+  });
+
+  it('keeps recording when a change listener throws', () => {
+    const store = new ErrorStore({ projectRoot: ROOT, clean });
+    const seen: number[] = [];
+    store.onChange(() => {
+      throw new Error('reader bug');
+    });
+    store.onChange((rev) => seen.push(rev));
+    expect(() => store.record({ ...base, message: 'a' })).not.toThrow();
+    expect(store.list()).toHaveLength(1);
+    expect(seen).toEqual([1]);
+  });
 });
 
 describe('logger', () => {

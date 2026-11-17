@@ -49,6 +49,13 @@ Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/des
 - `superviseChild` avvia senza shell, scarta stdout, nome limitato a `[a-z0-9-]`; non esiste un canale IPC per avviare processi.
 - I fault injector dei test esistono solo nella build `--mode e2e`; il pacchetto di produzione non li contiene (`e2e/packaged/build.spec.ts`).
 
+### Eventi push (4.0, ADR 0007)
+
+- Solo eventi dichiarati nel contratto: l'emitter del main rifiuta uno spec che non è l'oggetto del contratto, anche con lo stesso nome, e valida il payload prima di inviarlo. Test: C `createEventEmitter`.
+- Destinatari: solo finestre create dall'app, vive e con un URL dell'app; `webContents.send` raggiunge il solo frame principale. Test: E `a window the app did not create is an untrusted sender` (la finestra estranea si iscrive ma non riceve nulla).
+- Il preload non passa mai l'`IpcRendererEvent` (il suo `sender` è `ipcRenderer`), rivalida il payload, scarta messaggi con più argomenti e rifiuta listener che non sono funzioni. Test: C `events in createApi`, E `IPC events`.
+- Niente cicli: un errore di un iscritto si segnala una volta sola per errore distinto; un rifiuto di `errors:changed` va solo nel log; `emit` non lancia mai. Test: C e `apps/desktop/src/main/ipc-events.test.ts`.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
+_Ultimo aggiornamento: 2026-11-17 (4.0 canale push pronto per la PR)_
 
 ## Fase
 
@@ -12,7 +12,9 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
-**Fase 4 — Prima versione usabile**: da iniziare. Il brief è in [`FASE_4.md`](FASE_4.md), con le sotto-fasi 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
+**Fase 4 — Prima versione usabile**: in corso. Il brief è in [`FASE_4.md`](FASE_4.md), con le sotto-fasi 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
+
+- **4.0**, canale push nel contratto IPC: fatta sul branch `feat/ipc-push-channel` (`b0f0b0f`, ADR 0007), PR da aprire.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -20,7 +22,7 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 
 ## Branch
 
-Claude: `docs/corsie-claude-codex` (ripartizione in due corsie), poi `feat/ipc-push-channel`. Codex: `feat/workspace-terminal`. `main` include il brief della Fase 4 (PR #30) e `sessione-06` (PR #31).
+Claude: `feat/ipc-push-channel` (4.0, un commit sopra `main` `7cc14e1`). Codex: `feat/workspace-terminal`. `main` include la ripartizione in corsie (PR #33).
 
 ## Punto di ripresa
 
@@ -30,7 +32,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 - **Fatto:** PR #30 (brief della Fase 4), #31 (`sessione-06`) e #32 (plugin di progetto) unite.
 - **Bloccante, serve l'utente:** la `sessione-07` registrata il 2026-11-17 **non contiene `Notification`**. Controllo fatto con uno script, perché `raw/` non è leggibile da Claude: 10 righe di hooks (`SessionStart`, `UserPromptSubmit`×2, `PreToolUse`×2, `PostToolUse`×2, `Stop`×2, `SessionEnd`) e nessuna `Notification`; entrambi i `PowerShell` hanno un `PostToolUse`, quindi sono stati approvati. Va ripetuta come da `scripts/fixtures/README.md` (passi 6-11), controllando con `/hooks` che `Notification` sia caricato nel progetto di prova. Fino ad allora la 4.1 non parte. `sessione-07` non è stata ripulita né committata.
-- **Ora:** 4.0, canale push nel contratto IPC (Opus 5.5, high), branch `feat/ipc-push-channel`.
+- **Fatto (4.0):** canale push main → renderer nel contratto (ADR 0007), branch `feat/ipc-push-channel`, commit `b0f0b0f`. Eventi `event('ns:nome', schema)` accanto ai metodi; `createEventEmitter` nel main (solo eventi del contratto, payload validato, solo finestre fidate); `window.api.<ns>.onX(listener)` nel preload (un listener `ipcRenderer` per canale, payload rivalidato, mai l'`IpcRendererEvent`). Primo evento `errors:changed`: la Console Errori non interroga più ogni secondo. `/code-review high`: 5 punti trovati e corretti (ciclo di segnalazione da un iscritto che lancia, `targets()` fuori dal `try`, iscritto orfano, test del raggruppamento, E2E con attesa fissa).
+- **Ora:** aprire la PR di `feat/ipc-push-channel`; il merge lo fa l'utente a CI verde. Dopo il merge Codex può fare il terminale della 4.2 (output del pty come evento nuovo, con raggruppamento nel main).
 - **Poi:** 4.1 hooks bridge (`feat/hooks-bridge`, Opus 5.5, high) appena `Notification` è catturato; poi 5a.
 
 ### Corsia Codex
@@ -41,7 +44,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 ## Cosa funziona
 
 - ✅ `apps/desktop` (electron-vite, Electron 45.3.3, React 19): `pnpm dev`, `pnpm build`, `pnpm e2e`, `pnpm e2e:packaged`.
-- ✅ Renderer da `app://control-center/`, CSP in header e `<meta>`; `packages/ipc-contract` con 6 metodi (`app:get-info`, `shell:open-external`, e i 4 di `errors:*`). La 3c non ha aggiunto IPC.
+- ✅ Renderer da `app://control-center/`, CSP in header e `<meta>`; `packages/ipc-contract` con 6 metodi (`app:get-info`, `shell:open-external`, e i 4 di `errors:*`) e, sul branch della 4.0, 1 evento push (`errors:changed`).
+- ✅ Sul branch della 4.0, il 2026-11-17: `pnpm verify` verde (237 test, 0 errori di lint); `pnpm e2e` 46 verdi su 48, i 2 rossi sono i test visivi che in locale falliscono sempre per i font (vedi sotto). `pnpm e2e:packaged` non rieseguito.
 - ✅ `packages/app-log` e Console Errori (3b), ora nel dock inferiore "Problems".
 - ✅ Design system in codice (3c): token → Tailwind v4, `componenti.css` importato, componenti base, temi `system|dark|light` (preferenza in `localStorage`, `system` segue l'OS) e densità, shell a pannelli ridimensionabili con layout ricordato, barra attività, barra di stato, command palette (`Ctrl+K`, `Ctrl+Shift+P`), dialog `?`, scorciatoie con ambiti di focus (terminale, campi di testo, Live, dialog), `Ctrl+1…7`, pagina `#/components` con test visivi.
 - ✅ In locale, il 2026-11-17, sulla 3c:

@@ -370,7 +370,7 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
   - 3b > Il logger scrive JSONL ruotati e alimenta la Console Errori; un errore provocato nel main, nel renderer e in un processo figlio compare in Console con lo stack del sorgente TypeScript (test E2E verdi); log e report passano da `redactSecrets`; memoria aggiornata.
   - 3c > Il design system è in codice (token → Tailwind, componenti base della 1c con i loro stati); layout a pannelli, barra di stato, command palette, scorciatoie con ambiti di focus e temi chiaro/scuro/sistema funzionano; la pagina componenti ha test visivi verdi e un E2E apre la palette e cambia tema; revisione impeccable senza gravi; memoria aggiornata.
 
-- **Fase 4** (tre goal in sequenza; il goal complessivo è l'unione)
+- **Fase 4** (tre goal in sequenza; il goal complessivo è l'unione; dettagli in `FASE_4.md`)
 
   > Dall'app si apre un workspace, si usa il terminale e si conduce una sessione Claude Code con chat in streaming, richieste di permesso e cronologia JSONL; l'hooks bridge consegna gli eventi via named pipe con token; i test E2E con il finto eseguibile claude passano; typecheck, lint e test verdi; memoria aggiornata.
   - 4.1 > L'hooks bridge consegna gli eventi all'app via named pipe con token per sessione (eventi senza token o malformati rifiutati, con test); la sessione `claude -p` in stream-json con `--resume` è gestita dal main e i suoi eventi passano dai normalizzatori di `event-schema`; test di integrazione con il finto eseguibile claude verdi; memoria aggiornata.

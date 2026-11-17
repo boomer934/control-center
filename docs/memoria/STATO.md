@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa)_
+_Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 
 ## Fase
 
@@ -12,17 +12,21 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa)_
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
+**Fase 4 — Prima versione usabile**: da iniziare. Il brief è in [`FASE_4.md`](FASE_4.md), con le sotto-fasi 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
+
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
 - **3c**, design system in codice: ✅ unita su `main` (PR #27, `1765186`, ADR 0006), 6 check verdi compreso Verify (Windows) con i test visivi.
 
 ## Branch
 
-`main` (ultimo merge: `eb97793`, PR #28). Nessun lavoro aperto.
+`docs/phase-4-brief`: brief della Fase 4, in PR. `main` è a `d41292f` (PR #29, chiusura della Fase 3).
 
 ## Punto di ripresa
 
-- **Prossimo:** Fase 4.1, bridge degli hooks (Opus 5.5, high). Prima, se possibile, le fixture mancanti `Notification` e `PostToolUseFailure`.
+- **Ora:** merge della PR del brief della Fase 4 a CI verde.
+- **Poi (utente):** catturare le fixture di `Notification` e `PostToolUseFailure`, che bloccano la 4.1. La procedura è in `FASE_4.md`.
+- **Poi:** Fase 4.1, il bridge degli hooks, su `feat/hooks-bridge` con Opus 5.5, effort high. Il goal è in `FASE_4.md`.
 
 ## Cosa funziona
 
@@ -46,7 +50,7 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa)_
 - Mappatura degli stack nel pacchetto (`app.asar`) provata solo in `out/` e con test unitari, non end to end: vedi `PROBLEMI_NOTI.md`.
 - "Clic su un frame → apri l'editor" della Console non c'è: serve un metodo IPC che apra file, da progettare con i controlli di percorso della Fase 4.
 - gitleaks non è installato in locale: lo controlla il job CI.
-- Mancano fixture reali per `Notification` e `PostToolUseFailure` (servono prima della Fase 4).
+- **Bloccante per la 4.1:** mancano le fixture reali per `Notification` e `PostToolUseFailure`. Serve una sessione interattiva dell'utente.
 - Il prototipo 1d legge ancora le fixture grezze: in CI i suoi test Playwright si saltano.
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
 - Le cartelle `node_modules`, `out/`, `release/` e `test-results/` sono escluse dalla lettura nei permessi di Claude: le build si verificano con i test.

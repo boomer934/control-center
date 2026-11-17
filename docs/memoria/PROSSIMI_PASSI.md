@@ -2,11 +2,20 @@
 
 In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatte restano segnate con ✅ finché la fase non si chiude; poi passano in `STORIA.md`.
 
-> Le Fasi 1, 2 e 3 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1", "Chiusura Fase 2" e "Chiusura Fase 3".
+> Le Fasi 1, 2 e 3 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1", "Chiusura Fase 2" e "Chiusura Fase 3". Il brief della Fase 4 è in [`FASE_4.md`](FASE_4.md).
 
 ## Ora
 
-1. **(F4.1)** Bridge degli hooks (Opus 5.5, high). Da leggere: `PIANO.md`, sezione Fase 4, e `SICUREZZA.md` (processi figli, file system).
+1. **(F2, prima della F4.1, utente)** Una sessione interattiva breve nel progetto di prova per catturare `Notification` (attesa utente), con l'hook `PostToolUseFailure` attivo. Poi:
+   1. `node scripts/fixtures/sanitize.mjs`;
+   2. rilettura a mano;
+   3. aggiornamento degli snapshot (`npx vitest run packages/fixtures -u`).
+2. **(F4.1)** Hooks bridge e sessione Claude: branch `feat/hooks-bridge`, Opus 5.5, effort high. Il goal è in `FASE_4.md`.
+
+## Dopo
+
+3. **(F4.2)** Workspace e terminale (Sonnet 5.5, medium).
+4. **(F4.3)** Chat, permessi e cronologia (Sonnet 5.5, high).
 
 ## Quando capita
 
@@ -16,7 +25,6 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 - **(F4)** Metodo IPC per aprire un frame dello stack nell'editor, con i controlli di percorso; valutare un canale push al posto del polling di `errors:list`.
 - **(F10)** Provare a mano la mappatura degli stack nel pacchetto (`app.asar`); decidere se l'installer include le source map.
 
-- **(F2, prima della F4)** Una sessione interattiva breve nel progetto di prova per catturare `Notification` (attesa utente) e aggiungere l'hook `PostToolUseFailure`. Poi `node scripts/fixtures/sanitize.mjs`, rilettura e aggiornamento degli snapshot (`npx vitest run packages/fixtures -u`).
 - **(F4)** Il ponte degli hooks deve consegnare gli eventi in tempo reale. `normalizeClaudeHooks` collega gli hooks dei subagent alla chiamata `Agent` solo a posteriori; dal vivo l'attribuzione va presa dallo stream (`parent_tool_use_id`). I normalizzatori oggi sono funzioni batch: dal vivo serviranno versioni incrementali.
 - **(F5)** Passare il prototipo 1d a `AgentEvent` e alle fixture ripulite, così i suoi test Playwright girano anche in CI.
 - **(F5)** Dalla revisione 1d: regione `aria-live` per `waiting-user` ed `error` nella colonna Agents; zoom massimo più alto a `Fit` per grafi piccoli; `viewAt` indicizzato per 500 nodi.

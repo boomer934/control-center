@@ -4,6 +4,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Brief della Fase 4
+
+**Fatto:** nuovo `FASE_4.md` con le regole della fase, i punti di partenza e le sotto-fasi 4.1 (hooks bridge e sessione Claude), 4.2 (workspace e terminale) e 4.3 (chat, permessi e cronologia), ognuna con branch, modello, effort e goal. `PIANO.md` lo richiama.
+
+**Decisioni**
+
+- La 4.1 parte solo dopo le fixture reali di `Notification` e `PostToolUseFailure`: i permessi e gli errori dei tool vanno provati su dati veri.
+- Il metodo IPC per aprire file (frame della Console, link del terminale) nasce in 4.2, con i controlli di percorso del workspace.
+- I flussi continui (pty, eventi della sessione) richiedono un canale push nel contratto IPC.
+
+**Problemi:** una sessione parallela aveva già chiuso la Fase 3 (PR #29). Questo branch è stato riportato su `main` e tiene solo il brief.
+
+---
+
 ## 2026-11-17 — Chiusura Fase 3
 
 **Fatto**

@@ -27,7 +27,10 @@ afterEach(async () => {
 
 function tempDir(prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
-  cleanups.push(() => rmSync(dir, { recursive: true, force: true }));
+  // Windows frees the folder of a killed process tree a moment after the kill returns
+  cleanups.push(() =>
+    rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }),
+  );
   return dir;
 }
 
@@ -225,7 +228,10 @@ describe('Claude session with the fake claude', () => {
   it('terminates a run synchronously when the app quits', async () => {
     const h = await open('sessione-02', { fakeEnv: { FAKE_CLAUDE_MODE: 'hang' } });
     h.session.send('go');
-    await expect.poll(() => h.events.length, { timeout: 20_000 }).toBeGreaterThan(0);
+    // wait for the hang point, so no hook command is starting while the tree is killed
+    await expect
+      .poll(() => h.events.some((e) => e.type === 'tool.called'), { timeout: 20_000 })
+      .toBe(true);
     h.session.terminate();
     await h.idle();
     expect(h.events.at(-1)).toMatchObject({ type: 'session.ended', reason: 'interrupted' });

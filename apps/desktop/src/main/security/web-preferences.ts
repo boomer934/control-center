@@ -9,7 +9,6 @@ export function secureWebPreferences(preloadPath: string): WebPreferences {
     preload: preloadPath,
     contextIsolation: true,
     sandbox: true,
-
     nodeIntegration: false,
     nodeIntegrationInWorker: false,
     nodeIntegrationInSubFrames: false,

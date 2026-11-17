@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AgentEvent } from '@control-center/event-schema';
@@ -20,6 +20,7 @@ function setup(
   programs = {
     claude: { command: 'claude.exe', args: [] } as { command: string; args: string[] } | undefined,
   },
+  openGate?: Promise<void>,
 ) {
   const dataDir = mkdtempSync(join(tmpdir(), 'cc-svc-'));
   dirs.push(dataDir);
@@ -35,6 +36,7 @@ function setup(
     const close = vi.fn(async () => {});
     const respond = vi.fn(() => true);
     opened.push({ ...options, send, close, respond });
+    await openGate;
     return {
       id: options.sessionId ?? '',
       status: 'idle' as const,
@@ -55,7 +57,14 @@ function setup(
     open,
   });
   const updates: ClaudeUpdate[] = [];
-  return { service, opened, updates, publish: (u: ClaudeUpdate) => updates.push(u), reports };
+  return {
+    dataDir,
+    service,
+    opened,
+    updates,
+    publish: (u: ClaudeUpdate) => updates.push(u),
+    reports,
+  };
 }
 
 const active = () => true;
@@ -73,6 +82,7 @@ describe('Claude service', () => {
     expect(opened[0]?.send).not.toHaveBeenCalled();
     expect(service.send(1, ID, 'hi', active)).toBe('started');
     expect(opened[0]?.send).toHaveBeenCalledWith('hi');
+    await service.closeAll();
   });
 
   it('sends only while the session’s workspace is active', async () => {
@@ -122,6 +132,78 @@ describe('Claude service', () => {
     expect(updates[0]).toEqual({ kind: 'status', id: ID, status: 'idle', hooks: true });
   });
 
+  it('publishes and saves the prompt before synchronous events on every accepted turn', async () => {
+    const { service, opened, updates, publish } = setup();
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    const event = (seq: number): AgentEvent => ({
+      schemaVersion: 1,
+      type: 'session.started',
+      id: `event-${seq}`,
+      sessionId: ID,
+      seq,
+      timestamp: '2026-11-18T10:00:00.000Z',
+      source: 'stream',
+      provider: 'claude',
+      agentId: 'main',
+    });
+    const session = opened[0]!;
+    session.send.mockImplementationOnce(() => 'busy');
+    session.send.mockImplementationOnce(() => {
+      session.onEvents([event(0)]);
+      throw new Error('Could not spawn Claude');
+    });
+    let seq = 0;
+    session.send.mockImplementation(() => {
+      session.onEvents([event(seq++)]);
+      return 'started';
+    });
+    expect(service.send(1, ID, 'skip this', active)).toBe('busy');
+    expect(() => service.send(1, ID, 'skip this too', active)).toThrow('Could not spawn Claude');
+    expect(service.send(1, ID, 'first prompt', active)).toBe('started');
+    expect(service.send(1, ID, 'second prompt', active)).toBe('started');
+    const records = [
+      { kind: 'prompt', text: 'first prompt' },
+      { kind: 'events', events: [event(0)] },
+      { kind: 'prompt', text: 'second prompt' },
+      { kind: 'events', events: [event(1)] },
+    ];
+    expect(updates.slice(1)).toEqual(records.map((record) => ({ ...record, id: ID })));
+    const [summary] = await service.listHistory(WS);
+    expect(summary?.title).toBe('first prompt');
+    await expect(service.readHistory(WS, summary!.id)).resolves.toEqual({
+      records,
+      resumable: false,
+    });
+  });
+
+  it('isolates history by workspace and ignores an invalid native resume ID', async () => {
+    const { dataDir, service, publish } = setup();
+    const otherWorkspace = 'b'.repeat(64);
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await service.start(1, { id: OTHER, workspaceId: otherWorkspace }, 'C:\\other', publish);
+    service.send(1, ID, 'private to workspace A', active);
+    service.send(1, OTHER, 'private to workspace B', active);
+    await service.closeAll();
+    const [summary] = await service.listHistory(WS);
+    expect(summary?.title).toBe('private to workspace A');
+    expect((await service.listHistory(otherWorkspace)).map(({ title }) => title)).toEqual([
+      'private to workspace B',
+    ]);
+    await expect(service.readHistory(otherWorkspace, summary!.id)).resolves.toBeNull();
+    const dir = join(dataDir, 'claude-history', WS);
+    expect(readdirSync(dir)).toEqual([`${summary!.id}.jsonl`]);
+    writeFileSync(join(dir, `${summary!.id}.jsonl`), '{"kind":"resume","id":"--x"}\n', {
+      flag: 'a',
+    });
+    await expect(service.readHistory(WS, summary!.id)).resolves.toEqual({
+      records: [{ kind: 'prompt', text: 'private to workspace A' }],
+      resumable: false,
+    });
+    await expect(
+      service.start(1, { id: ID, workspaceId: WS, historyId: summary!.id }, 'C:\\ws', publish),
+    ).resolves.toBe('history-unavailable');
+  });
+
   it('closes the sessions of a window that goes away', async () => {
     const { service, opened, publish } = setup();
     await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
@@ -132,6 +214,25 @@ describe('Claude service', () => {
     expect(service.send(1, ID, 'hi', active)).toBe('closed');
     await service.closeAll();
     expect(opened[1]?.close).toHaveBeenCalled();
+  });
+
+  it('waits for an opening session to be closed during shutdown', async () => {
+    let finishOpen!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      finishOpen = resolve;
+    });
+    const { service, opened, publish } = setup(undefined, gate);
+    const start = service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await vi.waitFor(() => expect(opened).toHaveLength(1));
+    void service.closeOwner(1);
+    const shutdownDone = vi.fn();
+    const shutdown = service.closeAll().then(shutdownDone);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(shutdownDone).not.toHaveBeenCalled();
+    finishOpen();
+    await expect(start).resolves.toBe('failed');
+    await shutdown;
+    expect(opened[0]?.close).toHaveBeenCalledTimes(1);
   });
 
   it('reports a session that cannot open', async () => {

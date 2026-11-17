@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-18 — Correzioni dalla revisione della chat (4.3)
+
+- **Fatto:** corretti i nove rilievi della PR #47 su `fix/claude-chat-review`. Ora i dettagli dei permessi lunghi restano approvabili, le richieste pendenti si aggiornano al limite delle regole, e il renderer segnala un'azione in corso. Lo storico richiede una finestra proprietaria e conserva l'ordine prompt → eventi.
+- **Decisioni:** scrittura JSONL in coda asincrona per file, con attesa delle scritture prima della lettura e alla chiusura. Documentata la validità delle regole «Sempre in questa sessione» anche a workspace in secondo piano.
+- **Verifiche:** `pnpm verify` (332 passati, smoke test reale saltato), due E2E Claude e rilevatore Impeccable senza rilievi. La prima passata di `/code-review medium` ha portato correzioni su richieste duplicate, avvio del turno e chiusura. Il pannello esplicita che l'approvazione include gli argomenti omessi.
+
+---
+
 ## 2026-11-18 — Chiusura Fase 4
 
 **Fatto**

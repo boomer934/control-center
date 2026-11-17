@@ -55,6 +55,7 @@ export const ClaudePermissionSchema = z.strictObject({
   requestId: z.uuid(),
   tool: z.string().min(1).max(256),
   details: z.string().max(MAX_CLAUDE_PERMISSION_DETAILS),
+  truncated: z.boolean(),
   canRemember: z.boolean(),
 });
 export type ClaudePermission = z.infer<typeof ClaudePermissionSchema>;

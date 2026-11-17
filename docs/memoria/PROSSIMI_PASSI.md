@@ -8,26 +8,28 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Claude] (F4.3, revisione)** Correggere con test i due rilievi di gravità media (voci 1 e 2 in "Quando capita"): permessi con dettagli oltre 16 KiB e ordine degli eventi nello storico. Tocca il flusso dei permessi: lavoro Claude, non da delegare.
+1. **[Codex + Claude] (F4.3, revisione)** I nove rilievi della PR #47 sono corretti nella PR #49 (`fix/claude-chat-review`). Per il merge dell'utente servono CI verde e `/code-review medium` di Claude.
 
 ## Dopo
 
-3. **[Codex] (F4b)** Git e checkpoint (`gpt-6.1-sol`, high). Crediti Codex finiti il 2026-11-17: riprendere quando tornano; prima riportare il worktree `..control-center-codex` su `main`.
-4. **[Codex] (F4.1, revisione)** Seconda opinione di `gpt-6-astra` sulla pipe (`packages/hooks-bridge`), quando tornano i crediti.
-5. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
+2. **[Codex] (F4b)** Git e checkpoint (`gpt-6.1-sol`, high). Partire da `origin/main` dopo il merge della PR #49.
+3. **[Codex] (F4.1, revisione)** Seconda opinione di `gpt-6-astra` sulla pipe (`packages/hooks-bridge`).
+4. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
+
+## Rilievi della PR #47 affrontati nella PR #49
+
+1. **Medio.** `permissions.ts:77`: una richiesta il cui JSON ripulito supera `MAX_CLAUDE_PERMISSION_DETAILS` (16 384 caratteri) è rifiutata senza chiedere, quindi un `Write` o `Edit` da circa 16 KB o più non si approva mai dalla chat. Mostrare il testo troncato con un marcatore `… (troncato, N caratteri)`, tenendo impronta e risposta sull'input originale.
+2. **Medio.** `service.ts:169`: `session.send()` emette `run.start` prima che il prompt sia registrato. Al primo turno lo scrittore scarta quegli eventi; dai turni successivi storico e renderer ricevono `run.start` prima di `prompt`. Lo storico riaperto perde o riordina gli inizi di turno. Registrare il prompt prima di `send()`, oppure accodare gli eventi finché è scritto.
+3. **Basso.** `ipc.ts:266`: `listHistory` e `readHistory` controllano solo `isActive(workspaceId)` e ignorano `senderId`, a differenza di `start`, `send` e `respond`. Richiedere `windowOwner(senderId)`, come dice `SICUREZZA.md` ("solo la finestra proprietaria").
+4. **Basso.** `permissions.ts:90`: un'impronta ricordata è approvata anche se il workspace della sessione non è più attivo, mentre la decisione manuale lo richiede. È coerente con l'ADR 0010 (regola legata alla sessione): scriverlo in `SICUREZZA.md` oppure passare `isActive` a `receive`.
+5. **Basso.** `permissions.ts:107`: `canRemember` è calcolato all'arrivo, quindi due richieste pendenti possono offrire entrambe "sessione". Alla 128ª regola la seconda `respond('session')` torna `false` e la UI scrive "richiesta scaduta" mentre è ancora pendente. Ripubblicare le viste dopo ogni `remembered.add`, o ripiegare su `approve`.
+6. **Basso.** `permissions.ts:67`: un `control_request` con un `request_id` già pendente è scartato senza `control_response`; se la CLI lo facesse, il turno resterebbe appeso fino all'interruzione. Rispondere con `subtype: 'error'`, come alla riga 70.
+7. **Basso.** `useClaudeChat.ts:75`: il flag globale `busy` fa tornare `respond` in silenzio mentre un'altra azione è in corso, quindi un clic su Approva o Rifiuta può perdersi senza segnalazione.
+8. **Efficienza.** `history.ts:70`: a ogni record ci sono 2× `mkdirSync`, diversi `lstatSync`/`fstatSync`, `openSync`, `writeFileSync` e `closeSync` sul thread principale; i turni lunghi bloccano IPC e terminale. Validare la cartella una volta per scrittore e tenere aperto il descrittore, oppure accodare le scritture in modo asincrono.
+9. **Test.** `permissions.test.ts:31`: mancano test committati per una seconda decisione su una richiesta già risolta, per la regola "sessione" che non sopravvive a una nuova sessione, per l'isolamento dello storico tra workspace e per un id di ripresa non valido (per esempio `--x`) ignorato nel JSONL. Oggi tutto regge (verificato con prove fuori dalla repo).
 
 ## Quando capita
 
-- **(F4.3, dalla revisione, PR #47)** Nove rilievi di `/code-review high`, tutti ancora aperti, dal più grave:
-  1. **Medio.** `permissions.ts:77`: una richiesta il cui JSON ripulito supera `MAX_CLAUDE_PERMISSION_DETAILS` (16 384 caratteri) è rifiutata senza chiedere, quindi un `Write` o `Edit` da circa 16 KB o più non si approva mai dalla chat. Mostrare il testo troncato con un marcatore `… (troncato, N caratteri)`, tenendo impronta e risposta sull'input originale.
-  2. **Medio.** `service.ts:169`: `session.send()` emette `run.start` prima che il prompt sia registrato. Al primo turno lo scrittore scarta quegli eventi; dai turni successivi storico e renderer ricevono `run.start` prima di `prompt`. Lo storico riaperto perde o riordina gli inizi di turno. Registrare il prompt prima di `send()`, oppure accodare gli eventi finché è scritto.
-  3. **Basso.** `ipc.ts:266`: `listHistory` e `readHistory` controllano solo `isActive(workspaceId)` e ignorano `senderId`, a differenza di `start`, `send` e `respond`. Richiedere `windowOwner(senderId)`, come dice `SICUREZZA.md` ("solo la finestra proprietaria").
-  4. **Basso.** `permissions.ts:90`: un'impronta ricordata è approvata anche se il workspace della sessione non è più attivo, mentre la decisione manuale lo richiede. È coerente con l'ADR 0010 (regola legata alla sessione): scriverlo in `SICUREZZA.md` oppure passare `isActive` a `receive`.
-  5. **Basso.** `permissions.ts:107`: `canRemember` è calcolato all'arrivo, quindi due richieste pendenti possono offrire entrambe "sessione". Alla 128ª regola la seconda `respond('session')` torna `false` e la UI scrive "richiesta scaduta" mentre è ancora pendente. Ripubblicare le viste dopo ogni `remembered.add`, o ripiegare su `approve`.
-  6. **Basso.** `permissions.ts:67`: un `control_request` con un `request_id` già pendente è scartato senza `control_response`; se la CLI lo facesse, il turno resterebbe appeso fino all'interruzione. Rispondere con `subtype: 'error'`, come alla riga 70.
-  7. **Basso.** `useClaudeChat.ts:75`: il flag globale `busy` fa tornare `respond` in silenzio mentre un'altra azione è in corso, quindi un clic su Approva o Rifiuta può perdersi senza segnalazione.
-  8. **Efficienza.** `history.ts:70`: a ogni record ci sono 2× `mkdirSync`, diversi `lstatSync`/`fstatSync`, `openSync`, `writeFileSync` e `closeSync` sul thread principale; i turni lunghi bloccano IPC e terminale. Validare la cartella una volta per scrittore e tenere aperto il descrittore, oppure accodare le scritture in modo asincrono.
-  9. **Test.** `permissions.test.ts:31`: mancano test committati per una seconda decisione su una richiesta già risolta, per la regola "sessione" che non sopravvive a una nuova sessione, per l'isolamento dello storico tra workspace e per un id di ripresa non valido (per esempio `--x`) ignorato nel JSONL. Oggi tutto regge (verificato con prove fuori dalla repo).
 - **(F4.2, dalla revisione)** Primo: filtrare l'ambiente passato al pty (oggi eredita tutto `process.env`, regola 3 sui segreti). Poi: i link dei Problems si risolvono rispetto alla cartella dell'app, quindi aprono solo se il workspace è il repo stesso; i link del terminale non coprono `file.ts(12,5):` né `file.ts:12:5:`; `chooseFolder` lancia un errore per una cartella non disponibile e finisce nei Problems (meglio un risultato esplicito); un `id` duplicato è segnalato come `limit` e il tetto di 8 terminali è globale; una voce dei recenti non più risolvibile non si può togliere; Notepad apre il percorso verificato come stringa (finestra TOCTOU, impatto basso); la regex su xterm in `apps/desktop/xterm-csp.ts` e l'ordine dei passi CI (il pacchetto ricompila node-pty prima dell'E2E) sono fragili.
 - **(F4.2, test)** `workspace-terminal.spec.ts` › "opens a canonical workspace file…" è instabile nella suite completa in locale (passaggio del mouse sul link di xterm); da solo è verde.
 - **(F4+)** A ogni nuova versione di Claude Code: `CC_REAL_CLAUDE=1 npx vitest run apps/desktop/src/main/claude/real-claude.smoke.test.ts`, poi aggiungerla a `TESTED_CLAUDE_VERSIONS`.

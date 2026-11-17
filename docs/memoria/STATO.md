@@ -66,8 +66,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.
 - **Verifica visiva:** Electron a 960×600 nei due temi. Le azioni dei permessi e il focus sugli argomenti sono verificati dall'E2E. Rilevatore Impeccable senza rilievi.
-- **Fatto:** 4.3 unita (PR #47, `fe3cb61`); revisione incrociata di Claude fatta dopo il merge (9 punti, in `PROSSIMI_PASSI.md`).
-- **Ora:** nessun task. Crediti Codex finiti il 2026-11-17: riprendere quando tornano.
+- **Fatto (2026-11-18):** la 4.3 è su `main` (PR #47, `fe3cb61`). I nove rilievi della revisione sono corretti su `fix/claude-chat-review`, nel worktree Codex. `pnpm verify` verde con 332 test passati e smoke test della CLI reale saltato. Entrambi i casi di `claude.spec.ts` sono verdi. La prima passata Claude a effort `medium` ha portato altre correzioni su richieste duplicate, avvio del turno e chiusura.
+- **Ora:** CI della [PR #49](https://github.com/boomer934/control-center/pull/49) e revisione Claude `/code-review medium` prima del merge dell'utente.
 - **Poi:** 4b. La revisione di Astra sulla pipe della 4.1 è ancora da fare.
 
 ## Cosa funziona

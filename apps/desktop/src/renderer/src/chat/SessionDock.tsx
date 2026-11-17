@@ -100,6 +100,9 @@ function Permission({
       <pre id={`${request.requestId}-arguments`} tabIndex={0} aria-label="Tool arguments">
         {request.details}
       </pre>
+      {request.truncated && (
+        <p className="shell-muted">Approval includes the arguments omitted from this preview.</p>
+      )}
       <div className="session-actions">
         <Button variant="primary" disabled={pending} onClick={() => respond('approve')}>
           Approve

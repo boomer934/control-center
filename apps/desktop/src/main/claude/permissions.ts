@@ -28,12 +28,21 @@ interface Pending {
   wireId: string;
   tool: ToolRequest;
   fingerprint: string;
-  view: ClaudePermission;
+  view: Omit<ClaudePermission, 'canRemember'>;
 }
 
 const MAX_SESSION_APPROVALS = 128;
 const deny = (message: string): Decision => ({ behavior: 'deny', message });
 const allow = (tool: ToolRequest): Decision => ({ behavior: 'allow', updatedInput: tool.input });
+
+function displayDetails(details: string): Pick<ClaudePermission, 'details' | 'truncated'> {
+  if (details.length <= MAX_CLAUDE_PERMISSION_DETAILS) return { details, truncated: false };
+  const marker = `… (truncated, ${details.length} chars)`;
+  return {
+    details: details.slice(0, MAX_CLAUDE_PERMISSION_DETAILS - marker.length) + marker,
+    truncated: true,
+  };
+}
 
 export function createClaudePermissions(
   clean: (text: string) => string,
@@ -42,7 +51,10 @@ export function createClaudePermissions(
 ) {
   const pending = new Map<string, Pending>();
   const remembered = new Set<string>();
-  const update = () => publish([...pending.values()].map(({ view }) => view));
+  const update = () => {
+    const canRemember = remembered.size < MAX_SESSION_APPROVALS;
+    publish([...pending.values()].map(({ view }) => ({ ...view, canRemember })));
+  };
   const reply = (wireId: string, response: Reply) =>
     write(
       JSON.stringify({
@@ -59,12 +71,18 @@ export function createClaudePermissions(
       const envelope = controlEnvelope.safeParse(line);
       if (!envelope.success) return true;
       const wireId = envelope.data.request_id;
+      const existing = [...pending.values()].find((entry) => entry.wireId === wireId);
       if (line.type === 'control_cancel_request') {
-        const existing = [...pending.values()].find((entry) => entry.wireId === wireId);
         if (existing && pending.delete(existing.view.requestId)) update();
         return true;
       }
-      if ([...pending.values()].some((entry) => entry.wireId === wireId)) return true;
+      if (existing) {
+        if (reply(wireId, { subtype: 'error', error: 'Duplicate pending control request ID' })) {
+          pending.delete(existing.view.requestId);
+          update();
+        }
+        return true;
+      }
       const parsed = toolRequest.safeParse(line.request);
       if (!parsed.success) {
         reply(wireId, { subtype: 'error', error: 'Unsupported or invalid control request' });
@@ -72,10 +90,8 @@ export function createClaudePermissions(
       }
 
       const tool = parsed.data;
-      const details = clean(JSON.stringify(tool.input, null, 2));
       const displayTool = clean(tool.tool_name);
       if (
-        details.length > MAX_CLAUDE_PERMISSION_DETAILS ||
         !displayTool ||
         displayTool.length > 256 ||
         pending.size >= MAX_CLAUDE_PERMISSION_REQUESTS
@@ -92,11 +108,10 @@ export function createClaudePermissions(
         return true;
       }
       const requestId = randomUUID();
-      const view: ClaudePermission = {
+      const view = {
         requestId,
         tool: displayTool,
-        details,
-        canRemember: remembered.size < MAX_SESSION_APPROVALS,
+        ...displayDetails(clean(JSON.stringify(tool.input, null, 2))),
       };
       pending.set(requestId, { wireId, tool, fingerprint, view });
       update();

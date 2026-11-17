@@ -6,7 +6,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. ✅ **(F3a)** Shell Electron sicura e IPC, fatta su `feat/desktop-shell` (ADR 0004). PR #23: E2E e Fuses verdi in CI su `windows-latest`; resta il merge a mano.
+1. ✅ **(F3a)** Shell Electron sicura e IPC, unita su `main` con la PR #23 (`985130d`, ADR 0004), E2E e Fuses verdi in CI su `windows-latest`.
 2. **(F3b)** Logger (con ADR), cattura degli errori e Console Errori con stack sorgente. Branch proposto `feat/errors-console`. Vedi le note per la 3b in `STATO.md` (permesso appunti, `console.warn` del gate IPC).
 
 ## Dopo

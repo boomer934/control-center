@@ -26,28 +26,51 @@ function cspMeta(): Plugin {
   };
 }
 
-/** Renderer config, exported so the dev-mode E2E can start the same Vite dev server. */
-export const rendererConfig = {
-  root: resolve(__dirname, 'src/renderer'),
-  plugins: [react(), cspMeta()],
-  build: {
-    // Vite would inline small assets as data: URLs; keep every asset a file of the app origin.
-    assetsInlineLimit: 0,
-    modulePreload: { polyfill: false },
-    rollupOptions: { input: { index: resolve(__dirname, 'src/renderer/index.html') } },
-  },
-} satisfies UserConfig;
+/** The renderer's fault injectors exist only in a build made with `--mode e2e`. */
+const faultsDefine = (enabled: boolean) => ({ __CC_E2E_FAULTS__: JSON.stringify(enabled) });
 
-export default defineConfig({
-  main: {
+/** Renderer config, exported so the dev-mode E2E can start the same Vite dev server. */
+export const rendererConfigFor = (e2eFaults: boolean) =>
+  ({
+    root: resolve(__dirname, 'src/renderer'),
+    plugins: [react(), cspMeta()],
+    define: faultsDefine(e2eFaults),
     build: {
-      rollupOptions: { input: { index: resolve(__dirname, 'src/main/index.ts') } },
+      // Source maps ship with the app: the main process maps renderer stacks to TypeScript.
+      sourcemap: true,
+      // Vite would inline small assets as data: URLs; keep every asset a file of the app origin.
+      assetsInlineLimit: 0,
+      modulePreload: { polyfill: false },
+      rollupOptions: { input: { index: resolve(__dirname, 'src/renderer/index.html') } },
     },
-  },
-  preload: {
-    build: {
-      rollupOptions: { input: { index: resolve(__dirname, 'src/preload/index.ts') } },
+  }) satisfies UserConfig;
+
+export const rendererConfig = rendererConfigFor(false);
+
+export default defineConfig(({ mode }) => {
+  const e2eFaults = mode === 'e2e';
+  return {
+    main: {
+      resolve: {
+        // The fault injectors of the E2E tests exist only in the `e2e` build.
+        alias: {
+          '#e2e-faults': resolve(
+            __dirname,
+            e2eFaults ? 'src/main/errors/faults.ts' : 'src/main/errors/faults-off.ts',
+          ),
+        },
+      },
+      build: {
+        sourcemap: true,
+        rollupOptions: { input: { index: resolve(__dirname, 'src/main/index.ts') } },
+      },
     },
-  },
-  renderer: rendererConfig,
+    preload: {
+      build: {
+        sourcemap: true,
+        rollupOptions: { input: { index: resolve(__dirname, 'src/preload/index.ts') } },
+      },
+    },
+    renderer: rendererConfigFor(e2eFaults),
+  };
 });

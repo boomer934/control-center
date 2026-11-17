@@ -14,12 +14,21 @@ export function cleanEnv(extra: Record<string, string> = {}): Record<string, str
   return { ...env, ...extra };
 }
 
-/** Starts the built app (out/) and waits until the renderer got its first IPC answer. */
-export async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
+/**
+ * Starts the built app (out/) and waits until the renderer got its first IPC answer.
+ * `userDataDir` keeps logs and caches of the run out of the user's real profile.
+ */
+export async function launchApp(
+  options: { userDataDir?: string } = {},
+): Promise<{ app: ElectronApplication; page: Page }> {
   const app = await _electron.launch({
     // Fake camera and microphone: CI runners have none, and getUserMedia would fail with
     // NotFoundError before ever asking for the permission the tests expect to be denied.
-    args: ['--use-fake-device-for-media-stream', APP_DIR],
+    args: [
+      '--use-fake-device-for-media-stream',
+      ...(options.userDataDir ? [`--user-data-dir=${options.userDataDir}`] : []),
+      APP_DIR,
+    ],
     cwd: APP_DIR,
     env: cleanEnv(),
   });

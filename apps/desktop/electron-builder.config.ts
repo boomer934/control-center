@@ -7,7 +7,8 @@ const config: Configuration = {
   productName: 'Control Center',
   directories: { output: 'release', buildResources: 'build' },
   // Everything is bundled by electron-vite into out/: no node_modules in the package.
-  files: ['out/**/*', 'package.json', '!**/*.map'],
+  // Source maps stay inside the package: the Errors Console maps stacks to the TypeScript sources.
+  files: ['out/**/*', 'package.json'],
   asar: true,
   npmRebuild: false,
   // See docs/memoria/SICUREZZA.md (Electron checklist). Verified by e2e/packaged/fuses.spec.ts.

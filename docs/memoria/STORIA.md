@@ -4,6 +4,22 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Fase 3b: logger, cattura errori e Console Errori
+
+**Fatto** (branch `feat/errors-console`, commit `faac590`)
+
+- `packages/app-log`: logger JSONL ruotato (1 MiB × 5 file in `<userData>/logs`), parser degli stack V8 con frame `project`/`dependency`/`internal`, `ErrorStore` con raggruppamento e contatore, testo di "copia report". Tutto passa da `makeTextCleaner`/`redactSecrets`.
+- Main: cattura di `uncaughtException`/`unhandledRejection`, `render-process-gone`/`child-process-gone`, errori del gate IPC (al posto di `console.warn`) e `superviseChild` per stderr e uscite dei processi figli. `stack-mapper.ts` riscrive i frame di `out/` con le source map.
+- IPC: namespace `errors` con `list`, `reportRenderer`, `copyReport`, `clear`. Renderer: `window.onerror`, `unhandledrejection`, Error Boundary, barra di stato con contatore e pannello Console (frame del progetto in evidenza, dipendenze collassate, copia report, svuota).
+- Test: 13 unit su `app-log`, 5 sul mapper, 1 sul contratto; `errors.spec.ts` (10 E2E: main, renderer, figlio, righe esatte dei sorgenti, segreti, log, appunti) e `build.spec.ts` sul pacchetto. `verify` 184 test; E2E app 29/29; packaged 8/8.
+
+**Decisioni:** ADR 0005. Logger scritto in casa invece di pino; niente canale push (la Console interroga ogni secondo); fault injector solo con `--mode e2e` (alias di build nel main, `define` nel renderer); source map incluse nel pacchetto.
+
+**Problemi:** `process.setSourceMapsEnabled` non rimappa lo stack nel main di Electron; lo stderr dei figli ha `
+` e codici ANSI (Playwright forza i colori); il test dell'asar manomesso usava il vecchio prefisso `[ipc] `; `sourcesContent` delle mappe contiene anche codice eliminato dal bundle. Vedi `PROBLEMI_NOTI.md`.
+
+---
+
 ## 2026-11-17 — Merge della sotto-fase 3a
 
 **Fatto:** PR #23 unita su `main` (`985130d`, squash) con tutti i check verdi: Verify su Windows (compresi gli E2E `_electron` e i Fuses del pacchetto), gitleaks, commitlint, memoria.

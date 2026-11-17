@@ -15,7 +15,16 @@ body {
   height: 100%;
 }
 
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .shell {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
@@ -54,4 +63,139 @@ body {
 
 .shell-info dd {
   margin: 0;
+}
+
+/* Status bar and Errors Console (phase 3b). Only design tokens. */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  height: var(--status-h);
+  padding: 0 var(--sp-4);
+  border-top: var(--sz-hair) solid var(--line);
+  background: var(--bg-1);
+  font-size: var(--fs-xs);
+}
+
+.statusbar-btn,
+.errc-btn {
+  font: inherit;
+  color: var(--fg-1);
+  background: transparent;
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-1);
+  padding: var(--sp-1) var(--sp-3);
+  cursor: pointer;
+}
+
+.statusbar-btn {
+  border-color: transparent;
+}
+
+.statusbar-btn:hover,
+.errc-btn:hover {
+  background: var(--bg-2);
+}
+
+.statusbar-btn:focus-visible,
+.errc-btn:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: var(--sz-hair);
+}
+
+.errc {
+  display: flex;
+  flex-direction: column;
+  max-height: 40%;
+  min-height: 0;
+  border-top: var(--sz-hair) solid var(--line);
+  background: var(--bg-1);
+}
+
+.errc-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--sz-hair) solid var(--line);
+}
+
+.errc-title {
+  margin: 0;
+  margin-right: auto;
+  font-size: var(--fs-m);
+  font-weight: var(--fw-semibold);
+}
+
+.errc-notice {
+  color: var(--fg-3);
+  font-size: var(--fs-xs);
+}
+
+.errc-empty {
+  padding: var(--sp-4);
+}
+
+.errc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+.errc-group {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--sz-hair) solid var(--line);
+}
+
+.errc-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--fg-2);
+}
+
+.errc-chip {
+  font-family: var(--font-mono);
+  padding: 0 var(--sp-2);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-pill);
+}
+
+.errc-count {
+  color: var(--st-error);
+  font-weight: var(--fw-semibold);
+}
+
+.errc-message {
+  margin: var(--sp-2) 0;
+  color: var(--st-error);
+  overflow-wrap: anywhere;
+}
+
+.errc-frames {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-s);
+}
+
+.errc-frame {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.errc-frame-dim {
+  color: var(--fg-3);
+}
+
+.errc-fn {
+  color: var(--fg-2);
+}
+
+.errc-collapsed summary {
+  color: var(--fg-3);
+  cursor: pointer;
 }

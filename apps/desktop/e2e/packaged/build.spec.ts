@@ -69,8 +69,9 @@ test('source maps ship inside the package, so the Errors Console can map stacks'
 test('node-pty ships unpacked with its native ConPTY module and worker', () => {
   const pty = join(ASAR + '.unpacked', 'node_modules', 'node-pty');
   expect(existsSync(join(pty, 'lib', 'worker', 'conoutSocketWorker.js'))).toBe(true);
+  const rebuilt = existsSync(join(pty, 'build', 'Release', 'conpty.node'));
+  const usingPrebuild = process.env.CC_USE_PREBUILT_PTY === '1';
   expect(
-    existsSync(join(pty, 'build', 'Release', 'conpty.node')) ||
-      existsSync(join(pty, 'prebuilds', 'win32-x64', 'conpty.node')),
+    rebuilt || (usingPrebuild && existsSync(join(pty, 'prebuilds', 'win32-x64', 'conpty.node'))),
   ).toBe(true);
 });

@@ -8,8 +8,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Utente] (F0)** Decidere sulla versione `1.0.0` (release `control-center-v1.0.0`, PR #46): `PIANO.md` la prevede alla Fase 10 e il manifest partiva da `0.0.0`. Tenerla, oppure eliminare release e tag e riportare il manifest a 0.x (vedi `PROBLEMI_NOTI.md`).
-2. **[Claude] (F4.3, revisione)** Correggere con test i due rilievi di gravità media (voci 1 e 2 in "Quando capita"): permessi con dettagli oltre 16 KiB e ordine degli eventi nello storico. Tocca il flusso dei permessi: lavoro Claude, non da delegare.
+1. **[Claude] (F4.3, revisione)** Correggere con test i due rilievi di gravità media (voci 1 e 2 in "Quando capita"): permessi con dettagli oltre 16 KiB e ordine degli eventi nello storico. Tocca il flusso dei permessi: lavoro Claude, non da delegare.
 
 ## Dopo
 

@@ -88,7 +88,6 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ## Blocchi e avvertenze
 
-- **Versione `1.0.0` da confermare:** Release Please ora funziona e la PR #46 ha creato tag e release `control-center-v1.0.0`, ma `PIANO.md` prevede v1.0.0 alla Fase 10 (il manifest partiva da `0.0.0`). Da decidere se tenerla o riportare la repo a 0.x (vedi `PROBLEMI_NOTI.md`).
 - **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR, merge a mano a CI verde.
 - **Screenshot di riferimento** (`apps/desktop/e2e/app/ui.spec.ts-snapshots/`): sono quelli del runner `windows-latest` (artifact `playwright-results` del run 44100672540), perché i caratteri locali differivano di circa il 4% dei pixel. **In locale i 12 test visivi falliscono**: per rigenerarli o confrontarli si usa l'artifact della CI, non `--update-snapshots` locale. Le asserzioni sono `expect.soft`, così un run fallito salva tutti i candidati.
 - **Font non inclusi:** Instrument Sans e Martian Mono non sono nel pacchetto (la CSP vieta Google Fonts); l'app usa i font di ripiego dei token. Vedi `PROSSIMI_PASSI.md`.

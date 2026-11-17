@@ -19,7 +19,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Problemi aperti**
 
-- Il numero `1.0.0` della release è inatteso: `PIANO.md` prevede v1.0.0 alla Fase 10. Il manifest partiva da `0.0.0` e Release Please ha proposto 1.0.0 (probabile primo rilascio senza tag precedente; non verificato). Da decidere se tenerlo o riportare la repo a 0.x (vedi `PROBLEMI_NOTI.md`).
+- Versione `1.0.0` della release (PR #46): inattesa rispetto a `PIANO.md`, ma decisa il 2026-11-18 di tenerla.
 - 9 rilievi della revisione della 4.3, in `PROSSIMI_PASSI.md`.
 - Astra sulla pipe; script degli hooks fuori dal pacchetto (Fase 10); font non inclusi.
 

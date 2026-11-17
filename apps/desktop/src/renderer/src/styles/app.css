@@ -1,0 +1,329 @@
+/* App shell on top of the design system (design/sistema). Only design tokens, no literals.
+   Tailwind v4: theme + utilities, no preflight (componenti.css has its own base). The theme
+   maps the tokens, so utilities such as `bg-bg-1`, `text-fg-2` or `p-sp-4` read the same
+   variables as the CSS classes and follow the dark/light themes and the density. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme inline {
+  --color-*: initial;
+  --color-page: var(--page);
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-fg-1: var(--fg-1);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-accent: var(--accent);
+  --color-st-idle: var(--st-idle);
+  --color-st-reading: var(--st-reading);
+  --color-st-writing: var(--st-writing);
+  --color-st-running: var(--st-running);
+  --color-st-waiting: var(--st-waiting);
+  --color-st-error: var(--st-error);
+  --color-st-done: var(--st-done);
+  --spacing-sp-1: var(--sp-1);
+  --spacing-sp-2: var(--sp-2);
+  --spacing-sp-3: var(--sp-3);
+  --spacing-sp-4: var(--sp-4);
+  --spacing-sp-5: var(--sp-5);
+  --spacing-sp-6: var(--sp-6);
+  --spacing-sp-8: var(--sp-8);
+  --radius-r-1: var(--r-1);
+  --radius-r-2: var(--r-2);
+  --radius-r-3: var(--r-3);
+  --text-xs: var(--fs-xs);
+  --text-s: var(--fs-s);
+  --text-m: var(--fs-m);
+  --text-l: var(--fs-l);
+  --text-xl: var(--fs-xl);
+}
+
+/* ---------- base: a real window, not the 1440 x 900 mockup frame ---------- */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  overflow: hidden;
+}
+
+.frame {
+  display: grid;
+  grid-template-columns: var(--act-w) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) var(--status-h);
+  height: 100%;
+  background: var(--bg-1);
+}
+
+.frame > .act {
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.frame > .work {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.frame > .status {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* ---------- activity bar, status bar ---------- */
+.act .ws {
+  height: var(--status-h);
+}
+
+.act[data-compact] .badge {
+  display: none;
+}
+
+.status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.status .err .status-btn {
+  color: var(--st-error);
+}
+
+/* ---------- panels ---------- */
+.view {
+  height: 100%;
+  overflow: auto;
+  background: var(--bg-1);
+}
+
+.view-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-9);
+}
+
+.dock-fill {
+  height: 100%;
+  overflow: auto;
+  background: var(--bg-2);
+}
+
+.dock-side {
+  padding: var(--sp-5) var(--sp-6);
+  border-left: var(--sz-hair) solid var(--line-2);
+}
+
+.dock-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-l);
+  font-weight: var(--fw-semibold);
+}
+
+.dock-fill .errc {
+  height: 100%;
+  max-height: none;
+  border-top: var(--sz-hair) solid var(--line-2);
+}
+
+.sep {
+  flex: none;
+  background: var(--line);
+}
+
+.sep-h {
+  height: var(--sz-hair);
+}
+
+.sep-v {
+  width: var(--sz-hair);
+}
+
+.sep:hover,
+.sep[data-separator='active'] {
+  background: var(--accent);
+}
+
+.sep:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+}
+
+/* ---------- overlays over the whole window ---------- */
+.frame .scrim {
+  position: fixed;
+  inset: 0;
+}
+
+.frame .modal {
+  position: fixed;
+  top: calc(var(--sp-10) * 2);
+}
+
+.frame .pal {
+  top: var(--sp-10);
+}
+
+[cmdk-root] {
+  display: flex;
+  flex-direction: column;
+}
+
+[cmdk-input] {
+  flex: 1;
+  min-width: 0;
+  outline: none;
+  color: var(--fg-1);
+}
+
+[cmdk-input]::placeholder {
+  color: var(--fg-3);
+}
+
+[cmdk-list] {
+  max-height: calc(var(--sp-10) * 7);
+  overflow: auto;
+}
+
+[cmdk-group-heading] {
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-2);
+}
+
+.pal [cmdk-item] {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: calc(var(--row) + var(--sp-2));
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-2);
+  font-size: var(--fs-m);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pal [cmdk-item] .ic {
+  color: var(--fg-2);
+}
+
+.pal [cmdk-item] .kbd {
+  margin-left: auto;
+}
+
+.pal [cmdk-item][data-selected='true'] {
+  background: var(--bg-3);
+}
+
+.pal .empty-row {
+  padding: var(--sp-4);
+  color: var(--fg-2);
+}
+
+.help {
+  width: var(--dialog-w);
+}
+
+.help-body {
+  max-height: calc(var(--sp-10) * 9);
+  overflow: auto;
+}
+
+.help-group {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--fg-2);
+}
+
+.help-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.help-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+/* ---------- components page ---------- */
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  padding: var(--sp-8);
+  max-width: calc(var(--sp-10) * 20);
+}
+
+.gallery-title {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.gallery h2 {
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-l);
+  font-weight: var(--fw-semibold);
+}
+
+.gallery section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.gal-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-5);
+}
+
+.gal-top {
+  align-items: flex-start;
+}
+
+.gal-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.gallery .field {
+  width: calc(var(--sp-10) * 5);
+}
+
+.input input {
+  flex: 1;
+  min-width: 0;
+  outline: none;
+}
+
+/* The real input has no outline of its own: its frame shows the focus, like `.is-focus`. */
+.input:focus-within {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: var(--sz-stroke);
+}
+
+/* The wait is the only breathing element; the gallery screenshots must hold still. */
+.gallery [class*='pulse'],
+.gallery .breathe {
+  animation: none;
+}

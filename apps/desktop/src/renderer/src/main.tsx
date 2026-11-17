@@ -1,8 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../../../../design/sistema/tokens.css';
+import '../../../../../design/sistema/componenti.css';
+import './styles/app.css';
 import './shell.css';
 import { App } from './App';
+import { ThemeProvider } from './theme/ThemeProvider';
 import { installRendererCapture } from './errors/capture';
 import { installFaults } from './errors/faults';
 
@@ -15,6 +18,8 @@ if (!root) throw new Error('Missing #root');
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </StrictMode>,
 );

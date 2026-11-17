@@ -21,7 +21,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Problemi**
 
-- Gli screenshot di riferimento sono di Windows locale: se la CI su `windows-latest` rende i caratteri in modo diverso vanno rigenerati con `--update-snapshots` (non ancora verificato in CI).
+- Gli screenshot generati in locale non coincidevano con `windows-latest` (1375 pixel, 4%): primo run CI rosso sui soli 2 test visivi. Rimedio: asserzioni `expect.soft` per far salvare alla CI tutti i 12 candidati, scaricati dall'artifact e committati come riferimento. In locale i test visivi ora falliscono (font diversi).
 - La title bar personalizzata non c'è: la finestra usa la cornice nativa (la finestra senza cornice richiede lavoro nel main, da fare con la sicurezza della 3a in mente).
 
 ---

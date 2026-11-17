@@ -1,0 +1,57 @@
+/* Phase 3a placeholder. Only design tokens (design/sistema/tokens.css): see DESIGN.md. */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--page);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: var(--fs-m);
+  line-height: var(--lh-base);
+}
+
+#root {
+  height: 100%;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-9);
+}
+
+.shell-title {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+
+.shell-muted {
+  margin: 0;
+  color: var(--fg-3);
+}
+
+.shell-error {
+  margin: 0;
+  color: var(--st-error);
+}
+
+.shell-info {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: var(--sp-2) var(--sp-6);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-s);
+}
+
+.shell-info dt {
+  color: var(--fg-2);
+}
+
+.shell-info dd {
+  margin: 0;
+}

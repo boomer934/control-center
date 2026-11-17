@@ -6,11 +6,11 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F3a)** Shell Electron sicura e IPC: `apps/desktop` con electron-vite, checklist di `SICUREZZA.md` verificata da test, `packages/ipc-contract`, E2E `_electron` in CI. Branch proposto `feat/desktop-shell`; goal in `FASE_3.md`.
+1. ✅ **(F3a)** Shell Electron sicura e IPC, fatta su `feat/desktop-shell` (ADR 0004). Resta la PR: CI verde su GitHub (prima esecuzione di `pnpm e2e` ed `e2e:packaged` su `windows-latest`), poi merge a mano.
+2. **(F3b)** Logger (con ADR), cattura degli errori e Console Errori con stack sorgente. Branch proposto `feat/errors-console`. Vedi le note per la 3b in `STATO.md` (permesso appunti, `console.warn` del gate IPC).
 
 ## Dopo
 
-2. **(F3b)** Logger (con ADR), cattura degli errori e Console Errori con stack sorgente. Branch proposto `feat/errors-console`.
 3. **(F3c)** Design system in codice, layout a pannelli, command palette, scorciatoie con ambiti di focus (da `design/ricerca/architettura.md`), temi e pagina componenti con test visivi. Branch proposto `feat/desktop-ui`.
 
 ## Quando capita
@@ -22,4 +22,5 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 - **(F5e)** Aggiungere `error.detected` allo schema. Ogni cambio incompatibile di `AgentEvent` alza `schemaVersion` e richiede una migrazione testata (ADR 0003).
 - **(F7)** Il bridge Ollama vero: `normalizeOllamaChat` oggi è minimo.
 - Opzionale in locale: `winget install gitleaks`, `npm i -g pnpm@10`, `npx playwright install chromium` (Chromium 1255 per Playwright 1.65).
+- **(F10)** Icona dell'app, installer NSIS, firma e aggiornamenti: oggi `electron-builder.config.ts` serve solo per `--dir` e i test dei Fuses. Togliere `packageExtensions` per `@peculiar/utils` quando dichiarerà `tslib` (vedi `PROBLEMI_NOTI.md`).
 - **(F10, prima di rendere pubblica la repo)** Attivare la protezione di `main` e fissare le GitHub Actions a SHA. Riverificare il nome Vernier (marchi `VERNIER…` in classe 9 negli USA, pacchetto npm `vernier` già esistente, domini `vernier.com`/`.dev` in uso); dove crea problemi si resta con Control Center.

@@ -4,6 +4,24 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Fase 3a: shell Electron sicura e IPC
+
+**Fatto** (branch `feat/desktop-shell`)
+
+- `apps/desktop` con electron-vite, Electron 45.3.3 e React 19. Il renderer di produzione è servito da `app://control-center/` con CSP sia in header sia in `<meta>`.
+- `packages/ipc-contract`: metodi zod `.strict()`, gate nel main (mittente → richiesta → handler → risposta, con envelope) e `window.api` generato e congelato. ESLint vieta l'IPC grezzo fuori dai due file ponte.
+- Hardening: `secureWebPreferences`, `app.enableSandbox()`, navigazione e nuove finestre bloccate, link `https:` al browser di sistema, permessi web negati, istanza singola.
+- Fuses tramite `electronFuses` di electron-builder.
+- Test: 165 unitari; 19 E2E `_electron` (sicurezza e modalità sviluppo); 6 sul pacchetto (fuse wire, `ELECTRON_RUN_AS_NODE`, `--inspect`, `NODE_OPTIONS`, ASAR manomesso con prova di controllo).
+- In CI: `scripts/check-electron-support.mjs`, `pnpm e2e` ed `e2e:packaged` nel job Windows. Checklist Electron di `SICUREZZA.md` tutta spuntata.
+- Dipendenze solo di sviluppo e build: `@electron/fuses`, `@playwright/test` (nel pacchetto desktop), `vite`, `@vitejs/plugin-react`.
+
+**Decisioni:** ADR 0004. Le dipendenze dell'app sono tutte `devDependencies` messe in bundle, quindi il pacchetto non ha `node_modules`. Gli E2E girano sulla build non impacchettata, perché il fuse dell'inspector impedisce a Playwright di collegarsi al pacchetto.
+
+**Problemi:** dentro `page.evaluate` DevTools permette `eval` (le prove CSP girano in un timer). `electron-vite dev --rendererOnly` avvia comunque Electron, quindi il test di sviluppo usa `createServer` di Vite. `getLastWebPreferences` manca nei tipi di Electron 45. electron-builder non legge `electron-builder.config.ts` senza `--config`. `@peculiar/utils` usa `tslib` senza dichiararlo. Il test ha scoperto che una cartella passava come asset di `app://`: corretto.
+
+---
+
 ## 2026-11-14 — Revisione di modelli ed effort per il consumo di token
 
 **Fatto:** rivista la tabella "Modello, effort, ultracode e goal" di `PIANO.md` per le Fasi 3-10, dopo un forte aumento dell'uso di token. Aggiornati di conseguenza `FASE_3.md` e `STATO.md`.

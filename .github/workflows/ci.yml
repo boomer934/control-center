@@ -31,7 +31,19 @@ jobs:
       - name: Sanitized fixtures contain no secrets or personal data
         run: node scripts/fixtures/sanitize.mjs --check
       - run: pnpm build
-      # E2E (Playwright _electron) is added in Phase 3, when the app exists.
+      - name: Electron is within the last 2 supported majors
+        run: node scripts/check-electron-support.mjs
+      - name: E2E (Playwright _electron, security checklist)
+        run: pnpm e2e
+      - name: Packaged app (electron-builder --dir) and Electron Fuses
+        run: pnpm e2e:packaged
+      - name: Upload Playwright results on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results
+          path: apps/desktop/test-results/
+          retention-days: 7
       - name: Dependency audit
         run: pnpm audit --audit-level high
 

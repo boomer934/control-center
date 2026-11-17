@@ -21,3 +21,7 @@
 | **Segui agente**       | Modalità della mappa in cui la camera segue l'agente selezionato; si interrompe a ogni input sulla mappa (`F` / `Esc`).                                                                        |
 | **Vista raw**          | Il JSON originale di un evento, alternativo alla frase leggibile (vista umana); si passa dall'una all'altra con `R`.                                                                           |
 | **Test dei 2 secondi** | Verifica di design: si mostra una schermata per 2 secondi e si chiede una delle 5 domande chiave; supera se la risposta è giusta in 4 casi su 5.                                               |
+| **Contratto IPC**      | L'elenco chiuso dei metodi tra renderer e main (`packages/ipc-contract`), ognuno con schema zod di richiesta e risposta. Ogni nuova capacità del renderer è un metodo qui.                     |
+| **Envelope IPC**       | La risposta del main a ogni chiamata: `{ ok: true, value }` oppure `{ ok: false, error: { code, message } }`. Nessuna eccezione attraversa l'IPC.                                              |
+| **app://**             | Lo schema privilegiato (`app://control-center/`) da cui il main serve il renderer in produzione, al posto di `file://`, con la CSP come header.                                                |
+| **Fuses**              | Interruttori scritti nel binario di Electron in fase di build (es. `RunAsNode` off, integrità ASAR on); verificati in `e2e/packaged/fuses.spec.ts`.                                            |

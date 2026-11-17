@@ -59,6 +59,12 @@ importers:
       '@control-center/event-schema':
         specifier: workspace:*
         version: link:../../packages/event-schema
+      '@control-center/fixtures':
+        specifier: workspace:*
+        version: link:../../packages/fixtures
+      '@control-center/hooks-bridge':
+        specifier: workspace:*
+        version: link:../../packages/hooks-bridge
       '@control-center/ipc-contract':
         specifier: workspace:*
         version: link:../../packages/ipc-contract
@@ -116,6 +122,9 @@ importers:
       vite:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   design/prototipo-live:
     devDependencies:
@@ -175,8 +184,21 @@ importers:
         specifier: ^24.0.0
         version: 24.19.2
 
+  packages/hooks-bridge:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+
   packages/ipc-contract:
     dependencies:
+      '@control-center/event-schema':
+        specifier: workspace:*
+        version: link:../event-schema
       zod:
         specifier: ^4.6.7
         version: 4.6.7

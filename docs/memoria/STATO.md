@@ -20,13 +20,23 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 
 ## Branch
 
-`feat/fixture-posttoolusefailure` (PR #31). `main` include il brief della Fase 4 (PR #30).
+Claude: `docs/corsie-claude-codex` (ripartizione in due corsie), poi `feat/ipc-push-channel`. Codex: `feat/workspace-terminal`. `main` include il brief della Fase 4 (PR #30) e `sessione-06` (PR #31).
 
 ## Punto di ripresa
 
-- **Ora:** merge della PR #31 (`feat/fixture-posttoolusefailure`: `sessione-06` con `PostToolUseFailure`, guida passo passo in `scripts/fixtures/README.md`) a CI verde. La PR #30 (brief della Fase 4) è già unita.
-- **Poi (utente):** registrare `sessione-07` con `Notification` seguendo la sezione "Recording an interactive session" di `scripts/fixtures/README.md`; poi Claude ripulisce, aggiorna gli snapshot e apre la PR.
-- **Poi:** Fase 4.1, il bridge degli hooks, su `feat/hooks-bridge` con Opus 5.5, effort high. Il goal è in `FASE_4.md`.
+Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizione in [`CORSIE.md`](CORSIE.md)). Ogni agente modifica solo la propria sezione.
+
+### Corsia Claude
+
+- **Fatto:** PR #30 (brief della Fase 4), #31 (`sessione-06`) e #32 (plugin di progetto) unite.
+- **Bloccante, serve l'utente:** la `sessione-07` registrata il 2026-11-17 **non contiene `Notification`**. Controllo fatto con uno script, perché `raw/` non è leggibile da Claude: 10 righe di hooks (`SessionStart`, `UserPromptSubmit`×2, `PreToolUse`×2, `PostToolUse`×2, `Stop`×2, `SessionEnd`) e nessuna `Notification`; entrambi i `PowerShell` hanno un `PostToolUse`, quindi sono stati approvati. Va ripetuta come da `scripts/fixtures/README.md` (passi 6-11), controllando con `/hooks` che `Notification` sia caricato nel progetto di prova. Fino ad allora la 4.1 non parte. `sessione-07` non è stata ripulita né committata.
+- **Ora:** 4.0, canale push nel contratto IPC (Opus 5.5, high), branch `feat/ipc-push-channel`.
+- **Poi:** 4.1 hooks bridge (`feat/hooks-bridge`, Opus 5.5, high) appena `Notification` è catturato; poi 5a.
+
+### Corsia Codex
+
+- **Ora:** 4.2 workspace e terminale (`gpt-6.1-sol`, high), branch `feat/workspace-terminal`, nel worktree `..\control-center-codex`. Prima workspace e modulo dei percorsi; il terminale dopo il merge della 4.0.
+- **Poi:** 4.3 (dopo 4.0, 4.1 e 4.2 unite), poi 4b.
 
 ## Cosa funziona
 
@@ -50,7 +60,7 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 - Mappatura degli stack nel pacchetto (`app.asar`) provata solo in `out/` e con test unitari, non end to end: vedi `PROBLEMI_NOTI.md`.
 - "Clic su un frame → apri l'editor" della Console non c'è: serve un metodo IPC che apra file, da progettare con i controlli di percorso della Fase 4.
 - gitleaks non è installato in locale: lo controlla il job CI.
-- **Bloccante per la 4.1:** manca la fixture reale di `Notification`, che richiede una sessione interattiva dell'utente. `PostToolUseFailure` è in `sessione-06` (branch `feat/fixture-posttoolusefailure`).
+- **Bloccante per la 4.1:** manca la fixture reale di `Notification`, che richiede una sessione interattiva dell'utente (la prima prova, `sessione-07`, non l'ha catturata). `PostToolUseFailure` è in `sessione-06`, già su `main`.
 - Il prototipo 1d legge ancora le fixture grezze: in CI i suoi test Playwright si saltano.
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
 - Le cartelle `node_modules`, `out/`, `release/` e `test-results/` sono escluse dalla lettura nei permessi di Claude: le build si verificano con i test.

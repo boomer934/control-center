@@ -4,6 +4,26 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Due corsie, Claude e Codex
+
+**Fatto:**
+
+- con l'abbonamento a Codex il lavoro si divide in due corsie parallele; nuovo file [`CORSIE.md`](CORSIE.md) con corsia, modello, effort e revisione per ogni fase, e l'ordine a onde;
+- Opus 5.5 resta a sicurezza, contratti, bridge, scrittura di file dell'utente e audit; `gpt-6.1-sol` prende il lavoro già specificato; `gpt-6-luna` il meccanico; `gpt-6-astra` solo come seconda opinione di sicurezza (premessa dell'utente: Opus è più forte e costa meno);
+- `AGENTS.md`, `.agents/` e `.codex/` committati; `CLAUDE.md` e `AGENTS.md` rimandano a `CORSIE.md`; `STATO.md` ha una sezione per corsia.
+
+**Decisioni:**
+
+- ogni agente lavora nel proprio worktree e modifica solo la propria sezione di `STATO.md`;
+- nuova sotto-fase 4.0 (canale push nel contratto IPC), a Claude, perché 4.2, 4.3 e la Fase 6 ne dipendono e il contratto IPC non si delega;
+- la 4.2 passa da medium a high perché tocca percorsi e pty.
+
+**Problemi:**
+
+- la `sessione-07` registrata non contiene `Notification` (vedi `STATO.md`): la 4.1 resta bloccata finché l'utente non la ripete.
+
+---
+
 ## 2026-11-17 — Fixture `PostToolUseFailure` (`sessione-06`)
 
 **Fatto:**

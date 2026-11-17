@@ -61,6 +61,7 @@ Leggi solo ciò che serve al momento:
 | `PROSSIMI_PASSI.md` | scegli cosa fare                    | un task si chiude o nasce                                  |
 | `STORIA.md`         | devi capire perché qualcosa è così  | a fine sessione (voce in cima)                             |
 | `PIANO.md`          | apri una nuova fase o sotto-fase    | cambia il piano (con voce in STORIA)                       |
+| `CORSIE.md`         | scegli la corsia, modello e effort  | cambia la ripartizione Claude/Codex                        |
 | `DECISIONI.md`      | prima di cambiare architettura      | ogni nuova ADR                                             |
 | `DESIGN.md`         | prima di toccare la UI              | cambia il design system                                    |
 | `SICUREZZA.md`      | prima di IPC, processi, fs, segreti | nuova superficie d'attacco                                 |
@@ -76,3 +77,5 @@ Skill di progetto:
 ## Modello di lavoro
 
 Ogni fase ha modello, effort, uso di ultracode e un testo da usare con `/goal` in `docs/memoria/PIANO.md` (sezione "Modello, effort, ultracode e goal"). Ogni goal si chiude con la memoria aggiornata.
+
+Il lavoro è diviso in due corsie parallele, Claude e Codex, descritte in `docs/memoria/CORSIE.md` (fase per fase: corsia, modello, effort, revisione). Ogni agente lavora nel proprio worktree e aggiorna solo la propria sezione di `STATO.md`. Per le fasi Codex valgono modello ed effort di `CORSIE.md`.

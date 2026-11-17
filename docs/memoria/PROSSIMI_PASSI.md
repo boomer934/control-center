@@ -6,16 +6,17 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F2, prima della F4.1, utente)** `PostToolUseFailure` ✅ catturato in `sessione-06`. Resta `Notification`: una sessione interattiva breve nel progetto di prova (`claude` senza `-p`, con `VERNIER_HOOKS_SESSION=sessione-07`), con almeno una richiesta di permesso lasciata in attesa qualche secondo. Serve un file di stream vuoto `raw/sessione-07.jsonl` (vedi `scripts/fixtures/README.md`). Poi:
-   1. `node scripts/fixtures/sanitize.mjs`;
-   2. rilettura a mano;
-   3. aggiornamento degli snapshot (`npx vitest run packages/fixtures -u`).
-2. **(F4.1)** Hooks bridge e sessione Claude: branch `feat/hooks-bridge`, Opus 5.5, effort high. Il goal è in `FASE_4.md`.
+Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
+
+1. **[Utente] (F2, prima della F4.1)** Ripetere la registrazione di `sessione-07`: la prima non ha catturato `Notification` (10 righe di hooks, nessuna `Notification`). Guida in `scripts/fixtures/README.md`, passi 6-11; prima `/hooks` nel progetto di prova per controllare che `Notification` sia caricato, poi lasciare la richiesta di permesso in attesa 10 secondi. Poi `sanitize.mjs`, rilettura a mano e `npx vitest run packages/fixtures -u` (Claude).
+2. **[Claude] (F4.0)** Canale push nel contratto IPC: ADR, `feat/ipc-push-channel`, Opus 5.5, high.
+3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, il terminale dopo la 4.0.
 
 ## Dopo
 
-3. **(F4.2)** Workspace e terminale (Sonnet 5.5, medium).
-4. **(F4.3)** Chat, permessi e cronologia (Sonnet 5.5, high).
+4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: `feat/hooks-bridge`, Opus 5.5, high, quando `Notification` è catturato. Il goal è in `FASE_4.md`.
+5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), dopo 4.0, 4.1 e 4.2. Poi 4b.
+6. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 
 ## Quando capita
 

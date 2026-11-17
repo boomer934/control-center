@@ -8,13 +8,13 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Utente] (F2, prima della F4.1)** Ripetere la registrazione di `sessione-07`: la prima non ha catturato `Notification` (10 righe di hooks, nessuna `Notification`). Guida in `scripts/fixtures/README.md`, passi 6-11; prima `/hooks` nel progetto di prova per controllare che `Notification` sia caricato, poi lasciare la richiesta di permesso in attesa 10 secondi. Poi `sanitize.mjs`, rilettura a mano e `npx vitest run packages/fixtures -u` (Claude).
+1. ✅ **[Utente + Claude] (F2, prima della F4.1)** Fixture di `Notification`: `sessione-07` registrata e ripulita (branch `feat/fixture-notification`, commit `3ec6f97`). Resta il merge della PR a CI verde (l'utente).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
 3. **[Codex] (F4.2)** Workspace e terminale: `feat/workspace-terminal`, `gpt-6.1-sol`, high. Prima workspace e modulo dei percorsi, poi il terminale (sbloccato, la 4.0 è su `main`): l'output del pty è un evento nuovo del contratto (`event(...)`, schema limitato) e il main raggruppa i dati prima di inviarli (ADR 0007).
 
 ## Dopo
 
-4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: `feat/hooks-bridge`, Opus 5.5, high, quando `Notification` è catturato. Il goal è in `FASE_4.md`.
+4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: `feat/hooks-bridge`, Opus 5.5, high, sbloccata: parte dopo il merge della PR delle fixture. Il goal è in `FASE_4.md`.
 5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), dopo 4.0, 4.1 e 4.2. Poi 4b.
 6. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 

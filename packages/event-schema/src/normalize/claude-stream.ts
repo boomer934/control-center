@@ -36,33 +36,64 @@ interface PendingTool {
   at: string;
 }
 
-export function normalizeClaudeStream(
-  lines: readonly unknown[],
-  ctx: NormalizeContext,
-): AgentEvent[] {
-  const records = lines.filter(isObj);
-  const init = records.find((l) => l.type === 'system' && l.subtype === 'init');
-  const cwd = ctx.cwd ?? str(init?.cwd) ?? '';
-  const { text, file, target } = makeTools(cwd);
-  const log = new EventLog(ctx.sessionId, 'stream', 'claude');
+interface StreamState {
+  cwdKnown: boolean;
+  now: string;
+  tools: Map<string, PendingTool>;
+  denied: Map<string, string>; // toolUseId → message
+  announced: Set<string>; // toolUseIds whose denial was already emitted
+  usageSeen: Set<string>;
+  status: 'completed' | 'blocked' | 'failed' | undefined;
+  summary: string | undefined;
+}
 
-  let now = records.map((l) => iso(l.timestamp)).find((t) => t !== undefined) ?? EPOCH;
-  const tools = new Map<string, PendingTool>();
-  const denied = new Map<string, string>(); // toolUseId → message
-  const announced = new Set<string>(); // toolUseIds whose denial was already emitted
-  const usageSeen = new Set<string>();
-  let status: 'completed' | 'blocked' | 'failed' | undefined;
-  let summary: string | undefined;
+export interface StreamNormalizerOptions {
+  /** Timestamp used until a line carries one (the batch normalizer passes the first one). */
+  startAt?: string;
+}
 
-  const emitDenial = (
+/**
+ * Incremental stream-json normalizer: one line in, the AgentEvents it produces out. The live
+ * session feeds it line by line; `normalizeClaudeStream` feeds it a whole recording.
+ */
+export class ClaudeStreamNormalizer {
+  private readonly log: EventLog;
+  private cleaners: ReturnType<typeof makeTools>;
+  private readonly s: StreamState;
+
+  constructor(ctx: NormalizeContext, options: StreamNormalizerOptions = {}) {
+    this.log = new EventLog(ctx.sessionId, 'stream', 'claude');
+    this.cleaners = makeTools(ctx.cwd ?? '');
+    this.s = {
+      cwdKnown: ctx.cwd !== undefined,
+      now: options.startAt ?? EPOCH,
+      tools: new Map(),
+      denied: new Map(),
+      announced: new Set(),
+      usageSeen: new Set(),
+      status: undefined,
+      summary: undefined,
+    };
+  }
+
+  /** Normalizes one stream-json line. `at` stamps a line that has no timestamp of its own. */
+  push(raw: unknown, at?: string): AgentEvent[] {
+    if (!isObj(raw)) return [];
+    const from = this.log.events.length;
+    this.line(raw, at);
+    return this.log.events.slice(from);
+  }
+
+  private emitDenial(
     toolUseId: string,
     tool: string | undefined,
     detail: string,
     agentId: AgentId,
-  ) => {
-    if (announced.has(toolUseId)) return;
-    announced.add(toolUseId);
-    const base = { timestamp: now, agentId, toolUseId, ...(tool ? { tool } : {}) };
+  ) {
+    const { log, s } = this;
+    if (s.announced.has(toolUseId)) return;
+    s.announced.add(toolUseId);
+    const base = { timestamp: s.now, agentId, toolUseId, ...(tool ? { tool } : {}) };
     log.push({ ...base, type: 'permission.requested', ...(detail ? { detail } : {}) });
     log.push({
       ...base,
@@ -71,10 +102,19 @@ export function normalizeClaudeStream(
       by: 'policy',
       ...(detail ? { detail } : {}),
     });
-  };
+  }
 
-  for (const line of records) {
-    now = iso(line.timestamp) ?? now;
+  private line(line: Obj, at: string | undefined): void {
+    const { log, s } = this;
+    if (!s.cwdKnown && line.type === 'system' && line.subtype === 'init' && str(line.cwd)) {
+      s.cwdKnown = true;
+      this.cleaners = makeTools(str(line.cwd) ?? '');
+    }
+    const { text, file, target } = this.cleaners;
+    const { tools, denied } = s;
+    s.now = iso(line.timestamp) ?? at ?? s.now;
+    const now = s.now;
+    const emitDenial = this.emitDenial.bind(this);
     const agentId = agentOf(line.parent_tool_use_id);
     const msg = isObj(line.message) ? line.message : undefined;
 
@@ -90,21 +130,21 @@ export function normalizeClaudeStream(
         });
       } else if (line.subtype === 'permission_denied') {
         const id = str(line.tool_use_id);
-        if (!id) continue;
+        if (!id) return;
         const detail = short(text(str(line.message) ?? ''));
         denied.set(id, detail);
         emitDenial(id, str(line.tool_name), detail, tools.get(id)?.agentId ?? 'main');
       } else if (line.subtype === 'post_turn_summary') {
         const cat = str(line.status_category);
-        status =
+        s.status =
           cat === 'blocked'
             ? 'blocked'
             : cat === 'failed' || cat === 'error'
               ? 'failed'
               : 'completed';
-        summary = text(str(line.status_detail) ?? '') || summary;
+        s.summary = text(str(line.status_detail) ?? '') || s.summary;
       }
-      continue;
+      return;
     }
 
     if (line.type === 'assistant' && msg) {
@@ -161,8 +201,8 @@ export function normalizeClaudeStream(
       // one API message is split over several lines that repeat the same usage: count it once
       const usage = isObj(msg.usage) ? msg.usage : undefined;
       const key = str(msg.id);
-      if (usage && key && !usageSeen.has(key)) {
-        usageSeen.add(key);
+      if (usage && key && !s.usageSeen.has(key)) {
+        s.usageSeen.add(key);
         log.push({
           type: 'usage.updated',
           timestamp: now,
@@ -175,14 +215,14 @@ export function normalizeClaudeStream(
           cacheCreationTokens: int(usage.cache_creation_input_tokens),
         });
       }
-      continue;
+      return;
     }
 
     if (line.type === 'user' && msg) {
       if (typeof msg.content === 'string') {
         const t = text(msg.content);
         if (t) log.push({ type: 'message.user', timestamp: now, agentId, text: t });
-        continue;
+        return;
       }
       const content = Array.isArray(msg.content) ? msg.content : [];
       const meta = Array.isArray(line.tool_result_meta) ? line.tool_result_meta.filter(isObj) : [];
@@ -278,7 +318,7 @@ export function normalizeClaudeStream(
           });
         }
       }
-      continue;
+      return;
     }
 
     if (line.type === 'result') {
@@ -307,9 +347,9 @@ export function normalizeClaudeStream(
         timestamp: now,
         agentId: 'main',
         ok: !failed,
-        status: failed ? 'failed' : (status ?? 'completed'),
+        status: failed ? 'failed' : (s.status ?? 'completed'),
         ...(str(line.terminal_reason) ? { reason: str(line.terminal_reason) } : {}),
-        ...(summary || result ? { summary: short(summary ?? result) } : {}),
+        ...(s.summary || result ? { summary: short(s.summary ?? result) } : {}),
         ...(duration !== undefined ? { durationMs: duration } : {}),
         ...(turns !== undefined ? { turns: int(turns) } : {}),
         ...(cost !== undefined ? { costUsd: cost } : {}),
@@ -317,5 +357,16 @@ export function normalizeClaudeStream(
     }
     // rate_limit_event, hook_* and other system lines carry nothing the Live view draws
   }
-  return log.events;
+}
+
+export function normalizeClaudeStream(
+  lines: readonly unknown[],
+  ctx: NormalizeContext,
+): AgentEvent[] {
+  const records = lines.filter(isObj);
+  const init = records.find((l) => l.type === 'system' && l.subtype === 'init');
+  const cwd = ctx.cwd ?? str(init?.cwd) ?? '';
+  const startAt = records.map((l) => iso(l.timestamp)).find((t) => t !== undefined) ?? EPOCH;
+  const normalizer = new ClaudeStreamNormalizer({ ...ctx, cwd }, { startAt });
+  return records.flatMap((l) => normalizer.push(l));
 }

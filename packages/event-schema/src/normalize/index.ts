@@ -22,3 +22,6 @@ export function normalizeClaudeSession(
     ctx,
   );
 }
+export { ClaudeStreamNormalizer, type StreamNormalizerOptions } from './claude-stream';
+export { ClaudeHooksNormalizer, type HooksNormalizerOptions } from './claude-hooks';
+export { LiveClaudeSession, type LiveSessionContext } from './live';

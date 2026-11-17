@@ -20,12 +20,12 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 
 ## Branch
 
-`docs/phase-4-brief`: brief della Fase 4, in PR. `main` è a `d41292f` (PR #29, chiusura della Fase 3).
+`feat/fixture-posttoolusefailure` (PR #31). `main` include il brief della Fase 4 (PR #30).
 
 ## Punto di ripresa
 
-- **Ora:** merge della PR del brief della Fase 4 a CI verde.
-- **Poi (utente):** catturare le fixture di `Notification` e `PostToolUseFailure`, che bloccano la 4.1. La procedura è in `FASE_4.md`.
+- **Ora:** merge della PR #31 (`feat/fixture-posttoolusefailure`: `sessione-06` con `PostToolUseFailure`, guida passo passo in `scripts/fixtures/README.md`) a CI verde. La PR #30 (brief della Fase 4) è già unita.
+- **Poi (utente):** registrare `sessione-07` con `Notification` seguendo la sezione "Recording an interactive session" di `scripts/fixtures/README.md`; poi Claude ripulisce, aggiorna gli snapshot e apre la PR.
 - **Poi:** Fase 4.1, il bridge degli hooks, su `feat/hooks-bridge` con Opus 5.5, effort high. Il goal è in `FASE_4.md`.
 
 ## Cosa funziona

@@ -48,6 +48,6 @@ Run it in a separate **test project**, never in a real one and never with hooks 
 
 ## What the current set covers
 
-`sessione-01..05`: a multi-file rename, a failing test fixed and re-run, a subagent, a denied `npx tsc` (through the `PowerShell` tool on Windows, not `Bash`) and a missing file.
+`sessione-01..05`: a multi-file rename, a failing test fixed and re-run, a subagent, a denied `npx tsc` (through the `PowerShell` tool on Windows, not `Bash`) and a missing file. `sessione-06`: a `Read` of a missing file with the `PostToolUseFailure` hook (failed tools have no `PostToolUse`).
 
-**Still missing:** an interactive session (with `-p` permissions are denied at once, so there is no `Notification` for a user wait) and `PostToolUseFailure` (failed tools have no `PostToolUse`).
+**Still missing:** an interactive session. With `-p` permissions are denied at once, so there is no `Notification` for a user wait. Record it with `claude` (no `-p`) and `VERNIER_HOOKS_SESSION` set: there is no stream in interactive mode, so create an empty `raw/<name>.jsonl` next to the hooks file, otherwise `check-raw.mjs` and `sanitize.mjs` skip the session.

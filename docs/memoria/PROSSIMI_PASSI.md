@@ -6,7 +6,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-1. **(F2, prima della F4.1, utente)** Una sessione interattiva breve nel progetto di prova per catturare `Notification` (attesa utente), con l'hook `PostToolUseFailure` attivo. Poi:
+1. **(F2, prima della F4.1, utente)** `PostToolUseFailure` ✅ catturato in `sessione-06`. Resta `Notification`: una sessione interattiva breve nel progetto di prova (`claude` senza `-p`, con `VERNIER_HOOKS_SESSION=sessione-07`), con almeno una richiesta di permesso lasciata in attesa qualche secondo. Serve un file di stream vuoto `raw/sessione-07.jsonl` (vedi `scripts/fixtures/README.md`). Poi:
    1. `node scripts/fixtures/sanitize.mjs`;
    2. rilettura a mano;
    3. aggiornamento degli snapshot (`npx vitest run packages/fixtures -u`).

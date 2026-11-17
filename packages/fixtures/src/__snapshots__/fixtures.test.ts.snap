@@ -138,3 +138,17 @@ exports[`sessione-05 > matches the recorded timeline 1`] = `
   "main session.ended blocked",
 ]
 `;
+
+exports[`sessione-06 > matches the recorded timeline 1`] = `
+[
+  "main session.started",
+  "main message.user",
+  "main usage.updated",
+  "main tool.called Read non-esiste.txt",
+  "main tool.failed not-found",
+  "main message.assistant",
+  "main usage.updated",
+  "main usage.updated",
+  "main session.ended completed",
+]
+`;

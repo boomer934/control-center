@@ -4,6 +4,23 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Fixture `PostToolUseFailure` (`sessione-06`)
+
+**Fatto:**
+
+- registrata `sessione-06` nel progetto di prova con `claude -p` e Haiku: un `Read` di un file mancante, che genera l'hook `PostToolUseFailure`;
+- l'hook è stato aggiunto a `.claude/settings.local.json` del progetto di prova, con un backup `.bak`;
+- dopo la pulizia `check-raw.mjs` è verde; i file ripuliti sono stati riletti; c'è un nuovo snapshot della timeline (`tool.failed not-found`).
+
+**Decisioni:** `Notification` resta all'utente: serve una sessione interattiva, e Claude non può rispondere alle richieste di permesso di un'altra sessione.
+
+**Problemi:**
+
+- `sanitize.mjs` e `check-raw.mjs` ignorano le sessioni che non hanno il file di stream. Una sessione interattiva ha solo gli hooks, quindi serve un `raw/<nome>.jsonl` vuoto (documentato nel README degli script).
+- `packages/fixtures/raw/` è negato in lettura a Claude: i controlli si fanno con gli script.
+
+---
+
 ## 2026-11-17 — Brief della Fase 4
 
 **Fatto:** nuovo `FASE_4.md` con le regole della fase, i punti di partenza e le sotto-fasi 4.1 (hooks bridge e sessione Claude), 4.2 (workspace e terminale) e 4.3 (chat, permessi e cronologia), ognuna con branch, modello, effort e goal. `PIANO.md` lo richiama.

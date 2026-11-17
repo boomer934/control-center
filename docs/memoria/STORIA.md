@@ -4,6 +4,16 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Merge della sotto-fase 3a
+
+**Fatto:** PR #23 unita su `main` (`985130d`, squash) con tutti i check verdi: Verify su Windows (compresi gli E2E `_electron` e i Fuses del pacchetto), gitleaks, commitlint, memoria.
+
+**Decisioni:** nessun auto-merge di GitHub: senza protezione di `main` non è garantito che aspetti i check. Il merge si fa a mano dopo aver letto i check.
+
+**Problemi:** nessuno.
+
+---
+
 ## 2026-11-17 — Fase 3a: shell Electron sicura e IPC
 
 **Fatto** (branch `feat/desktop-shell`)

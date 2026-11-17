@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3a completata in locale)_
+_Ultimo aggiornamento: 2026-11-17 (sotto-fase 3a unita su main)_
 
 ## Fase
 
@@ -12,17 +12,17 @@ _Ultimo aggiornamento: 2026-11-17 (sotto-fase 3a completata in locale)_
 
 **Fase 3 — Shell sicura**: in corso.
 
-- **3a**, shell sicura e IPC: ✅ fatta sul branch `feat/desktop-shell` (ADR 0004), PR #23. In CI (corsa 44087946083, `ec7a6db`) sono verdi `pnpm e2e` e `pnpm e2e:packaged`. Manca il merge a mano.
+- **3a**, shell sicura e IPC: ✅ completata, PR #23 unita su `main` (`985130d`, squash) con la CI tutta verde (ADR 0004).
 - **3b**, logger e Console Errori: da fare.
 - **3c**, design system in codice: da fare.
 
 ## Branch
 
-`feat/desktop-shell`, da `main` (`b8e785b`). Contiene la 3a e la memoria aggiornata.
+`main` (ultimo merge: `985130d`, PR #23). La 3b parte da `main` su un branch nuovo, proposto `feat/errors-console`.
 
 ## Punto di ripresa
 
-- **Prossimo:** merge a mano della PR #23 se la CI è tutta verde. In seguito la 3b (Sonnet 5.5, effort high) in una sessione nuova, su `feat/errors-console`, con il goal di `FASE_3.md`.
+- **Prossimo:** la 3b (Sonnet 5.5, effort high) in una sessione nuova, su `feat/errors-console`, con il goal di `FASE_3.md`.
 - **Per la 3b:**
   - i messaggi del gate IPC oggi vanno in `console.warn` (`apps/desktop/src/main/ipc.ts`): li sostituisce il logger;
   - "copia report" non può usare `navigator.clipboard`, perché tutti i permessi web sono negati: serve un metodo IPC o l'apertura esplicita di `clipboard-sanitized-write`;

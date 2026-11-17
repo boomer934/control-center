@@ -10,7 +10,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 **Decisioni:** ADR 0008. Notepad apre i file come testo. Ogni pty appartiene alla finestra e al workspace. Gli stili del terminale usano CSSOM con la CSP invariata.
 
-**Problemi:** l'installazione Visual Studio locale non contiene le librerie MSVC Spectre. Il pacchetto di prova locale può usare il prebuild di node-pty. Il packaging standard richiede la ricompilazione.
+**Problemi:** l'installazione Visual Studio locale non contiene le librerie MSVC Spectre. Il pacchetto di prova locale può usare il prebuild di node-pty. Il packaging standard richiede la ricompilazione. Il controllo dei percorsi con maiuscole diverse verifica l'identità della directory sul volume.
+
+---
+
+## 2026-11-17 — Fixture `Notification` (sessione-07), 4.1 sbloccata
+
+**Fatto:**
+
+- registrata e ripulita `sessione-07` (interattiva, 12 righe di hooks, nessuno stream): `Read`, permesso approvato dopo l'attesa (`Notification`, `permission_prompt`) e rifiuto fatto da una persona; unita con la PR #38 (`d6d08da`);
+- `mergeClaudeSession` chiude a fine sessione le chiamate rimaste aperte come `tool.failed` (`interrupted`); le fixture 01-06 non cambiano; `pnpm verify` verde (243 test, 0 errori).
+
+**Decisioni:** `interrupted` è un'inferenza, non un rifiuto certo: nel live della 4.1 il rifiuto va letto da un altro segnale. Il normalizzatore degli hooks non è stato toccato (un primo tentativo spostava le chiusure di 04 e 05 e fu annullato).
+
+**Problemi:** i comandi di sola lettura (`npx --version`, `git log -1`) non chiedono permesso e quindi non generano `Notification`: serve un comando che scrive. Se `VERNIER_HOOKS_SESSION` non è nella finestra che lancia `claude`, gli hooks vanno in `unnamed.hooks.jsonl`. Il conflitto di merge in `STATO.md` con la PR #37 è stato risolto a mano.
 
 ---
 

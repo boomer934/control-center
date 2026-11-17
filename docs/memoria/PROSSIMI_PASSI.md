@@ -8,13 +8,13 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. ✅ **[Utente + Claude] (F2, prima della F4.1)** Fixture di `Notification`: `sessione-07` registrata e ripulita (branch `feat/fixture-notification`, commit `3ec6f97`). Resta il merge della PR a CI verde (l'utente).
+1. ✅ **[Utente + Claude] (F2)** Fixture di `Notification`: `sessione-07` unita su `main` (PR #38).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
 3. **[Codex] (F4.2)** Workspace e terminale implementati su `feat/workspace-terminal` (ADR 0008). Revisione Claude `/code-review high` e merge dell'utente a CI verde.
 
 ## Dopo
 
-4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: `feat/hooks-bridge`, Opus 5.5, high, sbloccata: parte dopo il merge della PR delle fixture. Il goal è in `FASE_4.md`.
+4. **[Claude] (F4.1)** Hooks bridge e sessione Claude: `feat/hooks-bridge`, Opus 5.5, high, sbloccata (fixture su `main`): è il prossimo task della corsia Claude. Il goal è in `FASE_4.md`.
 5. **[Codex] (F4.3)** Chat, permessi e cronologia (`gpt-6.1-sol`, high), dopo 4.0, 4.1 e 4.2. Poi 4b.
 6. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 

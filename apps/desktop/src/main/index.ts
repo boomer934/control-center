@@ -18,9 +18,10 @@ import { createMainWindow } from './window';
 const devServer = app.isPackaged ? null : parseDevServerUrl(process.env.ELECTRON_RENDERER_URL);
 
 const paths = builtPaths(__dirname);
+const projectRoot = app.isPackaged ? app.getAppPath() : paths.projectRoot;
 const errors = createErrorsService({
   logDir: join(app.getPath('userData'), 'logs'),
-  projectRoot: app.isPackaged ? app.getAppPath() : paths.projectRoot,
+  projectRoot,
   builtRoot: paths.builtRoot,
   rendererSourceRoot: paths.rendererSourceRoot,
   devServer,
@@ -54,7 +55,8 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(() => {
     hardenSession(session.defaultSession, devServer);
     installAppProtocol(session.defaultSession, join(__dirname, '../renderer'));
-    registerIpc(devServer, errors);
+    const disposeIpc = registerIpc(devServer, errors, projectRoot);
+    app.once('will-quit', disposeIpc);
     createMainWindow(devServer);
   });
 

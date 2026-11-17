@@ -46,7 +46,7 @@ Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/des
 - Il renderer può solo segnalare i propri errori (`errors:report-renderer`: schema stretto, stack ≤ 20 kB, tetto 100 ogni 10 s) e leggere gruppi già ripuliti. "Copia report" scrive negli appunti dal main: i permessi web restano negati.
 - Il gate IPC registra canale e codice, mai il payload; per errori di schema solo percorsi e messaggi (`issues`). Test: E2E "a refused IPC call is recorded without its payload".
 - Le source map si leggono solo dentro `out/` (`resolveAssetPath`): un frame costruito ad arte non legge altri file. Test: `stack-mapper.test.ts` ("never reads a map outside the build").
-- `superviseChild` avvia senza shell, scarta stdout, nome limitato a `[a-z0-9-]`; non esiste un canale IPC per avviare processi.
+- `superviseChild` avvia senza shell, scarta stdout, nome limitato a `[a-z0-9-]`. L'avvio di shell interattive è descritto nella 4.2.
 - I fault injector dei test esistono solo nella build `--mode e2e`; il pacchetto di produzione non li contiene (`e2e/packaged/build.spec.ts`).
 
 ### Eventi push (4.0, ADR 0007)
@@ -55,6 +55,14 @@ Spuntata in 3a (2026-11-17, ADR 0004). Abbreviazioni dei test: **U** = `apps/des
 - Destinatari: solo finestre create dall'app, vive e con un URL dell'app; `webContents.send` raggiunge il solo frame principale. Test: E `a window the app did not create is an untrusted sender` (la finestra estranea si iscrive ma non riceve nulla).
 - Il preload non passa mai l'`IpcRendererEvent` (il suo `sender` è `ipcRenderer`), rivalida il payload, scarta messaggi con più argomenti e rifiuta listener che non sono funzioni. Test: C `events in createApi`, E `IPC events`.
 - Niente cicli: un errore di un iscritto si segnala una volta sola per errore distinto; un rifiuto di `errors:changed` va solo nel log; `emit` non lancia mai. Test: C e `apps/desktop/src/main/ipc-events.test.ts`.
+
+### Workspace e terminale (4.2, ADR 0008)
+
+- Solo il dialog nativo nel main aggiunge una radice. I recenti si riaprono per ID se risolvono ancora alla stessa cartella canonica. Test: `workspace/service.test.ts`.
+- Il risolutore verifica i confini del workspace prima di risolvere il percorso reale, poi accetta solo file regolari con percorso canonico interno. Se cambia solo l'uso delle maiuscole, confronta gli identificativi della directory sul volume. Rifiuta i percorsi Win32 ambigui, i percorsi di dispositivo e gli stream alternativi. Test: `workspace/paths.test.ts`, con junction reali su Windows e casi symlink e UNC simulati.
+- `workspace:open-file` ricontrolla il workspace attivo e apre il file canonico come argomento di Notepad, senza applicare associazioni di file. E2E: apertura dal terminale e rifiuto di percorsi esterni.
+- `terminal:start` accetta solo due profili definiti nel main e un ID di workspace attivo. Le operazioni usano ID di pty vincolati al mittente e l'input richiede anche il workspace attivo. Il main chiude ogni pty alla perdita del renderer proprietario. Test: `terminal/service.test.ts` ed E2E.
+- Il main raggruppa i dati ConPTY, con controllo di flusso e payload validati, e li invia solo al proprietario. Il testo del terminale rimane nel buffer di xterm. I link OSC 8 non avviano navigazioni. Gli stili di xterm usano CSSOM con CSP invariata, verificata dall'E2E del terminale.
 
 ## Privacy
 

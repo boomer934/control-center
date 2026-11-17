@@ -25,6 +25,30 @@ const sectionShortcuts: Shortcut[] = SECTIONS.map((s, i) => ({
 /** Every shortcut of the app. The handlers are bound where the state lives (see App). */
 export const SHORTCUTS: readonly Shortcut[] = [
   {
+    id: 'workspace.switch',
+    combo: 'Ctrl+P',
+    label: 'Switch workspace',
+    group: 'Navigation',
+    scope: 'global',
+    whileDialog: true,
+  },
+  {
+    id: 'workspace.open',
+    combo: 'Ctrl+O',
+    label: 'Open workspace folder',
+    group: 'Navigation',
+    scope: 'global',
+    whileDialog: true,
+  },
+  {
+    id: 'terminal.open',
+    combo: 'Ctrl+`',
+    label: 'Show terminal',
+    group: 'Layout',
+    scope: 'global',
+    fromTerminal: true,
+  },
+  {
     id: 'palette.open',
     combo: 'Ctrl+K',
     label: 'Command palette',

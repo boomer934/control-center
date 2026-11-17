@@ -11,6 +11,8 @@ export interface PaletteCommand {
   icon?: string;
   /** Combo shown on the right, when the command has a shortcut. */
   combo?: string;
+  detail?: string;
+  current?: boolean;
   /** Extra words that also match (for example `dark` for the theme commands). */
   keywords?: string[];
   run(): void;
@@ -20,10 +22,11 @@ interface CommandPaletteProps {
   open: boolean;
   commands: readonly PaletteCommand[];
   onClose(): void;
+  workspace?: boolean;
 }
 
 /** Command palette (Ctrl+K, and Ctrl+Shift+P everywhere). Styled by the `.pal` classes. */
-export function CommandPalette({ open, commands, onClose }: CommandPaletteProps) {
+export function CommandPalette({ open, commands, onClose, workspace }: CommandPaletteProps) {
   const returnFocus = useRef<HTMLElement | null>(null);
 
   useModalInert(open);
@@ -37,6 +40,7 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
   if (!open) return null;
 
   const groups = [...new Set(commands.map((c) => c.group))];
+  const title = workspace ? 'Switch workspace' : 'Command palette';
 
   return (
     <>
@@ -45,8 +49,8 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
         className="modal pal"
         role="dialog"
         aria-modal="true"
-        aria-label="Command palette"
-        data-testid="palette"
+        aria-label={title}
+        data-testid={workspace ? 'workspace-picker' : 'palette'}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.preventDefault();
@@ -55,14 +59,20 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
           }
         }}
       >
-        <Command label="Command palette" loop>
+        <Command label={title} loop>
           <div className="q">
             <Icon name="search" />
-            <span className="pre">&gt;</span>
-            <Command.Input autoFocus placeholder="Type a command…" data-testid="palette-input" />
+            {!workspace && <span className="pre">&gt;</span>}
+            <Command.Input
+              autoFocus
+              placeholder={workspace ? 'Find a workspace…' : 'Type a command…'}
+              data-testid="palette-input"
+            />
           </div>
           <Command.List className="res">
-            <Command.Empty className="empty-row">No commands match.</Command.Empty>
+            <Command.Empty className="empty-row">
+              {workspace ? 'No workspaces match.' : 'No commands match.'}
+            </Command.Empty>
             {groups.map((group) => (
               <Command.Group key={group} heading={group}>
                 {commands
@@ -71,7 +81,7 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
                     <Command.Item
                       key={c.id}
                       className="it"
-                      value={`${c.label} ${(c.keywords ?? []).join(' ')}`}
+                      value={`${c.label} ${c.detail ?? ''} ${(c.keywords ?? []).join(' ')}`}
                       data-testid={`cmd-${c.id}`}
                       onSelect={() => {
                         onClose();
@@ -79,7 +89,13 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
                       }}
                     >
                       {c.icon && <Icon name={c.icon} />}
-                      <span>{c.label}</span>
+                      <span className={c.detail ? 'workspace-name' : undefined}>{c.label}</span>
+                      {c.detail && (
+                        <span className="sub" title={c.detail}>
+                          {c.detail}
+                        </span>
+                      )}
+                      {c.current && <span className="kbd">Current</span>}
                       {c.combo && <Kbd>{c.combo}</Kbd>}
                     </Command.Item>
                   ))}
@@ -91,7 +107,8 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
               <Kbd>↑↓</Kbd>move
             </span>
             <span>
-              <Kbd>Enter</Kbd>run
+              <Kbd>Enter</Kbd>
+              {workspace ? 'open' : 'run'}
             </span>
             <span>
               <Kbd>Esc</Kbd>close

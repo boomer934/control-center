@@ -23,7 +23,7 @@ export function useShortcuts(handlers: ShortcutHandlers): void {
       e.preventDefault();
       handler();
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 }

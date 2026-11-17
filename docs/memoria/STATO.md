@@ -38,7 +38,9 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
-- **Ora:** 4.2 workspace e terminale (`gpt-6.1-sol`, high), branch `feat/workspace-terminal`, nel worktree `..\control-center-codex`. Prima workspace e modulo dei percorsi; il terminale dopo il merge della 4.0.
+- **Fatto (2026-11-17):** implementazione 4.2 su `feat/workspace-terminal` (ADR 0008). Dialog nativo, recenti e `Ctrl+P`, layout per workspace, apertura dei file verificati in Notepad, terminali a schede PowerShell e Git Bash con output push. Le schede restano attive durante i cambi di workspace.
+- **Verificato in locale:** `pnpm verify` verde, 51 E2E funzionali, 9 E2E del pacchetto con il prebuild di node-pty. Rivisti selettore e terminale a 960×600 nei due temi, rilevatore impeccable senza rilievi. Gli screenshot di regressione dei componenti vengono verificati in CI.
+- **Ora:** [PR #40](https://github.com/boomer934/control-center/pull/40) per la 4.2, revisione incrociata Claude `/code-review high` e merge dell'utente a CI verde. La build del pacchetto ricompila node-pty per Electron. Per il pacchetto di prova locale si può usare il prebuild perché nell'installazione MSVC locale manca il componente Spectre.
 - **Poi:** 4.3 (dopo 4.0, 4.1 e 4.2 unite), poi 4b.
 
 ## Cosa funziona

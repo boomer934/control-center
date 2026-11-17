@@ -8,7 +8,7 @@ function frameText(f: Frame): string {
   return `${f.file}${pos}`;
 }
 
-function Frames({ frames }: { frames: Frame[] }) {
+function Frames({ frames, onOpen }: { frames: Frame[]; onOpen?: (path: string) => void }) {
   const rest = frames.filter((f) => f.kind !== 'project').length;
   return (
     <ol className="errc-frames">
@@ -17,7 +17,18 @@ function Frames({ frames }: { frames: Frame[] }) {
         .map((f, i) => (
           <li key={i} className="errc-frame" data-testid="error-frame" data-kind={f.kind}>
             {f.fn && <span className="errc-fn">{f.fn}</span>}
-            <span className="errc-file">{frameText(f)}</span>
+            {onOpen ? (
+              <button
+                type="button"
+                className="errc-file file-link"
+                title="Open in editor"
+                onClick={() => onOpen(f.file)}
+              >
+                {frameText(f)}
+              </button>
+            ) : (
+              <span className="errc-file">{frameText(f)}</span>
+            )}
           </li>
         ))}
       {rest > 0 && (
@@ -44,9 +55,11 @@ function Frames({ frames }: { frames: Frame[] }) {
 export function ErrorConsole({
   groups,
   onChanged,
+  onOpenFile,
 }: {
   groups: ErrorGroupDto[];
   onChanged(): void;
+  onOpenFile?(path: string): Promise<boolean>;
 }) {
   const [notice, setNotice] = useState('');
 
@@ -64,6 +77,12 @@ export function ErrorConsole({
         onChanged();
       })
       .catch(() => setNotice('Could not clear the list'));
+  };
+  const open = (path: string) => {
+    void onOpenFile?.(path).then(
+      (opened) => setNotice(opened ? '' : 'File unavailable in this workspace.'),
+      () => setNotice('Could not open the file.'),
+    );
   };
 
   return (
@@ -105,7 +124,7 @@ export function ErrorConsole({
                 <strong>{g.name}</strong>
                 {g.message ? `: ${g.message}` : ''}
               </p>
-              {g.frames.length > 0 && <Frames frames={g.frames} />}
+              {g.frames.length > 0 && <Frames frames={g.frames} onOpen={onOpenFile && open} />}
             </li>
           ))}
         </ul>

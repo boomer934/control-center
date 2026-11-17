@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'electron-vite';
 import type { Plugin, UserConfig } from 'vite';
 import { buildCsp } from './src/main/security/csp';
+import { xtermCsp } from './xterm-csp';
 
 /**
  * Production builds also carry the CSP as a <meta> tag (the app:// protocol sends it as a header
@@ -34,7 +35,8 @@ const faultsDefine = (enabled: boolean) => ({ __CC_E2E_FAULTS__: JSON.stringify(
 export const rendererConfigFor = (e2eFaults: boolean) =>
   ({
     root: resolve(__dirname, 'src/renderer'),
-    plugins: [react(), tailwindcss(), cspMeta()],
+    plugins: [xtermCsp(), react(), tailwindcss(), cspMeta()],
+    optimizeDeps: { exclude: ['@xterm/xterm'] },
     define: faultsDefine(e2eFaults),
     build: {
       // Source maps ship with the app: the main process maps renderer stacks to TypeScript.
@@ -63,7 +65,10 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         sourcemap: true,
-        rollupOptions: { input: { index: resolve(__dirname, 'src/main/index.ts') } },
+        rollupOptions: {
+          input: { index: resolve(__dirname, 'src/main/index.ts') },
+          external: ['node-pty'],
+        },
       },
     },
     preload: {

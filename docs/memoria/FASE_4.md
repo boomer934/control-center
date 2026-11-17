@@ -16,7 +16,7 @@ L'hooks bridge consegna gli eventi in tempo reale via named pipe, con un token p
 
 ## Prima di iniziare (bloccante per 4.1)
 
-Mancano le fixture reali di `Notification` (attesa dell'utente) e `PostToolUseFailure`. Per catturarle serve una sessione interattiva breve nel progetto di prova, con l'hook `PostToolUseFailure` attivo. Poi:
+Manca la fixture reale di `Notification` (attesa dell'utente); `PostToolUseFailure` è in `sessione-06`. Per catturarle serve una sessione interattiva breve nel progetto di prova, con l'hook `PostToolUseFailure` attivo. Poi:
 
 1. `node scripts/fixtures/sanitize.mjs`;
 2. rileggere a mano il risultato;

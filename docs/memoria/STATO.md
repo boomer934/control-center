@@ -20,12 +20,12 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 
 ## Branch
 
-`docs/phase-4-brief`: brief della Fase 4, in PR. `main` è a `d41292f` (PR #29, chiusura della Fase 3).
+`feat/fixture-posttoolusefailure` (PR #31). `main` include il brief della Fase 4 (PR #30).
 
 ## Punto di ripresa
 
-- **Ora:** merge della PR del brief della Fase 4 a CI verde.
-- **Poi (utente):** catturare le fixture di `Notification` e `PostToolUseFailure`, che bloccano la 4.1. La procedura è in `FASE_4.md`.
+- **Ora:** merge della PR #31 (`feat/fixture-posttoolusefailure`: `sessione-06` con `PostToolUseFailure`, guida passo passo in `scripts/fixtures/README.md`) a CI verde. La PR #30 (brief della Fase 4) è già unita.
+- **Poi (utente):** registrare `sessione-07` con `Notification` seguendo la sezione "Recording an interactive session" di `scripts/fixtures/README.md`; poi Claude ripulisce, aggiorna gli snapshot e apre la PR.
 - **Poi:** Fase 4.1, il bridge degli hooks, su `feat/hooks-bridge` con Opus 5.5, effort high. Il goal è in `FASE_4.md`.
 
 ## Cosa funziona
@@ -50,7 +50,7 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 - Mappatura degli stack nel pacchetto (`app.asar`) provata solo in `out/` e con test unitari, non end to end: vedi `PROBLEMI_NOTI.md`.
 - "Clic su un frame → apri l'editor" della Console non c'è: serve un metodo IPC che apra file, da progettare con i controlli di percorso della Fase 4.
 - gitleaks non è installato in locale: lo controlla il job CI.
-- **Bloccante per la 4.1:** mancano le fixture reali per `Notification` e `PostToolUseFailure`. Serve una sessione interattiva dell'utente.
+- **Bloccante per la 4.1:** manca la fixture reale di `Notification`, che richiede una sessione interattiva dell'utente. `PostToolUseFailure` è in `sessione-06` (branch `feat/fixture-posttoolusefailure`).
 - Il prototipo 1d legge ancora le fixture grezze: in CI i suoi test Playwright si saltano.
 - pnpm non è installato globalmente (Node 26 non ha corepack): si usa `npx pnpm@10.34.9`.
 - Le cartelle `node_modules`, `out/`, `release/` e `test-results/` sono escluse dalla lettura nei permessi di Claude: le build si verificano con i test.

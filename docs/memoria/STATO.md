@@ -25,12 +25,7 @@ _Ultimo aggiornamento: 2026-11-17 (Fase 3 chiusa, brief della Fase 4 pronto)_
 ## Punto di ripresa
 
 - **Ora:** merge della PR #31 (`feat/fixture-posttoolusefailure`: `sessione-06` con `PostToolUseFailure`, guida passo passo in `scripts/fixtures/README.md`) a CI verde. La PR #30 (brief della Fase 4) è già unita.
-- **Handoff 2026-11-17 (limite 5 ore al 95%):** l'utente ha registrato `sessione-07` in modo interattivo. In `packages/fixtures/raw/`, che è git-ignorata, c'è `sessione-07.hooks.jsonl` e l'utente vede `Notification`. **Da fare:**
-  1. controllare che esista anche il file di stream vuoto `raw/sessione-07.jsonl` e crearlo se manca;
-  2. eseguire `node scripts/fixtures/check-raw.mjs`, `node scripts/fixtures/sanitize.mjs` e `npx vitest run packages/fixtures -u`;
-  3. rileggere `sanitized/sessione-07.hooks.jsonl` e lo snapshot;
-  4. committare sul branch della PR #31 o su uno nuovo da `main`, e aggiornare README, STORIA, PROSSIMI_PASSI e FASE_4 (`Notification` catturato, 4.1 sbloccata).
-     Claude non può leggere `raw/`: i controlli si fanno con gli script.
+- **Poi (utente):** registrare `sessione-07` con `Notification` seguendo la sezione "Recording an interactive session" di `scripts/fixtures/README.md`; poi Claude ripulisce, aggiorna gli snapshot e apre la PR.
 - **Poi:** Fase 4.1, il bridge degli hooks, su `feat/hooks-bridge` con Opus 5.5, effort high. Il goal è in `FASE_4.md`.
 
 ## Cosa funziona

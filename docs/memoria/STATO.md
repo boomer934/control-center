@@ -18,8 +18,8 @@ _Ultimo aggiornamento: 2026-11-14 (chiusura Fase 2)_
 
 ## Punto di ripresa
 
-- **Prossimo:** sotto-fase 3a, shell Electron sicura e IPC. Opus 5.5, effort xhigh, niente ultracode, niente subagent. Il goal da copiare in `/goal` è in `FASE_3.md`.
-- **Da leggere prima di iniziare:** `FASE_3.md`, `SICUREZZA.md` (checklist Electron), `PIANO.md` §6.
+- **Prossimo:** sotto-fase 3a, shell Electron sicura e IPC. Opus 5.5, effort high, niente ultracode, niente subagent. Il goal da copiare in `/goal` è in `FASE_3.md`. Poi 3b (Sonnet high) e 3c (Sonnet medium), ciascuna in una sessione nuova.
+- **Da leggere prima di iniziare:** `FASE_3.md` e `SICUREZZA.md` (checklist Electron). Non serve rileggere tutto `PIANO.md`.
 - **Cosa c'è già da usare:**
   - `@control-center/event-schema`: `AgentEvent` (16 tipi, ADR 0003), normalizzatori batch, `redactSecrets` e `makeTextCleaner` per log e Console;
   - `@control-center/fixtures`: le 5 sessioni ripulite e il loader, utili anche come dati finti per la UI;

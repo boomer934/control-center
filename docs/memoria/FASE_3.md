@@ -38,7 +38,11 @@ La prima versione dell'app vera in `apps/desktop`: una shell Electron sicura per
 
 ## Sotto-fasi, modello e goal
 
-Una sessione o un loop per sotto-fase, su un branch `feat/…` con PR e merge a mano a CI verde. Ogni sotto-fase si chiude con la skill `fine-sessione`. Modello **Opus 5.5**, effort **xhigh**, **niente ultracode** (da `PIANO.md`).
+Una sessione o un loop per sotto-fase, su un branch `feat/…` con PR e merge a mano a CI verde. Ogni sotto-fase si chiude con la skill `fine-sessione`. Niente ultracode. Modello ed effort per sotto-fase (da `PIANO.md`, revisione del 2026-11-14 per il consumo di token):
+
+- **3a:** Opus 5.5, effort high;
+- **3b:** Sonnet 5.5, effort high;
+- **3c:** Sonnet 5.5, effort medium.
 
 ### 3a — Shell sicura e IPC
 

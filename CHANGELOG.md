@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/boomer934/control-center/compare/control-center-v1.0.0...control-center-v1.1.0) (2026-11-17)
+
+
+### Features
+
+* **desktop:** stream Claude chat and manage session permissions ([#47](https://github.com/boomer934/control-center/issues/47)) ([fe3cb61](https://github.com/boomer934/control-center/commit/fe3cb6180632b420276283f06f7600a6db13e98f))
+
 ## 1.0.0 (2026-11-17)
 
 

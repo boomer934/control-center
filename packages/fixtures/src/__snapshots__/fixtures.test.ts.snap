@@ -152,3 +152,21 @@ exports[`sessione-06 > matches the recorded timeline 1`] = `
   "main session.ended completed",
 ]
 `;
+
+exports[`sessione-07 > matches the recorded timeline 1`] = `
+[
+  "main session.started",
+  "main message.user",
+  "main tool.called Read prova-uno.txt",
+  "main tool.completed",
+  "main file.read prova-uno.txt",
+  "main tool.called PowerShell Set-Content -Path prova-uno.txt -Value ciao",
+  "main notification",
+  "main permission.requested",
+  "main tool.completed",
+  "main message.user",
+  "main tool.called PowerShell if (Test-Path prova-due.txt) { "EXISTS:"; Get-Content prova-due.txt } else { Set-Content -Path prova-due.txt -Value ciao; "CREATED" }",
+  "main tool.failed interrupted",
+  "main session.ended",
+]
+`;

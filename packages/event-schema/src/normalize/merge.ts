@@ -161,6 +161,26 @@ export function mergeClaudeSession(
     if (keep) out.push(e);
   }
 
+  // --- calls nobody closed ---
+  // A call the user refused at an interactive prompt gets a PreToolUse and nothing else (no
+  // PostToolUse, no PostToolUseFailure, no stream to report the denial): close it when the
+  // session ends, so the timeline never keeps a call open.
+  const closedIds = new Set<string>();
+  for (const e of out)
+    if (e.type === 'tool.completed' || e.type === 'tool.failed') closedIds.add(e.toolUseId);
+  const endAt = [...out].reverse().find((e) => e.type === 'session.ended')?.timestamp;
+  for (const e of [...out]) {
+    if (e.type !== 'tool.called' || e.kind === 'agent' || closedIds.has(e.toolUseId)) continue;
+    const { kind: _kind, tool: _tool, target: _target, ...common } = e;
+    out.push({
+      ...common,
+      type: 'tool.failed',
+      timestamp: endAt ? later(endAt, e.timestamp) : e.timestamp,
+      reason: 'interrupted',
+      detail: 'no result before the session ended',
+    } as AgentEvent);
+  }
+
   // --- one timeline: stable sort by time, then renumber ---
   const ordered = out
     .map((e, i) => ({ e, i }))

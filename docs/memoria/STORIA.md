@@ -4,6 +4,27 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-18 — Chiusura Fase 4
+
+**Fatto**
+
+- Fase 4 completata in quattro PR di codice: 4.0 canale push (#35, `4c2ef5c`, ADR 0007), 4.2 workspace e terminale (#40, `4b928ab`, ADR 0008), 4.1 hooks bridge e sessione Claude (#42, `ecb78f3`, ADR 0009, con la correzione del test #44), 4.3 chat, permessi e cronologia (#47, `fe3cb61`, ADR 0010). La memoria è registrata con le PR di sola documentazione (#41, #43, #45).
+- Risultato: l'app apre un workspace (recenti, `Ctrl+P`, percorsi verificati), ha terminali PowerShell e Git Bash a schede, e conduce una sessione Claude Code con chat in streaming, richieste di permesso (Approva, Rifiuta, Sempre in questa sessione) e cronologia JSONL per workspace ripresa dopo il riavvio. Gli eventi arrivano dall'hooks bridge (named pipe con token per sessione) e dallo stream-json, uniti in `AgentEvent`. In CI il vero servizio non viene mai chiamato: lo sostituisce il finto `claude` (`packages/fixtures/bin/fake-claude.mjs`).
+- Verifiche all'ultima PR (#47): `pnpm verify` verde con 326 test, 53 E2E funzionali verdi, impeccable senza rilievi a 960×600 nei due temi. Una run con la CLI vera (Claude Code 2.1.326) è stata provata sulla 4.1.
+- Revisioni: `/code-review high` di Claude su 4.1 (7 punti, tutti chiusi), 4.2 (9 minori) e 4.3 (9 punti, ancora tutti aperti su `main`: la PR è una sola commit). Quelli della 4.3 sono in `PROSSIMI_PASSI.md`; i due di gravità media sono i permessi oltre 16 KiB rifiutati sempre e l'ordine degli eventi nello storico.
+- `FASE_4.md` archiviato qui: le regole (niente subagent su IPC, processi, pipe, token, file system e configurazione degli hooks; `SICUREZZA.md` prima di ogni sotto-fase; IPC solo dal contratto, con zod e controllo del mittente; mai toccare `~/.claude*`; ADR per ogni dipendenza di runtime; solo token e stati semantici nella UI) restano in `CLAUDE.md` e `SICUREZZA.md`. Per registrare nuove fixture di hooks vale la procedura di "Fixture `Notification`" (`sessione-07`).
+- Dopo la chiusura è stata unita la release `control-center-v1.0.0` (PR #46): Release Please ora funziona (impostazione dei permessi attivata).
+
+**Decisioni:** nessuna nuova rispetto alle ADR 0007–0010. Il goal complessivo di `PIANO.md` è soddisfatto con due riserve: la seconda opinione di `gpt-6-astra` sulla pipe della 4.1 non è stata fatta (crediti Codex finiti) e la revisione della 4.3 è arrivata a PR già unita.
+
+**Problemi aperti**
+
+- Il numero `1.0.0` della release è inatteso: `PIANO.md` prevede v1.0.0 alla Fase 10. Il manifest partiva da `0.0.0` e Release Please ha proposto 1.0.0 (probabile primo rilascio senza tag precedente; non verificato). Da decidere se tenerlo o riportare la repo a 0.x (vedi `PROBLEMI_NOTI.md`).
+- 9 rilievi della revisione della 4.3, in `PROSSIMI_PASSI.md`.
+- Astra sulla pipe; script degli hooks fuori dal pacchetto (Fase 10); font non inclusi.
+
+---
+
 ## 2026-11-17 — Chat, permessi e cronologia (4.3)
 
 **Fatto:** dock Session con testo in streaming, Markdown, codice e strumenti richiudibili. La timeline usa gli eventi normalizzati. Lo storico JSONL viene ricaricato dopo il riavvio e una conversazione salvata può continuare con `--resume`. Il finto eseguibile verifica approvazione, rifiuto, ripetizione identica, argomenti diversi e interruzione.

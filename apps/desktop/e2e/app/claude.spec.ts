@@ -67,6 +67,7 @@ test.describe('chat dock', () => {
     await expect(dock.getByTestId('claude-streaming')).toContainText('Waiting for approval.');
     await expect(page.getByTestId('status-bar').getByText('Permission needed')).toBeVisible();
     await expect(request).toContainText('echo once');
+    await expect(request.getByLabel('Tool arguments')).toContainText(/… \(truncated, \d+ chars\)/);
     await expect(request).toContainText('example.txt');
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(960, 600));
     await expect(request.getByRole('button', { name: 'Always in this session' })).toBeInViewport();
@@ -100,7 +101,9 @@ test.describe('chat dock', () => {
     const root = join(history, workspaceId);
     const [filename] = await readdir(root);
     if (!filename) throw new Error('Session JSONL was not created');
-    const saved = await readFile(join(root, filename), 'utf8');
+    const historyFile = join(root, filename);
+    await expect.poll(() => readFile(historyFile, 'utf8')).toContain('Finished **the turn**');
+    const saved = await readFile(historyFile, 'utf8');
     expect(saved).toContain('Check the workspace');
     expect(saved).toContain('Finished **the turn**');
     expect(saved).toContain('<redacted:assignment>');
@@ -137,7 +140,8 @@ test.describe('chat dock', () => {
     const argv = await readFile(join(fixture, 'argv.jsonl'), 'utf8');
     expect(argv).toContain('"--resume","fake-chat-session"');
     expect(await readdir(root)).toEqual([filename]);
-    const continued = await readFile(join(root, filename), 'utf8');
+    await expect.poll(() => readFile(historyFile, 'utf8')).toContain('Continue the saved chat');
+    const continued = await readFile(historyFile, 'utf8');
     expect(continued).toContain('Continue the saved chat');
     expect(
       continued
@@ -170,11 +174,13 @@ test('runs a Claude session from the renderer and streams its AgentEvents', asyn
     const workspaceId = state.active?.id ?? '';
     const id = crypto.randomUUID();
     const events: Array<{ type: string; source: string; seq: number }> = [];
+    const records: string[] = [];
     const statuses: Array<{ status: string; hooks: boolean }> = [];
     let resolveIdle: () => void = () => {};
     const idle = new Promise<void>((r) => (resolveIdle = r));
     const stop = api.claude.onUpdated((u) => {
       if (u.id !== id) return;
+      if (u.kind === 'prompt' || u.kind === 'events') records.push(u.kind);
       if (u.kind === 'events') events.push(...u.events);
       if (u.kind === 'status') {
         statuses.push({ status: u.status, hooks: u.hooks });
@@ -187,13 +193,17 @@ test('runs a Claude session from the renderer and streams its AgentEvents', asyn
     const emptyMessage = await api.claude.send({ id, text: '' }).catch((e: Error) => e.message);
     const closed = await api.claude.close({ id });
     stop();
-    return { started, sent, events, statuses, emptyMessage, closed };
+    const [summary] = await api.claude.listHistory({ workspaceId });
+    const saved = summary && (await api.claude.readHistory({ workspaceId, historyId: summary.id }));
+    return { started, sent, events, records, saved, statuses, emptyMessage, closed };
   });
 
   expect(result.started).toBe('started');
   expect(result.sent).toBe('started');
   expect(result.statuses[0]).toEqual({ status: 'idle', hooks: true });
   expect(result.statuses.map((s) => s.status)).toContain('running');
+  expect(result.records.slice(0, 2)).toEqual(['prompt', 'events']);
+  expect(result.saved?.records.map((record) => record.kind)).toEqual(result.records);
   expect(result.events.map((e) => e.seq)).toEqual(result.events.map((_, i) => i));
   expect(result.events[0]?.type).toBe('session.started');
   expect(result.events.at(-1)?.type).toBe('session.ended');

@@ -104,7 +104,7 @@ async function permissionTurn(lines, message, resume) {
       : prompt === 'Stop this turn'
         ? [['echo waiting', 'deny']]
         : [
-            ['echo once', 'allow'],
+            [`echo once ${'x'.repeat(17 * 1024)}`, 'allow'],
             ['echo refused', 'deny'],
             ['echo repeat', 'allow'],
             ['echo repeat', 'allow'],
@@ -113,7 +113,7 @@ async function permissionTurn(lines, message, resume) {
   for (const [i, [command, behavior]] of requests.entries()) {
     const id = `tool-chat-${i}`;
     const request_id = `request-${i}`;
-    const input = { command, file_path: `${process.cwd()}\\example.txt` };
+    const input = { file_path: `${process.cwd()}\\example.txt`, command };
     assistant([{ type: 'tool_use', name: 'Bash', id, input }]);
     emit({
       type: 'control_request',

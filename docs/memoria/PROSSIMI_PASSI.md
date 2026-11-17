@@ -12,7 +12,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 2. ✅ **[Claude] (F4.0)** Canale push: unito su `main` (PR #35, ADR 0007).
 3. ✅ **[Codex] (F4.2)** Workspace e terminale: uniti su `main` (PR #40, ADR 0008).
 4. ✅ **[Claude] (F4.1)** Hooks bridge e sessione Claude: unita su `main` (PR #42, ADR 0009).
-5. **[Codex + Claude] (F4.3)** Chat, permessi e cronologia implementati su `feat/claude-chat` (ADR 0010). Revisione Claude Opus con effort `high` sul flusso dei permessi, poi merge dell'utente a CI verde.
+5. **[Codex + Claude] (F4.3)** Chat, permessi e cronologia su `main` (PR #47, ADR 0010). I nove rilievi della revisione sono corretti su `fix/claude-chat-review`. Per la PR di correzione restano CI e `/code-review medium` di Claude prima del merge dell'utente.
 
 ## Dopo
 

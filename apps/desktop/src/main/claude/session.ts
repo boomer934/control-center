@@ -63,7 +63,7 @@ export interface ClaudeSession {
   /** Claude's own session id, once the first run reported it. */
   readonly claudeSessionId: string | undefined;
   /** Sends a user message: starts a run, unless one is running or the session is closed. */
-  send(text: string): SendResult;
+  send(text: string, onAccepted?: () => void): SendResult;
   respond(requestId: string, choice: ClaudePermissionChoice): boolean;
   /** Stops the running run. */
   interrupt(): boolean;
@@ -376,9 +376,10 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     get claudeSessionId() {
       return claudeSessionId;
     },
-    send(text) {
+    send(text, onAccepted) {
       if (status === 'closed') return 'closed';
       if (run) return 'busy';
+      onAccepted?.();
       start(text.length > MAX_MESSAGE_CHARS ? text.slice(0, MAX_MESSAGE_CHARS) : text);
       return 'started';
     },

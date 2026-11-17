@@ -28,12 +28,18 @@ interface Pending {
   wireId: string;
   tool: ToolRequest;
   fingerprint: string;
-  view: ClaudePermission;
+  view: Omit<ClaudePermission, 'canRemember'>;
 }
 
 const MAX_SESSION_APPROVALS = 128;
 const deny = (message: string): Decision => ({ behavior: 'deny', message });
 const allow = (tool: ToolRequest): Decision => ({ behavior: 'allow', updatedInput: tool.input });
+
+function truncateDetails(details: string): string {
+  if (details.length <= MAX_CLAUDE_PERMISSION_DETAILS) return details;
+  const marker = `… (truncated, ${details.length} chars)`;
+  return details.slice(0, MAX_CLAUDE_PERMISSION_DETAILS - marker.length) + marker;
+}
 
 export function createClaudePermissions(
   clean: (text: string) => string,
@@ -42,7 +48,10 @@ export function createClaudePermissions(
 ) {
   const pending = new Map<string, Pending>();
   const remembered = new Set<string>();
-  const update = () => publish([...pending.values()].map(({ view }) => view));
+  const update = () => {
+    const canRemember = remembered.size < MAX_SESSION_APPROVALS;
+    publish([...pending.values()].map(({ view }) => ({ ...view, canRemember })));
+  };
   const reply = (wireId: string, response: Reply) =>
     write(
       JSON.stringify({
@@ -64,7 +73,10 @@ export function createClaudePermissions(
         if (existing && pending.delete(existing.view.requestId)) update();
         return true;
       }
-      if ([...pending.values()].some((entry) => entry.wireId === wireId)) return true;
+      if ([...pending.values()].some((entry) => entry.wireId === wireId)) {
+        reply(wireId, { subtype: 'error', error: 'Duplicate pending control request ID' });
+        return true;
+      }
       const parsed = toolRequest.safeParse(line.request);
       if (!parsed.success) {
         reply(wireId, { subtype: 'error', error: 'Unsupported or invalid control request' });
@@ -72,10 +84,8 @@ export function createClaudePermissions(
       }
 
       const tool = parsed.data;
-      const details = clean(JSON.stringify(tool.input, null, 2));
       const displayTool = clean(tool.tool_name);
       if (
-        details.length > MAX_CLAUDE_PERMISSION_DETAILS ||
         !displayTool ||
         displayTool.length > 256 ||
         pending.size >= MAX_CLAUDE_PERMISSION_REQUESTS
@@ -92,11 +102,10 @@ export function createClaudePermissions(
         return true;
       }
       const requestId = randomUUID();
-      const view: ClaudePermission = {
+      const view = {
         requestId,
         tool: displayTool,
-        details,
-        canRemember: remembered.size < MAX_SESSION_APPROVALS,
+        details: truncateDetails(clean(JSON.stringify(tool.input, null, 2))),
       };
       pending.set(requestId, { wireId, tool, fingerprint, view });
       update();

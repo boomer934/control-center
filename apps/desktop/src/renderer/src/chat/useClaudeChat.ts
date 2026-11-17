@@ -71,9 +71,13 @@ export function useClaudeChat(workspaceId?: string) {
     });
   }, [api]);
 
-  const perform = async <T>(action: (workspace: string) => Promise<T>) => {
-    if (!workspaceId || busy.current) return;
+  const perform = async <T>(action: (workspace: string) => Promise<T>, busyMessage?: string) => {
+    if (!workspaceId) return;
     const workspace = workspaceId;
+    if (busy.current) {
+      if (busyMessage) update(workspace, (value) => ({ ...value, error: busyMessage }));
+      return;
+    }
     busy.current = true;
     setPending(workspace);
     update(workspace, (value) => ({ ...value, error: undefined }));
@@ -173,9 +177,19 @@ export function useClaudeChat(workspaceId?: string) {
       }),
     respond: (requestId: string, choice: ClaudePermissionChoice) =>
       perform(async (workspace) => {
-        if (chat.id && !(await api.respond({ id: chat.id, requestId, choice })))
-          update(workspace, (value) => ({ ...value, error: 'This permission request expired.' }));
-      }),
+        if (chat.id && (await api.respond({ id: chat.id, requestId, choice }))) return;
+        update(workspace, (value) => {
+          const request = value.permissions.find(
+            (permission) => permission.requestId === requestId,
+          );
+          const error = !request
+            ? 'This permission request is no longer open.'
+            : choice === 'session' && !request.canRemember
+              ? 'This session has reached its approval limit. Choose Approve or Deny.'
+              : 'Could not submit the permission decision. Try again.';
+          return { ...value, error };
+        });
+      }, 'Wait for the current action to finish, then submit your permission decision again.'),
   };
 }
 

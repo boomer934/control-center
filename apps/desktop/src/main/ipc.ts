@@ -129,7 +129,7 @@ export function registerIpc(
   devServer: URL | null,
   errors: ErrorsService,
   projectRoot: string,
-): () => void {
+): () => Promise<void> {
   const reportFailure = makeFailureRouter(errors);
   const terminals = createTerminalService();
   let hooksWarned = false;
@@ -263,12 +263,18 @@ export function registerIpc(
       claudeSessions.send(senderId, id, text, (await getWorkspaces()).isActive),
     respond: async (request, { senderId }) =>
       claudeSessions.respond(senderId, request, (await getWorkspaces()).isActive),
-    listHistory: async ({ workspaceId }) =>
-      (await getWorkspaces()).isActive(workspaceId) ? claudeSessions.listHistory(workspaceId) : [],
-    readHistory: async ({ workspaceId, historyId }) =>
-      (await getWorkspaces()).isActive(workspaceId)
-        ? claudeSessions.readHistory(workspaceId, historyId)
-        : null,
+    listHistory: async ({ workspaceId }, { senderId }) => {
+      const workspaces = await getWorkspaces();
+      if (senderId === undefined || !windowOwner(senderId) || !workspaces.isActive(workspaceId))
+        return [];
+      return claudeSessions.listHistory(workspaceId);
+    },
+    readHistory: async ({ workspaceId, historyId }, { senderId }) => {
+      const workspaces = await getWorkspaces();
+      if (senderId === undefined || !windowOwner(senderId) || !workspaces.isActive(workspaceId))
+        return null;
+      return claudeSessions.readHistory(workspaceId, historyId);
+    },
     interrupt: ({ id }, { senderId }) => claudeSessions.interrupt(senderId, id),
     close: ({ id }, { senderId }) => claudeSessions.close(senderId, id),
   };
@@ -293,11 +299,11 @@ export function registerIpc(
   const stopErrors = errors.store.onChange(errorsChanged.trigger);
 
   return () => {
-    for (const owner of owners.values()) owner.close();
     claudeSessions.terminateAll();
-    void claudeSessions.closeAll();
+    for (const owner of owners.values()) owner.close();
     stopErrors();
     errorsChanged.cancel();
     disposeHandlers();
+    return claudeSessions.closeAll();
   };
 }

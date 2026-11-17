@@ -56,7 +56,17 @@ if (!app.requestSingleInstanceLock()) {
     hardenSession(session.defaultSession, devServer);
     installAppProtocol(session.defaultSession, join(__dirname, '../renderer'));
     const disposeIpc = registerIpc(devServer, errors, projectRoot);
-    app.once('will-quit', disposeIpc);
+    let quitting = false;
+    app.on('will-quit', function drainHistory(event) {
+      event.preventDefault();
+      if (quitting) return;
+      quitting = true;
+      void disposeIpc().finally(() => {
+        app.removeListener('will-quit', drainHistory);
+        // Let Electron finish cancelling the original quit before trying again.
+        setImmediate(() => app.quit());
+      });
+    });
     createMainWindow(devServer);
   });
 

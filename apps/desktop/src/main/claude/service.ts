@@ -40,6 +40,7 @@ interface Entry {
   clean: (text: string) => string;
   session?: ClaudeSession;
   closed: boolean;
+  closing?: Promise<void>;
 }
 
 export function createClaudeService(deps: ClaudeServiceDeps) {
@@ -57,14 +58,16 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
   const release = (id: string, entry: Entry) => {
     if (sessions.get(id) === entry) sessions.delete(id);
   };
-  const dispose = async (id: string, entry: Entry) => {
-    if (entry.closed) return;
+  const dispose = (id: string, entry: Entry) => {
     entry.closed = true;
-    try {
-      await entry.session?.close();
-    } finally {
-      release(id, entry);
-    }
+    return (entry.closing ??= (async () => {
+      try {
+        await entry.session?.close();
+      } finally {
+        await history.flush(entry.workspaceId, entry.historyId);
+        release(id, entry);
+      }
+    })());
   };
 
   return {
@@ -166,8 +169,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       if (!entry) return 'closed';
       if (!isActive(entry.workspaceId)) return 'workspace-unavailable';
       if (!entry.session) return 'busy';
-      const result = entry.session.send(text);
-      if (result === 'started') {
+      return entry.session.send(text, () => {
         // The CLI may echo a user message, but it need not. Record exactly what was sent.
         entry.record?.({
           kind: 'prompt',
@@ -175,8 +177,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
             .clean(text.slice(0, MAX_CLAUDE_MESSAGE_CHARS))
             .slice(0, MAX_CLAUDE_MESSAGE_CHARS),
         });
-      }
-      return result;
+      });
     },
 
     respond(
@@ -210,8 +211,11 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       for (const entry of sessions.values()) entry.session?.terminate();
     },
 
-    closeAll(): Promise<void> {
-      return Promise.all([...sessions].map(([id, e]) => dispose(id, e))).then(() => undefined);
+    async closeAll(): Promise<void> {
+      const results = await Promise.allSettled([...sessions].map(([id, e]) => dispose(id, e)));
+      for (const result of results) {
+        if (result.status === 'rejected') throw result.reason;
+      }
     },
 
     listHistory: history.list,

@@ -211,6 +211,26 @@ describe('Claude session with the fake claude', () => {
     await h.idle();
   }, 60_000);
 
+  it('closing during a run kills it and reports nothing afterwards', async () => {
+    const h = await open('sessione-02', { fakeEnv: { FAKE_CLAUDE_MODE: 'hang' } });
+    h.session.send('go');
+    await expect.poll(() => h.events.length, { timeout: 20_000 }).toBeGreaterThan(0);
+    await h.session.close();
+    const after = h.events.length;
+    await new Promise((r) => setTimeout(r, 500));
+    expect(h.events.length).toBe(after);
+    expect(h.session.status).toBe('closed');
+  }, 60_000);
+
+  it('terminates a run synchronously when the app quits', async () => {
+    const h = await open('sessione-02', { fakeEnv: { FAKE_CLAUDE_MODE: 'hang' } });
+    h.session.send('go');
+    await expect.poll(() => h.events.length, { timeout: 20_000 }).toBeGreaterThan(0);
+    h.session.terminate();
+    await h.idle();
+    expect(h.events.at(-1)).toMatchObject({ type: 'session.ended', reason: 'interrupted' });
+  }, 60_000);
+
   it('removes its files, token included, when it closes', async () => {
     const h = await open('sessione-05');
     const dir = join(h.dataDir, SESSIONS_DIR, h.session.id);

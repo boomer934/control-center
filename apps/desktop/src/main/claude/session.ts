@@ -6,7 +6,7 @@
 // through the live normalizers of @control-center/event-schema and leave as AgentEvents. The
 // session owns its pipe, its token and its temporary files, and removes them when it closes.
 import { randomUUID } from 'node:crypto';
-import { execFile, type ChildProcess } from 'node:child_process';
+import { execFile, execFileSync, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import type { ErrorInput } from '@control-center/app-log';
 import { LiveClaudeSession, type AgentEvent } from '@control-center/event-schema';
@@ -56,6 +56,8 @@ export interface ClaudeSession {
   send(text: string): SendResult;
   /** Stops the running run. */
   interrupt(): boolean;
+  /** Synchronous end of the running run, for app quit: no event is emitted after it. */
+  terminate(): void;
   close(): Promise<void>;
 }
 
@@ -79,7 +81,7 @@ const warnedVersions = new Set<string>();
  * Ends a run with everything it started (hook scripts, the commands of the agent's tools): on
  * Windows killing the process alone would leave its children running in the workspace.
  */
-function killTree(child: ChildProcess): void {
+function killTree(child: ChildProcess, wait = false): void {
   const pid = child.pid;
   if (process.platform !== 'win32' || pid === undefined) {
     child.kill();
@@ -87,7 +89,17 @@ function killTree(child: ChildProcess): void {
   }
   // full path: never a taskkill found on PATH or in the workspace
   const taskkill = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'taskkill.exe');
-  execFile(taskkill, ['/PID', String(pid), '/T', '/F'], { windowsHide: true }, (error) => {
+  const args = ['/PID', String(pid), '/T', '/F'];
+  if (wait) {
+    // the app is quitting: an asynchronous taskkill would never get to run
+    try {
+      execFileSync(taskkill, args, { windowsHide: true, stdio: 'ignore', timeout: 5000 });
+    } catch {
+      child.kill();
+    }
+    return;
+  }
+  execFile(taskkill, args, { windowsHide: true }, (error) => {
     if (error) child.kill();
   });
 }
@@ -119,7 +131,8 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     options.onStatus?.(next);
   };
   const emit = (events: AgentEvent[]) => {
-    if (events.length > 0) options.onEvents(events);
+    // a run that outlives close() (slow kill) must not speak for a session already closed
+    if (events.length > 0 && status !== 'closed') options.onEvents(events);
   };
 
   // ── the bridge: pipe server and session files ──
@@ -284,6 +297,12 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       run.stopping = true;
       killTree(run.child);
       return true;
+    },
+    terminate() {
+      const current = run;
+      if (!current) return;
+      current.stopping = true;
+      killTree(current.child, true);
     },
     async close() {
       if (status === 'closed') return;

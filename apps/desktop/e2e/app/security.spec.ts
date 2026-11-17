@@ -102,15 +102,16 @@ test.describe('preload', () => {
       };
     });
     expect(shape).toEqual({
-      namespaces: ['app', 'errors', 'shell', 'workspace', 'terminal'],
+      namespaces: ['app', 'errors', 'shell', 'workspace', 'terminal', 'claude'],
       methods: {
         app: ['getInfo'],
         errors: ['list', 'reportRenderer', 'copyReport', 'clear', 'onChanged'],
         shell: ['openExternal'],
         workspace: ['getState', 'chooseFolder', 'selectRecent', 'openFile'],
         terminal: ['start', 'write', 'resize', 'close', 'onUpdated'],
+        claude: ['start', 'send', 'interrupt', 'close', 'onUpdated'],
       },
-      types: Array.from({ length: 16 }, () => 'function'),
+      types: Array.from({ length: 21 }, () => 'function'),
       frozen: true,
       leaked: [],
     });

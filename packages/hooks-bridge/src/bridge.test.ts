@@ -213,6 +213,20 @@ describe('hook script', () => {
     expect(events[0]).not.toHaveProperty('tool_response');
   });
 
+  it('cuts a long error instead of dropping the event', async () => {
+    const { pipe, token, events } = await startServer();
+    const dir = sessionDir({ v: 1, pipe, token });
+    const failure = {
+      ...payload,
+      hook_event_name: 'PostToolUseFailure',
+      error: 'e'.repeat(2 * MAX_MESSAGE_BYTES),
+    };
+    expect((await runHook([join(dir, BRIDGE_FILE)], JSON.stringify(failure))).code).toBe(0);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ hook_event_name: 'PostToolUseFailure', truncated: true });
+    expect(events[0]?.error).toHaveLength(16_384);
+  });
+
   it('always exits 0 and never prints the token', async () => {
     const token = newToken();
     // nobody listens on this pipe

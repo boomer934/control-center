@@ -67,9 +67,10 @@ export const hookPayloadSchema = z.looseObject({
   tool_input: z.record(z.string(), z.unknown()).optional(),
   tool_response: z.unknown().optional(),
   notification_type: z.string().max(100).optional(),
-  message: z.string().max(100_000).optional(),
-  prompt: z.string().max(1_000_000).optional(),
-  error: z.string().max(100_000).optional(),
+  // long texts are not refused here: the message size limit and encodeMessage bound them
+  message: z.string().optional(),
+  prompt: z.string().optional(),
+  error: z.string().optional(),
   duration_ms: z.number().nonnegative().optional(),
   is_interrupt: z.boolean().optional(),
   reason: z.string().max(200).optional(),
@@ -116,13 +117,20 @@ export type BridgeReply = z.infer<typeof bridgeReplySchema>;
 /** One message on the wire: compact JSON and a newline. */
 export const encodeLine = (value: unknown): string => `${JSON.stringify(value)}\n`;
 
+/** Longest `error` or `message` kept in a trimmed payload. */
+const TRIMMED_TEXT = 16_384;
+
 /**
  * The message for a payload, trimmed to fit: when it is too big, the tool's input and response
- * (file contents, command output) are dropped and the payload is marked `truncated`.
+ * (file contents, command output) and the prompt are dropped, `error` and `message` are cut, and
+ * the payload is marked `truncated`.
  */
 export function encodeMessage(token: string, payload: HookPayload): string {
   const line = encodeLine({ v: BRIDGE_PROTOCOL, token, payload });
   if (Buffer.byteLength(line, 'utf8') <= MAX_MESSAGE_BYTES) return line;
   const { tool_input: _input, tool_response: _response, prompt: _prompt, ...rest } = payload;
-  return encodeLine({ v: BRIDGE_PROTOCOL, token, payload: { ...rest, truncated: true } });
+  const trimmed: HookPayload = { ...rest, truncated: true };
+  if (rest.error !== undefined) trimmed.error = rest.error.slice(0, TRIMMED_TEXT);
+  if (rest.message !== undefined) trimmed.message = rest.message.slice(0, TRIMMED_TEXT);
+  return encodeLine({ v: BRIDGE_PROTOCOL, token, payload: trimmed });
 }

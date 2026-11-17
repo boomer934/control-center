@@ -139,6 +139,11 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       return Promise.all(mine.map(([id, e]) => dispose(id, e))).then(() => undefined);
     },
 
+    /** App quit: ends every running process now; the files go at the next start. */
+    terminateAll(): void {
+      for (const entry of sessions.values()) entry.session?.terminate();
+    },
+
     closeAll(): Promise<void> {
       return Promise.all([...sessions].map(([id, e]) => dispose(id, e))).then(() => undefined);
     },

@@ -37,6 +37,7 @@ function setup(
       claudeSessionId: undefined,
       send,
       interrupt: () => true,
+      terminate: () => {},
       close,
     };
   }) as unknown as typeof openClaudeSession;

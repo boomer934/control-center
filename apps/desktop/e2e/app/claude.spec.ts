@@ -73,10 +73,10 @@ test('runs a Claude session from the renderer and streams its AgentEvents', asyn
     const started = await api.claude.start({ id, workspaceId });
     const sent = await api.claude.send({ id, text: 'Rename the helper' });
     await Promise.race([idle, new Promise((r) => setTimeout(r, 30_000))]);
-    const busyAfter = await api.claude.send({ id, text: '' }).catch((e: Error) => e.message);
+    const emptyMessage = await api.claude.send({ id, text: '' }).catch((e: Error) => e.message);
     const closed = await api.claude.close({ id });
     stop();
-    return { started, sent, events, statuses, busyAfter, closed };
+    return { started, sent, events, statuses, emptyMessage, closed };
   });
 
   expect(result.started).toBe('started');
@@ -89,6 +89,6 @@ test('runs a Claude session from the renderer and streams its AgentEvents', asyn
   expect(result.events.some((e) => e.source === 'hooks')).toBe(true);
   expect(result.events.filter((e) => e.type === 'tool.called').length).toBeGreaterThan(0);
   // an empty message never reaches the main process
-  expect(result.busyAfter).toContain('invalid-request');
+  expect(result.emptyMessage).toContain('invalid-request');
   expect(result.closed).toBe(true);
 });

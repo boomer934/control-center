@@ -3,7 +3,7 @@
 //   node <this file> <session folder>/bridge.json
 //
 // It reads the hook payload from stdin, validates it, and delivers it to the app's pipe with the
-// session token. It always exits 0 and prints nothing on stdout, so a bridge problem never
+// session token. It exits 0 and prints nothing on stdout, so a bridge problem never
 // changes what the agent does; problems go to stderr as a short code, never with the token.
 import { lstatSync, readFileSync } from 'node:fs';
 import { basename, isAbsolute } from 'node:path';
@@ -59,6 +59,8 @@ async function main(): Promise<void> {
   if (!result.ok) fail(result.code ?? 'refused');
 }
 
-main()
-  .catch(() => fail('internal'))
-  .finally(() => process.exit(0));
+// Let the process end by itself so stderr (asynchronous on a Windows pipe) is flushed; the
+// client's own timeout bounds the wait, and this guard bounds everything else.
+process.exitCode = 0;
+setTimeout(() => process.exit(0), 10_000).unref();
+main().catch(() => fail('internal'));

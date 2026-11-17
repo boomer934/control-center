@@ -168,7 +168,7 @@ export function registerIpc(
       throw error;
     }));
 
-  function terminalOwner(id: number) {
+  function windowOwner(id: number) {
     const existing = owners.get(id);
     if (existing) return existing;
     const contents = webContents.fromId(id);
@@ -232,7 +232,7 @@ export function registerIpc(
   const terminal: Handlers['terminal'] = {
     start: async (request, { senderId }) => {
       if (senderId === undefined) return 'workspace-unavailable';
-      const owner = terminalOwner(senderId);
+      const owner = windowOwner(senderId);
       if (!owner) return 'workspace-unavailable';
       const [workspaces, shell] = await Promise.all([getWorkspaces(), resolveShell(request.shell)]);
       if (!shell) return 'shell-unavailable';
@@ -251,7 +251,7 @@ export function registerIpc(
   const claude: Handlers['claude'] = {
     start: async (request, { senderId }) => {
       if (senderId === undefined) return 'workspace-unavailable';
-      const owner = terminalOwner(senderId);
+      const owner = windowOwner(senderId);
       if (!owner) return 'workspace-unavailable';
       const cwd = await (await getWorkspaces()).activeRootFor(request.workspaceId);
       if (!cwd || owners.get(senderId) !== owner) return 'workspace-unavailable';
@@ -286,6 +286,7 @@ export function registerIpc(
 
   return () => {
     for (const owner of owners.values()) owner.close();
+    claudeSessions.terminateAll();
     void claudeSessions.closeAll();
     stopErrors();
     errorsChanged.cancel();

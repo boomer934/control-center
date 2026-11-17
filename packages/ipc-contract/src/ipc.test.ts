@@ -80,6 +80,12 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
       resize: () => false,
       close: () => false,
     },
+    claude: {
+      start: () => 'workspace-unavailable',
+      send: () => 'closed',
+      interrupt: () => false,
+      close: () => false,
+    },
   };
   return { handlers, getInfo, openExternal };
 }
@@ -111,10 +117,16 @@ describe('contract', () => {
       'terminal:resize',
       'terminal:close',
       'terminal:updated',
+      'claude:start',
+      'claude:send',
+      'claude:interrupt',
+      'claude:close',
+      'claude:updated',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
       'errors:changed',
       'terminal:updated',
+      'claude:updated',
     ]);
     expect(listMethods()).toHaveLength(listChannels().length - listEvents().length);
   });
@@ -276,7 +288,7 @@ describe('registerIpcHandlers (main)', () => {
 describe('createApi (preload)', () => {
   it('exposes exactly the contract methods, deeply frozen', () => {
     const api = createApi(async () => ({ ok: true, value: null }), noSubscribe);
-    expect(Object.keys(api)).toEqual(['app', 'errors', 'shell', 'workspace', 'terminal']);
+    expect(Object.keys(api)).toEqual(['app', 'errors', 'shell', 'workspace', 'terminal', 'claude']);
     expect(Object.keys(api.app)).toEqual(['getInfo']);
     expect(Object.keys(api.errors)).toEqual([
       'list',
@@ -293,6 +305,7 @@ describe('createApi (preload)', () => {
       'openFile',
     ]);
     expect(Object.keys(api.terminal)).toEqual(['start', 'write', 'resize', 'close', 'onUpdated']);
+    expect(Object.keys(api.claude)).toEqual(['start', 'send', 'interrupt', 'close', 'onUpdated']);
     expect(Object.isFrozen(api)).toBe(true);
     expect(Object.isFrozen(api.app)).toBe(true);
     expect(Object.isFrozen(api.shell)).toBe(true);

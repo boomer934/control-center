@@ -19,7 +19,7 @@ export function cleanEnv(extra: Record<string, string> = {}): Record<string, str
  * `userDataDir` keeps logs and caches of the run out of the user's real profile.
  */
 export async function launchApp(
-  options: { userDataDir?: string } = {},
+  options: { userDataDir?: string; env?: Record<string, string> } = {},
 ): Promise<{ app: ElectronApplication; page: Page }> {
   const app = await _electron.launch({
     // Fake camera and microphone: CI runners have none, and getUserMedia would fail with
@@ -30,7 +30,7 @@ export async function launchApp(
       APP_DIR,
     ],
     cwd: APP_DIR,
-    env: cleanEnv(),
+    env: cleanEnv(options.env),
   });
   const page = await app.firstWindow();
   await page.getByTestId('app-info').waitFor();

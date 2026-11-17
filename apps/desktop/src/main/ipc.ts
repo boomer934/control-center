@@ -1,6 +1,7 @@
 // The only file of the main process that touches ipcMain (enforced by ESLint): it registers the
 // handlers of @control-center/ipc-contract behind the sender check, and pushes the contract
 // events to the trusted windows only (ADR 0007).
+import { existsSync } from 'node:fs';
 import { join, win32 } from 'node:path';
 import {
   app,
@@ -19,6 +20,8 @@ import {
   type Emit,
   type EventReceiver,
 } from '@control-center/ipc-contract/main';
+import { resolveClaude, resolveHookNode } from './claude/cli';
+import { createClaudeService } from './claude/service';
 import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
 import { coalesce, makeFailureRouter } from './ipc-events';
@@ -56,6 +59,7 @@ function makeHandlers(
   errors: ErrorsService,
   workspace: Handlers['workspace'],
   terminal: Handlers['terminal'],
+  claude: Handlers['claude'],
 ): Handlers {
   return {
     app: {
@@ -86,7 +90,19 @@ function makeHandlers(
     },
     workspace,
     terminal,
+    claude,
   };
+}
+
+/**
+ * The hook script: from source in a development or test build (Node strips the types), a bundled
+ * copy next to the app in a packaged one (phase 10; until then packaged sessions run on the
+ * stream alone).
+ */
+function hookScript(projectRoot: string): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, 'hooks-bridge', 'bin.mjs')
+    : join(projectRoot, 'packages', 'hooks-bridge', 'src', 'bin.ts');
 }
 
 /**
@@ -116,6 +132,30 @@ export function registerIpc(
 ): () => void {
   const reportFailure = makeFailureRouter(errors);
   const terminals = createTerminalService();
+  let hooksWarned = false;
+  const claudeSessions = createClaudeService({
+    dataDir: app.getPath('userData'),
+    report: errors.report,
+    programs: async () => {
+      const claude = resolveClaude();
+      const node = await resolveHookNode();
+      const script = hookScript(projectRoot);
+      const hooks = node && existsSync(script) ? { node, script } : undefined;
+      if (claude && !hooks && !hooksWarned) {
+        hooksWarned = true;
+        errors.report({
+          origin: 'main',
+          source: 'hooks-bridge',
+          kind: 'claude-setup',
+          name: 'HooksUnavailable',
+          message: node
+            ? 'The hook script is not available in this build: Claude sessions run on the stream alone'
+            : 'Node.js 22.18 or later was not found on PATH: Claude sessions run without hook events',
+        });
+      }
+      return { claude, hooks };
+    },
+  });
   const owners = new Map<number, { emit: Emit; close(): void }>();
   let workspaceService: ReturnType<typeof createWorkspaceService> | undefined;
   let choosingFolder = false;
@@ -128,7 +168,7 @@ export function registerIpc(
       throw error;
     }));
 
-  function terminalOwner(id: number) {
+  function windowOwner(id: number) {
     const existing = owners.get(id);
     if (existing) return existing;
     const contents = webContents.fromId(id);
@@ -141,6 +181,7 @@ export function registerIpc(
       close() {
         owners.delete(id);
         terminals.closeOwner(id);
+        void claudeSessions.closeOwner(id);
         contents.off('did-start-navigation', onNavigation);
         contents.off('render-process-gone', owner.close);
         contents.off('destroyed', owner.close);
@@ -191,7 +232,7 @@ export function registerIpc(
   const terminal: Handlers['terminal'] = {
     start: async (request, { senderId }) => {
       if (senderId === undefined) return 'workspace-unavailable';
-      const owner = terminalOwner(senderId);
+      const owner = windowOwner(senderId);
       if (!owner) return 'workspace-unavailable';
       const [workspaces, shell] = await Promise.all([getWorkspaces(), resolveShell(request.shell)]);
       if (!shell) return 'shell-unavailable';
@@ -207,10 +248,31 @@ export function registerIpc(
     close: ({ id }, { senderId }) => terminals.close(senderId, id),
   };
 
-  const disposeHandlers = registerIpcHandlers(ipcMain, makeHandlers(errors, workspace, terminal), {
-    isTrustedSender: makeSenderCheck(devServer),
-    onFailure: reportFailure,
-  });
+  const claude: Handlers['claude'] = {
+    start: async (request, { senderId }) => {
+      if (senderId === undefined) return 'workspace-unavailable';
+      const owner = windowOwner(senderId);
+      if (!owner) return 'workspace-unavailable';
+      const cwd = await (await getWorkspaces()).activeRootFor(request.workspaceId);
+      if (!cwd || owners.get(senderId) !== owner) return 'workspace-unavailable';
+      return claudeSessions.start(senderId, request, cwd, (update) =>
+        owner.emit(contract.claude.updated, update),
+      );
+    },
+    send: async ({ id, text }, { senderId }) =>
+      claudeSessions.send(senderId, id, text, (await getWorkspaces()).isActive),
+    interrupt: ({ id }, { senderId }) => claudeSessions.interrupt(senderId, id),
+    close: ({ id }, { senderId }) => claudeSessions.close(senderId, id),
+  };
+
+  const disposeHandlers = registerIpcHandlers(
+    ipcMain,
+    makeHandlers(errors, workspace, terminal, claude),
+    {
+      isTrustedSender: makeSenderCheck(devServer),
+      onFailure: reportFailure,
+    },
+  );
 
   const emit: Emit = createEventEmitter({
     targets: () => trustedReceivers(devServer),
@@ -224,6 +286,8 @@ export function registerIpc(
 
   return () => {
     for (const owner of owners.values()) owner.close();
+    claudeSessions.terminateAll();
+    void claudeSessions.closeAll();
     stopErrors();
     errorsChanged.cancel();
     disposeHandlers();

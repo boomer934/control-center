@@ -2,7 +2,7 @@
 
 > Questo file passa il lavoro alla sessione che apre la Fase 4. Va letto insieme a `STATO.md`, alla sezione "Fase 4" di `PIANO.md` (§7) e a `SICUREZZA.md`. Si aggiorna a ogni sotto-fase chiusa; a fine fase si archivia, cioè lo si riassume in `STORIA.md` e lo si toglie dalla repo.
 >
-> **Stato:** brief preparato il 2026-11-17, alla chiusura della Fase 3. Nessuna sotto-fase iniziata.
+> **Stato:** 4.0 e 4.2 unite su `main`; 4.1 implementata su `feat/hooks-bridge` (ADR 0009); 4.3 da fare.
 
 ## Obiettivo
 
@@ -14,9 +14,9 @@ Dalla Fase 4 l'app serve ogni giorno. Si apre un workspace e si usa il terminale
 
 L'hooks bridge consegna gli eventi in tempo reale via named pipe, con un token per ogni sessione. La CI non chiama mai il vero servizio: un finto eseguibile `claude` riproduce le fixture.
 
-## Prima di iniziare (bloccante per 4.1)
+## Prima di iniziare (bloccante per 4.1, risolto)
 
-Manca la fixture reale di `Notification` (attesa dell'utente); `PostToolUseFailure` è in `sessione-06`. Per catturarle serve una sessione interattiva breve nel progetto di prova, con l'hook `PostToolUseFailure` attivo. Poi:
+Risolto con `sessione-07` (PR #38). Il testo resta come procedura per registrare nuove fixture. In origine mancava la fixture reale di `Notification`; `PostToolUseFailure` è in `sessione-06`. Per catturarle serve una sessione interattiva breve nel progetto di prova, con l'hook `PostToolUseFailure` attivo. Poi:
 
 1. `node scripts/fixtures/sanitize.mjs`;
 2. rileggere a mano il risultato;
@@ -73,6 +73,7 @@ Una sessione o un loop per sotto-fase, su un branch `feat/…` con PR e merge a 
 ### 4.1 — Hooks bridge e sessione Claude
 
 - **Branch proposto:** `feat/hooks-bridge`.
+- **Stato:** implementata il 2026-11-17 (ADR 0009). Oltre al brief c'è il namespace IPC `claude` (`start`, `send`, `interrupt`, `close`, evento `claude:updated`), su cui la 4.3 costruisce la chat. Restano per la 4.3 il canale dei permessi su stdin e, per la Fase 10, lo script degli hooks nel pacchetto.
 - **Produce:**
   - `packages/hooks-bridge`:
     - lo script chiamato dagli hooks legge l'evento da stdin;

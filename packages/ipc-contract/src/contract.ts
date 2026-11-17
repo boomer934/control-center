@@ -8,6 +8,14 @@
 // main process. See docs/memoria/SICUREZZA.md.
 import { z } from 'zod';
 import {
+  ClaudeSendResultSchema,
+  ClaudeSendSchema,
+  ClaudeStartResultSchema,
+  ClaudeStartSchema,
+  ClaudeTargetSchema,
+  ClaudeUpdateSchema,
+} from './claude';
+import {
   TerminalResizeSchema,
   TerminalResultSchema,
   TerminalStartSchema,
@@ -103,6 +111,8 @@ export const ERROR_KINDS = [
   'child-exit',
   'child-spawn',
   'ipc-failure',
+  'bridge-rejected',
+  'claude-setup',
 ] as const;
 
 export const StackFrameSchema = z
@@ -208,6 +218,13 @@ export const contract = {
     resize: invoke('terminal:resize', TerminalResizeSchema, z.boolean()),
     close: invoke('terminal:close', TerminalTargetSchema, z.boolean()),
     updated: event('terminal:updated', TerminalUpdateSchema),
+  },
+  claude: {
+    start: invoke('claude:start', ClaudeStartSchema, ClaudeStartResultSchema),
+    send: invoke('claude:send', ClaudeSendSchema, ClaudeSendResultSchema),
+    interrupt: invoke('claude:interrupt', ClaudeTargetSchema, z.boolean()),
+    close: invoke('claude:close', ClaudeTargetSchema, z.boolean()),
+    updated: event('claude:updated', ClaudeUpdateSchema),
   },
 } as const;
 

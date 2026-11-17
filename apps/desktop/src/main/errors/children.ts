@@ -15,14 +15,20 @@ export interface SuperviseOptions {
   report: (input: ErrorInput) => unknown;
   /** Quiet time after which buffered stderr is reported as one error. Default 150 ms. */
   flushMs?: number;
+  /** Give the child a stdin pipe (default: ignored). */
+  stdin?: boolean;
+  /** Receives stdout as UTF-8 text. Without it stdout is drained and ignored. */
+  onStdout?: (chunk: string) => void;
+  /** Asked when the child exits with an error: true means the app ended it on purpose. */
+  expectedExit?: () => boolean;
 }
 
 const NAME = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const MAX_STDERR = 64 * 1024;
 
 /**
- * Starts `command` without a shell and reports what goes wrong. stdout is drained and ignored (it
- * is data, not errors, and may carry secrets).
+ * Starts `command` without a shell and reports what goes wrong. stdout is data, not errors: it goes
+ * to `onStdout` when given (the caller validates it), otherwise it is drained and ignored.
  */
 export function superviseChild(options: SuperviseOptions): ChildProcess {
   if (!NAME.test(options.name)) throw new Error(`Invalid child process name: ${options.name}`);
@@ -34,7 +40,7 @@ export function superviseChild(options: SuperviseOptions): ChildProcess {
     env: options.env ?? process.env,
     shell: false,
     windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: [options.stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'],
   });
 
   let stderr = '';
@@ -56,7 +62,15 @@ export function superviseChild(options: SuperviseOptions): ChildProcess {
     });
   };
 
-  child.stdout?.resume();
+  if (options.onStdout) {
+    const onStdout = options.onStdout;
+    child.stdout?.setEncoding('utf8');
+    child.stdout?.on('data', (chunk: string) => onStdout(chunk));
+  } else {
+    child.stdout?.resume();
+  }
+  // a child that exits before reading all its input must not crash the app with EPIPE
+  child.stdin?.on('error', () => undefined);
   child.stderr?.setEncoding('utf8');
   child.stderr?.on('data', (chunk: string) => {
     if (stderr.length < MAX_STDERR) stderr += chunk;
@@ -76,7 +90,7 @@ export function superviseChild(options: SuperviseOptions): ChildProcess {
 
   child.on('close', (code, signal) => {
     flush();
-    if (code === 0) return;
+    if (code === 0 || options.expectedExit?.()) return;
     options.report({
       origin: 'child',
       source,

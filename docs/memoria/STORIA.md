@@ -4,6 +4,30 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-17 — Hooks bridge e sessione Claude (4.1)
+
+**Fatto:**
+
+- `event-schema`: normalizzatori incrementali e merge dal vivo (`LiveClaudeSession`); le funzioni batch sono invariate (snapshot uguali);
+- nuovo pacchetto `hooks-bridge`: protocollo, server della named pipe, client e script degli hooks;
+- main: sessione `claude -p` stream-json, una run per messaggio con `--resume`;
+- namespace IPC `claude`;
+- finto `claude` che riproduce le fixture ed esegue gli hooks configurati;
+- test: 21 del bridge, 13 di integrazione della sessione, 15 di CLI e file, 6 del servizio, 9 del merge dal vivo, 1 E2E. `pnpm verify` verde (321 test). Commit da `7ef4238` a `9b062df` su `feat/hooks-bridge`.
+
+**Decisioni:** ADR 0009. Il token sta solo nel file della sessione, mai nell'ambiente. Lo script degli hooks gira dal sorgente TS con il type stripping di Node ≥ 22.18. Nel merge dal vivo vince la prima copia di un fatto e gli hooks ambigui dei subagent attendono lo stream. Il namespace IPC `claude` è anticipato dalla 4.3 perché il contratto è un file caldo. Nuovi tipi di errore: `bridge-rejected` e `claude-setup`.
+
+**Problemi:**
+
+- su Windows `child.kill()` lasciava vivi i figli di `claude`: ora l'arresto usa `taskkill /T`;
+- una pipe chiusa a metà dal client si chiude del tutto;
+- Playwright carica le spec come CommonJS;
+- `/code-review high` ha trovato 7 punti e ne sono stati corretti 6: processi vivi dopo l'uscita, eventi dopo `close`, schema che scartava gli errori lunghi, stderr troncato e due nomi;
+- la prova con la CLI vera (2.1.326) è riuscita: gli hooks arrivano dalla pipe senza rifiuti. Ha però mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima di `init`, e `session.started` perdeva modello e versione. Ora il merge dal vivo trattiene quegli hooks fino a `init`. La prova resta come test da attivare con `CC_REAL_CLAUDE=1`;
+- la revisione di Astra non c'è perché i crediti Codex sono finiti.
+
+---
+
 ## 2026-11-17 — Workspace e terminale della 4.2
 
 **Fatto:** dialog nativo, recenti, selettore `Ctrl+P`, ripristino del layout, percorsi canonici verificati, link al file e terminali a schede in PowerShell e Git Bash. L'output usa il canale push della 4.0.

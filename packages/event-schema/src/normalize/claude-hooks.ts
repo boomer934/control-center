@@ -1,4 +1,4 @@
-// Claude Code hook payloads â†’ AgentEvents.
+// Claude Code hook payloads → AgentEvents.
 //
 // Records are `{ capturedAt, payload }`: hooks carry no timestamp of their own, so the receiver
 // (scripts/fixtures/capture-hook.mjs today, the hooks bridge in phase 4) stamps them on arrival.
@@ -25,46 +25,129 @@ import {
   type Obj,
 } from './common';
 
-export function normalizeClaudeHooks(
-  records: readonly unknown[],
-  ctx: NormalizeContext,
-): AgentEvent[] {
-  const hooks = records
-    .filter(isObj)
-    .map((r) => ({ at: iso(r.capturedAt), p: isObj(r.payload) ? r.payload : ({} as Obj) }));
-  const cwd = ctx.cwd ?? hooks.map((h) => str(h.p.cwd)).find((c) => c !== undefined) ?? '';
-  const { text, file, target } = makeTools(cwd);
-  const log = new EventLog(ctx.sessionId, 'hooks', 'claude');
+type HookRecord = { at: string | undefined; p: Obj };
 
+export interface HooksNormalizerOptions {
+  /** Timestamp used until a record carries one (the batch normalizer passes the first one). */
+  startAt?: string;
+  /** Claude `agent_id` → tool use id of the Agent call that spawned it, when known in advance. */
+  links?: ReadonlyMap<string, string>;
+  /**
+   * Live mode: a subagent hook whose spawning Agent call is ambiguous (several running) is held
+   * until `learn` links it, instead of being attributed to the main agent.
+   */
+  holdAmbiguous?: boolean;
+}
+
+/**
+ * Incremental hooks normalizer: one `{ capturedAt, payload }` record in, the AgentEvents it
+ * produces out. `normalizeClaudeHooks` feeds it a whole recording.
+ */
+export class ClaudeHooksNormalizer {
+  private readonly log: EventLog;
+  private cleaners: ReturnType<typeof makeTools>;
+  private cwdKnown: boolean;
+  private now: string;
+  private readonly holdAmbiguous: boolean;
   // Subagent hooks carry Claude's own `agent_id`; AgentEvents key subagents by the tool call that
-  // spawned them. The link is in the PostToolUse of that Agent call (`tool_response.agentId`).
-  const spawnedBy = new Map<string, string>();
-  for (const { p } of hooks) {
-    const res = isObj(p.tool_response) ? p.tool_response : undefined;
-    const id = str(p.tool_use_id);
-    const agent = str(res?.agentId);
-    if (p.hook_event_name === 'PostToolUse' && id && agent) spawnedBy.set(agent, id);
+  // spawned them. The link is in the PostToolUse of that Agent call (`tool_response.agentId`), or
+  // in the stream (`parent_tool_use_id`), which the live session passes to `learn`.
+  private readonly spawnedBy: Map<string, string>;
+  private readonly agentOfTool = new Map<string, string>(); // tool_use_id → Claude agent_id
+  private readonly running: string[] = []; // Agent tool calls still running
+  private readonly called = new Map<
+    string,
+    { name: string; input: Obj; at: string; agentId: AgentId }
+  >();
+  private held: HookRecord[] = [];
+
+  constructor(ctx: NormalizeContext, options: HooksNormalizerOptions = {}) {
+    this.log = new EventLog(ctx.sessionId, 'hooks', 'claude');
+    this.cleaners = makeTools(ctx.cwd ?? '');
+    this.cwdKnown = ctx.cwd !== undefined;
+    this.now = options.startAt ?? EPOCH;
+    this.spawnedBy = new Map(options.links);
+    this.holdAmbiguous = options.holdAmbiguous ?? false;
   }
-  const running: string[] = []; // Agent tool calls still running, for unlinked subagent hooks
-  const agentOf = (p: Obj): AgentId => {
+
+  /** Normalizes one hook record. */
+  push(raw: unknown): AgentEvent[] {
+    if (!isObj(raw)) return [];
+    const record = { at: iso(raw.capturedAt), p: isObj(raw.payload) ? raw.payload : ({} as Obj) };
+    const from = this.log.events.length;
+    this.take(record);
+    return this.log.events.slice(from);
+  }
+
+  /** The stream reported tool call `toolUseId` as made by `agentId`: link its Claude agent. */
+  learn(toolUseId: string, agentId: AgentId): AgentEvent[] {
+    const claudeAgent = this.agentOfTool.get(toolUseId);
+    if (!claudeAgent || !agentId.startsWith('sub:') || this.spawnedBy.has(claudeAgent)) return [];
+    this.spawnedBy.set(claudeAgent, agentId.slice(4));
+    return this.release(false);
+  }
+
+  /** Releases every held record, attributing what is still ambiguous to the main agent. */
+  flush(): AgentEvent[] {
+    return this.release(true);
+  }
+
+  private release(force: boolean): AgentEvent[] {
+    const from = this.log.events.length;
+    const held = this.held;
+    this.held = [];
+    for (const r of held) {
+      if (force || this.agentOf(r.p) !== undefined) this.process(r);
+      else this.held.push(r);
+    }
+    return this.log.events.slice(from);
+  }
+
+  /** `undefined`: a subagent hook that cannot be attributed yet. */
+  private agentOf(p: Obj): AgentId | undefined {
     const a = str(p.agent_id);
     if (!a) return 'main';
-    const parent = spawnedBy.get(a) ?? (running.length === 1 ? running[0] : undefined);
-    return parent ? `sub:${parent}` : 'main';
-  };
+    const parent =
+      this.spawnedBy.get(a) ?? (this.running.length === 1 ? this.running[0] : undefined);
+    if (parent) return `sub:${parent}`;
+    return this.holdAmbiguous ? undefined : 'main';
+  }
 
-  const stopRunning = (id: string) => {
-    const i = running.indexOf(id);
-    if (i >= 0) running.splice(i, 1);
-  };
+  private take(r: HookRecord): void {
+    const { p } = r;
+    if (!this.cwdKnown && str(p.cwd)) {
+      this.cwdKnown = true;
+      this.cleaners = makeTools(str(p.cwd) ?? '');
+    }
+    const a = str(p.agent_id);
+    const id = str(p.tool_use_id);
+    if (a && id) this.agentOfTool.set(id, a);
+    const res = isObj(p.tool_response) ? p.tool_response : undefined;
+    const spawned = str(res?.agentId);
+    if (p.hook_event_name === 'PostToolUse' && id && spawned) this.spawnedBy.set(spawned, id);
+    // keep the order of one agent's hooks: once one is held, the next ones wait too
+    const waiting = a !== undefined && this.held.some((h) => str(h.p.agent_id) === a);
+    if (waiting || this.agentOf(p) === undefined) {
+      this.held.push(r);
+      if (spawned) this.release(false);
+      return;
+    }
+    this.process(r);
+    if (spawned) this.release(false);
+  }
 
-  const called = new Map<string, { name: string; input: Obj; at: string; agentId: AgentId }>();
-  let now = hooks.map((h) => h.at).find((t) => t !== undefined) ?? EPOCH;
+  private stopRunning(id: string): void {
+    const i = this.running.indexOf(id);
+    if (i >= 0) this.running.splice(i, 1);
+  }
 
-  for (const { at, p } of hooks) {
-    now = at ?? now;
+  private process({ at, p }: HookRecord): void {
+    const { log, called } = this;
+    const { text, file, target } = this.cleaners;
+    this.now = at ?? this.now;
+    const now = this.now;
     const ev = str(p.hook_event_name);
-    const agentId = agentOf(p);
+    const agentId = this.agentOf(p) ?? 'main';
     const id = str(p.tool_use_id);
     const name = str(p.tool_name) ?? '';
     const input = isObj(p.tool_input) ? p.tool_input : {};
@@ -92,7 +175,7 @@ export function normalizeClaudeHooks(
           target: target(name, input),
         });
         if (kind === 'agent') {
-          running.push(id);
+          this.running.push(id);
           const task = text(str(input.description) ?? '');
           const model = str(input.model);
           log.push({
@@ -121,7 +204,7 @@ export function normalizeClaudeHooks(
           toolUseId: id,
           ...(durationMs !== undefined ? { durationMs } : {}),
         };
-        if (kind === 'agent') stopRunning(id);
+        if (kind === 'agent') this.stopRunning(id);
         if (kind === 'shell') {
           const n = failingCount(str(res.stdout) ?? '');
           if (n > 0) {
@@ -152,7 +235,7 @@ export function normalizeClaudeHooks(
       }
       case 'PostToolUseFailure': {
         if (!id) break;
-        if (kind === 'agent') stopRunning(id);
+        if (kind === 'agent') this.stopRunning(id);
         const error = str(p.error) ?? '';
         const detail = short(text(error));
         const durationMs = num(p.duration_ms) ?? durationSince(called.get(id)?.at, now);
@@ -205,7 +288,26 @@ export function normalizeClaudeHooks(
       // following events (idle notification or SessionEnd)
     }
   }
-  return log.events;
+}
+
+export function normalizeClaudeHooks(
+  records: readonly unknown[],
+  ctx: NormalizeContext,
+): AgentEvent[] {
+  const hooks = records
+    .filter(isObj)
+    .map((r) => ({ at: iso(r.capturedAt), p: isObj(r.payload) ? r.payload : ({} as Obj) }));
+  const cwd = ctx.cwd ?? hooks.map((h) => str(h.p.cwd)).find((c) => c !== undefined) ?? '';
+  const links = new Map<string, string>();
+  for (const { p } of hooks) {
+    const res = isObj(p.tool_response) ? p.tool_response : undefined;
+    const id = str(p.tool_use_id);
+    const agent = str(res?.agentId);
+    if (p.hook_event_name === 'PostToolUse' && id && agent) links.set(agent, id);
+  }
+  const startAt = hooks.map((h) => h.at).find((t) => t !== undefined) ?? EPOCH;
+  const normalizer = new ClaudeHooksNormalizer({ ...ctx, cwd }, { startAt, links });
+  return records.filter(isObj).flatMap((r) => normalizer.push(r));
 }
 
 function durationSince(start: string | undefined, end: string): number | undefined {

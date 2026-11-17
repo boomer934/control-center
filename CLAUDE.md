@@ -17,7 +17,7 @@ Il **cuore del prodotto è la Vista Live** (mappa + timeline + agenti). Oggi l'u
 apps/desktop/          app Electron (main, preload, renderer, e2e) — dalla Fase 3
 packages/event-schema  schema unificato AgentEvent (zod), normalizzatori, redazione dei segreti
 packages/fixtures      sessioni registrate e ripulite (sanitized/) con il loader
-packages/*             ipc-contract (Fase 3), hooks-bridge, mcp-bridge, ollama-client (in arrivo)
+packages/*             ipc-contract (Fase 3), hooks-bridge (4.1); mcp-bridge, ollama-client (in arrivo)
 docs/memoria/          memoria di progetto (vedi sotto)
 docs/adr/              decisioni architetturali numerate
 design/                ricerca UX, direzioni estetiche, token, design system HTML

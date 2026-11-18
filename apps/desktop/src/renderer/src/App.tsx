@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
-import type { AppInfo } from '@control-center/ipc-contract';
+import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
 import type { WorkspaceState } from '@control-center/ipc-contract/workspace';
 import { SessionDock, SessionTimeline } from './chat/SessionDock';
 import { useClaudeChat } from './chat/useClaudeChat';
@@ -8,6 +8,8 @@ import { ErrorBoundary } from './errors/ErrorBoundary';
 import { ErrorConsole } from './errors/ErrorConsole';
 import { FaultProbe } from './errors/faults';
 import { useErrorList } from './errors/useErrorList';
+import { CheckpointDialog } from './git/CheckpointDialog';
+import { GitView } from './git/GitView';
 import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
 import { useShortcuts } from './keys/useShortcuts';
 import { CommandPalette, type PaletteCommand } from './palette/CommandPalette';
@@ -30,7 +32,6 @@ const PHASE_OF: Partial<Record<SectionId, string>> = {
   infra: 'Phase 6',
   local: 'Phase 7',
   mcp: 'Phase 8',
-  git: 'Phase 4b',
   tele: 'Phase 9',
   settings: 'a later phase',
 };
@@ -141,6 +142,9 @@ function AppShell({
   const [info, setInfo] = useState<InfoState>({ kind: 'loading' });
   const workspaceId = workspaces.active?.id;
   const chat = useClaudeChat(workspaceId);
+  const [checkpoint, setCheckpoint] = useState<GitCheckpoint>();
+  const [gitRevision, setGitRevision] = useState(0);
+  const [restoreNotice, setRestoreNotice] = useState('');
   const [permissionFocus, setPermissionFocus] = useState(0);
   const { layout, setLayout } = useWorkspaceLayout(workspaceId);
   const { bottomOpen, bottomDock, rightOpen, compactBar } = layout;
@@ -322,10 +326,31 @@ function AppShell({
     route === 'live' ? (
       <>
         <LiveView state={info} />
-        <SessionTimeline records={chat.records} />
+        <SessionTimeline
+          records={chat.records}
+          onCheckpoint={setCheckpoint}
+          reviewDisabled={chat.status === 'running' || chat.pending}
+        />
       </>
     ) : route === 'components' ? (
       <ComponentsPage />
+    ) : route === 'git' ? (
+      <GitView
+        workspaceId={workspaceId}
+        running={chat.status === 'running' || chat.pending}
+        revision={gitRevision}
+        onCheckpoint={setCheckpoint}
+        onDraft={
+          chat.draft.trim()
+            ? undefined
+            : () => {
+                chat.setDraft(
+                  'Read the staged Git diff and suggest a commit message for it. Only read the diff. Do not edit files, stage changes or commit.',
+                );
+                setLayout((value) => ({ ...value, rightOpen: true }));
+              }
+        }
+      />
     ) : (
       <Placeholder route={route} />
     );
@@ -333,6 +358,22 @@ function AppShell({
   return (
     <div className="frame">
       <IconSprite />
+      {workspaceId && checkpoint && (
+        <CheckpointDialog
+          workspaceId={workspaceId}
+          checkpoint={checkpoint}
+          close={() => setCheckpoint(undefined)}
+          restored={(changed) => {
+            setCheckpoint(undefined);
+            setGitRevision((revision) => revision + 1);
+            setRestoreNotice(
+              changed
+                ? 'Checkpoint restored. Recovery is available in Git.'
+                : 'Files already match the checkpoint.',
+            );
+          }}
+        />
+      )}
       <ActivityBar
         current={route}
         compact={compactBar}
@@ -357,9 +398,14 @@ function AppShell({
               <Panel id="view" minSize="20%">
                 <ErrorBoundary>
                   <main className="view">
-                    {workspaceNotice && (
-                      <p className="workspace-notice shell-error" role="status">
-                        {workspaceNotice}
+                    {(workspaceNotice || restoreNotice) && (
+                      <p
+                        className={
+                          workspaceNotice ? 'workspace-notice shell-error' : 'workspace-notice'
+                        }
+                        role="status"
+                      >
+                        {workspaceNotice || restoreNotice}
                       </p>
                     )}
                     {view}

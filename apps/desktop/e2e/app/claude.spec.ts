@@ -1,6 +1,7 @@
 // A Claude session end to end, without the real service: the app finds a `claude` npm shim on
 // PATH whose cli.js is the fake claude, which replays a recording and runs the session's hook
 // commands. The renderer drives it through window.api.claude, as the chat of phase 4.3 will.
+import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -168,6 +169,100 @@ test.describe('chat dock', () => {
 test.afterEach(async () => {
   await app?.close();
   if (fixture) await rm(fixture, { recursive: true, force: true });
+});
+
+test('uses the Git panel and restores a session checkpoint from the timeline', async ({
+  chatMode,
+}, info) => {
+  expect(chatMode).toBe('normal');
+  const cwd = join(fixture, 'Project');
+  const git = (...args: string[]) =>
+    execFileSync('git', args, {
+      cwd,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trimEnd();
+  const tracked = join(cwd, 'file.txt');
+  git('init', '-b', 'demo');
+  git('config', 'user.name', 'Test User');
+  git('config', 'user.email', 'test@example.invalid');
+  git('config', 'core.autocrlf', 'false');
+  git('config', 'commit.gpgsign', 'false');
+  await writeFile(tracked, 'Initial text\n');
+  git('add', '.');
+  git('commit', '-m', 'Initial commit');
+  await writeFile(tracked, 'Ready to commit\n');
+
+  await page.getByRole('link', { name: 'Git', exact: true }).click();
+  const view = page.getByTestId('view-git');
+  await expect(view).toContainText('demo');
+  await view.getByRole('button', { name: 'Modified file.txt' }).click();
+  await expect(view.getByLabel('Diff content')).toContainText('+Ready to commit');
+  await view.getByRole('button', { name: 'Stage file.txt', exact: true }).click();
+  await view.getByRole('textbox', { name: 'Commit message' }).fill('Update file');
+  await view.getByRole('button', { name: 'Commit staged' }).click();
+  await expect(view.getByRole('button', { name: /Update file/ })).toBeVisible();
+  const head = git('rev-parse', 'HEAD');
+  await view.getByRole('button', { name: /Update file/ }).click();
+  await expect(view.getByLabel('Diff content')).toContainText('-Initial text');
+
+  await writeFile(tracked, 'Unsaved before Claude\n');
+  await page.getByRole('link', { name: 'Live', exact: true }).click();
+  const dock = page.getByRole('complementary', { name: 'Session' });
+  await dock.getByRole('textbox', { name: 'Message Claude' }).fill('Read the project');
+  await dock.getByRole('button', { name: 'Send', exact: true }).click();
+  const timeline = page.getByRole('region', { name: 'Session timeline' });
+  const review = timeline.getByRole('button', { name: 'Review Git checkpoint' });
+  await expect(review).toBeVisible({ timeout: 15_000 });
+  await expect(timeline).toContainText('Turn completed');
+  await expect(review).toBeEnabled();
+  await writeFile(tracked, 'Changed after Claude\n');
+  await writeFile(join(cwd, 'new.txt'), 'Keep this file for now\n');
+
+  await review.click();
+  const dialog = page.getByRole('dialog', { name: 'Restore Git checkpoint' });
+  await expect(dialog.getByLabel('Working tree comparison')).toContainText(
+    '+Unsaved before Claude',
+  );
+  await dialog.getByLabel('Files to restore').selectOption('file.txt');
+  await expect(dialog.getByLabel('Working tree comparison')).toContainText('-Changed after Claude');
+  if (process.env.CC_GIT_CAPTURE) {
+    await page.setViewportSize({ width: 960, height: 600 });
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
+      await page.screenshot({
+        path: info.outputPath(`git-checkpoint-${colorScheme}.png`),
+        animations: 'disabled',
+      });
+    }
+  }
+  await dialog.getByRole('button', { name: 'Restore file' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(review).toBeFocused();
+  expect(await readFile(tracked, 'utf8')).toBe('Unsaved before Claude\n');
+  expect(await readFile(join(cwd, 'new.txt'), 'utf8')).toBe('Keep this file for now\n');
+  expect(git('rev-parse', 'HEAD')).toBe(head);
+  expect(git('branch', '--show-current')).toBe('demo');
+  await page.getByRole('link', { name: 'Git', exact: true }).click();
+  await expect(view.getByRole('heading', { name: 'Before restore' })).toBeVisible();
+  await view.getByRole('button', { name: 'Modified file.txt' }).click();
+  await expect(view.getByLabel('Diff content')).toContainText('+Unsaved before Claude');
+  if (process.env.CC_GIT_CAPTURE) {
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
+      await page.screenshot({
+        path: info.outputPath(`git-panel-${colorScheme}.png`),
+        animations: 'disabled',
+      });
+    }
+  }
+  await page.getByRole('link', { name: 'Live', exact: true }).click();
+  await dock.getByRole('button', { name: 'New chat', exact: true }).click();
+  await dock.getByRole('button', { name: 'History', exact: true }).click();
+  await dock.getByRole('button', { name: /Read the project/ }).click();
+  await expect(review).toBeEnabled();
 });
 
 test('runs a Claude session from the renderer and streams its AgentEvents', async () => {

@@ -8,13 +8,12 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Codex + Claude] (F4.3, revisione)** I nove rilievi della PR #47 sono corretti nella PR #49 (`fix/claude-chat-review`). Per il merge dell'utente servono CI verde e `/code-review medium` di Claude.
+1. **[Codex + Claude] (F4b, revisione)** Pannello Git e checkpoint implementati su `feat/git-checkpoints`. Prima del merge dell'utente servono CI verde e `/code-review medium` di Claude.
 
 ## Dopo
 
-2. **[Codex] (F4b)** Git e checkpoint (`gpt-6.1-sol`, high). Partire da `origin/main` dopo il merge della PR #49.
-3. **[Codex] (F4.1, revisione)** Seconda opinione di `gpt-6-astra` sulla pipe (`packages/hooks-bridge`).
-4. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
+2. **[Codex] (F4.1, revisione)** Seconda opinione di Astra sulla pipe (`packages/hooks-bridge`).
+3. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 
 ## Rilievi della PR #47 affrontati nella PR #49
 

@@ -85,6 +85,13 @@ Test: **B** = `packages/hooks-bridge/src/bridge.test.ts`, **S** = `apps/desktop/
 - Lo storico viene letto e scritto sotto `userData/claude-history/<workspaceId>/<id>.jsonl`. L'IPC accetta solo un hash di workspace e un UUID. Il servizio controlla il workspace attivo e verifica che i sottopercorsi e i file siano directory e file regolari, rispettivamente. Il JSONL in lettura passa dallo schema della cronologia. Il main passa alla CLI come argomento di `--resume` soltanto un ID validato dallo storico di quel workspace.
 - Il testo finale viene reso con React Markdown e la CSP esistente. Il renderer scarta HTML e immagini e presenta il testo dei link senza navigazione. Lo storico contiene prompt ed eventi ripuliti e l'ID di ripresa. I delta transitori e gli argomenti originali dei permessi restano fuori dal file.
 
+### Git e checkpoint (4b, ADR 0011)
+
+- Gli handler operano sul workspace attivo e sul mittente fidato. Git si avvia dal PATH assoluto senza shell e riceve solo operazioni definite dall'app, pathspec letterali, OID validati e il messaggio di commit via stdin. Gli override `GIT_*` ereditati, hook Git, fsmonitor, firma automatica e driver esterni sono disattivati.
+- Un gitfile è ammesso solo per un linked worktree con collegamento reciproco. Per i ripristini il main valida i percorsi e i tipi di file, rifiuta symlink, junction, gitlink, hardlink sul percorso da scrivere, nomi Win32 ambigui e collisioni con file ignorati.
+- Il ripristino è una seconda azione dopo il confronto. Il token è monouso, vincolato alla finestra, al workspace e ai due alberi correnti, oltre a branch e HEAD. Le scritture Git del pannello e i turni Claude nello stesso workspace si escludono. Un checkpoint di recupero viene salvato prima della prima scrittura.
+- Il renderer riceve i diff per mostrarli su richiesta. Diff, messaggi Git e stdout/stderr del processo restano fuori dal log e dalla cronologia Claude. La cronologia conserva solo UUID e ora del checkpoint. I riferimenti locali contengono i dati del repository e vanno esclusi da eventuali trasferimenti con `--mirror`.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

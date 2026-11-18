@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-18 — Pannello Git e checkpoint (4b)
+
+- **Fatto** — Pannello Git con branch, modifiche, diff, commit recenti, stage e unstage. Il primo turno Claude con un workspace Git crea un checkpoint, visibile anche riaprendo la cronologia. Il dialogo dalla timeline confronta e ripristina un file o tutti, con effetto distinto su indice e working tree.
+- **Decisioni** — L'ADR 0011 usa riferimenti Git locali, un indice temporaneo, token monouso legati all'anteprima e un checkpoint di recupero prima del ripristino.
+- **Verifiche** — `pnpm verify` verde, 340 test passati e smoke test Claude reale saltato. Repository temporanei per staging, branch e stash invariati, ripristino parziale, anteprima invalidata da una modifica, linked worktree e percorsi rifiutati. Suite Electron con 54 test funzionali verdi, incluso il flusso pannello Git → Claude → timeline → ripristino.
+- **Problemi** — Gli snapshot dei componenti si verificano sulla CI Windows. Restano la revisione incrociata e il merge.
+
+---
+
 ## 2026-11-18 — Correzioni dalla revisione della chat (4.3)
 
 - **Fatto:** corretti i nove rilievi della PR #47 su `fix/claude-chat-review`. Ora i dettagli dei permessi lunghi restano approvabili, le richieste pendenti si aggiornano al limite delle regole, e il renderer segnala un'azione in corso. Lo storico richiede una finestra proprietaria e conserva l'ordine prompt → eventi.

@@ -36,7 +36,7 @@ const DEVICE_NAME = /^(?:con|prn|aux|nul|conin\$|conout\$|(?:com|lpt)[1-9¹²³]
 // eslint-disable-next-line no-control-regex -- Win32 also reserves ASCII control characters.
 const INVALID_FILENAME_CHARS = /[<>:"|?*\u0000-\u001f]/u;
 
-function isPlainSegment(segment: string): boolean {
+export function isPlainSegment(segment: string): boolean {
   return (
     !INVALID_FILENAME_CHARS.test(segment) && !/[. ]$/.test(segment) && !DEVICE_NAME.test(segment)
   );

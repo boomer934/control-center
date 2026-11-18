@@ -8,6 +8,19 @@
 // main process. See docs/memoria/SICUREZZA.md.
 import { z } from 'zod';
 import {
+  GitCheckpointTargetSchema,
+  GitCommitSchema,
+  GitDiffRequestSchema,
+  GitDiffSchema,
+  GitMutationSchema,
+  GitPreviewSchema,
+  GitRestoreRequestSchema,
+  GitRestoreSchema,
+  GitStageSchema,
+  GitStatusSchema,
+  GitWorkspaceSchema,
+} from './git';
+import {
   ClaudeHistoryListSchema,
   ClaudeHistorySchema,
   ClaudeHistoryTargetSchema,
@@ -237,6 +250,14 @@ export const contract = {
     interrupt: invoke('claude:interrupt', ClaudeTargetSchema, z.boolean()),
     close: invoke('claude:close', ClaudeTargetSchema, z.boolean()),
     updated: event('claude:updated', ClaudeUpdateSchema),
+  },
+  git: {
+    status: invoke('git:status', GitWorkspaceSchema, GitStatusSchema),
+    diff: invoke('git:diff', GitDiffRequestSchema, GitDiffSchema),
+    stage: invoke('git:stage', GitStageSchema, GitMutationSchema),
+    commit: invoke('git:commit', GitCommitSchema, GitMutationSchema),
+    preview: invoke('git:preview', GitCheckpointTargetSchema, GitPreviewSchema),
+    restore: invoke('git:restore', GitRestoreRequestSchema, GitRestoreSchema),
   },
 } as const;
 

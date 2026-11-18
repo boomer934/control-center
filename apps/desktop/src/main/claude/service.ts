@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ErrorInput } from '@control-center/app-log';
 import { makeTextCleaner, type AgentEvent } from '@control-center/event-schema';
+import type { GitCheckpoint } from '@control-center/ipc-contract';
 import {
   CLAUDE_EVENTS_PER_UPDATE,
   MAX_CLAUDE_MESSAGE_CHARS,
@@ -30,11 +31,20 @@ export interface ClaudeServiceDeps {
   programs: () => Promise<{ claude?: Program; hooks?: HookRunner }>;
   env?: NodeJS.ProcessEnv;
   open?: typeof openClaudeSession;
+  prepareTurn?: (
+    root: string,
+    workspaceId: string,
+    active: () => boolean,
+    create: boolean,
+  ) => Promise<GitCheckpoint | null>;
 }
 
 interface Entry {
   owner: number;
   workspaceId: string;
+  root: string;
+  preparing?: boolean;
+  checkpointCreated?: boolean;
   historyId: string;
   record?: (record: ClaudeHistoryRecord) => void;
   clean: (text: string) => string;
@@ -55,6 +65,12 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
     const entry = sessions.get(id);
     return entry && !entry.closed && entry.owner === owner ? entry : undefined;
   };
+  const isWorkspaceBusy = (workspaceId: string) =>
+    [...sessions.values()].some(
+      (entry) =>
+        entry.workspaceId === workspaceId &&
+        (entry.preparing || entry.session?.status === 'running' || (entry.closed && entry.closing)),
+    );
 
   const release = (id: string, entry: Entry) => {
     if (sessions.get(id) === entry) sessions.delete(id);
@@ -85,7 +101,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       if ([...sessions.values()].some((entry) => entry.historyId === historyId))
         return 'history-unavailable';
       const clean = makeTextCleaner(cwd);
-      const entry: Entry = { owner, workspaceId, historyId, clean, closed: false };
+      const entry: Entry = { owner, workspaceId, root: cwd, historyId, clean, closed: false };
       sessions.set(id, entry);
       try {
         await cleaned;
@@ -161,36 +177,61 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       }
     },
 
-    send(
+    async send(
       owner: number | undefined,
       id: string,
       text: string,
       isActive: (workspaceId: string) => boolean,
-    ): ClaudeSendResult {
+    ): Promise<ClaudeSendResult> {
       const entry = owned(owner, id);
       if (!entry) return 'closed';
       if (!isActive(entry.workspaceId)) return 'workspace-unavailable';
-      if (!entry.session) return 'busy';
+      if (!entry.session || entry.preparing || entry.session.status === 'running') return 'busy';
+      const session = entry.session;
+      const active = () => !entry.closed && isActive(entry.workspaceId);
+      let checkpoint: GitCheckpoint | null = null;
+      if (deps.prepareTurn) {
+        if (isWorkspaceBusy(entry.workspaceId)) return 'busy';
+        entry.preparing = true;
+        try {
+          checkpoint = await deps.prepareTurn(
+            entry.root,
+            entry.workspaceId,
+            active,
+            !entry.checkpointCreated,
+          );
+        } catch {
+          return active() ? 'checkpoint-unavailable' : 'workspace-unavailable';
+        } finally {
+          entry.preparing = false;
+        }
+        if (entry.closed) return 'closed';
+        if (!active()) return 'workspace-unavailable';
+      }
       const record = entry.record;
       const earlyRecords: ClaudeHistoryRecord[] = [];
       // The session may emit events synchronously before reporting whether it started the turn.
       entry.record = (event) => earlyRecords.push(event);
       let result: ClaudeSendResult;
       try {
-        result = entry.session.send(text);
+        result = session.send(text);
       } finally {
         entry.record = record;
       }
       if (result !== 'started') return result;
+      entry.checkpointCreated = true;
       record?.({
         kind: 'prompt',
         text: entry
           .clean(text.slice(0, MAX_CLAUDE_MESSAGE_CHARS))
           .slice(0, MAX_CLAUDE_MESSAGE_CHARS),
       });
+      if (checkpoint) record?.({ kind: 'checkpoint', checkpoint });
       for (const event of earlyRecords) record?.(event);
       return result;
     },
+
+    isWorkspaceBusy,
 
     respond(
       owner: number | undefined,

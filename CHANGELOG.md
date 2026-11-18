@@ -7,11 +7,6 @@
 
 * **desktop:** stream Claude chat and manage session permissions ([#47](https://github.com/boomer934/control-center/issues/47)) ([fe3cb61](https://github.com/boomer934/control-center/commit/fe3cb6180632b420276283f06f7600a6db13e98f))
 
-
-### Bug Fixes
-
-* **desktop:** address Claude chat review findings ([#49](https://github.com/boomer934/control-center/issues/49)) ([f06cd09](https://github.com/boomer934/control-center/commit/f06cd09ff26bd6e3ffa8e82d04e165079c3eaa3e))
-
 ## 1.0.0 (2026-11-17)
 
 

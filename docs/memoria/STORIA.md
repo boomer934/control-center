@@ -6,10 +6,11 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ## 2026-11-19 — Revisione del pannello Git e dei checkpoint (4b)
 
-- **Fatto:** riallineata la [PR #52](https://github.com/boomer934/control-center/pull/52) a `origin/main` dopo le PR #51 e #53. Conservata la memoria di main e aggiornate le voci della 4b. Tolti dalla PR la pianificazione dei modelli e il ritocco al test del terminale.
+- **Fatto:** riallineato `feat/git-checkpoints` a `origin/main` dopo le PR #51 e #53. Conservata la memoria di main e aggiornate le voci della 4b. Tolti dal branch la pianificazione dei modelli e il ritocco al test del terminale.
 - **Decisioni:** la chat continua con un avviso nello storico se fallisce il checkpoint e chiede di riprovare quando Git è occupato. Il commit esegue gli hook e rimanda al terminale se è richiesta la firma. Ogni workspace mantiene 20 checkpoint e 30 recuperi. Il pannello conta i file omessi e aggiorna il diff selezionato.
 - **Problemi:** l'istantanea completa ha ancora un costo sui repository grandi. Il ripristino riusa il piano dell'anteprima e ricontrolla i percorsi e i filtri prima della scrittura.
-- **Verifica:** `pnpm verify` con 349 test passati e uno smoke test opzionale saltato. Cinque E2E Claude e Git verdi. La CI della PR precede il merge dell'utente.
+- **Verifica:** `pnpm verify` con 349 test passati e uno smoke test opzionale saltato. Cinque E2E Claude e Git verdi.
+- **Esito:** la [PR #52](https://github.com/boomer934/control-center/pull/52) è stata unita (`e59beb7`) prima del push delle correzioni. Su richiesta dell'utente, le correzioni restano su `feat/git-checkpoints` (`5bc30ae`).
 
 ---
 

@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. Correzioni della revisione 4b sulla PR #52._
+_Ultimo aggiornamento 2026-11-19. Correzioni della revisione 4b su `feat/git-checkpoints`._
 
 ## Fase
 
@@ -18,7 +18,7 @@ _Ultimo aggiornamento 2026-11-19. Correzioni della revisione 4b sulla PR #52._
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
-- **4b**, Git e checkpoint: otto rilievi della revisione Claude corretti su `feat/git-checkpoints` ([PR #52](https://github.com/boomer934/control-center/pull/52), ADR 0011). Restano la verifica della CI e il merge dell'utente.
+- **4b**, Git e checkpoint: la [PR #52](https://github.com/boomer934/control-center/pull/52) è stata unita con la versione precedente (`e59beb7`). Le correzioni degli otto rilievi restano su `feat/git-checkpoints` per decisione dell'utente.
 - **Release 1.1.0:** la PR #50 è unita (`d8a546b`); Release Please ha aperto la [#51](https://github.com/boomer934/control-center/pull/51) (1.1.0, ancora aperta).
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
@@ -71,7 +71,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (2026-11-18):** i nove rilievi della revisione 4.3 sono corretti e uniti con la PR #49 (`f06cd09`); `pnpm verify` verde con 332 test passati.
 - **Fatto (4b, 2026-11-19):** pannello Git, checkpoint prima del primo turno Claude e ripristino dalla timeline. Dopo la revisione, la chat prosegue con un avviso quando la cattura fallisce, il commit dal pannello esegue gli hook, il ripristino riusa il piano dell'anteprima e i riferimenti sono potati per workspace.
 - **Verificato (4b):** `pnpm verify` verde con 349 test passati e smoke test Claude reale saltato. Cinque E2E verdi in `claude.spec.ts`, inclusi refresh del diff, cambio workspace, ripristino e avviso riletto dallo storico.
-- **Ora:** CI della [PR #52](https://github.com/boomer934/control-center/pull/52) dopo il rebase e le correzioni, poi merge dell'utente.
+- **Ora:** correzioni pubblicate su `feat/git-checkpoints` (`5bc30ae`). La #52 era già stata unita quando è arrivato il push.
 - **Poi:** seconda opinione di Astra sulla pipe della 4.1.
 
 ## Cosa funziona

@@ -8,7 +8,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Utente] (F4b)** La revisione Claude `/code-review medium` è conclusa e Codex ha corretto gli otto rilievi. Verificare la CI della [PR #52](https://github.com/boomer934/control-center/pull/52) dopo il rebase e unire quando è verde.
+1. **[Codex] (F4b)** Le correzioni della revisione Claude `/code-review medium` sono su `feat/git-checkpoints` (`5bc30ae`). La [PR #52](https://github.com/boomer934/control-center/pull/52) è stata unita con la versione precedente. L'utente ha scelto di lasciare le correzioni sul branch.
 
 ## Dopo
 

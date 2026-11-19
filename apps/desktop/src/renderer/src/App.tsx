@@ -336,6 +336,7 @@ function AppShell({
       <ComponentsPage />
     ) : route === 'git' ? (
       <GitView
+        key={workspaceId}
         workspaceId={workspaceId}
         running={chat.status === 'running' || chat.pending}
         revision={gitRevision}

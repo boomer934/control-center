@@ -4,7 +4,7 @@
 // runs (see apps/desktop/src/main/claude and ADR 0009).
 import { agentEventSchema } from '@control-center/event-schema';
 import { z } from 'zod';
-import { GitCheckpointSchema } from './git';
+import { GitCheckpointSchema, GitErrorSchema } from './git';
 import { WorkspaceIdSchema } from './workspace';
 
 export const MAX_CLAUDE_SESSIONS = 4;
@@ -39,7 +39,7 @@ export const ClaudeSendResultSchema = z.enum([
   'busy',
   'closed',
   'workspace-unavailable',
-  'checkpoint-unavailable',
+  'checkpoint-busy',
 ]);
 export type ClaudeSendResult = z.infer<typeof ClaudeSendResultSchema>;
 
@@ -74,10 +74,15 @@ export const ClaudeCheckpointSchema = z.strictObject({
   kind: z.literal('checkpoint'),
   checkpoint: GitCheckpointSchema,
 });
+export const ClaudeCheckpointWarningSchema = z.strictObject({
+  kind: z.literal('checkpoint-warning'),
+  code: GitErrorSchema,
+});
 export const ClaudeHistoryRecordSchema = z.discriminatedUnion('kind', [
   ClaudePromptSchema,
   ClaudeEventsSchema,
   ClaudeCheckpointSchema,
+  ClaudeCheckpointWarningSchema,
 ]);
 export type ClaudeHistoryRecord = z.infer<typeof ClaudeHistoryRecordSchema>;
 export const ClaudeHistoryListSchema = z
@@ -105,6 +110,7 @@ export const ClaudeUpdateSchema = z.discriminatedUnion('kind', [
   ClaudeEventsSchema.extend(ClaudeTargetSchema.shape),
   ClaudePromptSchema.extend(ClaudeTargetSchema.shape),
   ClaudeCheckpointSchema.extend(ClaudeTargetSchema.shape),
+  ClaudeCheckpointWarningSchema.extend(ClaudeTargetSchema.shape),
   ClaudeTargetSchema.extend({
     kind: z.literal('partial'),
     text: z.string().max(MAX_CLAUDE_PARTIAL_CHARS),

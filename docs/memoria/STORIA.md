@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-19 — Revisione del pannello Git e dei checkpoint (4b)
+
+- **Fatto:** riallineata la [PR #52](https://github.com/boomer934/control-center/pull/52) a `origin/main` dopo le PR #51 e #53. Conservata la memoria di main e aggiornate le voci della 4b. Tolti dalla PR la pianificazione dei modelli e il ritocco al test del terminale.
+- **Decisioni:** la chat continua con un avviso nello storico se fallisce il checkpoint e chiede di riprovare quando Git è occupato. Il commit esegue gli hook e rimanda al terminale se è richiesta la firma. Ogni workspace mantiene 20 checkpoint e 30 recuperi. Il pannello conta i file omessi e aggiorna il diff selezionato.
+- **Problemi:** l'istantanea completa ha ancora un costo sui repository grandi. Il ripristino riusa il piano dell'anteprima e ricontrolla i percorsi e i filtri prima della scrittura.
+- **Verifica:** `pnpm verify` con 349 test passati e uno smoke test opzionale saltato. Cinque E2E Claude e Git verdi. La CI della PR precede il merge dell'utente.
+
+---
+
 ## 2026-11-18 — Allineamento della memoria dopo le PR #49 e #50
 
 - **Fatto:** la memoria locale era rimasta a `d1426a8`. Registrate la PR #49 (nove rilievi della 4.3 corretti, `f06cd09`), la release 1.1.0 (#50, `d8a546b`; la #51 è aperta) e lo stato della 4b: implementata da Codex su `feat/git-checkpoints` (`6180e12`), PR non ancora aperta. Tolta da `PROSSIMI_PASSI.md` la sezione dei rilievi 4.3, ormai chiusi.

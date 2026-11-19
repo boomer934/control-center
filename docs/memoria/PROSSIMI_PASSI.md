@@ -8,7 +8,7 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Claude] (F4b, revisione)** `/code-review medium` sulla 4b (`feat/git-checkpoints`, `6180e12`, ADR 0011): tocca file system, processi Git e ripristino dei file dell'utente, quindi è lavoro Claude. La PR non è ancora aperta: la apre Codex dopo `pnpm verify` verde; il merge è dell'utente a CI verde.
+1. **[Utente] (F4b)** La revisione Claude `/code-review medium` è conclusa e Codex ha corretto gli otto rilievi. Verificare la CI della [PR #52](https://github.com/boomer934/control-center/pull/52) dopo il rebase e unire quando è verde.
 
 ## Dopo
 

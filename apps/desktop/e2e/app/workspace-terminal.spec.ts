@@ -186,15 +186,16 @@ test('opens a canonical workspace file as text in the Windows editor', async () 
   await expect(terminal.locator('.xterm-rows')).toContainText('First project', { timeout: 15_000 });
   await page.keyboard.type("Write-Output ('\"project ' + 'notes.txt\"')");
   await page.keyboard.press('Enter');
-  const link = terminal.locator('.xterm-rows').getByText('"project notes.txt"', { exact: true });
-  const position = { x: 20, y: 5 };
-  const screen = terminal.locator('.xterm-screen');
-  // The screen receives pointer events over the text row, which xterm may repaint.
-  await expect(async () => {
-    await link.hover({ position, force: true, timeout: 1500 });
-    await expect(screen).toHaveClass(/xterm-cursor-pointer/, { timeout: 1000 });
-  }).toPass({ timeout: 10_000 });
-  await link.click({ position, force: true });
+  const link = terminal.getByText('"project notes.txt"', { exact: true });
+  await expect(link).toBeVisible();
+  const box = await link.boundingBox();
+  if (!box) throw new Error('Expected the terminal link to render');
+  const x = box.x + 20;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  // xterm resolves link providers on pointer movement before activating them on click.
+  await expect(terminal.locator('.xterm-screen')).toHaveClass(/xterm-cursor-pointer/);
+  await page.mouse.click(x, y);
   await expect.poll(() => app.evaluate(() => Boolean(process.env.CC_E2E_EDITOR_CALL))).toBe(true);
   const invocation = await app.evaluate(() => process.env.CC_E2E_EDITOR_CALL);
   expect(JSON.parse(invocation ?? 'null')).toEqual({

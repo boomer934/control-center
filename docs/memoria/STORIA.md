@@ -11,6 +11,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - **Problemi** — Restano la revisione incrociata e la verifica degli snapshot sulla CI Windows.
 - **CI della PR #52** — Due test di ripristino con processi Git reali hanno superato i 5 s predefiniti sul runner Windows. Il timeout della suite di integrazione Git è ora di 20 s.
 - **E2E Windows** — Il test dei checkpoint attende più a lungo la fine del turno Claude. Nel test dell'editor, Playwright cerca di nuovo la riga del link se xterm la sostituisce mentre ridisegna il prompt.
+- **Allineamento** — Integrata la memoria della PR #53 nel ramo della PR #52. Le PR di release #50 e #51 sono entrambe unite.
 
 ---
 
@@ -20,6 +21,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - **Decisioni** — L'ADR 0011 usa riferimenti Git locali, un indice temporaneo, token monouso legati all'anteprima e un checkpoint di recupero prima del ripristino.
 - **Verifiche** — `pnpm verify` verde, 340 test passati e smoke test Claude reale saltato. Repository temporanei per staging, branch e stash invariati, ripristino parziale, anteprima invalidata da una modifica, linked worktree e percorsi rifiutati. Suite Electron con 54 test funzionali verdi, incluso il flusso pannello Git → Claude → timeline → ripristino.
 - **Problemi** — Gli snapshot dei componenti si verificano sulla CI Windows. Restano la revisione incrociata e il merge.
+
+---
+
+## 2026-11-18 — Allineamento della memoria dopo le PR #49 e #50
+
+- **Fatto:** la memoria locale era rimasta a `d1426a8`. Registrate la PR #49 (nove rilievi della 4.3 corretti, `f06cd09`), la release 1.1.0 (#50, `d8a546b`; la #51 è aperta) e lo stato della 4b: implementata da Codex su `feat/git-checkpoints` (`6180e12`), PR non ancora aperta. Tolta da `PROSSIMI_PASSI.md` la sezione dei rilievi 4.3, ormai chiusi.
+- **Verifica:** `pnpm verify` eseguito sul branch di sola documentazione.
 
 ---
 

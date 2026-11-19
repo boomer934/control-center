@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. Git e checkpoint in preparazione per la revisione. Assegnazioni Codex aggiornate a GPT-6.2._
+_Ultimo aggiornamento 2026-11-19. PR della 4b aperta e assegnazioni Codex aggiornate a GPT-6.2._
 
 ## Fase
 
@@ -17,8 +17,9 @@ _Ultimo aggiornamento 2026-11-19. Git e checkpoint in preparazione per la revisi
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
-- **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). I nove rilievi della revisione sono stati affrontati nella PR #49, unita su `main` (`f06cd09`).
-- **4b**, Git e checkpoint: implementata su `feat/git-checkpoints` (ADR 0011). Restano la revisione incrociata e il merge dopo CI verde.
+- **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
+- **4b**, Git e checkpoint: [PR #52](https://github.com/boomer934/control-center/pull/52) da `feat/git-checkpoints` (ADR 0011). Restano la revisione incrociata e il merge dopo CI verde.
+- **Release 1.1.0:** le PR di Release Please #50 (`d8a546b`) e #51 (`c11b76d`) sono unite su `main`.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -26,7 +27,7 @@ _Ultimo aggiornamento 2026-11-19. Git e checkpoint in preparazione per la revisi
 
 ## Branch
 
-Claude: branch di memoria `docs/memoria-allinea-4-3` nel worktree principale. Codex: `feat/git-checkpoints`, da `origin/main` (`d8a546b`, release 1.1.0, PR #50), comprende l'aggiornamento delle assegnazioni GPT-6.2.
+Claude: la PR di memoria #53 è unita su `main`. Codex: `feat/git-checkpoints` (PR #52), allineato a `origin/main` (`48032f9`), comprende l'aggiornamento delle assegnazioni GPT-6.2.
 
 ## Punto di ripresa
 
@@ -56,21 +57,22 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
     - il test dell'editor di `workspace-terminal.spec.ts`, instabile nella suite completa ma verde da solo e insieme a `claude.spec.ts`;
   - `pnpm e2e:packaged` non rieseguito.
 - **Prova con la CLI vera (Claude Code 2.1.326):** una run breve che legge un file. Claude Code ha eseguito il comando degli hooks tra virgolette e la pipe ha accettato tutti i messaggi (zero rifiuti), con `file.read` arrivato dagli hooks. La prova ha mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`: ora il merge dal vivo li trattiene finché arriva `init`, così `session.started` conserva modello e versione. Il test resta nella repo, saltato salvo `CC_REAL_CLAUDE=1` (`real-claude.smoke.test.ts`). La 2.1.326 è stata aggiunta alle versioni testate.
-- **Non verificato:** manca la seconda opinione di Astra sulla pipe (crediti Codex finiti).
-- **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi), 9 punti commentati sulla PR e riportati in `PROSSIMI_PASSI.md`. Due punti di gravità media: i permessi con dettagli oltre 16 KiB sono sempre rifiutati e l'ordine di `run.start`/`prompt` nello storico può invertirsi o perdersi.
+- **Non verificato:** manca la seconda opinione di Astra sulla pipe.
+- **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi): 9 punti, tutti corretti da Codex nella PR #49 (`f06cd09`) dopo una passata `/code-review medium` di Claude.
 - **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
-- **Ora:** nessun task aperto; PR della sola memoria (`docs/chiusura-fase-4`).
-- **Poi:** correzione dei due rilievi medi della 4.3 (piccola, Sonnet 5.5 medium) e 5a (Opus 5.5, high).
+- **Ora:** allineamento della memoria (PR #49, #50, stato della 4b), branch `docs/memoria-allinea-4-3`.
+- **Poi:** `/code-review medium` sulla 4b appena Codex apre la PR, poi 5a (Opus 5.5, high).
 
 ### Corsia Codex
 
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.
 - **Verifica visiva:** Electron a 960×600 nei due temi. Le azioni dei permessi e il focus sugli argomenti sono verificati dall'E2E. Rilevatore Impeccable senza rilievi.
-- **Fatto (2026-11-18):** la 4.3 è su `main` (PR #47, `fe3cb61`). I nove rilievi della revisione sono corretti su `fix/claude-chat-review`, nel worktree Codex. `pnpm verify` verde con 332 test passati e smoke test della CLI reale saltato. Entrambi i casi di `claude.spec.ts` sono verdi. La prima passata Claude a effort `medium` ha portato altre correzioni su richieste duplicate, avvio del turno e chiusura.
+- **Fatto (2026-11-18):** i nove rilievi della revisione 4.3 sono corretti e uniti con la PR #49 (`f06cd09`). `pnpm verify` verde con 332 test passati.
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
-- **Ora:** revisione incrociata della 4b con Claude `/code-review medium` e CI prima del merge.
+- **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
+- **Ora:** revisione incrociata della [PR #52](https://github.com/boomer934/control-center/pull/52) con Claude `/code-review medium` e CI prima del merge.
 - **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
 
 ## Cosa funziona

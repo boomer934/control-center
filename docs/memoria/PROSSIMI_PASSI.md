@@ -8,24 +8,12 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Codex + Claude] (F4b, revisione)** Pannello Git e checkpoint implementati su `feat/git-checkpoints`. Prima del merge dell'utente servono CI verde e `/code-review medium` di Claude.
+1. **[Claude] (F4b, revisione)** `/code-review medium` sulla [PR #52](https://github.com/boomer934/control-center/pull/52) (`feat/git-checkpoints`, ADR 0011), con attenzione al file system, ai processi Git e al ripristino dei file dell'utente. A CI verde e revisione conclusa, il merge spetta all'utente.
 
 ## Dopo
 
 2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 3. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
-
-## Rilievi della PR #47 affrontati nella PR #49
-
-1. **Medio.** `permissions.ts:77`: una richiesta il cui JSON ripulito supera `MAX_CLAUDE_PERMISSION_DETAILS` (16 384 caratteri) è rifiutata senza chiedere, quindi un `Write` o `Edit` da circa 16 KB o più non si approva mai dalla chat. Mostrare il testo troncato con un marcatore `… (troncato, N caratteri)`, tenendo impronta e risposta sull'input originale.
-2. **Medio.** `service.ts:169`: `session.send()` emette `run.start` prima che il prompt sia registrato. Al primo turno lo scrittore scarta quegli eventi; dai turni successivi storico e renderer ricevono `run.start` prima di `prompt`. Lo storico riaperto perde o riordina gli inizi di turno. Registrare il prompt prima di `send()`, oppure accodare gli eventi finché è scritto.
-3. **Basso.** `ipc.ts:266`: `listHistory` e `readHistory` controllano solo `isActive(workspaceId)` e ignorano `senderId`, a differenza di `start`, `send` e `respond`. Richiedere `windowOwner(senderId)`, come dice `SICUREZZA.md` ("solo la finestra proprietaria").
-4. **Basso.** `permissions.ts:90`: un'impronta ricordata è approvata anche se il workspace della sessione non è più attivo, mentre la decisione manuale lo richiede. È coerente con l'ADR 0010 (regola legata alla sessione): scriverlo in `SICUREZZA.md` oppure passare `isActive` a `receive`.
-5. **Basso.** `permissions.ts:107`: `canRemember` è calcolato all'arrivo, quindi due richieste pendenti possono offrire entrambe "sessione". Alla 128ª regola la seconda `respond('session')` torna `false` e la UI scrive "richiesta scaduta" mentre è ancora pendente. Ripubblicare le viste dopo ogni `remembered.add`, o ripiegare su `approve`.
-6. **Basso.** `permissions.ts:67`: un `control_request` con un `request_id` già pendente è scartato senza `control_response`; se la CLI lo facesse, il turno resterebbe appeso fino all'interruzione. Rispondere con `subtype: 'error'`, come alla riga 70.
-7. **Basso.** `useClaudeChat.ts:75`: il flag globale `busy` fa tornare `respond` in silenzio mentre un'altra azione è in corso, quindi un clic su Approva o Rifiuta può perdersi senza segnalazione.
-8. **Efficienza.** `history.ts:70`: a ogni record ci sono 2× `mkdirSync`, diversi `lstatSync`/`fstatSync`, `openSync`, `writeFileSync` e `closeSync` sul thread principale; i turni lunghi bloccano IPC e terminale. Validare la cartella una volta per scrittore e tenere aperto il descrittore, oppure accodare le scritture in modo asincrono.
-9. **Test.** `permissions.test.ts:31`: mancano test committati per una seconda decisione su una richiesta già risolta, per la regola "sessione" che non sopravvive a una nuova sessione, per l'isolamento dello storico tra workspace e per un id di ripresa non valido (per esempio `--x`) ignorato nel JSONL. Oggi tutto regge (verificato con prove fuori dalla repo).
 
 ## Quando capita
 

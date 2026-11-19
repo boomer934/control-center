@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-18 — Allineamento della memoria dopo le PR #49 e #50
+
+- **Fatto:** la memoria locale era rimasta a `d1426a8`. Registrate la PR #49 (nove rilievi della 4.3 corretti, `f06cd09`), la release 1.1.0 (#50, `d8a546b`; la #51 è aperta) e lo stato della 4b: implementata da Codex su `feat/git-checkpoints` (`6180e12`), PR non ancora aperta. Tolta da `PROSSIMI_PASSI.md` la sezione dei rilievi 4.3, ormai chiusi.
+- **Verifica:** `pnpm verify` eseguito sul branch di sola documentazione.
+
+---
+
 ## 2026-11-18 — Correzioni dalla revisione della chat (4.3)
 
 - **Fatto:** corretti i nove rilievi della PR #47 su `fix/claude-chat-review`. Ora i dettagli dei permessi lunghi restano approvabili, le richieste pendenti si aggiornano al limite delle regole, e il renderer segnala un'azione in corso. Lo storico richiede una finestra proprietaria e conserva l'ordine prompt → eventi.

@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Worker } from 'node:worker_threads';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -11,6 +11,7 @@ import { packageName } from './resolve.ts';
 import {
   applyProjectDelta,
   isProjectPath,
+  MAX_PROJECT_PATH,
   type ProjectFile,
   type ProjectSnapshot,
 } from './schema.ts';
@@ -33,6 +34,8 @@ describe('helpers', () => {
       expect(isProjectPath(ok)).toBe(true);
     for (const bad of ['', '/a', 'a/', 'a//b', './a', 'a/../b', '..', 'C:/a', 'a\\b', 'a\u0007'])
       expect(isProjectPath(bad), bad).toBe(false);
+    expect(isProjectPath('a'.repeat(MAX_PROJECT_PATH))).toBe(true);
+    expect(isProjectPath('a'.repeat(MAX_PROJECT_PATH + 1))).toBe(false);
   });
 
   it('expands Rust use trees', () => {
@@ -79,11 +82,22 @@ describe('helpers', () => {
     const rules = await IgnoreRules.load(root);
     await rules.enter('a');
     expect(rules.ignored('x.log', false)).toBe(true);
-    expect(rules.ignored('a/keep.log', false)).toBe(true); // the root rule still applies
+    expect(rules.ignored('a/keep.log', false)).toBe(false);
+    expect(rules.ignored('a/other.log', false)).toBe(true);
     expect(rules.ignored('a/build', true)).toBe(true);
     expect(rules.ignored('a/build/x.ts', false)).toBe(true);
     expect(rules.ignored('build/x.ts', false)).toBe(false);
     expect(rules.ignored('node_modules/x/y.js', false)).toBe(true);
+  });
+
+  it('uses repository excludes only through real directories in the workspace', async () => {
+    const root = await workspace({ '.git/info/exclude': '*.local\n' });
+    expect((await IgnoreRules.load(root)).ignored('settings.local', false)).toBe(true);
+
+    const linkedRoot = await workspace({});
+    await mkdir(join(linkedRoot, '.git'));
+    await symlink(join(root, '.git', 'info'), join(linkedRoot, '.git', 'info'), 'junction');
+    expect((await IgnoreRules.load(linkedRoot)).ignored('settings.local', false)).toBe(false);
   });
 
   it('refuses a delta that does not follow the snapshot', () => {
@@ -109,6 +123,19 @@ describe('helpers', () => {
 });
 
 describe('watchTree', () => {
+  it('requests a rescan when a previously unavailable root starts being watched', async () => {
+    const root = await workspace({});
+    const missing = join(root, 'missing');
+    const batches: WatchBatch[] = [];
+    const stop = watchTree(missing, (batch) => batches.push(batch), { delayMs: 10, retryMs: 25 });
+    try {
+      await mkdir(missing);
+      await expect.poll(() => batches, { timeout: 5000 }).toContain('all');
+    } finally {
+      stop();
+    }
+  });
+
   it('reports changed paths relative to the root, in batches', async () => {
     const root = await workspace({ 'a.ts': '' });
     const batches: WatchBatch[] = [];
@@ -129,7 +156,13 @@ describe('watchTree', () => {
 
 describe('project model worker', () => {
   it('sends a snapshot, then deltas for indexing and file changes', async () => {
-    const root = await workspace({ 'a.ts': "import './b';\n", 'b.ts': '' });
+    const root = await workspace({
+      'a.ts': "import './b';\n",
+      'b.ts': '',
+      'go.mod': 'module example.test/model\n',
+      'root.go': 'package model\n',
+      'cmd/main.go': 'package main\nimport "example.test/model"\n',
+    });
     const worker = new Worker(new URL('./worker.ts', import.meta.url));
     const messages: WorkerMessage[] = [];
     worker.on('message', (message: unknown) => messages.push(WorkerMessageSchema.parse(message)));
@@ -147,6 +180,7 @@ describe('project model worker', () => {
       const file = (path: string): ProjectFile | undefined =>
         current()?.files.find((entry) => entry.path === path);
       await expect.poll(() => file('a.ts')?.imports, { timeout: 10_000 }).toEqual(['b.ts']);
+      await expect.poll(() => file('cmd/main.go')?.importDirs, { timeout: 10_000 }).toEqual(['']);
 
       await new Promise((resolve) => setTimeout(resolve, 200));
       await writeFile(join(root, 'c.ts'), "import './a';\n");

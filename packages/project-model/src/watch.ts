@@ -40,7 +40,8 @@ export function watchTree(
     timer = setTimeout(deliver, delayMs);
   };
 
-  const start = () => {
+  const start = (recovering = false) => {
+    retry = undefined;
     if (stopped) return;
     try {
       watcher = watch(root, { recursive: true, persistent: false }, (_event, name) => {
@@ -53,10 +54,15 @@ export function watchTree(
         watcher = undefined;
         all = true;
         schedule();
-        retry = setTimeout(start, retryMs);
+        retry = setTimeout(() => start(true), retryMs);
       });
+      // A rescan performed after reattaching covers changes made while no watcher was active.
+      if (recovering) {
+        all = true;
+        schedule();
+      }
     } catch {
-      retry = setTimeout(start, retryMs);
+      retry = setTimeout(() => start(true), retryMs);
     }
   };
   start();

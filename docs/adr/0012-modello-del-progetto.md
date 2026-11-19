@@ -16,7 +16,7 @@ La Fase 5a dà alla Vista Live il modello del progetto: i file del workspace, gl
   - Gli import interni hanno l'estensione `.ts`, così Node esegue il worker anche dal sorgente (test di integrazione).
 - **Contratto (`PROJECT_MODEL_VERSION = 1`).**
   - Un file è `{ path, language, size, roles, indexed, imports, importDirs, externals }`. I percorsi sono relativi alla radice, separati da `/`, senza `.` né `..`.
-  - `imports` sono file del workspace. `importDirs` sono cartelle importate per intero (pacchetti Go). `externals` sono i nomi fuori dal workspace (pacchetti npm, moduli Python, moduli Go, crate).
+  - `imports` sono file del workspace. `importDirs` sono cartelle importate per intero (pacchetti Go), con la stringa vuota per la radice. `externals` sono i nomi fuori dal workspace (pacchetti npm, moduli Python, moduli Go, crate).
   - Le cartelle non sono nel contratto: si ricavano dai percorsi.
   - Lo snapshot ha `revision`, `status` (`scanning` | `indexing` | `ready`), `truncated` e `progress`. Un delta vale su `revision - 1`: `upsert` sostituisce voci intere, `remove` toglie percorsi. Un cambio incompatibile alza la versione, come per `AgentEvent`.
 - **Due tempi.** Lo snapshot parte appena la lista dei file è nota: è l'apertura misurata, la mappa collassata. Gli import arrivano dopo, in delta ogni 100 ms. Un file modificato tiene i vecchi import finché non viene riletto, così la mappa non lampeggia.

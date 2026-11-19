@@ -4,6 +4,12 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-19 — Correzioni della revisione 5a
+
+- **Fatto:** corretti i sette rilievi della revisione incrociata della PR #56. Aggiunti test per il modulo Go alla radice, il limite dei percorsi, le regole di esclusione, l'arresto del worker durante la prima scansione, il recupero del watcher e l'ordine dei messaggi IPC.
+- **Decisioni:** la stringa vuota rappresenta la directory radice solo in `importDirs` (ADR 0012). Il renderer richiede uno snapshot aggiornato se ha già visto un delta successivo.
+- **Problemi:** la prova del worker dentro l'eseguibile Electron distribuito resta tracciata in `PROBLEMI_NOTI.md`.
+
 ## 2026-11-19 — Modello del progetto (5a) e correzioni della 4b
 
 - **Fatto:** la PR #52 (4b) era stata unita prima delle correzioni della revisione. Claude le ha portate su `main` con la PR #55 (cherry-pick di `5bc30ae`), tenendo il test del terminale già stabilizzato e aggiungendo timeout e ambiente corretti per il commit con hook. Poi la 5a: pacchetto `project-model`, worker nel main, canali `project:open` e `project:updated`, stato del modello nella Vista Live (ADR 0012).

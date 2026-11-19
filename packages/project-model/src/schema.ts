@@ -29,6 +29,7 @@ export const ProjectPathSchema = z
   .refine(isProjectPath, { message: 'Invalid project path' });
 
 export function isProjectPath(value: string): boolean {
+  if (value.length === 0 || value.length > MAX_PROJECT_PATH) return false;
   // eslint-disable-next-line no-control-regex
   if (/[\\\u0000-\u001f]/.test(value) || value.includes(':')) return false;
   return value.split('/').every((part) => part !== '' && part !== '.' && part !== '..');
@@ -80,8 +81,8 @@ export const ProjectFileSchema = z.strictObject({
   indexed: z.boolean(),
   /** Workspace files this file imports. */
   imports: z.array(ProjectPathSchema).max(MAX_IMPORTS_PER_FILE),
-  /** Workspace directories this file imports as a whole (Go packages). */
-  importDirs: z.array(ProjectPathSchema).max(MAX_IMPORTS_PER_FILE),
+  /** Workspace directories imported as a whole (Go packages). The empty string is the root. */
+  importDirs: z.array(z.union([ProjectPathSchema, z.literal('')])).max(MAX_IMPORTS_PER_FILE),
   /** Imports that do not resolve inside the workspace, by package or module name. */
   externals: z.array(ExternalNameSchema).max(MAX_EXTERNALS_PER_FILE),
 });

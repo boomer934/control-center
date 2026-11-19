@@ -19,7 +19,9 @@ export function useProjectModel(workspaceId?: string): ProjectModelState {
       return;
     }
     let alive = true;
+    let failed = false;
     let snapshot: ProjectSnapshot | null = null;
+    let latestRevision = 0;
     let opening = false;
     const open = () => {
       if (opening) return;
@@ -27,11 +29,12 @@ export function useProjectModel(workspaceId?: string): ProjectModelState {
       window.api.project.open({ workspaceId }).then(
         (result) => {
           opening = false;
-          if (!alive) return;
+          if (!alive || failed) return;
           if (!result.ok) return setState({ kind: 'error', error: result.error });
-          // Deltas that arrived while the snapshot was on its way are already in it.
           if (!snapshot || result.snapshot.revision >= snapshot.revision)
             snapshot = result.snapshot;
+          // A delta seen in flight may be newer than the snapshot captured by the main process.
+          if (snapshot.revision < latestRevision) return open();
           setState({ kind: 'ready', snapshot });
         },
         () => {
@@ -41,16 +44,21 @@ export function useProjectModel(workspaceId?: string): ProjectModelState {
       );
     };
     setState({ kind: 'loading' });
-    open();
     const unsubscribe = window.api.project.onUpdated((update) => {
-      if (!alive || update.workspaceId !== workspaceId) return;
-      if (update.kind === 'failed') return setState({ kind: 'error', error: 'failed' });
+      if (!alive || failed || update.workspaceId !== workspaceId) return;
+      if (update.kind === 'failed') {
+        failed = true;
+        setState({ kind: 'error', error: 'failed' });
+        return;
+      }
+      latestRevision = Math.max(latestRevision, update.delta.revision);
       if (!snapshot || update.delta.revision <= snapshot.revision) return;
       const next = applyProjectDelta(snapshot, update.delta);
       if (!next) return open();
       snapshot = next;
       setState({ kind: 'ready', snapshot: next });
     });
+    open();
     return () => {
       alive = false;
       unsubscribe();

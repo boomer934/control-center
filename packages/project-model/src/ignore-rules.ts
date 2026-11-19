@@ -5,6 +5,7 @@
 import { lstat, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import ignore, { type Ignore } from 'ignore';
+import { realDirectory } from './scan.ts';
 
 /** Never part of the model, with or without a .gitignore. */
 const ALWAYS_IGNORED = new Set(['.git', 'node_modules']);
@@ -30,7 +31,9 @@ export class IgnoreRules {
 
   static async load(root: string): Promise<IgnoreRules> {
     const rules = new IgnoreRules(root);
-    const exclude = await readSmallFile(join(root, '.git', 'info', 'exclude'));
+    const exclude = (await realDirectory(root, '.git/info'))
+      ? await readSmallFile(join(root, '.git', 'info', 'exclude'))
+      : null;
     const own = await readSmallFile(join(root, '.gitignore'));
     if (exclude !== null || own !== null) {
       rules.layers.set(
@@ -67,11 +70,13 @@ export class IgnoreRules {
   }
 
   private matches(path: string, directory: boolean): boolean {
-    for (const [base, matcher] of this.layers) {
-      if (base !== '' && !path.startsWith(`${base}/`)) continue;
-      const relative = base === '' ? path : path.slice(base.length + 1);
-      if (matcher.ignores(directory ? `${relative}/` : relative)) return true;
+    const candidate = directory ? `${path}/` : path;
+    let ignored = this.layers.get('')?.ignores(candidate) ?? false;
+    for (let end = path.indexOf('/'); end !== -1; end = path.indexOf('/', end + 1)) {
+      const result = this.layers.get(path.slice(0, end))?.test(candidate.slice(end + 1));
+      if (result?.ignored) ignored = true;
+      else if (result?.unignored) ignored = false;
     }
-    return false;
+    return ignored;
   }
 }

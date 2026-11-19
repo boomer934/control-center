@@ -17,16 +17,17 @@ export interface ProjectServiceDeps {
 }
 
 type Emit = (update: ProjectUpdate) => void;
+type StopReason = Extract<ProjectOpenResult, { ok: false }>['error'];
 
 interface Model {
   workspaceId: string;
   root: string;
   worker: Worker;
   snapshot: ProjectSnapshot | null;
-  /** Settles with the first snapshot, or null when the worker failed first. */
-  ready: Promise<ProjectSnapshot | null>;
+  ready: Promise<void>;
+  markReady: () => void;
   subscribers: Map<number, Emit>;
-  stopped: boolean;
+  stopReason: StopReason | null;
 }
 
 export function createProjectService(deps: ProjectServiceDeps) {
@@ -35,9 +36,10 @@ export function createProjectService(deps: ProjectServiceDeps) {
   const report = (name: string, message: string) =>
     deps.report({ origin: 'main', source: 'project-model', kind: 'child-exit', name, message });
 
-  function stop(current: Model | null): void {
-    if (!current || current.stopped) return;
-    current.stopped = true;
+  function stop(current: Model | null, reason: StopReason = 'workspace-unavailable'): void {
+    if (!current || current.stopReason) return;
+    current.stopReason = reason;
+    current.markReady();
     current.subscribers.clear();
     void current.worker.terminate();
     if (model === current) model = null;
@@ -45,25 +47,28 @@ export function createProjectService(deps: ProjectServiceDeps) {
 
   function start(workspaceId: string, root: string): Model {
     const worker = new Worker(deps.workerPath, { name: 'project-model' });
-    let settle: (snapshot: ProjectSnapshot | null) => void = () => undefined;
+    let markReady!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      markReady = resolve;
+    });
     const current: Model = {
       workspaceId,
       root,
       worker,
       snapshot: null,
-      ready: new Promise((resolve) => (settle = resolve)),
+      ready,
+      markReady,
       subscribers: new Map(),
-      stopped: false,
+      stopReason: null,
     };
     const fail = (name: string, message: string) => {
-      if (current.stopped) return;
+      if (current.stopReason) return;
       report(name, message);
-      settle(null);
       for (const emit of current.subscribers.values()) emit({ workspaceId, kind: 'failed' });
-      stop(current);
+      stop(current, 'failed');
     };
     worker.on('message', (raw: unknown) => {
-      if (current.stopped) return;
+      if (current.stopReason) return;
       const parsed = WorkerMessageSchema.safeParse(raw);
       if (!parsed.success)
         return fail('ProjectModelProtocol', 'The project model worker sent an invalid message');
@@ -72,7 +77,7 @@ export function createProjectService(deps: ProjectServiceDeps) {
         return fail('ProjectModelScan', 'The workspace could not be scanned');
       if (message.type === 'snapshot') {
         current.snapshot = message.snapshot;
-        settle(message.snapshot);
+        current.markReady();
         return;
       }
       const next = current.snapshot && applyProjectDelta(current.snapshot, message.delta);
@@ -110,9 +115,9 @@ export function createProjectService(deps: ProjectServiceDeps) {
       }
       const current = model;
       current.subscribers.set(owner, emit);
-      const snapshot = await current.ready;
-      if (current.stopped && snapshot) return { ok: false, error: 'workspace-unavailable' };
-      if (!snapshot || !current.snapshot) return { ok: false, error: 'failed' };
+      await current.ready;
+      if (current.stopReason) return { ok: false, error: current.stopReason };
+      if (!current.snapshot) return { ok: false, error: 'failed' };
       if (!isCurrent()) return { ok: false, error: 'workspace-unavailable' };
       return { ok: true, snapshot: current.snapshot };
     },

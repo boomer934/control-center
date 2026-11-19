@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. 5a (modello del progetto) implementata su `feat/modello-progetto`; correzioni della 4b unite con la PR #55._
+_Ultimo aggiornamento 2026-11-19. Correzioni della revisione 5a sulla PR #56; correzioni della 4b unite con la PR #55._
 
 ## Fase
 
@@ -14,7 +14,7 @@ _Ultimo aggiornamento 2026-11-19. 5a (modello del progetto) implementata su `fea
 
 **Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore).
 
-- **5a**, modello del progetto: implementata su `feat/modello-progetto` (ADR 0012), PR da aprire. Restano la revisione `/code-review medium` e il merge a CI verde.
+- **5a**, modello del progetto: implementata, rivista e corretta nella [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -93,7 +93,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
-- **Ora (annotato da Claude):** nessun task 4b aperto: la PR #52 e le correzioni della revisione (PR #55, `6a17d71`) sono unite.
+- **Fatto (5a):** Codex ha corretto la PR #56 su richiesta dell'utente in un worktree separato. La radice Go è rappresentata da `''` in `importDirs`. Il worker chiude le richieste pendenti, il renderer recupera i delta in volo e il watcher riscansiona alla riattivazione. La scansione applica il limite del contratto e rispetta le reinclusioni dei `.gitignore` annidati e i confini di `.git/info/exclude`.
 - **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
 
 ## Cosa funziona

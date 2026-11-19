@@ -8,11 +8,11 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Codex] (F5a, revisione)** `/code-review medium` sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (`feat/modello-progetto`, ADR 0012): legge file del workspace in un worker, nuovo canale IPC, due dipendenze di runtime. Merge dell'utente a CI verde.
+1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
+2. **[Claude] (F5b)** Mappa (Opus 5.5, high). Integrare `ProjectSnapshot` e `ProjectDelta` dopo il merge della PR #56. In `importDirs`, `''` indica la radice del workspace.
 
 ## Dopo
 
-2. **[Claude] (F5b)** Mappa (Opus 5.5, high), sul contratto `ProjectSnapshot`/`ProjectDelta` della 5a.
 3. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 4. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non compare "Waiting for approval." entro 5 s): capire se è l'ambiente o il test.
 

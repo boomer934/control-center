@@ -198,6 +198,9 @@ test('uses the Git panel and restores a session checkpoint from the timeline', a
   await expect(view).toContainText('demo');
   await view.getByRole('button', { name: 'Modified file.txt' }).click();
   await expect(view.getByLabel('Diff content')).toContainText('+Ready to commit');
+  await writeFile(tracked, 'Refreshed before commit\n');
+  await view.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(view.getByLabel('Diff content')).toContainText('+Refreshed before commit');
   await view.getByRole('button', { name: 'Stage file.txt', exact: true }).click();
   await view.getByRole('textbox', { name: 'Commit message' }).fill('Update file');
   await view.getByRole('button', { name: 'Commit staged' }).click();
@@ -263,6 +266,58 @@ test('uses the Git panel and restores a session checkpoint from the timeline', a
   await dock.getByRole('button', { name: 'History', exact: true }).click();
   await dock.getByRole('button', { name: /Read the project/ }).click();
   await expect(review).toBeEnabled();
+});
+
+test('shows and reloads a checkpoint warning while Claude completes the turn', async () => {
+  const cwd = join(fixture, 'Project');
+  execFileSync('git', ['init', '-b', 'demo'], { cwd, stdio: 'ignore' });
+  execFileSync('git', ['config', 'core.sparseCheckout', 'true'], { cwd, stdio: 'ignore' });
+  const dock = page.getByRole('complementary', { name: 'Session' });
+  const prompt = 'Read without a checkpoint';
+  await dock.getByRole('textbox', { name: 'Message Claude' }).fill(prompt);
+  await dock.getByRole('button', { name: 'Send', exact: true }).click();
+  const warning = dock.getByText('Turn started without a Git checkpoint (unsupported).');
+  await expect(warning).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('region', { name: 'Session timeline' })).toContainText(
+    'Turn completed',
+    { timeout: 20_000 },
+  );
+  await dock.getByRole('button', { name: 'New chat', exact: true }).click();
+  await expect(warning).toHaveCount(0);
+  await dock.getByRole('button', { name: 'History', exact: true }).click();
+  await dock.getByRole('button', { name: prompt }).click();
+  await expect(warning).toBeVisible();
+});
+
+test('clears the selected Git diff when switching workspaces', async () => {
+  const init = async (cwd: string, contents: string) => {
+    execFileSync('git', ['init', '-b', 'demo'], { cwd, stdio: 'ignore' });
+    await writeFile(join(cwd, 'shared.txt'), contents);
+  };
+  const first = join(fixture, 'Project');
+  const second = join(fixture, 'Other');
+  await mkdir(second);
+  await init(first, 'First workspace\n');
+  await init(second, 'Second workspace\n');
+  await page.getByRole('link', { name: 'Git', exact: true }).click();
+  const view = page.getByTestId('view-git');
+  const file = view.getByRole('button', { name: 'Untracked shared.txt' });
+  await file.click();
+  await expect(view.getByLabel('Diff content')).toContainText('+First workspace');
+  await app.evaluate(
+    ({ dialog }, folder) => {
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] });
+    },
+    await realpath(second),
+  );
+  await page.getByRole('button', { name: 'Switch workspace', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Switch workspace' }).getByText('Open folder…').click();
+  await expect(page.getByTestId('status-bar')).toContainText('Other');
+  await page.getByRole('link', { name: 'Git', exact: true }).click();
+  await expect(file).toHaveAttribute('aria-pressed', 'false');
+  await expect(view.getByLabel('Diff content')).toHaveCount(0);
+  await file.click();
+  await expect(view.getByLabel('Diff content')).toContainText('+Second workspace');
 });
 
 test('runs a Claude session from the renderer and streams its AgentEvents', async () => {

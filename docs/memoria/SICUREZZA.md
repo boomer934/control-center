@@ -87,10 +87,10 @@ Test: **B** = `packages/hooks-bridge/src/bridge.test.ts`, **S** = `apps/desktop/
 
 ### Git e checkpoint (4b, ADR 0011)
 
-- Gli handler operano sul workspace attivo e sul mittente fidato. Git si avvia dal PATH assoluto senza shell e riceve solo operazioni definite dall'app, pathspec letterali, OID validati e il messaggio di commit via stdin. Gli override `GIT_*` ereditati, hook Git, fsmonitor, firma automatica e driver esterni sono disattivati.
+- Gli handler operano sul workspace attivo e sul mittente fidato. Git si avvia dal PATH assoluto senza shell e riceve solo operazioni definite dall'app, pathspec letterali, OID validati e il messaggio di commit via stdin. Gli override `GIT_*` ereditati, fsmonitor e i driver esterni sono disattivati. Il clic dell'utente su **Commit staged** esegue il codice degli hook configurati per il repository. Gli altri comandi disabilitano gli hook. Con `commit.gpgsign` attivo, il commit va eseguito dal terminale.
 - Un gitfile è ammesso solo per un linked worktree con collegamento reciproco. Per i ripristini il main valida i percorsi e i tipi di file, rifiuta symlink, junction, gitlink, hardlink sul percorso da scrivere, nomi Win32 ambigui e collisioni con file ignorati.
 - Il ripristino è una seconda azione dopo il confronto. Il token è monouso, vincolato alla finestra, al workspace e ai due alberi correnti, oltre a branch e HEAD. Le scritture Git del pannello e i turni Claude nello stesso workspace si escludono. Un checkpoint di recupero viene salvato prima della prima scrittura.
-- Il renderer riceve i diff per mostrarli su richiesta. Diff, messaggi Git e stdout/stderr del processo restano fuori dal log e dalla cronologia Claude. La cronologia conserva solo UUID e ora del checkpoint. I riferimenti locali contengono i dati del repository e vanno esclusi da eventuali trasferimenti con `--mirror`.
+- Il renderer riceve i diff per mostrarli su richiesta. Diff, messaggi Git e stdout/stderr del processo restano fuori dal log e dalla cronologia Claude. La cronologia conserva UUID e ora del checkpoint oppure il solo codice dell'errore di cattura. I riferimenti locali conservano anche i file non tracciati e non ignorati. Per workspace si mantengono gli ultimi 20 checkpoint e 30 recuperi. I riferimenti vanno esclusi da eventuali trasferimenti con `--mirror`.
 
 ## Privacy
 

@@ -19,6 +19,8 @@ const messages: Record<GitError, string> = {
   stale: 'Git state changed. Refresh and try again.',
   'too-large': 'This Git result is too large to display.',
   'nothing-staged': 'Stage changes before committing.',
+  'hook-failed': 'Git refused the commit. Check the repository hooks in the terminal.',
+  'signing-required': 'This repository requires signed commits. Commit from the terminal.',
   'restore-incomplete':
     'Restore stopped. The original files and staging area are saved under Before restore in Git.',
   failed: 'The Git action failed. Check the repository and try again.',
@@ -179,17 +181,19 @@ export function GitView({
     void window.api.git.diff({ workspaceId, target }).then(
       (result) => {
         if (!current) return;
-        if (result.ok) setDiff(result.value);
-        else setDiffError(gitMessage(result.error));
+        setDiff(result.ok ? result.value : undefined);
+        setDiffError(result.ok ? '' : gitMessage(result.error));
       },
       () => {
-        if (current) setDiffError(gitMessage('failed'));
+        if (!current) return;
+        setDiff(undefined);
+        setDiffError(gitMessage('failed'));
       },
     );
     return () => {
       current = false;
     };
-  }, [workspaceId, target]);
+  }, [workspaceId, target, reload, revision]);
 
   function select(selection: GitDiffTarget) {
     setDiff(undefined);
@@ -248,6 +252,11 @@ export function GitView({
       {value && workspaceId && (
         <div className="git-layout">
           <div className="git-sidebar">
+            {value.omitted > 0 && (
+              <p className="shell-muted" role="status">
+                {value.omitted} {value.omitted === 1 ? 'file' : 'files'} not shown.
+              </p>
+            )}
             <ChangeList
               rows={changes}
               staged={false}

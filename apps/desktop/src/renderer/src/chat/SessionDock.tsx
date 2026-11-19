@@ -43,6 +43,10 @@ const Transcript = memo(function Transcript({ records }: { records: ClaudeHistor
         <h3>You</h3>
         <p>{record.text}</p>
       </article>
+    ) : record.kind === 'checkpoint-warning' ? (
+      <p className="shell-error" role="status" key={index}>
+        Turn started without a Git checkpoint ({record.code}).
+      </p>
     ) : record.kind === 'events' ? (
       record.events.map((event) => {
         const key = `${index}-${event.seq}`;

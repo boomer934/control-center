@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. PR della 4b aperta e assegnazioni Codex aggiornate a GPT-6.2._
+_Ultimo aggiornamento 2026-11-19. 4b unita (PR #52), release 1.2.0 (PR #54); correzioni della revisione 4b su `fix/git-checkpoint-review`._
 
 ## Fase
 
@@ -18,8 +18,8 @@ _Ultimo aggiornamento 2026-11-19. PR della 4b aperta e assegnazioni Codex aggior
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
-- **4b**, Git e checkpoint: [PR #52](https://github.com/boomer934/control-center/pull/52) da `feat/git-checkpoints` (ADR 0011). Restano la revisione incrociata e il merge dopo CI verde.
-- **Release 1.1.0:** le PR di Release Please #50 (`d8a546b`) e #51 (`c11b76d`) sono unite su `main`.
+- **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi di Claude (`5bc30ae` di Codex, arrivato dopo il merge) vanno su `main` con il branch `fix/git-checkpoint-review` di Claude, più una correzione: il commit con hook ha 5 minuti di timeout invece di 30 s (un kill a metà lascerebbe `index.lock`) e gli hook non ereditano `GIT_LITERAL_PATHSPECS`.
+- **Release:** 1.1.0 unita (PR #50 `d8a546b`, #51 `c11b76d`); 1.2.0 unita (PR #54, `06525e4`).
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -27,7 +27,7 @@ _Ultimo aggiornamento 2026-11-19. PR della 4b aperta e assegnazioni Codex aggior
 
 ## Branch
 
-Claude: la PR di memoria #53 è unita su `main`. Codex: `feat/git-checkpoints` (PR #52), allineato a `origin/main` (`48032f9`), comprende l'aggiornamento delle assegnazioni GPT-6.2.
+Claude: `fix/git-checkpoint-review` (correzioni della 4b), poi `feat/modello-progetto` (5a). Codex: `feat/git-checkpoints` è superato: la PR #52 è unita e le correzioni rimaste passano dal branch di Claude.
 
 ## Punto di ripresa
 
@@ -60,8 +60,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Non verificato:** manca la seconda opinione di Astra sulla pipe.
 - **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi): 9 punti, tutti corretti da Codex nella PR #49 (`f06cd09`) dopo una passata `/code-review medium` di Claude.
 - **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
-- **Ora:** allineamento della memoria (PR #49, #50, stato della 4b), branch `docs/memoria-allinea-4-3`.
-- **Poi:** `/code-review medium` sulla 4b appena Codex apre la PR, poi 5a (Opus 5.5, high).
+- **Fatto (4b, correzioni, 2026-11-19):** su richiesta dell'utente, cherry-pick di `5bc30ae` su `origin/main` nel branch `fix/git-checkpoint-review`. Tenuto il test del terminale stabilizzato già su `main` (la versione di Codex lo riportava indietro). Riletto il diff: aggiunti timeout di 5 minuti e ambiente senza `GIT_LITERAL_PATHSPECS` per il commit con hook, con test. `pnpm verify` verde (349 test). E2E `claude.spec.ts`: 4 su 5 verdi; "streams the chat, answers permissions…" fallisce in locale anche su `main` (vedi `PROBLEMI_NOTI.md`).
+- **Ora:** PR di `fix/git-checkpoint-review`, merge dell'utente a CI verde. Poi 5a (Opus 5.5, high) su `feat/modello-progetto`.
 
 ### Corsia Codex
 
@@ -72,7 +72,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
-- **Ora:** revisione incrociata della [PR #52](https://github.com/boomer934/control-center/pull/52) con Claude `/code-review medium` e CI prima del merge.
+- **Fatto (2026-11-19, annotato da Claude):** PR #52 unita. Le correzioni della revisione (`5bc30ae`) sono arrivate dopo il merge: le porta su `main` Claude con `fix/git-checkpoint-review`, su richiesta dell'utente. `feat/git-checkpoints` non serve più.
+- **Ora:** nessun task 4b aperto.
 - **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
 
 ## Cosa funziona

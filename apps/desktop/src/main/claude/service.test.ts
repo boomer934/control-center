@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { AgentEvent } from '@control-center/event-schema';
 import type { ClaudeUpdate } from '@control-center/ipc-contract/claude';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { GitFailure } from '../git/repository';
 import { createClaudeService } from './service';
 import type { ClaudeSessionOptions, openClaudeSession } from './session';
 
@@ -72,19 +73,19 @@ function setup(
 const active = () => true;
 
 describe('Claude service', () => {
-  it('waits for a checkpoint before the first turn and refuses concurrent or unprotected sends', async () => {
+  it('waits for the first checkpoint and refuses sends while Git or Claude is busy', async () => {
     const checkpoint = { id: OTHER, at: '2026-11-18T00:00:00.000Z' };
     let ready!: (value: typeof checkpoint) => void;
     const gate = new Promise<typeof checkpoint>((resolve) => {
       ready = resolve;
     });
     const prepare = vi.fn<NonNullable<Parameters<typeof createClaudeService>[0]['prepareTurn']>>();
-    prepare.mockRejectedValueOnce(new Error('Checkpoint failure'));
+    prepare.mockRejectedValueOnce(new GitFailure('busy'));
     prepare.mockReturnValueOnce(gate);
     prepare.mockResolvedValue(null);
     const { service, opened, publish, updates } = setup(undefined, undefined, prepare);
     await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
-    expect(await service.send(1, ID, 'first', active)).toBe('checkpoint-unavailable');
+    expect(await service.send(1, ID, 'first', active)).toBe('checkpoint-busy');
     const sending = service.send(1, ID, 'first', active);
     expect(opened[0]?.send).not.toHaveBeenCalled();
     expect(await service.send(1, ID, 'concurrent', active)).toBe('busy');
@@ -93,6 +94,38 @@ describe('Claude service', () => {
     expect(updates).toContainEqual({ kind: 'checkpoint', checkpoint, id: ID });
     await expect(service.send(1, ID, 'second', active)).resolves.toBe('started');
     expect(prepare).toHaveBeenLastCalledWith('C:\\ws', WS, expect.any(Function), false);
+    await service.closeAll();
+  });
+
+  it.each([
+    [new GitFailure('unsupported'), 'unsupported'],
+    [new GitFailure('too-large'), 'too-large'],
+    [new Error('Private process output'), 'failed'],
+  ])('starts the turn and stores only the checkpoint error code for %s', async (error, code) => {
+    const prepare = vi.fn().mockRejectedValueOnce(error).mockResolvedValue(null);
+    const { service, opened, publish, updates } = setup(undefined, undefined, prepare);
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    expect(await service.send(1, ID, 'first', active)).toBe('started');
+    expect(opened[0]?.send).toHaveBeenCalledWith('first');
+    const warning = { kind: 'checkpoint-warning', code };
+    expect(updates).toContainEqual({ ...warning, id: ID });
+    expect(await service.send(1, ID, 'second', active)).toBe('started');
+    expect(prepare).toHaveBeenLastCalledWith('C:\\ws', WS, expect.any(Function), false);
+    await service.closeAll();
+    const [saved] = await service.listHistory(WS);
+    expect((await service.readHistory(WS, saved!.id))?.records).toEqual([
+      { kind: 'prompt', text: 'first' },
+      warning,
+      { kind: 'prompt', text: 'second' },
+    ]);
+  });
+
+  it('refuses a send if workspace validation fails during checkpoint preparation', async () => {
+    const prepare = vi.fn().mockRejectedValue(new GitFailure('workspace-unavailable'));
+    const { service, opened, publish } = setup(undefined, undefined, prepare);
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    expect(await service.send(1, ID, 'first', active)).toBe('workspace-unavailable');
+    expect(opened[0]?.send).not.toHaveBeenCalled();
     await service.closeAll();
   });
   it('binds a session to the window that opened it', async () => {

@@ -38,6 +38,8 @@ export const GitErrorSchema = z.enum([
   'stale',
   'too-large',
   'nothing-staged',
+  'hook-failed',
+  'signing-required',
   'restore-incomplete',
   'failed',
 ]);
@@ -61,6 +63,7 @@ export const GitStatusSchema = result(
         }),
       )
       .max(5000),
+    omitted: z.number().int().nonnegative(),
     commits: z
       .array(
         z.strictObject({

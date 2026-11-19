@@ -50,6 +50,11 @@ function applyUpdate(chat: Chat, update: ClaudeUpdate): Chat {
         ...chat,
         records: [...chat.records, { kind: 'checkpoint', checkpoint: update.checkpoint }],
       };
+    case 'checkpoint-warning':
+      return {
+        ...chat,
+        records: [...chat.records, { kind: 'checkpoint-warning', code: update.code }],
+      };
   }
 }
 
@@ -178,8 +183,8 @@ export function useClaudeChat(workspaceId?: string) {
         update(workspace, (value) => ({
           ...value,
           error:
-            result === 'checkpoint-unavailable'
-              ? 'Git could not save the checkpoint. Finish any Git operation and retry.'
+            result === 'checkpoint-busy'
+              ? 'Finish the current Git operation and retry.'
               : 'The message could not be sent. Try again.',
         }));
       }),

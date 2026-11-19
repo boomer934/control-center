@@ -51,7 +51,7 @@ export function pathInput(paths: readonly string[]): string {
 
 export type RunGit = (
   args: string[],
-  options?: { index?: string; input?: string; allowOne?: boolean },
+  options?: { index?: string; input?: string; allowOne?: boolean; commitHooks?: boolean },
 ) => Promise<string>;
 
 function runner(cwd: string): RunGit {
@@ -67,7 +67,10 @@ function runner(cwd: string): RunGit {
     GIT_NO_LAZY_FETCH: '1',
     GIT_NO_REPLACE_OBJECTS: '1',
   });
-  return (args, { index, input, allowOne } = {}) =>
+  // The commit takes no pathspec. Its hooks run their own Git commands, which should
+  // match the user's terminal, where glob pathspecs keep their usual meaning.
+  const { GIT_LITERAL_PATHSPECS: _literal, ...hookEnv } = env;
+  return (args, { index, input, allowOne, commitHooks } = {}) =>
     new Promise((accept, reject) => {
       const child = execFile(
         executable,
@@ -81,8 +84,7 @@ function runner(cwd: string): RunGit {
           'core.protectHFS=true',
           '-c',
           'log.showSignature=false',
-          '-c',
-          `core.hooksPath=${NULL_DEVICE}`,
+          ...(commitHooks ? [] : ['-c', `core.hooksPath=${NULL_DEVICE}`]),
           '-c',
           'maintenance.auto=false',
           '-c',
@@ -94,21 +96,21 @@ function runner(cwd: string): RunGit {
         ],
         {
           cwd,
-          env: index ? { ...env, GIT_INDEX_FILE: index } : env,
+          env: index ? { ...env, GIT_INDEX_FILE: index } : commitHooks ? hookEnv : env,
           windowsHide: true,
-          timeout: 30_000,
+          // Hooks such as linters can run for minutes. Killing Git mid-commit would leave
+          // index.lock behind, so the commit gets a longer budget than the other commands.
+          timeout: commitHooks ? 300_000 : 30_000,
           maxBuffer: MAX_OUTPUT,
           encoding: 'utf8',
         },
         (error, stdout) => {
           // Error messages from Git can contain paths, URLs and arbitrary repository content.
           if (!error || (allowOne && error.code === 1)) accept(stdout);
-          else
-            reject(
-              new GitFailure(
-                error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' ? 'too-large' : 'failed',
-              ),
-            );
+          else if (commitHooks && error.code === 1) reject(new GitFailure('hook-failed'));
+          else if (error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER')
+            reject(new GitFailure('too-large'));
+          else reject(new GitFailure('failed'));
         },
       );
       child.stdin?.on('error', () => undefined);

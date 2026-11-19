@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-19 — Assegnazioni GPT-6.2 e preparazione della revisione 4b
+
+- **Fatto** — Integrate le assegnazioni GPT-6.2 nel ramo `feat/git-checkpoints`. `CORSIE.md` raccoglie modelli ed effort, `PIANO.md` contiene i goal e le due skill di avvio consultano entrambi.
+- **Decisioni** — GPT-6.2 Sol per l'implementazione Codex e GPT-6.2 Astra a effort `high` per le seconde opinioni previste. La 4b va in revisione con Claude `/code-review medium`.
+- **Problemi** — Restano la revisione incrociata e la verifica degli snapshot sulla CI Windows.
+
+---
+
 ## 2026-11-18 — Pannello Git e checkpoint (4b)
 
 - **Fatto** — Pannello Git con branch, modifiche, diff, commit recenti, stage e unstage. Il primo turno Claude con un workspace Git crea un checkpoint, visibile anche riaprendo la cronologia. Il dialogo dalla timeline confronta e ripristina un file o tutti, con effetto distinto su indice e working tree.

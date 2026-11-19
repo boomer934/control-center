@@ -12,7 +12,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 ## Dopo
 
-2. **[Codex] (F4.1, revisione)** Seconda opinione di Astra sulla pipe (`packages/hooks-bridge`).
+2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 3. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
 
 ## Rilievi della PR #47 affrontati nella PR #49

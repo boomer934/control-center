@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-18. Git e checkpoint implementati nel worktree Codex._
+_Ultimo aggiornamento 2026-11-19. Git e checkpoint in preparazione per la revisione. Assegnazioni Codex aggiornate a GPT-6.2._
 
 ## Fase
 
@@ -26,7 +26,7 @@ _Ultimo aggiornamento 2026-11-18. Git e checkpoint implementati nel worktree Cod
 
 ## Branch
 
-Claude: nessun branch di lavoro aperto (solo memoria su `docs/chiusura-fase-4`). Codex: `feat/git-checkpoints`, da `origin/main` (`d8a546b`, release 1.1.0, PR #50). Il commit di pianificazione dei modelli GPT-6.2 (`bd29be0`) è sul branch separato `codex/gpt-6-2-phase-models`.
+Claude: branch di memoria `docs/memoria-allinea-4-3` nel worktree principale. Codex: `feat/git-checkpoints`, da `origin/main` (`d8a546b`, release 1.1.0, PR #50), comprende l'aggiornamento delle assegnazioni GPT-6.2.
 
 ## Punto di ripresa
 
@@ -71,7 +71,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Ora:** revisione incrociata della 4b con Claude `/code-review medium` e CI prima del merge.
-- **Poi:** seconda opinione di Astra sulla pipe della 4.1.
+- **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
 
 ## Cosa funziona
 

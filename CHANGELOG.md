@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/boomer934/control-center/compare/control-center-v1.1.0...control-center-v1.2.0) (2026-11-19)
+
+
+### Features
+
+* **desktop:** add Git panel and session checkpoints ([e59beb7](https://github.com/boomer934/control-center/commit/e59beb7f4b627940c38812b3f1fb2338129db042))
+* **desktop:** add Git panel and session checkpoints ([6180e12](https://github.com/boomer934/control-center/commit/6180e12e124467eca84f17191b6edf686dbe1431))
+
 ## [1.1.0](https://github.com/boomer934/control-center/compare/control-center-v1.0.0...control-center-v1.1.0) (2026-11-17)
 
 

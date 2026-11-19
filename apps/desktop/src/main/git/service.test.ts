@@ -55,7 +55,8 @@ async function checkpoint() {
   return result;
 }
 
-describe('Git workspace on temporary repositories', () => {
+// These tests spawn multiple real Git processes, which take longer on Windows CI.
+describe('Git workspace on temporary repositories', { timeout: 20_000 }, () => {
   it('shows branch and status, reads literal file and commit diffs, and commits only staged files', async () => {
     await initialCommit();
     const name = '-- café.txt';

@@ -9,6 +9,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - **Fatto** — Integrate le assegnazioni GPT-6.2 nel ramo `feat/git-checkpoints`. `CORSIE.md` raccoglie modelli ed effort, `PIANO.md` contiene i goal e le due skill di avvio consultano entrambi.
 - **Decisioni** — GPT-6.2 Sol per l'implementazione Codex e GPT-6.2 Astra a effort `high` per le seconde opinioni previste. La 4b va in revisione con Claude `/code-review medium`.
 - **Problemi** — Restano la revisione incrociata e la verifica degli snapshot sulla CI Windows.
+- **CI della PR #52** — Due test di ripristino con processi Git reali hanno superato i 5 s predefiniti sul runner Windows. Il timeout della suite di integrazione Git è ora di 20 s.
 
 ---
 

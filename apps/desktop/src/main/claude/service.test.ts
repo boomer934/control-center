@@ -21,6 +21,7 @@ function setup(
     claude: { command: 'claude.exe', args: [] } as { command: string; args: string[] } | undefined,
   },
   openGate?: Promise<void>,
+  prepareTurn?: Parameters<typeof createClaudeService>[0]['prepareTurn'],
 ) {
   const dataDir = mkdtempSync(join(tmpdir(), 'cc-svc-'));
   dirs.push(dataDir);
@@ -55,6 +56,7 @@ function setup(
     report: (r) => reports.push(r),
     programs: async () => ({ claude: programs.claude, hooks: undefined }),
     open,
+    prepareTurn,
   });
   const updates: ClaudeUpdate[] = [];
   return {
@@ -70,17 +72,40 @@ function setup(
 const active = () => true;
 
 describe('Claude service', () => {
+  it('waits for a checkpoint before the first turn and refuses concurrent or unprotected sends', async () => {
+    const checkpoint = { id: OTHER, at: '2026-11-18T00:00:00.000Z' };
+    let ready!: (value: typeof checkpoint) => void;
+    const gate = new Promise<typeof checkpoint>((resolve) => {
+      ready = resolve;
+    });
+    const prepare = vi.fn<NonNullable<Parameters<typeof createClaudeService>[0]['prepareTurn']>>();
+    prepare.mockRejectedValueOnce(new Error('Checkpoint failure'));
+    prepare.mockReturnValueOnce(gate);
+    prepare.mockResolvedValue(null);
+    const { service, opened, publish, updates } = setup(undefined, undefined, prepare);
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    expect(await service.send(1, ID, 'first', active)).toBe('checkpoint-unavailable');
+    const sending = service.send(1, ID, 'first', active);
+    expect(opened[0]?.send).not.toHaveBeenCalled();
+    expect(await service.send(1, ID, 'concurrent', active)).toBe('busy');
+    ready(checkpoint);
+    await expect(sending).resolves.toBe('started');
+    expect(updates).toContainEqual({ kind: 'checkpoint', checkpoint, id: ID });
+    await expect(service.send(1, ID, 'second', active)).resolves.toBe('started');
+    expect(prepare).toHaveBeenLastCalledWith('C:\\ws', WS, expect.any(Function), false);
+    await service.closeAll();
+  });
   it('binds a session to the window that opened it', async () => {
     const { service, opened, publish } = setup();
     await expect(service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish)).resolves.toBe(
       'started',
     );
     expect(opened[0]).toMatchObject({ sessionId: ID, cwd: 'C:\\ws' });
-    expect(service.send(2, ID, 'hi', active)).toBe('closed');
+    expect(await service.send(2, ID, 'hi', active)).toBe('closed');
     expect(service.interrupt(2, ID)).toBe(false);
     await expect(service.close(2, ID)).resolves.toBe(false);
     expect(opened[0]?.send).not.toHaveBeenCalled();
-    expect(service.send(1, ID, 'hi', active)).toBe('started');
+    expect(await service.send(1, ID, 'hi', active)).toBe('started');
     expect(opened[0]?.send).toHaveBeenCalledWith('hi');
     await service.closeAll();
   });
@@ -88,7 +113,7 @@ describe('Claude service', () => {
   it('sends only while the session’s workspace is active', async () => {
     const { service, opened, publish } = setup();
     await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
-    expect(service.send(1, ID, 'hi', () => false)).toBe('workspace-unavailable');
+    expect(await service.send(1, ID, 'hi', () => false)).toBe('workspace-unavailable');
     expect(opened[0]?.send).not.toHaveBeenCalled();
   });
 
@@ -157,10 +182,12 @@ describe('Claude service', () => {
       session.onEvents([event(seq++)]);
       return 'started';
     });
-    expect(service.send(1, ID, 'skip this', active)).toBe('busy');
-    expect(() => service.send(1, ID, 'skip this too', active)).toThrow('Could not spawn Claude');
-    expect(service.send(1, ID, 'first prompt', active)).toBe('started');
-    expect(service.send(1, ID, 'second prompt', active)).toBe('started');
+    expect(await service.send(1, ID, 'skip this', active)).toBe('busy');
+    await expect(service.send(1, ID, 'skip this too', active)).rejects.toThrow(
+      'Could not spawn Claude',
+    );
+    expect(await service.send(1, ID, 'first prompt', active)).toBe('started');
+    expect(await service.send(1, ID, 'second prompt', active)).toBe('started');
     const records = [
       { kind: 'prompt', text: 'first prompt' },
       { kind: 'events', events: [event(0)] },
@@ -181,8 +208,8 @@ describe('Claude service', () => {
     const otherWorkspace = 'b'.repeat(64);
     await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
     await service.start(1, { id: OTHER, workspaceId: otherWorkspace }, 'C:\\other', publish);
-    service.send(1, ID, 'private to workspace A', active);
-    service.send(1, OTHER, 'private to workspace B', active);
+    await service.send(1, ID, 'private to workspace A', active);
+    await service.send(1, OTHER, 'private to workspace B', active);
     await service.closeAll();
     const [summary] = await service.listHistory(WS);
     expect(summary?.title).toBe('private to workspace A');
@@ -211,7 +238,7 @@ describe('Claude service', () => {
     await service.closeOwner(1);
     expect(opened[0]?.close).toHaveBeenCalled();
     expect(opened[1]?.close).not.toHaveBeenCalled();
-    expect(service.send(1, ID, 'hi', active)).toBe('closed');
+    expect(await service.send(1, ID, 'hi', active)).toBe('closed');
     await service.closeAll();
     expect(opened[1]?.close).toHaveBeenCalled();
   });

@@ -1,6 +1,7 @@
 import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import type { AgentEvent } from '@control-center/event-schema';
+import type { GitCheckpoint } from '@control-center/ipc-contract';
 import {
   MAX_CLAUDE_MESSAGE_CHARS,
   type ClaudeHistoryRecord,
@@ -42,7 +43,7 @@ const Transcript = memo(function Transcript({ records }: { records: ClaudeHistor
         <h3>You</h3>
         <p>{record.text}</p>
       </article>
-    ) : (
+    ) : record.kind === 'events' ? (
       record.events.map((event) => {
         const key = `${index}-${event.seq}`;
         if (event.type === 'message.assistant') {
@@ -81,7 +82,7 @@ const Transcript = memo(function Transcript({ records }: { records: ClaudeHistor
         }
         return null;
       })
-    ),
+    ) : null,
   );
 });
 
@@ -393,18 +394,35 @@ function describe(event: AgentEvent): string | undefined {
 
 export const SessionTimeline = memo(function SessionTimeline({
   records,
+  onCheckpoint,
+  reviewDisabled,
 }: {
   records: ClaudeHistoryRecord[];
+  onCheckpoint(checkpoint: GitCheckpoint): void;
+  reviewDisabled: boolean;
 }) {
   const rows = useMemo(
     () =>
-      records.flatMap((record, index) =>
-        record.kind === 'events'
-          ? record.events.flatMap((event) => {
-              const label = describe(event);
-              return label ? [{ key: `${index}-${event.seq}`, label, at: event.timestamp }] : [];
-            })
-          : [],
+      records.flatMap(
+        (
+          record,
+          index,
+        ): {
+          key: string;
+          label: string;
+          at: string;
+          checkpoint?: GitCheckpoint;
+        }[] => {
+          if (record.kind === 'checkpoint') {
+            const { checkpoint } = record;
+            return [{ key: checkpoint.id, label: 'Git checkpoint', at: checkpoint.at, checkpoint }];
+          }
+          if (record.kind !== 'events') return [];
+          return record.events.flatMap((event) => {
+            const label = describe(event);
+            return label ? [{ key: `${index}-${event.seq}`, label, at: event.timestamp }] : [];
+          });
+        },
       ),
     [records],
   );
@@ -413,10 +431,20 @@ export const SessionTimeline = memo(function SessionTimeline({
     <section className="session-timeline" aria-label="Session timeline">
       <h2 className="dock-title">Timeline</h2>
       <ol>
-        {rows.map(({ key, label, at }) => (
+        {rows.map(({ key, label, at, checkpoint }) => (
           <li key={key}>
             <time dateTime={at}>{new Date(at).toLocaleTimeString()}</time>
-            <span>{label}</span>
+            {checkpoint ? (
+              <Button
+                disabled={reviewDisabled}
+                title={reviewDisabled ? 'Wait for the Claude turn to finish' : undefined}
+                onClick={() => onCheckpoint(checkpoint)}
+              >
+                Review {label}
+              </Button>
+            ) : (
+              <span>{label}</span>
+            )}
           </li>
         ))}
       </ol>

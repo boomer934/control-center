@@ -8,13 +8,12 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Claude] (F4b, revisione)** `/code-review medium` sulla 4b (`feat/git-checkpoints`, `6180e12`, ADR 0011): tocca file system, processi Git e ripristino dei file dell'utente, quindi è lavoro Claude. La PR non è ancora aperta: la apre Codex dopo `pnpm verify` verde; il merge è dell'utente a CI verde.
+1. **[Claude] (F4b, revisione)** `/code-review medium` sulla [PR #52](https://github.com/boomer934/control-center/pull/52) (`feat/git-checkpoints`, ADR 0011), con attenzione al file system, ai processi Git e al ripristino dei file dell'utente. A CI verde e revisione conclusa, il merge spetta all'utente.
 
 ## Dopo
 
-2. **[Codex] (F4.1, revisione)** Seconda opinione di `gpt-6-astra` sulla pipe (`packages/hooks-bridge`).
+2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 3. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
-4. **[Utente]** Unire la PR di release 1.1.0 ([#51](https://github.com/boomer934/control-center/pull/51), aperta da Release Please) quando conviene.
 
 ## Quando capita
 

@@ -10,7 +10,7 @@ description: Avvia una sessione di lavoro su Control Center. Legge lo stato del 
    - `git status --short` e `git branch --show-current`;
    - `git log --oneline -10`.
      Se ci sono modifiche non committate o il branch non corrisponde a quello in `STATO.md`, segnalalo prima di tutto.
-3. Individua il primo task aperto in `PROSSIMI_PASSI.md` e la sua fase. In `docs/memoria/PIANO.md`, sezione "Modello, effort, ultracode e goal", trova la riga di quella fase e il testo del goal.
+3. Individua il primo task aperto in `PROSSIMI_PASSI.md`. In `docs/memoria/CORSIE.md` cerca corsia, modello ed effort della fase o sotto-fase. In `docs/memoria/PIANO.md`, sezione "Goal per ogni fase", trova il testo del goal.
 4. Rispondi all'utente in italiano, in modo breve:
    - dove eravamo rimasti (2-3 righe);
    - il task proposto;

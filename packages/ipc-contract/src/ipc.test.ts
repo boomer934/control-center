@@ -89,6 +89,14 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
       interrupt: () => false,
       close: () => false,
     },
+    git: {
+      status: () => ({ ok: false, error: 'workspace-unavailable' }),
+      diff: () => ({ ok: false, error: 'workspace-unavailable' }),
+      stage: () => ({ ok: false, error: 'workspace-unavailable' }),
+      commit: () => ({ ok: false, error: 'workspace-unavailable' }),
+      preview: () => ({ ok: false, error: 'workspace-unavailable' }),
+      restore: () => ({ ok: false, error: 'workspace-unavailable' }),
+    },
   };
   return { handlers, getInfo, openExternal };
 }
@@ -128,6 +136,12 @@ describe('contract', () => {
       'claude:interrupt',
       'claude:close',
       'claude:updated',
+      'git:status',
+      'git:diff',
+      'git:stage',
+      'git:commit',
+      'git:preview',
+      'git:restore',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
       'errors:changed',
@@ -294,7 +308,23 @@ describe('registerIpcHandlers (main)', () => {
 describe('createApi (preload)', () => {
   it('exposes exactly the contract methods, deeply frozen', () => {
     const api = createApi(async () => ({ ok: true, value: null }), noSubscribe);
-    expect(Object.keys(api)).toEqual(['app', 'errors', 'shell', 'workspace', 'terminal', 'claude']);
+    expect(Object.keys(api)).toEqual([
+      'app',
+      'errors',
+      'shell',
+      'workspace',
+      'terminal',
+      'claude',
+      'git',
+    ]);
+    expect(Object.keys(api.git)).toEqual([
+      'status',
+      'diff',
+      'stage',
+      'commit',
+      'preview',
+      'restore',
+    ]);
     expect(Object.keys(api.app)).toEqual(['getInfo']);
     expect(Object.keys(api.errors)).toEqual([
       'list',

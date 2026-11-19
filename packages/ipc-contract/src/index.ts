@@ -34,3 +34,4 @@ export {
   type Namespace,
   type Unsubscribe,
 } from './contract';
+export * from './git';

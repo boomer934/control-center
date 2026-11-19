@@ -24,6 +24,7 @@ import { resolveClaude, resolveHookNode } from './claude/cli';
 import { createClaudeService } from './claude/service';
 import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
+import { createGitService } from './git/service';
 import { coalesce, makeFailureRouter } from './ipc-events';
 import { isAppUrl } from './security/urls';
 import { createTerminalService } from './terminal/service';
@@ -60,6 +61,7 @@ function makeHandlers(
   workspace: Handlers['workspace'],
   terminal: Handlers['terminal'],
   claude: Handlers['claude'],
+  git: Handlers['git'],
 ): Handlers {
   return {
     app: {
@@ -91,6 +93,7 @@ function makeHandlers(
     workspace,
     terminal,
     claude,
+    git,
   };
 }
 
@@ -132,10 +135,16 @@ export function registerIpc(
 ): () => Promise<void> {
   const reportFailure = makeFailureRouter(errors);
   const terminals = createTerminalService();
+  const gitService = createGitService();
   let hooksWarned = false;
   const claudeSessions = createClaudeService({
     dataDir: app.getPath('userData'),
     report: errors.report,
+    prepareTurn: async (root, workspaceId, active, create) => {
+      const current = await (await getWorkspaces()).activeRootFor(workspaceId);
+      if (root !== current) throw new Error('Workspace root changed');
+      return gitService.checkpoint(root, workspaceId, active, create);
+    },
     programs: async () => {
       const claude = resolveClaude();
       const node = await resolveHookNode();
@@ -181,6 +190,7 @@ export function registerIpc(
       close() {
         owners.delete(id);
         terminals.closeOwner(id);
+        gitService.clearOwner(id);
         void claudeSessions.closeOwner(id).catch(() => {
           errors.logger.error('main', 'claude-window-close-failed');
         });
@@ -281,9 +291,55 @@ export function registerIpc(
     close: ({ id }, { senderId }) => claudeSessions.close(senderId, id),
   };
 
+  async function gitContext(workspaceId: string, senderId?: number) {
+    if (senderId === undefined) return null;
+    const owner = windowOwner(senderId);
+    if (!owner) return null;
+    const workspaces = await getWorkspaces();
+    const root = await workspaces.activeRootFor(workspaceId);
+    const active = () => owners.get(senderId) === owner && workspaces.isActive(workspaceId);
+    return root && active()
+      ? {
+          root,
+          workspaceId,
+          owner: senderId,
+          active,
+          busy: () => claudeSessions.isWorkspaceBusy(workspaceId),
+        }
+      : null;
+  }
+
+  const unavailable = { ok: false, error: 'workspace-unavailable' } as const;
+  const git: Handlers['git'] = {
+    status: async ({ workspaceId }, { senderId }) => {
+      const ctx = await gitContext(workspaceId, senderId);
+      return ctx ? gitService.status(ctx) : unavailable;
+    },
+    diff: async ({ workspaceId, target }, { senderId }) => {
+      const ctx = await gitContext(workspaceId, senderId);
+      return ctx ? gitService.diff(ctx, target) : unavailable;
+    },
+    stage: async ({ workspaceId, path, staged }, { senderId }) => {
+      const ctx = await gitContext(workspaceId, senderId);
+      return ctx ? gitService.stage(ctx, path, staged) : unavailable;
+    },
+    commit: async ({ workspaceId, message }, { senderId }) => {
+      const ctx = await gitContext(workspaceId, senderId);
+      return ctx ? gitService.commit(ctx, message) : unavailable;
+    },
+    preview: async ({ workspaceId, id, path }, { senderId }) => {
+      const ctx = await gitContext(workspaceId, senderId);
+      return ctx ? gitService.preview(ctx, id, path) : unavailable;
+    },
+    restore: async ({ workspaceId, token }, { senderId }) => {
+      const ctx = await gitContext(workspaceId, senderId);
+      return ctx ? gitService.restore(ctx, token) : unavailable;
+    },
+  };
+
   const disposeHandlers = registerIpcHandlers(
     ipcMain,
-    makeHandlers(errors, workspace, terminal, claude),
+    makeHandlers(errors, workspace, terminal, claude, git),
     {
       isTrustedSender: makeSenderCheck(devServer),
       onFailure: reportFailure,

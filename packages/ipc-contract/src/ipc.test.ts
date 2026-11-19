@@ -97,6 +97,9 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
       preview: () => ({ ok: false, error: 'workspace-unavailable' }),
       restore: () => ({ ok: false, error: 'workspace-unavailable' }),
     },
+    project: {
+      open: () => ({ ok: false, error: 'workspace-unavailable' }),
+    },
   };
   return { handlers, getInfo, openExternal };
 }
@@ -142,11 +145,14 @@ describe('contract', () => {
       'git:commit',
       'git:preview',
       'git:restore',
+      'project:open',
+      'project:updated',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
       'errors:changed',
       'terminal:updated',
       'claude:updated',
+      'project:updated',
     ]);
     expect(listMethods()).toHaveLength(listChannels().length - listEvents().length);
   });
@@ -316,7 +322,9 @@ describe('createApi (preload)', () => {
       'terminal',
       'claude',
       'git',
+      'project',
     ]);
+    expect(Object.keys(api.project)).toEqual(['open', 'onUpdated']);
     expect(Object.keys(api.git)).toEqual([
       'status',
       'diff',

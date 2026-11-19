@@ -4,6 +4,29 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-19 — Correzioni della revisione 5a
+
+- **Fatto:** corretti i sette rilievi della revisione incrociata della PR #56. Aggiunti test per il modulo Go alla radice, il limite dei percorsi, le regole di esclusione, l'arresto del worker durante la prima scansione, il recupero del watcher e l'ordine dei messaggi IPC.
+- **Decisioni:** la stringa vuota rappresenta la directory radice solo in `importDirs` (ADR 0012). Il renderer richiede uno snapshot aggiornato se ha già visto un delta successivo.
+- **Problemi:** la prova del worker dentro l'eseguibile Electron distribuito resta tracciata in `PROBLEMI_NOTI.md`.
+
+## 2026-11-19 — Modello del progetto (5a) e correzioni della 4b
+
+- **Fatto:** la PR #52 (4b) era stata unita prima delle correzioni della revisione. Claude le ha portate su `main` con la PR #55 (cherry-pick di `5bc30ae`), tenendo il test del terminale già stabilizzato e aggiungendo timeout e ambiente corretti per il commit con hook. Poi la 5a: pacchetto `project-model`, worker nel main, canali `project:open` e `project:updated`, stato del modello nella Vista Live (ADR 0012).
+- **Decisioni:**
+  - snapshot appena nota la lista dei file, import in delta ogni 100 ms;
+  - `@vscode/tree-sitter-wasm` invece di web-tree-sitter con una grammatica per pacchetto: una dipendenza, nessun addon nativo;
+  - `fs.watch` ricorsivo invece di chokidar (cambia `PIANO.md`);
+  - ruoli solo dai percorsi, come plugin;
+  - uno specchio del modello nel main risponde a `project:open`.
+- **Problemi:**
+  - il type stripping di Node non accetta le parameter property: il pacchetto non le usa, perché il worker deve girare anche dal sorgente;
+  - Rollup mette il codice comune a main e worker in `out/main/chunks/`: nel pacchetto vanno estratti anche i chunk, controllato da `build.spec.ts`;
+  - un percorso segnalato dal watcher dentro una junction nuova passava con `lstat`: ora si controllano tutte le cartelle antenate.
+- **Verifica:** `pnpm verify` verde, 5.000 file aperti in 46 ms e indicizzati in circa 2 s, E2E del modello e del pacchetto verdi. In locale l'E2E della chat con i permessi fallisce anche su `main` (`PROBLEMI_NOTI.md`).
+
+---
+
 ## 2026-11-19 — Revisione del pannello Git e dei checkpoint (4b)
 
 - **Fatto:** riallineata la [PR #52](https://github.com/boomer934/control-center/pull/52) a `origin/main` dopo le PR #51 e #53. Conservata la memoria di main e aggiornate le voci della 4b. Tolti dalla PR la pianificazione dei modelli e il ritocco al test del terminale.

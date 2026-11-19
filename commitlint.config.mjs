@@ -18,6 +18,7 @@ export default {
         'event-schema',
         'ipc-contract',
         'hooks-bridge',
+        'project-model',
         'mcp-bridge',
         'ollama-client',
         'fixtures',

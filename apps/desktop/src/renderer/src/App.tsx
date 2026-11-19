@@ -14,6 +14,7 @@ import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
 import { useShortcuts } from './keys/useShortcuts';
 import { CommandPalette, type PaletteCommand } from './palette/CommandPalette';
 import { ShortcutHelp } from './palette/ShortcutHelp';
+import { describeProject, useProjectModel } from './project/useProjectModel';
 import { ComponentsPage } from './pages/ComponentsPage';
 import { ActivityBar } from './shell/ActivityBar';
 import { useRoute, type RouteId } from './shell/route';
@@ -36,7 +37,9 @@ const PHASE_OF: Partial<Record<SectionId, string>> = {
   settings: 'a later phase',
 };
 
-function LiveView({ state }: { state: InfoState }) {
+function LiveView({ state, workspaceId }: { state: InfoState; workspaceId?: string }) {
+  // Deltas re-render this view only, not the whole shell.
+  const project = useProjectModel(workspaceId);
   return (
     <div className="view-body" data-focus-scope="live" data-testid="shell">
       <h1 className="shell-title">Control Center</h1>
@@ -56,6 +59,10 @@ function LiveView({ state }: { state: InfoState }) {
           <dd>{state.info.chrome}</dd>
           <dt>Node</dt>
           <dd>{state.info.node}</dd>
+          <dt>Project</dt>
+          <dd data-testid="project-model" aria-live="polite">
+            {describeProject(project)}
+          </dd>
         </dl>
       )}
       <FaultProbe />
@@ -325,7 +332,7 @@ function AppShell({
   const view =
     route === 'live' ? (
       <>
-        <LiveView state={info} />
+        <LiveView state={info} workspaceId={workspaceId} />
         <SessionTimeline
           records={chat.records}
           onCheckpoint={setCheckpoint}

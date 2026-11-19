@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. 4b unita (PR #52), release 1.2.0 (PR #54); correzioni della revisione 4b su `fix/git-checkpoint-review`._
+_Ultimo aggiornamento 2026-11-19. Correzioni della revisione 5a sulla PR #56; correzioni della 4b unite con la PR #55._
 
 ## Fase
 
@@ -12,14 +12,18 @@ _Ultimo aggiornamento 2026-11-19. 4b unita (PR #52), release 1.2.0 (PR #54); cor
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
+**Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore).
+
+- **5a**, modello del progetto: implementata, rivista e corretta nella [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
+
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
 - **4.0**, canale push nel contratto IPC: ✅ unita su `main` (PR #35, `4c2ef5c`, ADR 0007).
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
-- **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi di Claude (`5bc30ae` di Codex, arrivato dopo il merge) vanno su `main` con il branch `fix/git-checkpoint-review` di Claude, più una correzione: il commit con hook ha 5 minuti di timeout invece di 30 s (un kill a metà lascerebbe `index.lock`) e gli hook non ereditano `GIT_LITERAL_PATHSPECS`.
-- **Release:** 1.1.0 unita (PR #50 `d8a546b`, #51 `c11b76d`); 1.2.0 unita (PR #54, `06525e4`).
+- **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi sono unite con la [PR #55](https://github.com/boomer934/control-center/pull/55) (`6a17d71`, CI verde).
+- **Release:** 1.1.0 (PR #50, #51) e 1.2.0 (PR #54, `06525e4`) unite.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -27,7 +31,7 @@ _Ultimo aggiornamento 2026-11-19. 4b unita (PR #52), release 1.2.0 (PR #54); cor
 
 ## Branch
 
-Claude: `fix/git-checkpoint-review` (correzioni della 4b), poi `feat/modello-progetto` (5a). Codex: `feat/git-checkpoints` è superato: la PR #52 è unita e le correzioni rimaste passano dal branch di Claude.
+Claude: `feat/modello-progetto` (5a, [PR #56](https://github.com/boomer934/control-center/pull/56), con `main` unito dopo la #55). Codex: `feat/git-checkpoints` è superato (PR #52 e #55 unite).
 
 ## Punto di ripresa
 
@@ -60,8 +64,25 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Non verificato:** manca la seconda opinione di Astra sulla pipe.
 - **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi): 9 punti, tutti corretti da Codex nella PR #49 (`f06cd09`) dopo una passata `/code-review medium` di Claude.
 - **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
-- **Fatto (4b, correzioni, 2026-11-19):** su richiesta dell'utente, cherry-pick di `5bc30ae` su `origin/main` nel branch `fix/git-checkpoint-review`. Tenuto il test del terminale stabilizzato già su `main` (la versione di Codex lo riportava indietro). Riletto il diff: aggiunti timeout di 5 minuti e ambiente senza `GIT_LITERAL_PATHSPECS` per il commit con hook, con test. `pnpm verify` verde (349 test). E2E `claude.spec.ts`: 4 su 5 verdi; "streams the chat, answers permissions…" fallisce in locale anche su `main` (vedi `PROBLEMI_NOTI.md`).
-- **Ora:** PR di `fix/git-checkpoint-review`, merge dell'utente a CI verde. Poi 5a (Opus 5.5, high) su `feat/modello-progetto`.
+- **Fatto (4b, correzioni):** su richiesta dell'utente, cherry-pick delle correzioni di Codex (`5bc30ae`) su `origin/main` nella [PR #55](https://github.com/boomer934/control-center/pull/55), con il test del terminale di `main` e una correzione in più (commit con hook: timeout di 5 minuti, niente `GIT_LITERAL_PATHSPECS` agli hook).
+- **Fatto (5a, ADR 0012):**
+  - pacchetto `packages/project-model`:
+    - scansione con `.gitignore`, senza symlink e junction, fino a 20.000 file;
+    - import con Tree-sitter WASM (`@vscode/tree-sitter-wasm`) per TS/TSX/JS, Python, Go e Rust, risolti verso file, cartelle Go o nomi esterni;
+    - ruoli come plugin: comuni, Next.js, React, API Node;
+    - indicizzatore incrementale e watcher `fs.watch` ricorsivo;
+  - worker thread nel main con specchio del modello; canali `project:open` e `project:updated` (snapshot, poi delta per revisione);
+  - riga di stato nella Vista Live (file, link, avanzamento), in attesa della mappa della 5b;
+  - nel pacchetto, worker, chunk condivisi e `.wasm` fuori da `app.asar`.
+- **Verificato in locale (5a):**
+  - `pnpm verify` verde;
+  - 18 test del modello: grafo dei progetti di prova in 4 linguaggi, aggiornamenti incrementali, watcher, worker dal sorgente, junction;
+  - prestazioni: 5.000 file elencati in 46 ms (cache calda), indicizzati in circa 2 s;
+  - E2E `project.spec.ts` 2/2 e `security.spec.ts` verdi; `pnpm e2e:packaged` 10/10;
+  - suite `app`: rossi solo i 2 test visivi e il test della chat già noto.
+- **Non verificato:** il worker dentro l'app impacchettata (Playwright non si collega al pacchetto: provati solo i file estratti); la CI Windows.
+- **Ora:** [PR #56](https://github.com/boomer934/control-center/pull/56) di `feat/modello-progetto`: CI, poi `/code-review medium` (Codex, da `CORSIE.md`) e merge a CI verde.
+- **Poi:** 5b (mappa, Opus 5.5 high), dopo il merge della 5a.
 
 ### Corsia Codex
 
@@ -72,8 +93,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
-- **Fatto (2026-11-19, annotato da Claude):** PR #52 unita. Le correzioni della revisione (`5bc30ae`) sono arrivate dopo il merge: le porta su `main` Claude con `fix/git-checkpoint-review`, su richiesta dell'utente. `feat/git-checkpoints` non serve più.
-- **Ora:** nessun task 4b aperto.
+- **Fatto (5a):** Codex ha corretto la PR #56 su richiesta dell'utente in un worktree separato. La radice Go è rappresentata da `''` in `importDirs`. Il worker chiude le richieste pendenti, il renderer recupera i delta in volo e il watcher riscansiona alla riattivazione. La scansione applica il limite del contratto e rispetta le reinclusioni dei `.gitignore` annidati e i confini di `.git/info/exclude`.
 - **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
 
 ## Cosa funziona

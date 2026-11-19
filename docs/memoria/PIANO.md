@@ -666,7 +666,7 @@ Implementazione della specifica del §4.3, in quattro passi indipendenti, ciascu
 - Scansione della cartella (rispettando `.gitignore`), in un worker per non bloccare la UI.
 - Grafo degli import: Tree-sitter (`web-tree-sitter`, WASM) per TS/JS, Python, Go, Rust come primo set; si estende con nuove grammatiche.
 - Riconoscimento di "ruoli" (pagine, componenti, route API, schema DB) con regole per framework (Next.js, Vite+React, FastAPI, Express…) definite come plugin.
-- Aggiornamento incrementale con un file watcher (chokidar), non rescansione completa.
+- Aggiornamento incrementale con un file watcher (`fs.watch` ricorsivo di Node, ADR 0012), non rescansione completa.
 
 **5b. Mappa**
 

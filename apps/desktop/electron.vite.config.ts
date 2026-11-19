@@ -66,8 +66,14 @@ export default defineConfig(({ mode }) => {
       build: {
         sourcemap: true,
         rollupOptions: {
-          input: { index: resolve(__dirname, 'src/main/index.ts') },
-          external: ['node-pty'],
+          input: {
+            index: resolve(__dirname, 'src/main/index.ts'),
+            // The project model worker thread (phase 5a, ADR 0012).
+            'project-worker': resolve(__dirname, '../../packages/project-model/src/worker.ts'),
+          },
+          // Runtime dependencies loaded from node_modules: a native addon and the Tree-sitter
+          // runtime, which reads its .wasm files next to itself.
+          external: ['node-pty', '@vscode/tree-sitter-wasm'],
         },
       },
     },

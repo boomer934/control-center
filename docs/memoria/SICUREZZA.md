@@ -4,22 +4,23 @@ Leggere prima di toccare IPC, processi figli, file system, segreti, Docker, brid
 
 ## Modello delle minacce
 
-| Superficie          | Rischio                                                         | Contromisura                                                                                       | Fase |
-| ------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---- |
-| Renderer            | XSS dall'output degli agenti (Markdown, log) → accesso all'IPC  | sandbox, CSP, Markdown sanitizzato, niente HTML raw                                                | 3    |
-| IPC                 | comandi arbitrari dal renderer                                  | canali espliciti in `ipc-contract`, zod, controllo del mittente, nessun "esegui comando" generico  | 3    |
-| Hooks/MCP bridge    | un processo locale invia eventi falsi                           | named pipe con permessi utente + token casuale per sessione, niente TCP (4.1: ADR 0009)            | 4, 7 |
-| File system         | path traversal, symlink fuori dal workspace                     | normalizzazione + verifica del percorso reale                                                      | 4    |
-| Docker              | il socket equivale a privilegi elevati                          | sola lettura di default, conferma sulle azioni                                                     | 6    |
-| Porte               | esposizione involontaria                                        | solo lettura delle porte locali, avviso su `0.0.0.0`, nessuna scansione remota                     | 6    |
-| Server MCP di terzi | codice non fidato                                               | mostrare comando e origine prima di abilitarli; i nuovi server non si avviano mai da soli          | 8    |
-| Agenti locali       | output inaffidabile                                             | nessuna scrittura diretta, solo proposte di diff; allowlist dei tool MCP                           | 7    |
-| Git/checkpoint      | perdita di lavoro                                               | ref nascosti, mai toccare il branch dell'utente, conferma + anteprima del diff                     | 4b   |
-| Dipendenze          | supply chain                                                    | lockfile, Dependabot, `pnpm audit`, ADR per ogni dipendenza, pnpm `onlyBuiltDependencies`          | 0    |
-| Aggiornamenti       | update malevolo                                                 | firma e verifica di electron-updater                                                               | 10   |
-| Repo pubblica       | segreti nella cronologia                                        | gitleaks in pre-commit e in CI (cronologia completa)                                               | 0    |
-| Fixture pubblicate  | segreti, contenuti di file o dati personali nelle registrazioni | pulizia ad allowlist (`sanitize.mjs`), `--check` in CI e in Vitest, gitleaks; grezzi git-ignored   | 2    |
-| Eventi              | segreti o percorsi personali in eventi e log                    | `makeTextCleaner` (radice → `.`, home → `~`, `redactSecrets`) su ogni testo; schema senza assoluti | 2    |
+| Superficie          | Rischio                                                         | Contromisura                                                                                                       | Fase |
+| ------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---- |
+| Renderer            | XSS dall'output degli agenti (Markdown, log) → accesso all'IPC  | sandbox, CSP, Markdown sanitizzato, niente HTML raw                                                                | 3    |
+| IPC                 | comandi arbitrari dal renderer                                  | canali espliciti in `ipc-contract`, zod, controllo del mittente, nessun "esegui comando" generico                  | 3    |
+| Hooks/MCP bridge    | un processo locale invia eventi falsi                           | named pipe con permessi utente + token casuale per sessione, niente TCP (4.1: ADR 0009)                            | 4, 7 |
+| File system         | path traversal, symlink fuori dal workspace                     | normalizzazione + verifica del percorso reale                                                                      | 4    |
+| Docker              | il socket equivale a privilegi elevati                          | sola lettura di default, conferma sulle azioni                                                                     | 6    |
+| Porte               | esposizione involontaria                                        | solo lettura delle porte locali, avviso su `0.0.0.0`, nessuna scansione remota                                     | 6    |
+| Server MCP di terzi | codice non fidato                                               | mostrare comando e origine prima di abilitarli; i nuovi server non si avviano mai da soli                          | 8    |
+| Agenti locali       | output inaffidabile                                             | nessuna scrittura diretta, solo proposte di diff; allowlist dei tool MCP                                           | 7    |
+| Git/checkpoint      | perdita di lavoro                                               | ref nascosti, mai toccare il branch dell'utente, conferma + anteprima del diff                                     | 4b   |
+| Modello progetto    | lettura fuori dal workspace, file enormi, contenuti esposti     | worker in sola lettura, niente symlink, limiti di file e dimensioni, solo percorsi e import al renderer (ADR 0012) | 5a   |
+| Dipendenze          | supply chain                                                    | lockfile, Dependabot, `pnpm audit`, ADR per ogni dipendenza, pnpm `onlyBuiltDependencies`                          | 0    |
+| Aggiornamenti       | update malevolo                                                 | firma e verifica di electron-updater                                                                               | 10   |
+| Repo pubblica       | segreti nella cronologia                                        | gitleaks in pre-commit e in CI (cronologia completa)                                                               | 0    |
+| Fixture pubblicate  | segreti, contenuti di file o dati personali nelle registrazioni | pulizia ad allowlist (`sanitize.mjs`), `--check` in CI e in Vitest, gitleaks; grezzi git-ignored                   | 2    |
+| Eventi              | segreti o percorsi personali in eventi e log                    | `makeTextCleaner` (radice → `.`, home → `~`, `redactSecrets`) su ogni testo; schema senza assoluti                 | 2    |
 
 ## Checklist Electron (Fase 3: tutte verificate in test)
 
@@ -91,6 +92,16 @@ Test: **B** = `packages/hooks-bridge/src/bridge.test.ts`, **S** = `apps/desktop/
 - Un gitfile è ammesso solo per un linked worktree con collegamento reciproco. Per i ripristini il main valida i percorsi e i tipi di file, rifiuta symlink, junction, gitlink, hardlink sul percorso da scrivere, nomi Win32 ambigui e collisioni con file ignorati.
 - Il ripristino è una seconda azione dopo il confronto. Il token è monouso, vincolato alla finestra, al workspace e ai due alberi correnti, oltre a branch e HEAD. Le scritture Git del pannello e i turni Claude nello stesso workspace si escludono. Un checkpoint di recupero viene salvato prima della prima scrittura.
 - Il renderer riceve i diff per mostrarli su richiesta. Diff, messaggi Git e stdout/stderr del processo restano fuori dal log e dalla cronologia Claude. La cronologia conserva solo UUID e ora del checkpoint. I riferimenti locali contengono i dati del repository e vanno esclusi da eventuali trasferimenti con `--mirror`.
+
+### Modello del progetto (5a, ADR 0012)
+
+Test: **M** = `packages/project-model/src/model.test.ts`, **I** = `packages/project-model/src/indexer.test.ts`, **E2E** = `apps/desktop/e2e/app/project.spec.ts`.
+
+- **Solo lettura.** Il worker legge nomi, dimensioni e contenuto dei file del workspace attivo e non scrive nulla. Non esegue codice del progetto: niente `require` dei file analizzati, niente script, niente Git. Il parsing usa Tree-sitter in WASM, senza addon nativi.
+- **Confini del workspace.** La radice è quella canonica del workspace attivo (ADR 0008). La scansione non segue symlink e junction (I). Scarta i nomi con caratteri di controllo, `:` o `\` e i percorsi con `.` o `..` (M), e risolve gli import solo verso file già elencati. Resta una finestra TOCTOU: un file sostituito da un collegamento tra `lstat` e lettura verrebbe letto. L'impatto è basso, perché dal contenuto escono solo specificatori di import.
+- **Limiti.** 20.000 file, 64 livelli, file oltre 1 MiB non letti, 500 import e 200 nomi esterni per file, `.gitignore` e file di configurazione oltre 256 KiB ignorati.
+- **IPC.** `project:open` richiede il mittente fidato e il workspace attivo; un ID sconosciuto riceve `workspace-unavailable` (E2E). I delta vanno solo alle finestre che hanno aperto il modello. Main e preload validano snapshot e delta con lo schema del contratto. Il main valida anche ogni messaggio del worker.
+- **Cosa esce.** Al renderer arrivano percorsi relativi, linguaggio, dimensione, ruoli e nomi degli import, mai il contenuto dei file. Gli errori del worker arrivano alla Console con un nome e un messaggio fissi, senza percorsi né testo dei file.
 
 ## Privacy
 

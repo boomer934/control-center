@@ -102,7 +102,7 @@ test.describe('preload', () => {
       };
     });
     expect(shape).toEqual({
-      namespaces: ['app', 'errors', 'shell', 'workspace', 'terminal', 'claude', 'git'],
+      namespaces: ['app', 'errors', 'shell', 'workspace', 'terminal', 'claude', 'git', 'project'],
       methods: {
         app: ['getInfo'],
         errors: ['list', 'reportRenderer', 'copyReport', 'clear', 'onChanged'],
@@ -120,8 +120,9 @@ test.describe('preload', () => {
           'onUpdated',
         ],
         git: ['status', 'diff', 'stage', 'commit', 'preview', 'restore'],
+        project: ['open', 'onUpdated'],
       },
-      types: Array.from({ length: 30 }, () => 'function'),
+      types: Array.from({ length: 32 }, () => 'function'),
       frozen: true,
       leaked: [],
     });

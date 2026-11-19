@@ -41,6 +41,7 @@ import {
   TerminalUpdateSchema,
   TerminalWriteSchema,
 } from './terminal';
+import { ProjectOpenResultSchema, ProjectUpdateSchema, ProjectWorkspaceSchema } from './project';
 import { WorkspaceIdSchema, WorkspacePathSchema, WorkspaceStateSchema } from './workspace';
 
 /** One request/response method: renderer → main, answered by a single handler. */
@@ -258,6 +259,10 @@ export const contract = {
     commit: invoke('git:commit', GitCommitSchema, GitMutationSchema),
     preview: invoke('git:preview', GitCheckpointTargetSchema, GitPreviewSchema),
     restore: invoke('git:restore', GitRestoreRequestSchema, GitRestoreSchema),
+  },
+  project: {
+    open: invoke('project:open', ProjectWorkspaceSchema, ProjectOpenResultSchema),
+    updated: event('project:updated', ProjectUpdateSchema),
   },
 } as const;
 

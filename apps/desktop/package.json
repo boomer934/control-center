@@ -16,6 +16,7 @@
     "e2e:packaged": "pnpm package:dir && playwright test --project=packaged"
   },
   "dependencies": {
+    "@vscode/tree-sitter-wasm": "0.3.1",
     "node-pty": "^1.1.0"
   },
   "devDependencies": {
@@ -24,6 +25,7 @@
     "@control-center/fixtures": "workspace:*",
     "@control-center/hooks-bridge": "workspace:*",
     "@control-center/ipc-contract": "workspace:*",
+    "@control-center/project-model": "workspace:*",
     "@electron/fuses": "^2.1.3",
     "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",

@@ -10,7 +10,14 @@ const config: Configuration = {
   // Source maps stay inside the package: the Errors Console maps stacks to the TypeScript sources.
   files: ['out/**/*', 'package.json'],
   asar: true,
-  asarUnpack: ['**/node_modules/node-pty/**/*'],
+  // The project model worker thread runs from real files: its entry, the chunks it shares with
+  // the main bundle, and the Tree-sitter runtime with its .wasm grammars (ADR 0012).
+  asarUnpack: [
+    '**/node_modules/node-pty/**/*',
+    '**/node_modules/@vscode/tree-sitter-wasm/**/*',
+    'out/main/project-worker.js',
+    'out/main/chunks/**/*',
+  ],
   npmRebuild: process.env.CC_USE_PREBUILT_PTY !== '1',
   // See docs/memoria/SICUREZZA.md (Electron checklist). Verified by e2e/packaged/fuses.spec.ts.
   electronFuses: {

@@ -2,7 +2,8 @@
 // handlers of @control-center/ipc-contract behind the sender check, and pushes the contract
 // events to the trusted windows only (ADR 0007).
 import { existsSync } from 'node:fs';
-import { join, win32 } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join, win32 } from 'node:path';
 import {
   app,
   BrowserWindow,
@@ -26,6 +27,7 @@ import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
 import { createGitService } from './git/service';
 import { coalesce, makeFailureRouter } from './ipc-events';
+import { createProjectService } from './project/service';
 import { isAppUrl } from './security/urls';
 import { createTerminalService } from './terminal/service';
 import { resolveShell } from './terminal/shells';
@@ -62,6 +64,7 @@ function makeHandlers(
   terminal: Handlers['terminal'],
   claude: Handlers['claude'],
   git: Handlers['git'],
+  project: Handlers['project'],
 ): Handlers {
   return {
     app: {
@@ -94,7 +97,16 @@ function makeHandlers(
     terminal,
     claude,
     git,
+    project,
   };
+}
+
+/** In a packaged app, the copy that electron-builder extracts next to app.asar (asarUnpack). */
+const unpacked = (path: string) => path.replace(/app\.asar(?=[\\/])/, 'app.asar.unpacked');
+
+/** The Tree-sitter runtime and grammars ship as files of a runtime dependency (ADR 0012). */
+function treeSitterDir(): string {
+  return unpacked(dirname(createRequire(__filename).resolve('@vscode/tree-sitter-wasm')));
 }
 
 /**
@@ -136,6 +148,11 @@ export function registerIpc(
   const reportFailure = makeFailureRouter(errors);
   const terminals = createTerminalService();
   const gitService = createGitService();
+  const projects = createProjectService({
+    workerPath: unpacked(join(__dirname, 'project-worker.js')),
+    wasmDir: treeSitterDir(),
+    report: errors.report,
+  });
   let hooksWarned = false;
   const claudeSessions = createClaudeService({
     dataDir: app.getPath('userData'),
@@ -191,6 +208,7 @@ export function registerIpc(
         owners.delete(id);
         terminals.closeOwner(id);
         gitService.clearOwner(id);
+        projects.closeOwner(id);
         void claudeSessions.closeOwner(id).catch(() => {
           errors.logger.error('main', 'claude-window-close-failed');
         });
@@ -337,9 +355,27 @@ export function registerIpc(
     },
   };
 
+  const project: Handlers['project'] = {
+    open: async ({ workspaceId }, { senderId }) => {
+      if (senderId === undefined) return unavailable;
+      const owner = windowOwner(senderId);
+      if (!owner) return unavailable;
+      const workspaces = await getWorkspaces();
+      const root = await workspaces.activeRootFor(workspaceId);
+      if (!root || owners.get(senderId) !== owner) return unavailable;
+      return projects.open(
+        senderId,
+        workspaceId,
+        root,
+        (update) => owner.emit(contract.project.updated, update),
+        () => owners.get(senderId) === owner && workspaces.isActive(workspaceId),
+      );
+    },
+  };
+
   const disposeHandlers = registerIpcHandlers(
     ipcMain,
-    makeHandlers(errors, workspace, terminal, claude, git),
+    makeHandlers(errors, workspace, terminal, claude, git, project),
     {
       isTrustedSender: makeSenderCheck(devServer),
       onFailure: reportFailure,
@@ -358,6 +394,7 @@ export function registerIpc(
 
   return () => {
     claudeSessions.terminateAll();
+    projects.dispose();
     for (const owner of owners.values()) owner.close();
     stopErrors();
     errorsChanged.cancel();

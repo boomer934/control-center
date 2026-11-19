@@ -75,3 +75,32 @@ test('node-pty ships unpacked with its native ConPTY module and worker', () => {
     rebuilt || (usingPrebuild && existsSync(join(pty, 'prebuilds', 'win32-x64', 'conpty.node'))),
   ).toBe(true);
 });
+
+test('the project model worker and the Tree-sitter runtime ship unpacked (ADR 0012)', () => {
+  const unpacked = `${ASAR}.unpacked`;
+  const worker = join(unpacked, 'out', 'main', 'project-worker.js');
+  expect(existsSync(worker)).toBe(true);
+  // Every module the worker loads by relative path (chunks shared with the main bundle) must be
+  // unpacked next to it, and none may carry the E2E fault injectors.
+  const code = readFileSync(worker, 'utf8');
+  const local = [...code.matchAll(/require\(["'](\.\/[^"']+)["']\)/g)].map((m) => m[1]!);
+  expect(local.length).toBeGreaterThan(0);
+  for (const path of local) {
+    const file = join(unpacked, 'out', 'main', path);
+    expect(existsSync(file), path).toBe(true);
+    expect(readFileSync(file, 'utf8'), path).not.toContain('__ccFaults');
+  }
+  const wasm = join(unpacked, 'node_modules', '@vscode', 'tree-sitter-wasm', 'wasm');
+  for (const name of [
+    'tree-sitter.js',
+    'tree-sitter.wasm',
+    'tree-sitter-typescript.wasm',
+    'tree-sitter-tsx.wasm',
+    'tree-sitter-javascript.wasm',
+    'tree-sitter-python.wasm',
+    'tree-sitter-go.wasm',
+    'tree-sitter-rust.wasm',
+  ]) {
+    expect(existsSync(join(wasm, name)), name).toBe(true);
+  }
+});

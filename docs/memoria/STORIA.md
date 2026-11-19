@@ -4,11 +4,31 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-19 — Mappa della Vista Live (5b)
+
+- **Fatto:** branch `feat/mappa` impilato sulla 5a (in revisione da Codex). Mappa React Flow in `renderer/src/live/`: contenitori per cartella con file toccati e vicini, resto collassato con calore; stati dei nodi dagli `AgentEvent`; chip e archi degli agenti; nodi temporanei per comandi e MCP; Segui agente, Fit, zoom semantico, minimappa a heatmap, anteprima diff; map lab con le fixture e banco da 500 file (ADR 0013).
+- **Decisioni:**
+  - raggruppamento per cartelle con griglia e ELK `rectpacking` nel worker, invece del grafo `layered` degli import (stabile, niente groviglio);
+  - stato per nodo da uno store esterno: la lista dei nodi cambia solo con il layout;
+  - un file si accende da `tool.called` (i `file.read`/`file.written` arrivano a fine chiamata);
+  - anteprima diff dal `git:diff` esistente, niente nuovo IPC;
+  - map lab tolto dalla produzione con una condizione letterale nel punto dell'import dinamico.
+- **Problemi:**
+  - React Flow toglie i `pointer-events` ai nodi non selezionabili né trascinabili: servono `onNodeMouseEnter`/`Leave`;
+  - `rectpacking` senza larghezza obiettivo impila i contenitori in colonna;
+  - Rollup non piega una costante importata da un altro modulo: il chunk del lab finiva in produzione;
+  - in mancanza di baseline Playwright scrive gli screenshot locali: vanno cancellati, le baseline vengono dalla CI.
+- **Verifica:** `pnpm verify` verde (381 test); E2E della mappa verdi (144 fps, p95 7 ms con 500 nodi e 20 eventi/s); test visivi da completare con le baseline della CI.
+
+---
+
 ## 2026-11-19 — Correzioni della revisione 5a
 
 - **Fatto:** corretti i sette rilievi della revisione incrociata della PR #56. Aggiunti test per il modulo Go alla radice, il limite dei percorsi, le regole di esclusione, l'arresto del worker durante la prima scansione, il recupero del watcher e l'ordine dei messaggi IPC.
 - **Decisioni:** la stringa vuota rappresenta la directory radice solo in `importDirs` (ADR 0012). Il renderer richiede uno snapshot aggiornato se ha già visto un delta successivo.
 - **Problemi:** la prova del worker dentro l'eseguibile Electron distribuito resta tracciata in `PROBLEMI_NOTI.md`.
+
+---
 
 ## 2026-11-19 — Modello del progetto (5a) e correzioni della 4b
 

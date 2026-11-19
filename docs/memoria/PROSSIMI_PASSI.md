@@ -9,12 +9,13 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
-2. **[Claude] (F5b)** Mappa (Opus 5.5, high). Integrare `ProjectSnapshot` e `ProjectDelta` dopo il merge della PR #56. In `importDirs`, `''` indica la radice del workspace.
+2. **[Claude] (F5b)** Mappa implementata su `feat/mappa` (ADR 0013). Dopo il merge della #56: rebase su `main`, PR, baseline `map-*` dall'artifact della CI Windows, verifica del budget 60 fps in CI, revisione impeccable sulla PR. In `importDirs`, `''` indica la radice del workspace.
 
 ## Dopo
 
-3. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-4. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non compare "Waiting for approval." entro 5 s): capire se è l'ambiente o il test.
+3. **[Codex] (F5c)** Timeline e replay (`gpt-6.2-sol`, high): lo scrubber chiede alla mappa `MapActivity.viewAt(t)`; la mappa accetta già un istante fisso (`at`).
+4. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+5. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non compare "Waiting for approval." entro 5 s): capire se è l'ambiente o il test.
 
 ## Quando capita
 
@@ -36,4 +37,5 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 - Opzionale in locale: `winget install gitleaks`, `npm i -g pnpm@10`, `npx playwright install chromium` (Chromium 1255 per Playwright 1.65).
 - **(F10)** Icona dell'app, installer NSIS, firma e aggiornamenti: oggi `electron-builder.config.ts` serve solo per `--dir` e i test dei Fuses. Togliere `packageExtensions` per `@peculiar/utils` quando dichiarerà `tslib` (vedi `PROBLEMI_NOTI.md`).
 - **(F10, prima di rendere pubblica la repo)** Attivare la protezione di `main` e fissare le GitHub Actions a SHA. Riverificare il nome Vernier (marchi `VERNIER…` in classe 9 negli USA, pacchetto npm `vernier` già esistente, domini `vernier.com`/`.dev` in uso); dove crea problemi si resta con Control Center.
+- **(F5b+)** Mappa: anteprima dell'ultima modifica dell'agente (oggi è il diff non committato del file: gli eventi portano solo i conteggi); simboli nello zoom semantico (serve il modello); menu `@` della palette per scegliere l'agente da seguire; anteprima diff anche da tastiera.
 - **(F5a+)** Modello del progetto: ruoli per FastAPI e altri framework Python; `paths` dei `tsconfig` delle sottocartelle ed `extends`; moduli Python fuori da radice e `src/`; cache su disco del modello; pool di worker se l'indicizzazione di progetti grandi diventa lenta.

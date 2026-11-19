@@ -1,0 +1,357 @@
+/* Map of the Live view (phase 5b). Only tokens of the design system; the node, container, chip,
+   edge, legend and readout classes come from design/sistema/componenti.css. */
+
+.live-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.live-view > .live-timeline {
+  flex: 0 1 auto;
+  max-height: 40%;
+  overflow: auto;
+}
+.lmap-area {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(var(--sp-10) * 6);
+}
+
+/* Toolbar */
+.lmap-tb button.tool {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-right: var(--sz-hair) solid var(--line);
+  font: inherit;
+  font-size: var(--fs-m);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+.lmap-tb .r button.tool {
+  border-right: 0;
+  border-left: var(--sz-hair) solid var(--line);
+}
+.lmap-tb button.tool:hover:not(:disabled) {
+  background: var(--bg-2);
+  color: var(--fg-1);
+}
+.lmap-tb button.tool[aria-pressed='true'] {
+  color: var(--fg-1);
+  background: var(--bg-3);
+}
+.lmap-tb button.tool:disabled {
+  color: var(--fg-3);
+  cursor: default;
+}
+.lmap-tb button.tool:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: calc(var(--sz-stroke) * -1);
+}
+.lmap-tb,
+.lmap-tb .r {
+  min-width: 0;
+}
+.lmap-about {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-5);
+  border-left: var(--sz-hair) solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.lmap-about dd {
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lmap .node.has-diff:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: var(--sz-hair);
+}
+.lmap-about dd + dt + dd::before {
+  content: '·';
+  margin-right: var(--sp-3);
+  color: var(--fg-3);
+}
+.lmap-about [data-testid='electron-version']::before {
+  content: '· Electron ';
+}
+
+/* Canvas */
+.lmap {
+  outline: none;
+}
+.lmap .react-flow__pane {
+  cursor: grab;
+}
+.lmap .react-flow__node {
+  /* Re-layouts glide instead of jumping. */
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.lmap .ctr,
+.lmap .node {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.lmap button.node,
+.lmap button.ctr {
+  appearance: none;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-stretch: var(--mono-cell);
+  font-size: var(--fs-map);
+  text-align: left;
+  cursor: pointer;
+}
+.lmap button.ctr {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+  background: var(--bg-1);
+  color: var(--fg-1);
+}
+.lmap button.node:hover,
+.lmap button.ctr:hover {
+  border-color: var(--line-3);
+}
+.lmap button.node:focus-visible,
+.lmap button.ctr:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: var(--sz-hair);
+}
+.lmap .ctr .heat {
+  display: inline-flex;
+  gap: var(--sz-hair);
+}
+.lmap .ctr .heat i {
+  width: var(--sz-stroke);
+  height: var(--sz-glyph-s);
+  background: var(--line-2);
+  border-radius: var(--sz-hair);
+}
+.lmap .ctr .heat i.h {
+  background: var(--st-writing);
+}
+.lmap .ctr .heat i.r {
+  background: var(--st-reading);
+}
+.lmap .node.has-diff {
+  cursor: pointer;
+}
+.lmap .ctr.collapsed.s-error {
+  border-color: var(--st-error);
+}
+
+/* Semantic zoom: far away the names give way to folders and their heat. */
+.lmap[data-zoom='far'] .node .nm,
+.lmap[data-zoom='far'] .node .meta,
+.lmap[data-zoom='far'] .node .sign {
+  visibility: hidden;
+}
+.lmap[data-zoom='far'] .ctr > .lg {
+  /* Counter-scaled: the folder names stay readable however far the map is. */
+  font-size: calc(var(--fs-map) / var(--map-zoom));
+  line-height: var(--lh-tight);
+  top: 0;
+  transform: translateY(-100%);
+}
+.lmap[data-zoom='far'] .node .heat,
+.lmap[data-zoom='far'] .ctr .heat {
+  visibility: visible;
+}
+.lmap[data-zoom='far'] .achip .nmx,
+.lmap[data-zoom='far'] .achip .st {
+  display: none;
+}
+
+/* Overlay: links and chips, in map coordinates */
+.lmap-links {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--sz-hair);
+  height: var(--sz-hair);
+  overflow: visible;
+  pointer-events: none;
+}
+.e-imp {
+  fill: none;
+  stroke: var(--line-3);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.lmap .achip {
+  pointer-events: none;
+}
+.lmap-trip {
+  offset-rotate: 0deg;
+  offset-distance: 100%;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lmap-trip {
+    animation: lmap-trip var(--dur-3) var(--ease-io) 1 both;
+  }
+  .lmap-trip.back {
+    animation-direction: reverse;
+  }
+}
+@keyframes lmap-trip {
+  from {
+    offset-distance: 0%;
+    opacity: 1;
+  }
+  to {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+/* Minimap: the heatmap of the zones the agents touched */
+.lmap .lmap-mini {
+  width: calc(var(--sp-10) * 3);
+  height: calc(var(--sp-10) * 2);
+  margin: var(--sp-5);
+  background: var(--bg-0);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-3);
+  overflow: hidden;
+}
+.lmap .lmap-mini svg {
+  display: block;
+}
+.lmap .lmap-mini .react-flow__minimap-mask {
+  fill: var(--scrim);
+}
+.mm-r {
+  fill: var(--st-reading);
+}
+.mm-c {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 4;
+}
+
+/* Notes over the canvas */
+.lmap-note {
+  position: absolute;
+  left: var(--sp-5);
+  top: var(--sp-5);
+}
+.lmap-empty {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  padding: var(--sp-6) var(--sp-7);
+  background: var(--bg-1);
+  border: var(--sz-hair) solid var(--line);
+  border-radius: var(--r-3);
+  pointer-events: none;
+}
+.lmap-pill {
+  position: absolute;
+  left: 50%;
+  top: var(--sp-5);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-5);
+  background: var(--bg-0);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  color: var(--fg-2);
+}
+.lmap .legend,
+.lmap .readout {
+  z-index: 5;
+}
+
+/* Diff preview */
+.lmap-diff {
+  position: absolute;
+  z-index: 10;
+  width: calc(var(--sp-10) * 8 + var(--sp-9));
+  max-height: calc(var(--sp-10) * 7);
+  overflow: hidden;
+  background: var(--bg-2);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-3);
+  box-shadow: var(--shadow-overlay);
+  pointer-events: none;
+}
+.lmap-diff-h {
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: var(--sz-hair) solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--fg-1);
+}
+.lmap-diff-m {
+  padding: var(--sp-4) var(--sp-5);
+  font-size: var(--fs-xs);
+  color: var(--fg-2);
+}
+.lmap-diff-b {
+  margin: 0;
+  padding: var(--sp-3) 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-prose);
+  white-space: pre;
+  overflow: hidden;
+}
+.lmap-diff-b > span {
+  display: block;
+  padding: 0 var(--sp-5);
+  color: var(--fg-2);
+}
+.lmap-diff-b > .add {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-fg);
+}
+.lmap-diff-b > .del {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-fg);
+}
+.lmap-diff-b > .hunk {
+  color: var(--fg-3);
+}
+
+.sr-only {
+  position: absolute;
+  width: var(--sz-hair);
+  height: var(--sz-hair);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lmap-trip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--sz-dot);
+  height: var(--sz-dot);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.lmap-trip.reading {
+  background: var(--st-reading);
+}
+.lmap-trip.writing {
+  background: var(--st-writing);
+}
+.lmap[data-zoom='far'] .ctr > .lg i {
+  display: none;
+}

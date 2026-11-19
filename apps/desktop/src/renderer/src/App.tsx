@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
 import type { WorkspaceState } from '@control-center/ipc-contract/workspace';
 import { SessionDock, SessionTimeline } from './chat/SessionDock';
-import { useClaudeChat } from './chat/useClaudeChat';
+import { useClaudeChat, type ClaudeChat } from './chat/useClaudeChat';
 import { ErrorBoundary } from './errors/ErrorBoundary';
 import { ErrorConsole } from './errors/ErrorConsole';
 import { FaultProbe } from './errors/faults';
@@ -11,6 +11,7 @@ import { useErrorList } from './errors/useErrorList';
 import { CheckpointDialog } from './git/CheckpointDialog';
 import { GitView } from './git/GitView';
 import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
+import { LiveMap, type DiffPreview } from './live/LiveMap';
 import { useShortcuts } from './keys/useShortcuts';
 import { CommandPalette, type PaletteCommand } from './palette/CommandPalette';
 import { ShortcutHelp } from './palette/ShortcutHelp';
@@ -27,6 +28,11 @@ import { useTheme } from './theme/ThemeProvider';
 import { Icon, IconSprite } from './ui/icons';
 import { Button } from './ui/primitives';
 
+// The literal condition (not MAP_LAB) lets Rollup drop the lab chunk, with the fixtures, from
+// the production build.
+const MapLab =
+  __CC_E2E_FAULTS__ || import.meta.env.DEV ? lazy(() => import('./live/MapLab')) : null;
+
 type InfoState = { kind: 'loading' } | { kind: 'ready'; info: AppInfo } | { kind: 'error' };
 
 const PHASE_OF: Partial<Record<SectionId, string>> = {
@@ -37,40 +43,121 @@ const PHASE_OF: Partial<Record<SectionId, string>> = {
   settings: 'a later phase',
 };
 
-function LiveView({ state, workspaceId }: { state: InfoState; workspaceId?: string }) {
+const GIT_DIFF_MESSAGE: Partial<Record<string, string>> = {
+  'not-repository': 'This workspace is not a Git repository.',
+  'git-unavailable': 'Git was not found on PATH.',
+  'too-large': 'The diff is too large to preview.',
+  busy: 'Git is busy. Hover again in a moment.',
+};
+
+/** Diff preview of the map: uncommitted changes of the file, on disk first, then staged. */
+async function loadFileDiff(workspaceId: string, path: string): Promise<DiffPreview> {
+  for (const staged of [false, true]) {
+    const result = await window.api.git.diff({
+      workspaceId,
+      target: { kind: 'file', path, staged },
+    });
+    if (result.ok && result.value.text.trim())
+      return { ok: true, text: result.value.text, truncated: result.value.truncated };
+    if (!result.ok && result.error !== 'stale')
+      return { ok: false, message: GIT_DIFF_MESSAGE[result.error] ?? 'Diff unavailable.' };
+  }
+  return { ok: false, message: 'No uncommitted changes in this file.' };
+}
+
+function LiveView({
+  state,
+  workspaceId,
+  chat,
+  onCheckpoint,
+  reviewDisabled,
+  openGit,
+}: {
+  state: InfoState;
+  workspaceId?: string;
+  chat: ClaudeChat;
+  onCheckpoint(checkpoint: GitCheckpoint): void;
+  reviewDisabled: boolean;
+  openGit(): void;
+}) {
   // Deltas re-render this view only, not the whole shell.
   const project = useProjectModel(workspaceId);
-  return (
-    <div className="view-body" data-focus-scope="live" data-testid="shell">
-      <h1 className="shell-title">Control Center</h1>
-      {state.kind === 'loading' && <p className="shell-muted">Starting…</p>}
+  const loadDiff = useCallback(
+    (path: string) => (workspaceId ? loadFileDiff(workspaceId, path) : Promise.reject(new Error())),
+    [workspaceId],
+  );
+  const about = (
+    <>
+      {state.kind === 'loading' && <span className="lmap-about">Starting…</span>}
       {state.kind === 'error' && (
-        <p className="shell-error" role="alert">
+        <span className="lmap-about shell-error" role="alert">
           The main process did not answer.
-        </p>
+        </span>
       )}
       {state.kind === 'ready' && (
-        <dl className="shell-info" data-testid="app-info">
-          <dt>Version</dt>
-          <dd>{state.info.version}</dd>
-          <dt>Electron</dt>
-          <dd data-testid="electron-version">{state.info.electron}</dd>
-          <dt>Chromium</dt>
-          <dd>{state.info.chrome}</dd>
-          <dt>Node</dt>
-          <dd>{state.info.node}</dd>
-          <dt>Project</dt>
+        <dl className="lmap-about" data-testid="app-info">
+          <dt className="sr-only">Project</dt>
           <dd data-testid="project-model" aria-live="polite">
             {describeProject(project)}
           </dd>
+          <dt className="sr-only">Version</dt>
+          <dd title={`Chromium ${state.info.chrome} · Node ${state.info.node}`}>
+            v{state.info.version}
+          </dd>
+          <dt className="sr-only">Electron</dt>
+          <dd data-testid="electron-version">{state.info.electron}</dd>
         </dl>
       )}
+    </>
+  );
+  return (
+    <div className="live-view" data-focus-scope="live" data-testid="shell">
+      <h1 className="sr-only">Control Center</h1>
+      <div className="lmap-area">
+        {project.kind === 'ready' ? (
+          <LiveMap
+            snapshot={project.snapshot}
+            records={chat.records}
+            pendingPermission={chat.permissions.length > 0}
+            loadDiff={loadDiff}
+            openDiff={openGit}
+            aside={about}
+          />
+        ) : (
+          <>
+            <div className="tb lmap-tb">
+              <span className="tool">
+                <b>Live</b>
+              </span>
+              <span className="r">{about}</span>
+            </div>
+            <div className="map">
+              <div className="empty lmap-empty">
+                <Icon name={project.kind === 'idle' ? 'folder' : 'live'} className="g" />
+                <h2>{project.kind === 'idle' ? 'No workspace open' : describeProject(project)}</h2>
+                <p>
+                  {project.kind === 'idle'
+                    ? 'Open a folder to see its files and what the agents do to them.'
+                    : 'The map appears as soon as the file list is read.'}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="live-timeline">
+        <SessionTimeline
+          records={chat.records}
+          onCheckpoint={onCheckpoint}
+          reviewDisabled={reviewDisabled}
+        />
+      </div>
       <FaultProbe />
     </div>
   );
 }
 
-function Placeholder({ route }: { route: Exclude<RouteId, 'live' | 'components'> }) {
+function Placeholder({ route }: { route: Exclude<RouteId, 'live' | 'components' | 'map-lab'> }) {
   const label = SECTIONS.find((s) => s.id === route)?.label ?? route;
   return (
     <div className="view-body" data-testid={`view-${route}`}>
@@ -332,15 +419,23 @@ function AppShell({
   const view =
     route === 'live' ? (
       <>
-        <LiveView state={info} workspaceId={workspaceId} />
-        <SessionTimeline
-          records={chat.records}
+        <LiveView
+          state={info}
+          workspaceId={workspaceId}
+          chat={chat}
           onCheckpoint={setCheckpoint}
           reviewDisabled={chat.status === 'running' || chat.pending}
+          openGit={() => go('git')}
         />
       </>
     ) : route === 'components' ? (
       <ComponentsPage />
+    ) : route === 'map-lab' ? (
+      MapLab && (
+        <Suspense fallback={null}>
+          <MapLab />
+        </Suspense>
+      )
     ) : route === 'git' ? (
       <GitView
         key={workspaceId}

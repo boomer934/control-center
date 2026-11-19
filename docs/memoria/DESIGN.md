@@ -117,3 +117,21 @@ Il movimento comunica stato, non decora. Durate 150-300 ms con curve dai token, 
   - conferme distruttive senza azione su `Enter`;
   - una notifica di Windows non approva mai un permesso: porta alla richiesta, dove si vede il contesto (confermato dall'utente il 2026-11-14);
   - sul fondo pieno dell'attesa sigle e glifi usano `--on-waiting`, mai il colore dell'agente.
+
+## Mappa della Vista Live (Fase 5b)
+
+Implementazione in `apps/desktop/src/renderer/src/live/` (ADR 0013). Riusa le classi di `componenti.css`: `.ctr`, `.node`, `.heat`, `.trail`, `.prog`, `.achip`, `.e-*`, `.legend`, `.readout` e i colori `.mm-*` della minimappa. Classi nuove, in `live/map.css`, solo con i token:
+
+- `.mm-r` (file letti) e `.mm-c` (contenitore aperto, solo contorno) nella minimappa;
+- `.e-imp`: i link degli import del file sotto il puntatore, tratteggiati e neutri;
+- `.lmap-trip`: un solo viaggio di un punto lungo l'arco quando l'agente cambia bersaglio. Le letture vanno verso l'agente, le scritture verso il file. Con il movimento ridotto non c'è.
+
+Regole:
+
+- un contenitore per cartella di primo livello;
+- i file toccati e i loro vicini diretti si vedono, il resto è collassato con le barre di calore (scritti `h`, letti `r`);
+- l'arco di un chip corre nello spazio tra le righe e scende sul bordo superiore del file, così non attraversa gli altri nodi;
+- zoom semantico sotto il 45%: spariscono nomi e glifi dei file, le etichette delle cartelle sono controscalate (`--map-zoom`) e restano leggibili;
+- la mappa apre con `Fit` (massimo 100%) e resta inquadrata finché nessuno la muove;
+- `F` segue l'agente, `0` inquadra, `Esc` chiude la pillola "Following stopped";
+- l'anteprima del diff compare dopo 350 ms sopra un file con modifiche.

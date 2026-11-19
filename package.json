@@ -1,6 +1,6 @@
 {
   "name": "control-center",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Local AI Control Center: a visual desktop app to watch and orchestrate AI coding agents (Claude Code + local Ollama models) and your local dev infrastructure.",
   "license": "MIT",

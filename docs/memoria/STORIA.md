@@ -10,6 +10,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - **Decisioni** — GPT-6.2 Sol per l'implementazione Codex e GPT-6.2 Astra a effort `high` per le seconde opinioni previste. La 4b va in revisione con Claude `/code-review medium`.
 - **Problemi** — Restano la revisione incrociata e la verifica degli snapshot sulla CI Windows.
 - **CI della PR #52** — Due test di ripristino con processi Git reali hanno superato i 5 s predefiniti sul runner Windows. Il timeout della suite di integrazione Git è ora di 20 s.
+- **E2E Windows** — Il test dei checkpoint attende più a lungo la fine del turno Claude. Nel test dell'editor, Playwright cerca di nuovo la riga del link se xterm la sostituisce mentre ridisegna il prompt.
 
 ---
 

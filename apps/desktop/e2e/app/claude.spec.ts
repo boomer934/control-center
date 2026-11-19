@@ -214,7 +214,7 @@ test('uses the Git panel and restores a session checkpoint from the timeline', a
   const timeline = page.getByRole('region', { name: 'Session timeline' });
   const review = timeline.getByRole('button', { name: 'Review Git checkpoint' });
   await expect(review).toBeVisible({ timeout: 15_000 });
-  await expect(timeline).toContainText('Turn completed');
+  await expect(timeline).toContainText('Turn completed', { timeout: 20_000 });
   await expect(review).toBeEnabled();
   await writeFile(tracked, 'Changed after Claude\n');
   await writeFile(join(cwd, 'new.txt'), 'Keep this file for now\n');

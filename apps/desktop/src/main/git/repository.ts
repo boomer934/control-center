@@ -67,6 +67,9 @@ function runner(cwd: string): RunGit {
     GIT_NO_LAZY_FETCH: '1',
     GIT_NO_REPLACE_OBJECTS: '1',
   });
+  // The commit takes no pathspec. Its hooks run their own Git commands, which should
+  // match the user's terminal, where glob pathspecs keep their usual meaning.
+  const { GIT_LITERAL_PATHSPECS: _literal, ...hookEnv } = env;
   return (args, { index, input, allowOne, commitHooks } = {}) =>
     new Promise((accept, reject) => {
       const child = execFile(
@@ -93,9 +96,11 @@ function runner(cwd: string): RunGit {
         ],
         {
           cwd,
-          env: index ? { ...env, GIT_INDEX_FILE: index } : env,
+          env: index ? { ...env, GIT_INDEX_FILE: index } : commitHooks ? hookEnv : env,
           windowsHide: true,
-          timeout: 30_000,
+          // Hooks such as linters can run for minutes. Killing Git mid-commit would leave
+          // index.lock behind, so the commit gets a longer budget than the other commands.
+          timeout: commitHooks ? 300_000 : 30_000,
           maxBuffer: MAX_OUTPUT,
           encoding: 'utf8',
         },

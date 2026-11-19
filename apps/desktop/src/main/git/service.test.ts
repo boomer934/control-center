@@ -168,7 +168,10 @@ describe('Git workspace on temporary repositories', { timeout: 20_000 }, () => {
       error: 'hook-failed',
     });
     expect(git('rev-parse', 'HEAD')).toBe(original);
-    await writeFile(hook, '#!/bin/sh\necho ran > hook-marker\n', { mode: 0o755 });
+    // Hooks see the user's usual pathspec semantics, not the app's literal ones.
+    await writeFile(hook, '#!/bin/sh\necho "ran ${GIT_LITERAL_PATHSPECS:-glob}" > hook-marker\n', {
+      mode: 0o755,
+    });
     git('config', 'commit.gpgsign', 'true');
     expect(await service.commit(ctx(), 'Signed commit')).toEqual({
       ok: false,
@@ -177,7 +180,7 @@ describe('Git workspace on temporary repositories', { timeout: 20_000 }, () => {
     await expect(read('hook-marker')).rejects.toMatchObject({ code: 'ENOENT' });
     git('config', 'commit.gpgsign', 'false');
     ok(await service.commit(ctx(), 'Allowed by the hook'));
-    expect(await read('hook-marker')).toBe('ran\n');
+    expect(await read('hook-marker')).toBe('ran glob\n');
   });
 
   it(

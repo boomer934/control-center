@@ -21,6 +21,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-19 — Revisione del pannello Git e dei checkpoint (4b)
+
+- **Fatto:** riallineata la [PR #52](https://github.com/boomer934/control-center/pull/52) a `origin/main` dopo le PR #51 e #53. Conservata la memoria di main e aggiornate le voci della 4b. Tolti dalla PR la pianificazione dei modelli e il ritocco al test del terminale.
+- **Decisioni:** la chat continua con un avviso nello storico se fallisce il checkpoint e chiede di riprovare quando Git è occupato. Il commit esegue gli hook e rimanda al terminale se è richiesta la firma. Ogni workspace mantiene 20 checkpoint e 30 recuperi. Il pannello conta i file omessi e aggiorna il diff selezionato.
+- **Problemi:** l'istantanea completa ha ancora un costo sui repository grandi. Il ripristino riusa il piano dell'anteprima e ricontrolla i percorsi e i filtri prima della scrittura.
+- **Verifica:** `pnpm verify` con 349 test passati e uno smoke test opzionale saltato. Cinque E2E Claude e Git verdi. La CI della PR precede il merge dell'utente.
+
+---
+
 ## 2026-11-19 — Assegnazioni GPT-6.2 e preparazione della revisione 4b
 
 - **Fatto** — Integrate le assegnazioni GPT-6.2 nel ramo `feat/git-checkpoints`. `CORSIE.md` raccoglie modelli ed effort, `PIANO.md` contiene i goal e le due skill di avvio consultano entrambi.

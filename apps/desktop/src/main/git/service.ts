@@ -9,7 +9,9 @@ import {
   readCheckpoint,
   restorePlan,
   saveCheckpoint,
+  validateRestorePaths,
   withSnapshot,
+  type RestorePlan,
   type Snapshot,
   type Trees,
 } from './checkpoints';
@@ -46,10 +48,10 @@ interface Preview {
   workspaceId: string;
   current: Snapshot;
   target: Trees;
-  path?: string;
+  plan: RestorePlan;
 }
 
-async function statusFiles(git: RunGit, path?: string) {
+export async function statusFiles(git: RunGit, path?: string) {
   const output = await git([
     'status',
     '--porcelain=v1',
@@ -61,12 +63,14 @@ async function statusFiles(git: RunGit, path?: string) {
     ...(path ? [path] : []),
   ]);
   const entries = nulList(output);
-  if (entries.length > 5000) fail('too-large');
-  return entries.map((entry) => {
+  const files = [];
+  for (const entry of entries) {
     const name = entry.slice(3);
-    if (!GitPathSchema.safeParse(name).success) fail('unsupported');
-    return { index: entry[0]!, worktree: entry[1]!, path: name };
-  });
+    if (!GitPathSchema.safeParse(name).success) continue;
+    files.push({ index: entry[0]!, worktree: entry[1]!, path: name });
+    if (files.length === 5000) break;
+  }
+  return { files, omitted: entries.length - files.length };
 }
 
 async function commits(git: RunGit, currentHead: string) {
@@ -153,7 +157,7 @@ export function createGitService() {
     status: (ctx: Context) =>
       access(ctx, false, async (git) => {
         const currentHead = await head(git);
-        const [name, files, recent, recovery] = await Promise.all([
+        const [name, changes, recent, recovery] = await Promise.all([
           branch(git),
           statusFiles(git),
           commits(git, currentHead),
@@ -162,7 +166,7 @@ export function createGitService() {
         return {
           branch: name || null,
           head: currentHead || null,
-          files,
+          ...changes,
           commits: recent,
           recovery,
         };
@@ -186,7 +190,8 @@ export function createGitService() {
           );
         }
         await checkPath(ctx.root, target.path);
-        const row = (await statusFiles(git, target.path)).find((file) => file.path === target.path);
+        const { files } = await statusFiles(git, target.path);
+        const row = files.find((file) => file.path === target.path);
         if (!row) fail('stale');
         if (row.index === '?' && !target.staged) {
           return patch(await untrackedDiff(ctx.root, git, target.path));
@@ -204,7 +209,8 @@ export function createGitService() {
     stage: (ctx: Context, path: string, staged: boolean) =>
       access(ctx, true, async (git) => {
         await checkPath(ctx.root, path);
-        if (!(await statusFiles(git, path)).some((file) => file.path === path)) fail('stale');
+        const { files } = await statusFiles(git, path);
+        if (!files.some((file) => file.path === path)) fail('stale');
         if (staged) {
           await checkFilters(git, pathInput([path]));
           checkActive(ctx);
@@ -226,9 +232,14 @@ export function createGitService() {
           allowOne: true,
         });
         if (interrupted) fail('unsupported');
+        const signing = await git(['config', '--type=bool', '--get', 'commit.gpgsign'], {
+          allowOne: true,
+        });
+        if (signing.trim() === 'true') fail('signing-required');
         checkActive(ctx);
-        await git(['commit', '--no-gpg-sign', '--cleanup=verbatim', '--file=-'], {
+        await git(['commit', '--cleanup=verbatim', '--file=-'], {
           input: message,
+          commitHooks: true,
         });
         return null;
       }),
@@ -251,7 +262,7 @@ export function createGitService() {
             workspaceId: ctx.workspaceId,
             current,
             target,
-            path,
+            plan,
           });
           return { token, files: plan.files, worktree, index };
         });
@@ -270,8 +281,10 @@ export function createGitService() {
         previews.delete(ctx.owner);
         return withSnapshot(git, async (current, scratch) => {
           if (!sameSnapshot(current, preview.current)) fail('stale');
-          const plan = await restorePlan(git, ctx.root, current, preview.target, preview.path);
+          const { plan } = preview;
           if (!plan.files.length) return null;
+          // Ignored files and attributes can change without changing either snapshot tree.
+          await validateRestorePaths(git, ctx.root, preview.target, plan);
           checkActive(ctx);
           const recovery = await saveCheckpoint(git, ctx.workspaceId, current, true);
           checkActive(ctx);

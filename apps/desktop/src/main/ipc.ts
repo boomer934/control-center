@@ -25,6 +25,7 @@ import { resolveClaude, resolveHookNode } from './claude/cli';
 import { createClaudeService } from './claude/service';
 import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
+import { fail as failGit } from './git/repository';
 import { createGitService } from './git/service';
 import { coalesce, makeFailureRouter } from './ipc-events';
 import { createProjectService } from './project/service';
@@ -158,8 +159,10 @@ export function registerIpc(
     dataDir: app.getPath('userData'),
     report: errors.report,
     prepareTurn: async (root, workspaceId, active, create) => {
-      const current = await (await getWorkspaces()).activeRootFor(workspaceId);
-      if (root !== current) throw new Error('Workspace root changed');
+      const current = await getWorkspaces()
+        .then((workspaces) => workspaces.activeRootFor(workspaceId))
+        .catch(() => failGit('workspace-unavailable'));
+      if (root !== current) failGit('workspace-unavailable');
       return gitService.checkpoint(root, workspaceId, active, create);
     },
     programs: async () => {

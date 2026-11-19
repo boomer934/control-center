@@ -6,7 +6,8 @@
 import { randomUUID } from 'node:crypto';
 import type { ErrorInput } from '@control-center/app-log';
 import { makeTextCleaner, type AgentEvent } from '@control-center/event-schema';
-import type { GitCheckpoint } from '@control-center/ipc-contract';
+import type { GitCheckpoint, GitError } from '@control-center/ipc-contract';
+import { GitFailure } from '../git/repository';
 import {
   CLAUDE_EVENTS_PER_UPDATE,
   MAX_CLAUDE_MESSAGE_CHARS,
@@ -44,7 +45,7 @@ interface Entry {
   workspaceId: string;
   root: string;
   preparing?: boolean;
-  checkpointCreated?: boolean;
+  firstTurnStarted?: boolean;
   historyId: string;
   record?: (record: ClaudeHistoryRecord) => void;
   clean: (text: string) => string;
@@ -190,6 +191,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       const session = entry.session;
       const active = () => !entry.closed && isActive(entry.workspaceId);
       let checkpoint: GitCheckpoint | null = null;
+      let checkpointWarning: GitError | undefined;
       if (deps.prepareTurn) {
         if (isWorkspaceBusy(entry.workspaceId)) return 'busy';
         entry.preparing = true;
@@ -198,10 +200,14 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
             entry.root,
             entry.workspaceId,
             active,
-            !entry.checkpointCreated,
+            !entry.firstTurnStarted,
           );
-        } catch {
-          return active() ? 'checkpoint-unavailable' : 'workspace-unavailable';
+        } catch (error) {
+          if (entry.closed) return 'closed';
+          const code = error instanceof GitFailure ? error.reason : 'failed';
+          if (!active() || code === 'workspace-unavailable') return 'workspace-unavailable';
+          if (code === 'busy') return 'checkpoint-busy';
+          checkpointWarning = code;
         } finally {
           entry.preparing = false;
         }
@@ -219,7 +225,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
         entry.record = record;
       }
       if (result !== 'started') return result;
-      entry.checkpointCreated = true;
+      entry.firstTurnStarted = true;
       record?.({
         kind: 'prompt',
         text: entry
@@ -227,6 +233,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           .slice(0, MAX_CLAUDE_MESSAGE_CHARS),
       });
       if (checkpoint) record?.({ kind: 'checkpoint', checkpoint });
+      if (checkpointWarning) record?.({ kind: 'checkpoint-warning', code: checkpointWarning });
       for (const event of earlyRecords) record?.(event);
       return result;
     },

@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. 5a (modello del progetto) implementata su `feat/modello-progetto`; correzioni della 4b in PR #55._
+_Ultimo aggiornamento 2026-11-19. 5a (modello del progetto) implementata su `feat/modello-progetto`; correzioni della 4b unite con la PR #55._
 
 ## Fase
 
@@ -22,7 +22,7 @@ _Ultimo aggiornamento 2026-11-19. 5a (modello del progetto) implementata su `fea
 - **4.2**, workspace e terminale: ✅ unita su `main` (PR #40, `4b928ab`, ADR 0008), CI verde dopo la correzione del test dei percorsi. `/code-review high` di Claude: 9 punti minori, in `PROSSIMI_PASSI.md`.
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
-- **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi sono nella [PR #55](https://github.com/boomer934/control-center/pull/55) (`fix/git-checkpoint-review`), in attesa di CI e merge.
+- **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi sono unite con la [PR #55](https://github.com/boomer934/control-center/pull/55) (`6a17d71`, CI verde).
 - **Release:** 1.1.0 (PR #50, #51) e 1.2.0 (PR #54, `06525e4`) unite.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
@@ -31,7 +31,7 @@ _Ultimo aggiornamento 2026-11-19. 5a (modello del progetto) implementata su `fea
 
 ## Branch
 
-Claude: `feat/modello-progetto` (5a, da `origin/main` `06525e4`) e `fix/git-checkpoint-review` (PR #55). Codex: `feat/git-checkpoints` è superato (PR #52 unita; le correzioni passano dalla #55).
+Claude: `feat/modello-progetto` (5a, [PR #56](https://github.com/boomer934/control-center/pull/56), con `main` unito dopo la #55). Codex: `feat/git-checkpoints` è superato (PR #52 e #55 unite).
 
 ## Punto di ripresa
 
@@ -81,7 +81,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - E2E `project.spec.ts` 2/2 e `security.spec.ts` verdi; `pnpm e2e:packaged` 10/10;
   - suite `app`: rossi solo i 2 test visivi e il test della chat già noto.
 - **Non verificato:** il worker dentro l'app impacchettata (Playwright non si collega al pacchetto: provati solo i file estratti); la CI Windows.
-- **Ora:** PR di `feat/modello-progetto`, poi `/code-review medium` (Codex, da `CORSIE.md`) e merge a CI verde.
+- **Ora:** [PR #56](https://github.com/boomer934/control-center/pull/56) di `feat/modello-progetto`: CI, poi `/code-review medium` (Codex, da `CORSIE.md`) e merge a CI verde.
 - **Poi:** 5b (mappa, Opus 5.5 high), dopo il merge della 5a.
 
 ### Corsia Codex
@@ -93,7 +93,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
-- **Ora:** revisione incrociata della [PR #52](https://github.com/boomer934/control-center/pull/52) con Claude `/code-review medium` e CI prima del merge.
+- **Ora (annotato da Claude):** nessun task 4b aperto: la PR #52 e le correzioni della revisione (PR #55, `6a17d71`) sono unite.
 - **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
 
 ## Cosa funziona

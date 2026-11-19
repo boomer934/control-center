@@ -2,9 +2,11 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GitStatusSchema } from '@control-center/ipc-contract';
-import { createGitService } from './service';
+import { checkpointRef, restorePlan, saveCheckpoint } from './checkpoints';
+import { openRepository } from './repository';
+import { createGitService, statusFiles } from './service';
 
 const workspaceId = 'a'.repeat(64);
 let root: string;
@@ -24,6 +26,17 @@ const ok = <T>(result: { ok: true; value: T } | { ok: false; error: string }): T
   if (!result.ok) throw new Error(result.error);
   return result.value;
 };
+
+it('keeps the first 5000 valid status rows and counts invalid and excess rows', async () => {
+  const rows = Array.from({ length: 5002 }, (_, index) => `?? file-${index}.txt`);
+  rows.splice(1, 0, ' M ' + 'x'.repeat(4097));
+  const git = vi.fn().mockResolvedValue(rows.join('\0') + '\0');
+  const result = await statusFiles(git);
+  expect(result.files).toHaveLength(5000);
+  expect(result.files[1]?.path).toBe('file-1.txt');
+  expect(result.files.at(-1)?.path).toBe('file-4999.txt');
+  expect(result.omitted).toBe(3);
+});
 
 beforeEach(async () => {
   directory = await realpath(await mkdtemp(join(tmpdir(), 'cc-git-test-')));
@@ -135,6 +148,114 @@ describe('Git workspace on temporary repositories', { timeout: 20_000 }, () => {
     ok(await service.restore(ctx(), ok(await service.preview(ctx(), recovery!.id)).token));
     expect(await read('new.txt')).toBe('new file\n');
     expect(git('show', ':tracked.txt')).toBe('staged after');
+  });
+
+  it('runs commit hooks, keeps their output private, and refuses signed commits before hooks run', async () => {
+    const original = await initialCommit();
+    await mkdir(join(root, 'hooks'));
+    git('config', 'core.hooksPath', 'hooks');
+    const hook = join(root, 'hooks', 'pre-commit');
+    await writeFile(hook, '#!/bin/sh\necho private-hook-output >&2\nexit 13\n', { mode: 0o755 });
+    await write('tracked.txt', 'staged');
+    ok(await service.stage(ctx(), 'tracked.txt', true));
+    // A checkpoint creates refs, but must not run the repository hook.
+    const referenceHook = join(root, 'hooks', 'reference-transaction');
+    await writeFile(referenceHook, '#!/bin/sh\nexit 14\n', { mode: 0o755 });
+    await checkpoint();
+    await rm(referenceHook);
+    expect(await service.commit(ctx(), 'Hook rejects this')).toEqual({
+      ok: false,
+      error: 'hook-failed',
+    });
+    expect(git('rev-parse', 'HEAD')).toBe(original);
+    // Hooks see the user's usual pathspec semantics, not the app's literal ones.
+    await writeFile(hook, '#!/bin/sh\necho "ran ${GIT_LITERAL_PATHSPECS:-glob}" > hook-marker\n', {
+      mode: 0o755,
+    });
+    git('config', 'commit.gpgsign', 'true');
+    expect(await service.commit(ctx(), 'Signed commit')).toEqual({
+      ok: false,
+      error: 'signing-required',
+    });
+    await expect(read('hook-marker')).rejects.toMatchObject({ code: 'ENOENT' });
+    git('config', 'commit.gpgsign', 'false');
+    ok(await service.commit(ctx(), 'Allowed by the hook'));
+    expect(await read('hook-marker')).toBe('ran glob\n');
+  });
+
+  it(
+    'prunes checkpoints and recoveries to the newest 20 and 30 refs for each workspace',
+    { timeout: 60_000 },
+    async () => {
+      await initialCommit();
+      const run = (await openRepository(root))!;
+      const tree = git('rev-parse', 'HEAD^{tree}');
+      const trees = { index: tree, worktree: tree };
+      const other = 'b'.repeat(64);
+      const separate = await saveCheckpoint(run, other, trees);
+      for (const [recovery, count, limit] of [
+        [false, 25, 20],
+        [true, 32, 30],
+      ] as const) {
+        const saved = [];
+        for (let i = 0; i < count; i += 1) {
+          saved.push((await saveCheckpoint(run, workspaceId, trees, recovery)).id);
+        }
+        const prefix = `refs/control-center/${recovery ? 'recovery' : 'checkpoints'}/${workspaceId}/`;
+        const actual = git('for-each-ref', '--format=%(refname)', prefix)
+          .split('\n')
+          .map((ref) => ref.slice(prefix.length));
+        expect(actual.sort()).toEqual(saved.slice(-limit).sort());
+        if (recovery) {
+          expect(ok(await service.status(ctx())).recovery.map(({ id }) => id)).toEqual(
+            saved.slice(-limit).reverse(),
+          );
+        }
+      }
+      expect(git('rev-parse', '--verify', checkpointRef(other, separate.id))).toBeTruthy();
+    },
+  );
+
+  it('reads tree modes only for changed paths and checks all four trees', async () => {
+    await initialCommit();
+    const git = vi.fn(async ([command, ...args]: string[]) => {
+      if (command === 'diff') return 'tracked.txt\0';
+      if (command === 'ls-tree') {
+        const mode = args.includes('target-index') ? '120000' : '100644';
+        return `${mode} blob object\ttracked.txt\0`;
+      }
+      throw new Error('Unexpected Git command');
+    });
+    await expect(
+      restorePlan(
+        git,
+        root,
+        { index: 'current-index', worktree: 'current-worktree' },
+        { index: 'target-index', worktree: 'target-worktree' },
+      ),
+    ).rejects.toMatchObject({ reason: 'unsupported' });
+    expect(git.mock.calls.filter(([args]) => args[0] === 'ls-tree').map(([args]) => args)).toEqual(
+      ['current-worktree', 'target-worktree', 'current-index', 'target-index'].map((tree) => [
+        'ls-tree',
+        '-r',
+        '-z',
+        tree,
+        '--',
+        'tracked.txt',
+      ]),
+    );
+  });
+
+  it('revalidates ignored files after preview even when both snapshot trees still match', async () => {
+    await initialCommit();
+    await write('private.txt', 'included before');
+    const saved = await checkpoint();
+    await rm(join(root, 'private.txt'));
+    await write('.git/info/exclude', 'private.txt');
+    const preview = ok(await service.preview(ctx(), saved.id));
+    await write('private.txt', 'ignored after preview');
+    expect(await service.restore(ctx(), preview.token)).toEqual({ ok: false, error: 'stale' });
+    expect(await read('private.txt')).toBe('ignored after preview\n');
   });
 
   it('restores a single path and requires a fresh preview after further edits', async () => {

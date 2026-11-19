@@ -8,12 +8,13 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
-1. **[Claude] (F4b, revisione)** `/code-review medium` sulla [PR #52](https://github.com/boomer934/control-center/pull/52) (`feat/git-checkpoints`, ADR 0011), con attenzione al file system, ai processi Git e al ripristino dei file dell'utente. A CI verde e revisione conclusa, il merge spetta all'utente.
+1. **[Utente] (F4b)** Unire a CI verde la PR di `fix/git-checkpoint-review`, che porta su `main` le correzioni della revisione 4b.
+2. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high), branch `feat/modello-progetto`.
 
 ## Dopo
 
-2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-3. **[Claude] (F5a)** Modello del progetto (Opus 5.5, high).
+3. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+4. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non trova "Waiting for approval." in 5 s): capire se è l'ambiente o il test.
 
 ## Quando capita
 

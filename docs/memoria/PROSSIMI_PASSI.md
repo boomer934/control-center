@@ -9,7 +9,24 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
-2. **[Claude] (F5b)** Mappa implementata su `feat/mappa` (ADR 0013). Dopo il merge della #56: rebase su `main`, PR, baseline `map-*` dall'artifact della CI Windows, verifica del budget 60 fps in CI, revisione impeccable sulla PR. In `importDirs`, `''` indica la radice del workspace.
+
+2. **[Claude] (F5b, chiusura)** Mappa implementata su `feat/mappa` (ADR 0013). In `importDirs`, `''` indica la radice del workspace. Opus 5.5, effort high. Passi per la prossima sessione, in ordine:
+   1. ✅ **Controllo iniziale.** `git fetch` e `gh pr view 56`.
+      - Se la #56 non è unita: fermarsi (il branch dipende dalla 5a). Se la revisione di Codex ha cambiato il contratto `ProjectSnapshot`/`ProjectDelta`, adattare `live/visible.ts`.
+   2. ✅ **Rebase.** `git rebase --onto origin/main feat/modello-progetto feat/mappa`, perché la 5a arriva su `main` con un suo commit di merge. Il lockfile si rigenera con `npx pnpm@10.34.9 install`, non si risolve a mano. Poi `pnpm verify`.
+   3. **Verifica locale.**
+      - `npx electron-vite build --mode e2e`, poi in `apps/desktop` `npx playwright test --project=app e2e/app/map.spec.ts --grep-invert visual`: 9 verdi;
+      - prima del commit cancellare `apps/desktop/e2e/app/map.spec.ts-snapshots/` se Playwright l'ha ricreata in locale.
+   4. **PR.** Push di `feat/mappa` e PR verso `main` con descrizione, ADR 0013 e risultati.
+   5. **Baseline visive.** Il primo run della CI fallisce sui test `map (visual)` perché mancano gli screenshot. Si scarica l'artifact `playwright-results` del run (`gh run download <id> -n playwright-results`) e si committano i 14 `map-*-app-win32.png` in `apps/desktop/e2e/app/map.spec.ts-snapshots/`, senza usare `--update-snapshots` in locale. Si controllano a occhio prima del commit.
+   6. **Budget 60 fps.**
+      - Leggere nel log CI l'annotazione `performance` del test "keeps 60 fps…" (soglie: almeno 55 fps, p95 al massimo 25 ms).
+      - Se il runner non regge, capire se il limite è il runner (rendering software) o la mappa prima di toccare le soglie, e annotarlo in `PROBLEMI_NOTI.md`.
+   7. **Revisione.**
+      - Passata impeccable sulla PR (`audit` della mappa nei due temi);
+      - prova a mano con una sessione Claude reale su un workspace vero: mappa, Segui agente, anteprima diff da Git;
+      - aggiornare `STATO.md` e `STORIA.md` con `/fine-sessione`.
+   8. **Merge** dell'utente a CI verde. Poi la 5c (Codex) parte dalla mappa unita.
 
 ## Dopo
 

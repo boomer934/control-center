@@ -93,7 +93,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - suite `app`: 66 verdi, rossi solo i test visivi (in locale falliscono sempre; per la mappa mancano ancora le baseline) e il test della chat già noto;
   - impeccable: rilevatore senza rilievi; dalla verifica manuale corretti apertura del diff da tastiera e toolbar a finestra stretta.
 - **Non verificato:** budget dei 60 fps sul runner Windows della CI; mappa con una sessione Claude reale (provata con le fixture); `pnpm e2e:packaged`.
-- **Ora:** attendere il merge della 5a (PR #56), ribasare `feat/mappa` su `main`, aprire la PR della 5b; dal primo run CI prendere le baseline `map-*` dall'artifact `playwright-results` e committarle.
+- **Ora (punto di ripresa):** `feat/mappa` ha un commit locale (`2fa8119`) non spinto, l'albero è pulito. La prossima sessione segue la checklist della voce 2 di `PROSSIMI_PASSI.md`: merge della #56, rebase, PR, baseline visive dalla CI, budget dei 60 fps in CI, revisione e prova con una sessione reale.
 
 ### Corsia Codex
 

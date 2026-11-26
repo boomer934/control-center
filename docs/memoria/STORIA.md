@@ -4,6 +4,17 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Rifinitura della mappa: audit e sessione reale
+
+- **Fatto:** audit impeccable della mappa nei due temi: rilevatore pulito sul sorgente e sull'app via CDP, contrasto del testo ≥ 4,5:1. Prova con Claude Code 2.1.326 su un workspace Git di prova, guidata da Playwright: letture, permesso, edit con diff, due turni, Segui agente, anteprima diff. Tre correzioni nella PR #59: chip dell'agente dal secondo turno, `Fit` libero da legenda, readout, minimappa e nota vuota, Segui agente che inquadra file e chip insieme.
+- **Decisioni:**
+  - un agente ha una run per turno: `viewAt` lo considera vivo solo dentro una run, così il replay della 5c vede le pause tra i turni;
+  - la nota "No session yet" sta in alto e `Fit` misura dal DOM quanto gli overlay entrano nella tela, invece di nascondere la legenda.
+- **Problemi:** il checkpoint Git fallisce nell'app (`failed`) ma riesce fuori, sullo stesso repo: voce aperta per la corsia Codex (4b). Le baseline visive della mappa vanno rigenerate dalla CI.
+- **Verifica:** `pnpm verify` verde (386 test); `map.spec.ts` 9 test di comportamento verdi in locale, 2 visivi rossi (attesi).
+
+---
+
 ## 2026-11-26 — Mappa 5b in CI: budget dei 60 fps e merge
 
 - **Fatto:** PR #58 portata a CI verde. Baseline visive della mappa dal runner Windows; `data-ready` solo sul layout del visibile corrente; props di `<ReactFlow>` stabili (un evento ri-renderizzava tutti i 511 nodi). Il test dei 60 fps falliva ancora (12,2% di frame > 25 ms): causa trovata con il protocollo DevTools e tracce del main thread. Ora il punto del viaggio si muove con `transform` sul compositor (`Trip`, un elemento per agente), i nodi della mappa non hanno transizioni e il `readtick` usa `fill/stroke-opacity`. Main thread durante il banco: 95% → 43% a CPU ×4, 25% → 9% a CPU ×1; in CI 64,1 fps, 0% di frame lunghi, 15,8% di main thread.

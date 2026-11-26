@@ -80,6 +80,33 @@ const PRO_OPTIONS = { hideAttribution: true };
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const union = (a: Box, b: Box): Box => {
+  const x = Math.min(a.x, b.x);
+  const y = Math.min(a.y, b.y);
+  return {
+    x,
+    y,
+    w: Math.max(a.x + a.w, b.x + b.w) - x,
+    h: Math.max(a.y + a.h, b.y + b.h) - y,
+  };
+};
+
+/** Share of the canvas height a fitted map always keeps, however tall the overlays are. */
+const MIN_FIT_ROOM = 0.5;
+
+/** How far the overlays reach into the canvas from its top and bottom edges, in pixels. */
+function overlayInsets(host: HTMLElement | null): { top: number; bottom: number } {
+  if (!host) return { top: 0, bottom: 0 };
+  const frame = host.getBoundingClientRect();
+  let bottom = 0;
+  for (const el of host.querySelectorAll('.legend, .readout, .lmap-mini')) {
+    const box = el.getBoundingClientRect();
+    if (box.height) bottom = Math.max(bottom, frame.bottom - box.top);
+  }
+  const note = host.querySelector('.lmap-empty')?.getBoundingClientRect();
+  return { top: note?.height ? note.bottom - frame.top : 0, bottom };
+}
+
 /** Orthogonal path with rounded corners through the points (as in the design screens). */
 function roundedPath(points: [number, number][], r = 8): string {
   let d = `M${points[0]![0]} ${points[0]![1]}`;
@@ -333,13 +360,17 @@ function MapInner(props: LiveMapProps) {
     (animate = true) => {
       const b = bounds();
       if (!b || !width || !height) return;
+      // The fitted map stays clear of what floats over the canvas: the key, the readout and the
+      // minimap at the bottom, the empty-state note at the top.
+      const { top, bottom } = overlayInsets(wrapper.current);
+      const room = Math.max(height - top - bottom, height * MIN_FIT_ROOM);
       const zoom = Math.min(
         1,
         width / (b.w * (1 + 2 * FIT_PADDING)),
-        height / (b.h * (1 + 2 * FIT_PADDING)),
+        room / (b.h * (1 + 2 * FIT_PADDING)),
       );
       const x = (width - b.w * zoom) / 2 - b.x * zoom;
-      const y = (height - b.h * zoom) / 2 - b.y * zoom;
+      const y = top + (room - b.h * zoom) / 2 - b.y * zoom;
       void rf.setViewport({ x, y, zoom }, { duration: animate && !reducedMotion() ? 200 : 0 });
     },
     [bounds, width, height, rf],
@@ -359,13 +390,15 @@ function MapInner(props: LiveMapProps) {
     ? (chips.find((c) => c.agent.id === follow.agent) ??
       [...chips].sort((a, b) => b.agent.lastActive - a.agent.lastActive)[0])
     : undefined;
-  const focus =
-    followed?.target ??
-    (followed ? { x: followed.x, y: followed.y, w: CHIP_W, h: row } : undefined);
+  const chipBox = followed ? { x: followed.x, y: followed.y, w: CHIP_W, h: row } : undefined;
+  const focus = followed?.target ?? chipBox;
+  const pair = followed?.target && chipBox ? union(followed.target, chipBox) : undefined;
   useEffect(() => {
     if (!focus) return;
     const zoom = Math.max(rf.getZoom(), FOLLOW_ZOOM);
-    void rf.setCenter(focus.x + focus.w / 2, focus.y + focus.h / 2, {
+    // The node and the chip of its agent together when they fit, else the node alone.
+    const box = pair && pair.w * zoom <= width * (1 - 2 * FIT_PADDING) ? pair : focus;
+    void rf.setCenter(box.x + box.w / 2, box.y + box.h / 2, {
       zoom,
       duration: reducedMotion() ? 0 : 300,
     });

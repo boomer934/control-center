@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ClaudeHistoryRecord,
   ClaudeHistorySummary,
@@ -65,6 +65,11 @@ export function useClaudeChat(workspaceId?: string) {
   const busy = useRef(false);
   const chat = (workspaceId && chats[workspaceId]) || blank;
   const api = window.api.claude;
+  const listHistory = useCallback(
+    async (): Promise<ClaudeHistorySummary[]> =>
+      workspaceId ? api.listHistory({ workspaceId }) : [],
+    [api, workspaceId],
+  );
 
   const update = (workspace: string, change: (value: Chat) => Chat) => {
     setChats((previous) => ({
@@ -134,9 +139,7 @@ export function useClaudeChat(workspaceId?: string) {
     setDraft(draft: string) {
       if (workspaceId) update(workspaceId, (value) => ({ ...value, draft }));
     },
-    async listHistory(): Promise<ClaudeHistorySummary[]> {
-      return workspaceId ? api.listHistory({ workspaceId }) : [];
-    },
+    listHistory,
     loadHistory: (historyId: string) =>
       perform(async (workspace) => {
         if (chat.status === 'running') return;
@@ -150,6 +153,7 @@ export function useClaudeChat(workspaceId?: string) {
         }
         await close();
         update(workspace, () => ({ ...blank, ...previous, historyId }));
+        return true;
       }),
     resume: () =>
       perform(async (workspace) => {

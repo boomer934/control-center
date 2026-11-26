@@ -4,14 +4,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AgentEvent } from '@control-center/event-schema';
 import { MapActivity } from './activity';
+import { ReplayActivity, type ReplayRecord } from './replay';
 import { MapStore } from './store';
 
 /** What the chat keeps: event batches among prompts and checkpoints. */
-export type EventRecord = { kind: string; events?: readonly AgentEvent[] };
+export type EventRecord = ReplayRecord;
 
 export interface MapActivityOptions {
   /** Fixed instant (ms since the epoch) instead of "now": replay and tests. */
   at?: number;
+  /** Limit the map to recorded events at or before the fixed time. */
+  historical?: boolean;
   pendingPermission?: boolean;
   /** Folders shown as collapsed nodes or containers, with their file count. */
   folders: ReadonlyMap<string, number>;
@@ -28,6 +31,10 @@ export function useMapActivity(
   const activity = useRef(new MapActivity());
   const seen = useRef<{ first?: EventRecord; count: number }>({ count: 0 });
   const opts = useRef(options);
+  const replay = useMemo(
+    () => (options.historical ? new ReplayActivity(records) : undefined),
+    [options.historical, records],
+  );
   const [touched, setTouched] = useState<string[]>([]);
   const frame = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -38,10 +45,8 @@ export function useMapActivity(
     clearTimeout(timer.current);
     const { at, pendingPermission, folders } = opts.current;
     const t = at ?? Date.now();
-    const view = activity.current.viewAt(t, { pendingPermission });
+    const view = replay?.viewAt(t) ?? activity.current.viewAt(t, { pendingPermission });
     store.update(view, folders);
-    const files = activity.current.touched();
-    setTouched((previous) => (previous.length === files.length ? previous : files));
     if (at !== undefined) return;
     const busy =
       view.agents.some((a) => a.alive && (a.state === 'running' || a.state === 'waiting')) ||
@@ -70,21 +75,26 @@ export function useMapActivity(
     }
     const batch: AgentEvent[] = [];
     for (let i = state.count; i < records.length; i++) {
-      const events = records[i]!.events;
-      if (records[i]!.kind === 'events' && events) batch.push(...events);
+      const record = records[i]!;
+      if (record.kind === 'events') batch.push(...record.events);
     }
     state.count = records.length;
     activity.current.apply(batch);
     // The touched files decide what the map shows: update them now, so the first layout is
     // already the right one, instead of a layout without them followed by a second one.
     const files = activity.current.touched();
-    setTouched((previous) => (previous.length === files.length ? previous : files));
+    setTouched((previous) =>
+      previous.length === files.length && previous.every((path, index) => path === files[index])
+        ? previous
+        : files,
+    );
     schedule();
   }, [records]);
 
   useEffect(
     () => () => {
       cancelAnimationFrame(frame.current);
+      frame.current = 0;
       clearTimeout(timer.current);
     },
     [],

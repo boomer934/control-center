@@ -171,6 +171,50 @@ test.afterEach(async () => {
   if (fixture) await rm(fixture, { recursive: true, force: true });
 });
 
+test('opens saved activity in read-only replay after restarting Electron', async () => {
+  const cwd = join(fixture, 'Project');
+  await mkdir(join(cwd, 'src'));
+  await writeFile(join(cwd, 'src', 'cart.js'), 'export const total = 0;\n');
+  const dock = page.getByRole('complementary', { name: 'Session' });
+  await dock.getByRole('textbox', { name: 'Message Claude' }).fill('Record a session for replay');
+  await dock.getByRole('button', { name: 'Send', exact: true }).click();
+  const timeline = page.getByRole('region', { name: 'Session timeline' });
+  await expect(timeline.getByRole('button', { name: 'Turn completed', exact: true })).toBeVisible({
+    timeout: 20_000,
+  });
+  const read = timeline.getByRole('button', { name: 'Read · src/cart.js', exact: true });
+  await expect(read).toHaveCount(1);
+  await read.click();
+  const file = page.locator('[data-node="src/cart.js"]');
+  await expect(file).toHaveAttribute('data-state', 'reading');
+  await timeline.getByRole('button', { name: 'Back to live' }).click();
+  await expect(timeline.getByRole('button', { name: 'Back to live' })).toHaveCount(0);
+
+  await app.close();
+  ({ app, page } = await launchApp({ userDataDir: join(fixture, 'user-data') }));
+  const reopened = page.getByRole('region', { name: 'Session timeline' });
+  const reopenedDock = page.getByRole('complementary', { name: 'Session' });
+  await page.keyboard.press('Control+Alt+B');
+  await expect(reopenedDock).toHaveCount(0);
+  await reopened.getByRole('button', { name: 'History', exact: true }).click();
+  await reopenedDock.getByRole('button', { name: /Record a session for replay/ }).click();
+  await expect(reopened).toContainText('Replay · read-only');
+  await expect(reopened.getByRole('button', { name: 'Back to live' })).toHaveCount(0);
+  await expect(reopenedDock.getByRole('textbox', { name: 'Message Claude' })).toHaveCount(0);
+  await expect(reopenedDock.getByRole('button', { name: 'Resume session' })).toBeVisible();
+
+  await reopened.getByRole('button', { name: 'Read · src/cart.js', exact: true }).click();
+  const reopenedFile = page.locator('[data-node="src/cart.js"]');
+  await expect(reopenedFile).toHaveAttribute('data-state', 'reading');
+  const position = reopened.getByRole('slider', { name: 'Replay position' });
+  await position.press('Home');
+  await expect(reopenedFile).toHaveAttribute('data-state', 'idle');
+  await position.press('End');
+  await expect(position).toHaveValue((await position.getAttribute('max'))!);
+  await expect(reopenedFile).not.toHaveAttribute('data-state', 'reading');
+  expect(await readFile(join(cwd, 'src', 'cart.js'), 'utf8')).toBe('export const total = 0;\n');
+});
+
 test('uses the Git panel and restores a session checkpoint from the timeline', async ({
   chatMode,
 }, info) => {
@@ -266,6 +310,10 @@ test('uses the Git panel and restores a session checkpoint from the timeline', a
   await dock.getByRole('button', { name: 'History', exact: true }).click();
   await dock.getByRole('button', { name: /Read the project/ }).click();
   await expect(review).toBeEnabled();
+  await review.click();
+  const comparison = page.getByRole('dialog', { name: 'Compare Git checkpoint' });
+  await expect(comparison).toBeVisible();
+  await expect(comparison.getByRole('button', { name: /Restore/ })).toHaveCount(0);
 });
 
 test('shows and reloads a checkpoint warning while Claude completes the turn', async () => {

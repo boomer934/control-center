@@ -4,6 +4,24 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Pubblicazione di timeline e checkpoint Windows
+
+- **Fatto.** Pubblicate la [PR #62](https://github.com/boomer934/control-center/pull/62) per timeline e replay 5c e la [PR #61](https://github.com/boomer934/control-center/pull/61) per il checkpoint Git su Windows.
+- **Decisioni.** La correzione dei checkpoint ha una PR separata. Claude Code ha rivisto il diff a effort `medium` senza confermare bug. Il dettaglio dell'errore passa dal processo Git alla Console, che raggruppa le occorrenze ripetute.
+- **Verifica.** Per la 5c, `pnpm verify` verde (393 test, uno saltato). Su Windows, `git update-ref` è fallito con un percorso di lock da 315 caratteri e ha funzionato con `-c core.longpaths=true`.
+- **Problemi.** CI avviata sulle due PR. Merge dopo i controlli.
+
+---
+
+## 2026-11-26 — Timeline e replay della Vista Live (5c)
+
+- **Fatto.** Corsie per agente con subagent annidati, marcatori e intervalli delle chiamate, scrubber da mouse e tastiera e riproduzione. Da History si riapre la sessione salvata in sola lettura, con confronto dei checkpoint.
+- **Decisioni.** Il replay applica a `MapActivity` solo gli eventi fino all'istante scelto e usa il grafo corrente del workspace come contesto. Il layout resta stabile durante la ricerca. Una lettura o scrittura sul target già indicato dalla chiamata usa lo stesso marcatore.
+- **Verifica.** `pnpm verify` verde (393 test, uno saltato). In Electron, 69 E2E funzionali verdi, inclusi replay della fixture, riapertura di una sessione dopo il riavvio e checkpoint. Audit Impeccable senza rilievi a 960×600 nei due temi.
+- **Problemi.** I quattro confronti visivi locali di mappa e componenti falliscono anche su `origin/main`.
+
+---
+
 ## 2026-11-26 — Rifinitura della mappa: audit e sessione reale
 
 - **Fatto:** audit impeccable della mappa nei due temi: rilevatore pulito sul sorgente e sull'app via CDP, contrasto del testo ≥ 4,5:1. Prova con Claude Code 2.1.326 su un workspace Git di prova, guidata da Playwright: letture, permesso, edit con diff, due turni, Segui agente, anteprima diff. Tre correzioni nella PR #59: chip dell'agente dal secondo turno, `Fit` libero da legenda, readout, minimappa e nota vuota, Segui agente che inquadra file e chip insieme.

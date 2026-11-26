@@ -1,0 +1,200 @@
+.session-timeline {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--bg-1);
+  border-top: var(--sz-hair) solid var(--line-2);
+}
+
+.timeline-header,
+.timeline-scrub {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.timeline-header {
+  flex-wrap: wrap;
+}
+
+.timeline-mode {
+  color: var(--fg-2);
+  font-size: var(--fs-xs);
+}
+
+.timeline-history {
+  margin-inline-start: auto;
+}
+
+.timeline-scrub input {
+  min-width: 0;
+  flex: 1;
+  block-size: var(--sz-ctl-l);
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: ew-resize;
+}
+
+.timeline-time {
+  color: var(--fg-2);
+  font: var(--fs-xs) var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.timeline-selection,
+.timeline-empty {
+  flex: none;
+  margin: var(--sp-2) 0;
+  color: var(--fg-2);
+  font-size: var(--fs-m);
+  overflow-wrap: anywhere;
+}
+
+.timeline-chart {
+  min-height: var(--sz-ctl);
+  overflow: auto;
+}
+
+.timeline-lanes {
+  --timeline-row-height: var(--sp-9);
+  display: grid;
+  grid-template-columns: minmax(calc(var(--sp-10) * 2), 15%) minmax(calc(var(--sp-10) * 10), 1fr);
+  min-width: calc(var(--sp-10) * 12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-lane {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  border-top: var(--sz-hair) solid var(--line);
+}
+
+.timeline-agent {
+  position: sticky;
+  z-index: 1;
+  inset-inline-start: 0;
+  display: block;
+  align-content: start;
+  padding: var(--sp-3) var(--sp-2) var(--sp-3)
+    calc(var(--sp-2) + var(--timeline-depth) * var(--sp-3));
+  background: var(--bg-1);
+  color: var(--fg-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.timeline-track {
+  position: relative;
+  margin-inline: var(--sp-3);
+  min-height: calc(var(--timeline-rows) * var(--timeline-row-height));
+  border-inline: var(--sz-hair) solid var(--line);
+}
+
+.timeline-track::after {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: clamp(0%, var(--timeline-cursor), calc(100% - var(--sz-hair)));
+  width: var(--sz-hair);
+  background: var(--accent);
+  pointer-events: none;
+  content: '';
+}
+
+.timeline-event {
+  --event-line: var(--line-3);
+  --event-ink: var(--fg-2);
+  position: absolute;
+  container: timeline-mark / inline-size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  inset-inline-start: var(--timeline-x);
+  inset-block-start: calc(var(--timeline-row) * var(--timeline-row-height) + var(--sp-1));
+  inline-size: var(--timeline-w);
+  min-block-size: calc(var(--timeline-row-height) - var(--sp-2));
+  padding-inline: var(--sp-1);
+  overflow: hidden;
+  border: var(--sz-hair) solid var(--event-line);
+  border-radius: var(--r-pill);
+  background: var(--bg-2);
+  color: var(--fg-1);
+  font: inherit;
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.timeline-event .g {
+  flex: none;
+  width: var(--sz-glyph);
+  height: var(--sz-glyph);
+  color: var(--event-ink);
+}
+
+.timeline-event-label {
+  display: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@container timeline-mark (min-width: 5rem) {
+  .timeline-event-label {
+    display: block;
+  }
+}
+
+.timeline-event[data-tone='read'],
+.timeline-event[data-tone='search'] {
+  --event-line: var(--st-reading);
+  --event-ink: var(--st-reading);
+}
+
+.timeline-event[data-tone='write'] {
+  --event-line: var(--st-writing);
+  --event-ink: var(--st-writing);
+}
+
+.timeline-event[data-tone='shell'],
+.timeline-event[data-tone='mcp'],
+.timeline-event[data-tone='web'] {
+  --event-line: var(--st-running);
+  --event-ink: var(--st-running);
+}
+
+.timeline-event[data-tone='waiting'] {
+  --event-line: var(--st-waiting-edge);
+  --event-ink: var(--on-waiting);
+  background: var(--st-waiting);
+  color: var(--on-waiting);
+}
+
+.timeline-event[data-tone='error'] {
+  --event-line: var(--st-error);
+  --event-ink: var(--st-error);
+}
+
+.timeline-event[aria-pressed='true'],
+.timeline-event:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 var(--sz-hair) var(--event-line);
+}
+
+.timeline-event:focus-visible,
+.timeline-scrub input:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: calc(-1 * var(--sz-stroke));
+}
+
+.timeline-event:disabled {
+  color: var(--fg-3);
+  cursor: default;
+}

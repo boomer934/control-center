@@ -8,11 +8,13 @@ type Preview = Extract<GitPreview, { ok: true }>['value'];
 export function CheckpointDialog({
   workspaceId,
   checkpoint,
+  readOnly = false,
   close,
   restored,
 }: {
   workspaceId: string;
   checkpoint: GitCheckpoint;
+  readOnly?: boolean;
   close(): void;
   restored(changed: boolean): void;
 }) {
@@ -76,7 +78,7 @@ export function CheckpointDialog({
   }
 
   async function apply() {
-    if (!preview || restoring) return;
+    if (readOnly || !preview || restoring) return;
     setRestoring(true);
     setError('');
     try {
@@ -108,11 +110,11 @@ export function CheckpointDialog({
       }}
     >
       <header className="git-header">
-        <h2 id={title}>Restore Git checkpoint</h2>
+        <h2 id={title}>{readOnly ? 'Compare Git checkpoint' : 'Restore Git checkpoint'}</h2>
         <time dateTime={checkpoint.at}>{new Date(checkpoint.at).toLocaleString()}</time>
       </header>
       <div className="git-dialog-body">
-        <label htmlFor={scope}>Files to restore</label>
+        <label htmlFor={scope}>{readOnly ? 'Files to compare' : 'Files to restore'}</label>
         <select
           id={scope}
           className="field"
@@ -142,10 +144,12 @@ export function CheckpointDialog({
               <p role="status">Already matches this checkpoint.</p>
             ) : (
               <div className="git-restore-preview">
-                <p>
-                  {preview.files.length} {preview.files.length === 1 ? 'file will' : 'files will'}{' '}
-                  change. A recovery checkpoint will save the current state.
-                </p>
+                {!readOnly && (
+                  <p>
+                    {preview.files.length} {preview.files.length === 1 ? 'file will' : 'files will'}{' '}
+                    change. A recovery checkpoint will save the current state.
+                  </p>
+                )}
                 <h3>Working tree</h3>
                 <Patch value={preview.worktree} label="Working tree comparison" />
                 <h3>Staging area</h3>
@@ -157,7 +161,7 @@ export function CheckpointDialog({
       </div>
       <footer className="git-actions">
         <Button autoFocus onClick={dismiss} disabled={restoring}>
-          {preview?.files.length ? 'Cancel' : 'Close'}
+          {preview?.files.length && !readOnly ? 'Cancel' : 'Close'}
         </Button>
         {error && (
           <Button
@@ -169,13 +173,15 @@ export function CheckpointDialog({
             Refresh comparison
           </Button>
         )}
-        <Button
-          variant="danger"
-          disabled={loading || restoring || !preview?.files.length}
-          onClick={() => void apply()}
-        >
-          {restoring ? 'Restoring…' : path ? 'Restore file' : 'Restore all'}
-        </Button>
+        {!readOnly && (
+          <Button
+            variant="danger"
+            disabled={loading || restoring || !preview?.files.length}
+            onClick={() => void apply()}
+          >
+            {restoring ? 'Restoring…' : path ? 'Restore file' : 'Restore all'}
+          </Button>
+        )}
       </footer>
     </dialog>
   );

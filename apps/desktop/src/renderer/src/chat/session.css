@@ -162,15 +162,13 @@
   justify-content: flex-end;
 }
 
-.session-history,
-.session-timeline ol {
+.session-history {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.session-history li + li,
-.session-timeline li + li {
+.session-history li + li {
   border-top: var(--sz-hair) solid var(--line);
 }
 
@@ -184,23 +182,8 @@
   white-space: normal;
 }
 
-.session-history time,
-.session-timeline time {
+.session-history time {
   color: var(--fg-3);
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
-}
-
-.session-timeline {
-  min-width: 0;
-  padding: var(--sp-5) var(--sp-9);
-  border-top: var(--sz-hair) solid var(--line-2);
-}
-
-.session-timeline li {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-4);
-  padding-block: var(--sp-2);
-  overflow-wrap: anywhere;
 }

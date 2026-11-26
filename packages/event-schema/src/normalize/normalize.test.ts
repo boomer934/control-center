@@ -106,6 +106,45 @@ describe('normalizeClaudeStream', () => {
     expect(JSON.stringify(events)).not.toContain(secret);
   });
 
+  it('turns stack traces in the output of agent commands into error.detected', () => {
+    const trace = [
+      "TypeError: Cannot read properties of undefined (reading 'reduce')",
+      '    at total (C:\\repo\\src\\lib\\price.js:2:21)',
+      '    at Module._compile (node:internal/modules/cjs/loader:1934:14)',
+    ].join('\n');
+    const events = normalizeClaudeStream(
+      [
+        init,
+        assistant('2026-11-14T10:00:01.000Z', [
+          { type: 'tool_use', id: 't1', name: 'Bash', input: { command: 'node src/cart.js' } },
+          { type: 'tool_use', id: 't2', name: 'Bash', input: { command: 'npx vitest run' } },
+          { type: 'tool_use', id: 't3', name: 'Read', input: { file_path: 'C:\\repo\\x.log' } },
+        ]),
+        toolResult('2026-11-14T10:00:02.000Z', 't1', `Exit code 1\n${trace}`, { is_error: true }),
+        toolResult('2026-11-14T10:00:03.000Z', 't2', `${trace}\n Tests  1 failed | 2 passed`),
+        toolResult('2026-11-14T10:00:04.000Z', 't3', trace),
+      ],
+      ctx,
+    );
+    valid(events);
+    const errors = events.filter((e) => e.type === 'error.detected');
+    // a Read that shows a trace is not an error of the project
+    expect(errors.map((e) => [e.toolUseId, e.origin])).toEqual([
+      ['t1', 'command'],
+      ['t2', 'test'],
+    ]);
+    expect(errors[0]).toMatchObject({
+      language: 'node',
+      file: { path: 'src/lib/price.js', external: false },
+      line: 2,
+      column: 21,
+      source: 'stream',
+    });
+    // each error follows the end of its call
+    const failed = events.findIndex((e) => e.type === 'tool.failed' && e.toolUseId === 't1');
+    expect(events[failed + 1]?.type).toBe('error.detected');
+  });
+
   it('counts the usage of one API message once, even when it spans several lines', () => {
     const events = normalizeClaudeStream(
       [

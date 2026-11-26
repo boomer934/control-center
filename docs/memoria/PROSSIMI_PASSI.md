@@ -14,15 +14,20 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite con la [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
 4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
-5. **[Codex] (F4b, bug)** Correzione dei percorsi lunghi di Git su Windows nella [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` completata senza bug confermati. Branch riallineato dopo la #62. Esito di CI e integrazione nella PR.
+5. ✅ **[Codex] (F4b, bug)** Percorsi lunghi di Git su Windows uniti su `main` con la [PR #61](https://github.com/boomer934/control-center/pull/61) (`6bcb9cf`).
+6. ✅ **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura uniti su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`). La schermata Infra completa resta nella Fase 6.
+7. **[Claude] (F5e)** Errori del progetto sulla mappa sul branch `feat/errori-progetto` (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Audit impeccable fatto. [PR #64](https://github.com/boomer934/control-center/pull/64) con le baseline `map-error-*` della CI. Resta: CI verde e merge su richiesta dell'utente.
 
 ## Dopo
 
-6. **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura verificati nella [PR #63](https://github.com/boomer934/control-center/pull/63). Riallineata alla 5c e al branch della #61. Revisione Claude su IPC e probe locali completata senza rilievi bloccanti. Ordine di integrazione: #61, poi #63. Esito di CI e integrazione nelle rispettive PR. La schermata Infra completa resta nella Fase 6.
-7. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-8. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c.
+8. **[Claude o Codex] (F5e+)** Azioni rapide sull'errore: "chiedi a Claude di sistemarlo", "spiegalo in locale" (Ollama), "vai al file" (serve un metodo IPC che apra un file a una riga, con i controlli di percorso della 4.2).
+9. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
+10. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+11. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
 
 ## Quando capita
+
+- **(F5b, dall'audit della 5e)** Con il dock del terminale aperto la mappa si rimpicciolisce e la legenda copre l'ultima cartella (`test`): rifare il Fit quando cambia l'altezza della mappa. Nei nodi stretti una nota d'errore lascia pochi caratteri al nome del file.
 
 - **(F4.2, dalla revisione)** Primo: filtrare l'ambiente passato al pty (oggi eredita tutto `process.env`, regola 3 sui segreti). Poi: i link dei Problems si risolvono rispetto alla cartella dell'app, quindi aprono solo se il workspace è il repo stesso; i link del terminale non coprono `file.ts(12,5):` né `file.ts:12:5:`; `chooseFolder` lancia un errore per una cartella non disponibile e finisce nei Problems (meglio un risultato esplicito); un `id` duplicato è segnalato come `limit` e il tetto di 8 terminali è globale; una voce dei recenti non più risolvibile non si può togliere; Notepad apre il percorso verificato come stringa (finestra TOCTOU, impatto basso); la regex su xterm in `apps/desktop/xterm-csp.ts` e l'ordine dei passi CI (il pacchetto ricompila node-pty prima dell'E2E) sono fragili.
 - **(F4.2, test)** `workspace-terminal.spec.ts` › "opens a canonical workspace file…" è instabile nella suite completa in locale (passaggio del mouse sul link di xterm); da solo è verde.
@@ -37,7 +42,6 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 - **(F5)** Passare il prototipo 1d a `AgentEvent` e alle fixture ripulite, così i suoi test Playwright girano anche in CI.
 - **(F5)** Dalla revisione 1d: regione `aria-live` per `waiting-user` ed `error` nella colonna Agents; zoom massimo più alto a `Fit` per grafi piccoli; `viewAt` indicizzato per 500 nodi.
-- **(F5e)** Aggiungere `error.detected` allo schema. Ogni cambio incompatibile di `AgentEvent` alza `schemaVersion` e richiede una migrazione testata (ADR 0003).
 - **(F7)** Il bridge Ollama vero: `normalizeOllamaChat` oggi è minimo.
 - Opzionale in locale: `winget install gitleaks`, `npm i -g pnpm@10`, `npx playwright install chromium` (Chromium 1255 per Playwright 1.65).
 - **(F10)** Icona dell'app, installer NSIS, firma e aggiornamenti: oggi `electron-builder.config.ts` serve solo per `--dir` e i test dei Fuses. Togliere `packageExtensions` per `@peculiar/utils` quando dichiarerà `tslib` (vedi `PROBLEMI_NOTI.md`).

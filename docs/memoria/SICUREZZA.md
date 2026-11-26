@@ -103,6 +103,16 @@ Test: **M** = `packages/project-model/src/model.test.ts`, **I** = `packages/proj
 - **IPC.** `project:open` richiede il mittente fidato e il workspace attivo; un ID sconosciuto riceve `workspace-unavailable` (E2E). I delta vanno solo alle finestre che hanno aperto il modello. Main e preload validano snapshot e delta con lo schema del contratto. Il main valida anche ogni messaggio del worker.
 - **Cosa esce.** Al renderer arrivano percorsi relativi, linguaggio, dimensione, ruoli e nomi degli import, mai il contenuto dei file. Gli errori del worker arrivano alla Console con un nome e un messaggio fissi, senza percorsi né testo dei file.
 
+### Errori del progetto (5e, ADR 0015)
+
+Test: **S** = `packages/fixtures/src/stacks.test.ts`, **T** = `apps/desktop/src/main/terminal/errors.test.ts`, **E2E** = `apps/desktop/e2e/app/project-errors.spec.ts`.
+
+- **Nessun nuovo canale.** Gli errori del terminale viaggiano su `terminal:updated` (aggiornamento `errors`), solo verso la finestra proprietaria del pty. Main e preload li validano con lo schema del contratto: al massimo 20 per messaggio, messaggio di 500 caratteri e 20 frame.
+- **Solo testo, niente esecuzione.** I parser leggono l'output già prodotto e non aprono file, non seguono URL e non eseguono nulla. Gli URL dei frame del browser diventano percorsi relativi.
+- **Ripulitura.** Messaggio e percorsi passano da `makeTextCleaner` e `toFileRef`: radice `.`, home `~`, segreti redatti (S). I percorsi fuori dal workspace restano `external`. Gli eventi entrano nella cronologia della sessione con la stessa ripulitura degli altri.
+- **Contro le inondazioni.** Scansione dopo 250 ms di quiete, al massimo 64 KiB di buffer e 256 KiB per scansione, ripetizioni scartate per 10 s, al massimo 30 errori al minuto per terminale (T).
+- **Migrazione.** Gli eventi della cronologia passano da `migrateAgentEvent` e poi dallo schema. Versioni sconosciute o future vengono scartate, non riparate.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

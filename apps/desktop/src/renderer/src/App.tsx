@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
+import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import type { WorkspaceState } from '@control-center/ipc-contract/workspace';
 import { SessionDock } from './chat/SessionDock';
 import { useClaudeChat, type ClaudeChat } from './chat/useClaudeChat';
@@ -72,6 +73,7 @@ function LiveView({
   state,
   workspaceId,
   chat,
+  terminalErrors,
   onCheckpoint,
   onHistory,
   reviewDisabled,
@@ -80,6 +82,8 @@ function LiveView({
   state: InfoState;
   workspaceId?: string;
   chat: ClaudeChat;
+  /** Errors the workspace's terminals found (phase 5e). */
+  terminalErrors: readonly TerminalError[];
   onCheckpoint(checkpoint: GitCheckpoint, readOnly: boolean): void;
   onHistory?(): void;
   reviewDisabled: boolean;
@@ -135,6 +139,7 @@ function LiveView({
               <LiveMap
                 snapshot={project.snapshot}
                 records={chat.records}
+                errors={terminalErrors}
                 at={replay.at}
                 historical={historical}
                 pendingPermission={chat.permissions.length > 0}
@@ -458,6 +463,7 @@ function AppShell({
           state={info}
           workspaceId={workspaceId}
           chat={chat}
+          terminalErrors={terminals.errorsFor(workspaceId)}
           onCheckpoint={reviewCheckpoint}
           onHistory={workspaceId ? openHistory : undefined}
           reviewDisabled={chat.status === 'running' || chat.pending}

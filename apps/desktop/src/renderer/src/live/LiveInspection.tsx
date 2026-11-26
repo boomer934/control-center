@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { AgentEvent } from '@control-center/event-schema';
+import type { AgentEvent, ErrorOrigin } from '@control-center/event-schema';
 import { Glyph } from '../ui/icons';
 import { Button, Sigil } from '../ui/primitives';
 import type { ActivityView, AgentPresence } from './activity';
@@ -27,6 +27,14 @@ const stateLabel: Record<AgentPresence['state'], string> = {
   done: 'Done',
 };
 
+const ERROR_ORIGIN: Record<ErrorOrigin, string> = {
+  terminal: 'Terminal',
+  command: 'Agent command',
+  docker: 'Docker',
+  'dev-server': 'Dev server',
+  test: 'Tests',
+};
+
 function eventCount(events: readonly { at: number }[], at: number) {
   let from = 0;
   let to = events.length;
@@ -41,7 +49,8 @@ function eventCount(events: readonly { at: number }[], at: number) {
 function eventFields(event: AgentEvent, summary: ReturnType<typeof summarizeEvents>) {
   const call =
     'toolUseId' in event && event.toolUseId ? summary.calls.get(event.toolUseId) : undefined;
-  const path = 'file' in event ? event.file.path : call?.target;
+  const path = 'file' in event ? event.file?.path : call?.target;
+  const error = event.type === 'error.detected' ? event : undefined;
   const write = event.type === 'file.written' ? event : path ? summary.writes.get(path) : undefined;
   const diff =
     write && 'toolUseId' in event && write.toolUseId === event.toolUseId ? write.diff : undefined;
@@ -50,7 +59,14 @@ function eventFields(event: AgentEvent, summary: ReturnType<typeof summarizeEven
       'Tool',
       event.type !== 'tool.called' && (call?.tool ?? ('tool' in event ? event.tool : undefined)),
     ],
-    ['Target', event.type !== 'tool.called' && path],
+    ['Error', error?.message],
+    [
+      'Target',
+      event.type !== 'tool.called' &&
+        path &&
+        (error?.line ? `${path}:${error.line}${error.column ? `:${error.column}` : ''}` : path),
+    ],
+    ['Origin', error && `${ERROR_ORIGIN[error.origin]} · ${error.language}`],
     ['Changes', diff && `+${diff.add} / −${diff.del}`],
     ['Model', 'model' in event ? event.model : undefined],
     ['Task', event.type === 'agent.spawned' ? event.task : undefined],

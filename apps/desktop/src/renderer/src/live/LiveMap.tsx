@@ -26,6 +26,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import type { ProjectSnapshot } from '@control-center/project-model/schema';
 import { useShortcuts } from '../keys/useShortcuts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -36,6 +37,7 @@ import type { Box, MapLayout } from './layout';
 import type { MapInspection } from './LiveInspection';
 import { MapContext, MiniNode, nodeTypes, type MapContextValue } from './nodes';
 import { useAgents, useStoreRevision, useTemps, type MapStore } from './store';
+import { makeResolveFile } from './resolve';
 import { useMapActivity, type EventRecord } from './useMapActivity';
 import { useMapLayout } from './useMapLayout';
 import { buildVisibleMap, indexSnapshot, neighborsOf, type VisibleMap } from './visible';
@@ -47,6 +49,8 @@ export type DiffPreview =
 export interface LiveMapProps {
   snapshot: ProjectSnapshot;
   records: readonly EventRecord[];
+  /** Errors the integrated terminals found in this workspace (phase 5e). */
+  errors?: readonly TerminalError[];
   pendingPermission?: boolean;
   /** Fixed instant instead of "now" (replay, tests). */
   at?: number;
@@ -254,6 +258,7 @@ function MapInner(props: LiveMapProps) {
   const {
     snapshot,
     records,
+    errors,
     pendingPermission,
     at,
     historical,
@@ -274,11 +279,14 @@ function MapInner(props: LiveMapProps) {
   const [folders, setFolders] = useState<ReadonlyMap<string, number>>(new Map());
 
   const index = useMemo(() => indexSnapshot(snapshot), [snapshot]);
+  const resolveFile = useMemo(() => makeResolveFile(index.byPath), [index]);
   const { store, touched } = useMapActivity(records, {
     at,
     historical,
     pendingPermission,
     folders,
+    resolveFile,
+    ...(historical ? {} : { errors }),
   });
   const visible: VisibleMap = useMemo(
     () => buildVisibleMap(index, touched, { expanded, showAll }),

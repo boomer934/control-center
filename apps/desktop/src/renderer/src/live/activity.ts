@@ -2,7 +2,14 @@
 // tool calls of a session as operations; `viewAt(t)` says what the map shows at instant t. The
 // view is a pure function of the events seen so far and of t, so the replay of phase 5c can ask
 // for any instant, and the live map asks for "now".
-import type { AgentEvent, AgentId, FailureReason, ToolKind } from '@control-center/event-schema';
+import type {
+  AgentEvent,
+  AgentId,
+  DetectedError,
+  FailureReason,
+  FileRef,
+  ToolKind,
+} from '@control-center/event-schema';
 import { isProjectPath } from '@control-center/project-model/schema';
 
 /** The semantic states of docs/memoria/DESIGN.md ("waiting" is waiting-user). */
@@ -58,6 +65,38 @@ interface AgentRecord {
 }
 
 export type TempKind = 'command' | 'mcp' | 'web';
+
+/** An error of the project on a file (phase 5e). */
+interface ErrorMark {
+  at: number;
+  line?: number;
+  message: string;
+  /** The agent command whose output showed it, as `commandKey` reads it. */
+  command?: string;
+}
+
+/** A command without its pipes and redirections: `npm test 2>&1 | tail -40` → `npm test`. */
+export function commandKey(target: string | null): string | undefined {
+  const head = target?.split(/\s*(?:\|\|?|&&|;)\s*/)[0];
+  const key = head?.replace(/\s+\d*>>?(?:&\d+|\s*\S+)/g, '').trim();
+  return key || undefined;
+}
+
+/** Finds the map file of an error's culprit; undefined: not a file of this project. */
+export type ResolveFile = (file: FileRef) => string | undefined;
+
+const workspaceOnly: ResolveFile = (file) => (file.external ? undefined : file.path);
+
+const MAX_ERROR_NAME = 18;
+
+/** "TypeError", "TS2322", "error[E0425]", "panic": the name of an error, for the node. */
+export function errorName(message: string): string {
+  // `AssertionError [ERR_ASSERTION]: …` names AssertionError; `error[E0425]: …` keeps its code.
+  const name =
+    /^(?:Uncaught\s+)?([\w.$]+(?:\[\w+\])?)(?:\s\[[\w-]+\])?:/.exec(message)?.[1] ?? message;
+  // The note sits beside the file name on a narrow node: keep it short (full text in the title).
+  return name.length > MAX_ERROR_NAME ? `${name.slice(0, MAX_ERROR_NAME - 1)}…` : name;
+}
 
 interface TempRecord {
   id: string;
@@ -173,13 +212,54 @@ export class MapActivity {
   private readonly temps = new Map<string, TempRecord>();
   private readonly agents = new Map<AgentId, AgentRecord>();
   private readonly codes = new Set<string>();
+  private readonly fileErrors = new Map<string, ErrorMark[]>();
+  private readonly errorKeys = new Set<string>();
+  private readonly resolveFile: ResolveFile;
   private lastTime = 0;
   /** Grows by one with every batch of events that changed something. */
   revision = 0;
 
-  /** Files the session touched, in the order they were first touched. */
+  constructor(resolveFile: ResolveFile = workspaceOnly) {
+    this.resolveFile = resolveFile;
+  }
+
+  /** Files the session touched (errors included), in the order they were first touched. */
   touched(): string[] {
-    return [...this.fileOps.keys()];
+    const out = [...this.fileOps.keys()];
+    for (const path of this.fileErrors.keys()) if (!this.fileOps.has(path)) out.push(path);
+    return out;
+  }
+
+  /**
+   * Errors found outside a session (the integrated terminal). The same error can also reach the
+   * map as an `error.detected` of the session: it counts once.
+   */
+  applyErrors(errors: readonly (DetectedError & { at: string })[]): void {
+    let changed = false;
+    for (const error of errors) changed = this.addError(error, Date.parse(error.at)) || changed;
+    if (changed) this.revision++;
+  }
+
+  private addError(error: DetectedError, at: number): boolean {
+    const op = error.toolUseId ? this.ops.get(error.toolUseId) : undefined;
+    const command = op?.kind === 'shell' ? commandKey(op.target) : undefined;
+    if (!error.file || !Number.isFinite(at)) return false;
+    const path = this.resolveFile(error.file);
+    if (!path) return false;
+    const key = `${at}\u0000${error.message}\u0000${path}:${error.line ?? ''}`;
+    if (this.errorKeys.has(key)) return false;
+    this.errorKeys.add(key);
+    const marks = this.fileErrors.get(path) ?? [];
+    marks.push({
+      at,
+      ...(error.line ? { line: error.line } : {}),
+      message: error.message,
+      ...(command ? { command } : {}),
+    });
+    marks.sort((a, b) => a.at - b.at);
+    this.fileErrors.set(path, marks);
+    this.lastTime = Math.max(this.lastTime, at);
+    return true;
   }
 
   /** Time of the latest event seen (ms since the epoch), 0 before any. */
@@ -239,6 +319,11 @@ export class MapActivity {
   private applyOne(event: AgentEvent): void {
     const at = Date.parse(event.timestamp);
     if (!Number.isFinite(at)) return;
+    // An error belongs to a file, not to an agent's presence (no chip for it).
+    if (event.type === 'error.detected') {
+      this.addError(event, at);
+      return;
+    }
     this.lastTime = Math.max(this.lastTime, at);
     const agent = this.agent(event.agentId, at);
     switch (event.type) {
@@ -380,7 +465,12 @@ export class MapActivity {
     const pending = options.pendingPermission ? this.openOp('main') : undefined;
     const files = new Map<string, NodeActivity>();
     for (const [path, ops] of this.fileOps) {
-      const node = this.fold(ops, t, pending);
+      const node = this.withErrors(this.fold(ops, t, pending), ops, this.fileErrors.get(path), t);
+      if (node) files.set(path, node);
+    }
+    for (const [path, marks] of this.fileErrors) {
+      if (this.fileOps.has(path)) continue;
+      const node = this.withErrors(undefined, [], marks, t);
       if (node) files.set(path, node);
     }
 
@@ -441,6 +531,44 @@ export class MapActivity {
     }
 
     return { t, files, temps, agents };
+  }
+
+  /**
+   * The latest error of a file turns its node red until a later write clears it (the agent or
+   * the user fixed it); an operation running on the node still shows first.
+   */
+  private withErrors(
+    node: NodeActivity | undefined,
+    ops: readonly Op[],
+    marks: readonly ErrorMark[] | undefined,
+    t: number,
+  ): NodeActivity | undefined {
+    let last: ErrorMark | undefined;
+    for (const mark of marks ?? []) if (mark.at <= t) last = mark;
+    if (!last) return node;
+    const error = last;
+    const after = (op: Op) => op.end !== undefined && op.end > error.at && op.end <= t;
+    // A later write to the file, or the same command passing again, clears the error.
+    if (ops.some((op) => op.write && after(op))) return node;
+    if (error.command)
+      for (const op of this.ops.values())
+        if (
+          op.kind === 'shell' &&
+          op.outcome === 'ok' &&
+          after(op) &&
+          commandKey(op.target) === error.command
+        )
+          return node;
+    const base = node ?? { state: 'idle' as MapState, reads: 0, writes: 0, fresh: false };
+    if (base.state !== 'idle' && base.state !== 'done' && base.state !== 'error') return base;
+    const name = errorName(error.message);
+    return {
+      ...base,
+      state: 'error',
+      note: error.line ? `L${error.line} ${name}` : name,
+      fresh: false,
+      pulse: undefined,
+    };
   }
 
   /** State of one map node from the operations that touched it, at instant t. */

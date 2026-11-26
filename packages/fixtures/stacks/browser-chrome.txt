@@ -1,0 +1,4 @@
+Uncaught TypeError: Cannot read properties of null (reading 'map')
+    at CartList (http://localhost:5173/src/components/CartList.tsx?t=1764170000000:14:23)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=4a1b2c3d:5652:26)
+    at mountIndeterminateComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=4a1b2c3d:9906:21)

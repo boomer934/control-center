@@ -277,8 +277,13 @@ export function registerIpc(
       if (!shell) return 'shell-unavailable';
       const cwd = await workspaces.activeRootFor(request.workspaceId);
       if (!cwd || owners.get(senderId) !== owner) return 'workspace-unavailable';
-      return terminals.start(senderId, request, cwd, shell, (update) =>
-        owner.emit(contract.terminal.updated, update),
+      return terminals.start(
+        senderId,
+        request,
+        cwd,
+        shell,
+        (update) => owner.emit(contract.terminal.updated, update),
+        (found, at) => claudeSessions.reportErrors(senderId, request.workspaceId, found, at),
       );
     },
     write: async ({ id, data }, { senderId }) =>

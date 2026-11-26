@@ -5,6 +5,7 @@ import {
   type ClaudeHistoryRecord,
   type ClaudeHistorySummary,
 } from '@control-center/ipc-contract/claude';
+import { migrateAgentEvent } from '@control-center/event-schema';
 import { z } from 'zod';
 
 export const ClaudeNativeSessionId = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/);
@@ -27,6 +28,14 @@ function parse(line: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+/** Event records saved by an older app carry older AgentEvents: migrate them, then validate. */
+function migrateRecord(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return value;
+  const record = value as { kind?: unknown; events?: unknown };
+  if (record.kind !== 'events' || !Array.isArray(record.events)) return value;
+  return { ...record, events: record.events.map(migrateAgentEvent) };
 }
 
 export function createClaudeHistory(dataDir: string) {
@@ -180,7 +189,7 @@ export function createClaudeHistory(dataDir: string) {
               resume = meta.data.id;
               continue;
             }
-            const record = ClaudeHistoryRecordSchema.safeParse(value);
+            const record = ClaudeHistoryRecordSchema.safeParse(migrateRecord(value));
             if (record.success) records.push(record.data);
           }
           return { records, resume };

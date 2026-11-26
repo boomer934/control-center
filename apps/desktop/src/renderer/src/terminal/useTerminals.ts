@@ -4,9 +4,14 @@ import { FitAddon } from '@xterm/addon-fit';
 import {
   MAX_TERMINALS,
   TERMINAL_CHUNK_SIZE,
+  type TerminalError,
   type TerminalShell,
 } from '@control-center/ipc-contract/terminal';
 import { registerFileLinks } from './fileLinks';
+
+/** Terminal errors kept per workspace for the Live map (the newest ones). */
+export const MAX_KEPT_ERRORS = 200;
+const NO_ERRORS: readonly TerminalError[] = [];
 
 export const SHELL_LABEL = { powershell: 'PowerShell', bash: 'Bash' } as const;
 
@@ -27,6 +32,7 @@ export function useTerminals() {
   const sessions = useRef(new Map<string, OpenTerminal>());
   const [tabs, setTabs] = useState<OpenTerminal[]>([]);
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, readonly TerminalError[]>>({});
   const refresh = () => setTabs([...sessions.current.values()]);
 
   useEffect(() => {
@@ -36,6 +42,16 @@ export function useTerminals() {
       if (!terminal) return;
       if (update.kind === 'output') {
         terminal.screen.write(update.data);
+        return;
+      }
+      if (update.kind === 'errors') {
+        const { workspaceId } = terminal;
+        setErrors((previous) => ({
+          ...previous,
+          [workspaceId]: [...(previous[workspaceId] ?? []), ...update.errors].slice(
+            -MAX_KEPT_ERRORS,
+          ),
+        }));
         return;
       }
       terminal.screen.options.disableStdin = true;
@@ -180,7 +196,12 @@ export function useTerminals() {
     refresh();
   }
 
-  return { tabs, selected, select, start, close };
+  /** Errors the terminals of a workspace found, oldest first. */
+  function errorsFor(workspaceId: string | undefined): readonly TerminalError[] {
+    return (workspaceId && errors[workspaceId]) || NO_ERRORS;
+  }
+
+  return { tabs, selected, select, start, close, errorsFor };
 }
 
 export type Terminals = ReturnType<typeof useTerminals>;

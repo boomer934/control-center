@@ -1,11 +1,12 @@
 // Phase 5b: the map logic on the recorded fixtures (activity), the visible set, the layout and
 // the per-node store.
 import { describe, expect, it } from 'vitest';
-import type { AgentEvent } from '@control-center/event-schema';
-import { HOLD_MS, MapActivity, TRAIL_MS } from './activity';
+import { SCHEMA_VERSION, type AgentEvent } from '@control-center/event-schema';
+import { commandKey, errorName, HOLD_MS, MapActivity, TRAIL_MS } from './activity';
 import { assembleLayout, packRequest, sizeGroup } from './layout';
 import { packBoxes } from './pack';
 import { fixture } from './labFixtures';
+import { makeResolveFile } from './resolve';
 import { MapStore } from './store';
 import { buildVisibleMap, indexProject, NEIGHBOR_LIMIT, VISIBLE_BUDGET } from './visible';
 
@@ -124,7 +125,7 @@ describe('MapActivity timing', () => {
   const at = (ms: number) => new Date(t0 + ms).toISOString();
   let seq = 0;
   const base = (ms: number) => ({
-    schemaVersion: 1 as const,
+    schemaVersion: SCHEMA_VERSION,
     id: `e${seq}`,
     sessionId: 's',
     seq: seq++,
@@ -186,6 +187,138 @@ describe('MapActivity timing', () => {
       target: 'f:b.ts',
     });
     expect(activity.viewAt(t0 + 20_000).agents[0]).toMatchObject({ alive: false });
+  });
+});
+
+describe('MapActivity errors (phase 5e)', () => {
+  const t0 = Date.parse('2026-11-26T10:00:00.000Z');
+  const at = (ms: number) => new Date(t0 + ms).toISOString();
+  let seq = 0;
+  const base = (ms: number) => ({
+    schemaVersion: SCHEMA_VERSION,
+    id: `x${seq}`,
+    sessionId: 's',
+    seq: seq++,
+    timestamp: at(ms),
+    source: 'stream' as const,
+    provider: 'claude' as const,
+    agentId: 'main' as const,
+  });
+  const detected = {
+    origin: 'command' as const,
+    language: 'node' as const,
+    message: "TypeError: Cannot read properties of undefined (reading 'reduce')",
+    file: { path: 'src/lib/price.js', external: false as const },
+    line: 2,
+    frames: [],
+  };
+  const error = (ms: number): AgentEvent => ({ ...base(ms), type: 'error.detected', ...detected });
+  const edit = (ms: number, id: string): AgentEvent[] => [
+    {
+      ...base(ms),
+      type: 'tool.called',
+      toolUseId: id,
+      tool: 'Edit',
+      kind: 'write',
+      target: 'src/lib/price.js',
+    },
+    { ...base(ms + 100), type: 'tool.completed', toolUseId: id },
+    {
+      ...base(ms + 100),
+      type: 'file.written',
+      toolUseId: id,
+      op: 'edit',
+      file: { path: 'src/lib/price.js', external: false },
+    },
+  ];
+
+  it('turns the culprit red with its line, until a later write fixes it', () => {
+    const activity = activityOf([error(1000), ...edit(5000, 'w1')]);
+    expect(activity.touched()).toEqual(['src/lib/price.js']);
+    expect(activity.viewAt(t0 + 500).files.get('src/lib/price.js')).toBeUndefined();
+    expect(activity.viewAt(t0 + 1000).files.get('src/lib/price.js')).toMatchObject({
+      state: 'error',
+      note: 'L2 TypeError',
+    });
+    // the write shows while it runs, then clears the error
+    expect(activity.viewAt(t0 + 5050).files.get('src/lib/price.js')?.state).toBe('writing');
+    expect(activity.viewAt(t0 + 8000).files.get('src/lib/price.js')?.state).toBe('done');
+    // an error after the fix is red again
+    activity.apply([error(9000)]);
+    expect(activity.viewAt(t0 + 9500).files.get('src/lib/price.js')?.state).toBe('error');
+    // no agent chip for an error alone
+    expect(activityOf([error(0)]).viewAt(t0 + 10).agents).toEqual([]);
+  });
+
+  it('clears an error of a command when the same command passes again', () => {
+    expect(commandKey('npm test 2>&1 | tail -40')).toBe('npm test');
+    expect(commandKey('npm test > out.txt && echo ok')).toBe('npm test');
+    expect(commandKey(null)).toBeUndefined();
+    const run = (ms: number, id: string, target: string, ok: boolean): AgentEvent[] => [
+      { ...base(ms), type: 'tool.called', toolUseId: id, tool: 'Bash', kind: 'shell', target },
+      ok
+        ? { ...base(ms + 500), type: 'tool.completed', toolUseId: id }
+        : { ...base(ms + 500), type: 'tool.failed', toolUseId: id, reason: 'tests-failing' },
+    ];
+    const activity = activityOf([
+      ...run(0, 'c1', 'npm test 2>&1 | tail -40', false),
+      { ...base(500), type: 'error.detected', ...detected, toolUseId: 'c1' },
+      ...run(3000, 'c2', 'npm run lint', true),
+    ]);
+    const state = (ms: number) => activity.viewAt(t0 + ms).files.get('src/lib/price.js')?.state;
+    expect(state(5000)).toBe('error');
+    activity.apply(run(6000, 'c3', 'npm test 2>&1 | tail -15', true));
+    expect(state(6200)).toBe('error');
+    expect(state(7000) ?? 'idle').toBe('idle');
+  });
+
+  it('names an error briefly for its node', () => {
+    expect(errorName("TypeError: Cannot read properties of undefined (reading 'x')")).toBe(
+      'TypeError',
+    );
+    expect(errorName('AssertionError [ERR_ASSERTION]: Expected values')).toBe('AssertionError');
+    expect(errorName('error[E0425]: cannot find value')).toBe('error[E0425]');
+    expect(errorName('TS2322: Type string')).toBe('TS2322');
+    expect(errorName('panic: runtime error')).toBe('panic');
+    expect(errorName('Unexpected "}"')).toBe('Unexpected "}"');
+    expect(errorName('django.core.exceptions.ImproperlyConfigured: x')).toBe('django.core.excep…');
+  });
+
+  it('counts an error once when the terminal and the session both report it', () => {
+    const activity = activityOf([error(1000)]);
+    const revision = activity.revision;
+    activity.applyErrors([{ ...detected, origin: 'command', at: at(1000) }]);
+    expect(activity.revision).toBe(revision);
+    activity.applyErrors([{ ...detected, origin: 'terminal', at: at(2000) }]);
+    expect(activity.revision).toBe(revision + 1);
+  });
+
+  it('matches a path the project does not have by its unique suffix', () => {
+    const paths = new Map(
+      ['rs/src/stock.rs', 'app/models.py', 'api/app/models.py', 'src/lib/price.js'].map((p) => [
+        p,
+        null,
+      ]),
+    );
+    const resolve = makeResolveFile(paths);
+    expect(resolve({ path: 'src/lib/price.js', external: false })).toBe('src/lib/price.js');
+    expect(resolve({ path: 'src/stock.rs', external: false })).toBe('rs/src/stock.rs');
+    // a container path: `app/models.py` is ambiguous, the longer suffix is not
+    expect(resolve({ path: '/srv/api/app/models.py', external: true })).toBe('api/app/models.py');
+    expect(resolve({ path: '/app/app/models.py', external: true })).toBeUndefined();
+    expect(resolve({ path: '/usr/lib/x.py', external: true })).toBeUndefined();
+    expect(resolve({ path: 'missing.ts', external: false })).toBeUndefined();
+
+    const activity = new MapActivity(resolve);
+    activity.apply([
+      {
+        ...base(0),
+        type: 'error.detected',
+        ...detected,
+        file: { path: 'src/stock.rs', external: false },
+      },
+    ]);
+    expect(activity.touched()).toEqual(['rs/src/stock.rs']);
   });
 });
 

@@ -1,0 +1,8 @@
+api-1  | INFO:     Started server process [1]
+api-1  | Traceback (most recent call last):
+api-1  |   File "/app/app/main.py", line 4, in <module>
+api-1  |     run()
+api-1  |   File "/app/app/models.py", line 2, in parse
+api-1  |     return int(row["qty"])
+api-1  | ValueError: invalid literal for int() with base 10: 'x'
+api-1 exited with code 1

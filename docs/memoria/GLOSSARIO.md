@@ -30,3 +30,5 @@
 | **Envelope IPC**         | La risposta del main a ogni chiamata: `{ ok: true, value }` oppure `{ ok: false, error: { code, message } }`. Nessuna eccezione attraversa l'IPC.                                              |
 | **app://**               | Lo schema privilegiato (`app://control-center/`) da cui il main serve il renderer in produzione, al posto di `file://`, con la CSP come header.                                                |
 | **Fuses**                | Interruttori scritti nel binario di Electron in fase di build (es. `RunAsNode` off, integrità ASAR on); verificati in `e2e/packaged/fuses.spec.ts`.                                            |
+| **Colpevole**            | Il frame di uno stack trace più vicino al guasto fuori dalle dipendenze (5e): è il file che la mappa colora di rosso.                                                                          |
+| **Migrazione di evento** | Passo `n → n + 1` di `migrateAgentEvent` che porta un `AgentEvent` salvato alla versione corrente dello schema prima della validazione.                                                        |

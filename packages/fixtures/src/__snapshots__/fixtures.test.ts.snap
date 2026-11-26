@@ -47,6 +47,7 @@ exports[`sessione-02 > matches the recorded timeline 1`] = `
   "main usage.updated",
   "main tool.called Bash npm test 2>&1 | tail -40",
   "main tool.failed tests-failing",
+  "main error.detected",
   "main tool.called Read src/cart.js",
   "main tool.completed",
   "main file.read src/cart.js",

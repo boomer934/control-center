@@ -1,0 +1,2 @@
+# example.com/shop/internal/stock
+internal\stock\stock.go:4:9: undefined: missing

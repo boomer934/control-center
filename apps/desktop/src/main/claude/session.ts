@@ -9,7 +9,12 @@ import { randomUUID } from 'node:crypto';
 import { execFile, execFileSync, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import type { ErrorInput } from '@control-center/app-log';
-import { LiveClaudeSession, makeTextCleaner, type AgentEvent } from '@control-center/event-schema';
+import {
+  LiveClaudeSession,
+  makeTextCleaner,
+  type AgentEvent,
+  type ErrorDraft,
+} from '@control-center/event-schema';
 import {
   MAX_CLAUDE_PARTIAL_CHARS,
   type ClaudePermission,
@@ -65,6 +70,8 @@ export interface ClaudeSession {
   /** Sends a user message: starts a run, unless one is running or the session is closed. */
   send(text: string): SendResult;
   respond(requestId: string, choice: ClaudePermissionChoice): boolean;
+  /** Adds errors the app found in the workspace's output (phase 5e) to the session's events. */
+  reportErrors(errors: readonly ErrorDraft[], at: Date): void;
   /** Stops the running run. */
   interrupt(): boolean;
   /** Synchronous end of the running run, for app quit: no event is emitted after it. */
@@ -383,6 +390,9 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       return 'started';
     },
     respond: permissions.respond,
+    reportErrors(errors, at) {
+      if (errors.length) emit(live.appErrors(errors, at.toISOString()));
+    },
     interrupt() {
       if (!run) return false;
       run.stopping = true;

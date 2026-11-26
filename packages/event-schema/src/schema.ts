@@ -5,7 +5,7 @@ import { fileRefSchema } from './path';
  * Version of the persisted event format. Bump it on any breaking change and add a migration, so
  * recorded sessions stay replayable (see docs/memoria/PIANO.md, "Versionamento", and ADR 0003).
  */
-export const SCHEMA_VERSION = 1 as const;
+export const SCHEMA_VERSION = 2 as const;
 
 export const providerSchema = z.enum(['claude', 'ollama']);
 export type Provider = z.infer<typeof providerSchema>;
@@ -169,6 +169,57 @@ export const notificationSchema = event('notification', {
   message: text,
 });
 
+/** Where the output that showed an error came from (phase 5e). */
+export const errorOriginSchema = z.enum(['terminal', 'command', 'docker', 'dev-server', 'test']);
+export type ErrorOrigin = z.infer<typeof errorOriginSchema>;
+
+/** Which stack trace parser recognized the error (`node` covers TypeScript too). */
+export const errorLanguageSchema = z.enum(['node', 'python', 'go', 'rust', 'browser']);
+export type ErrorLanguage = z.infer<typeof errorLanguageSchema>;
+
+export const MAX_ERROR_FRAMES = 20;
+
+/** One frame of a stack trace, or the location of a compiler diagnostic. */
+export const stackFrameSchema = z.strictObject({
+  file: fileRefSchema,
+  line: z.int().positive().optional(),
+  column: z.int().positive().optional(),
+  /** Function name, as the runtime printed it. */
+  fn: z.string().min(1).max(200).optional(),
+});
+export type StackFrame = z.infer<typeof stackFrameSchema>;
+
+/**
+ * An error found in the output of the project (terminal, agent commands, containers, dev
+ * servers). `file` is the culprit: the frame in the workspace closest to the failure, outside
+ * dependencies; absent when no frame is in the workspace.
+ */
+export const errorDetectedSchema = event('error.detected', {
+  origin: errorOriginSchema,
+  language: errorLanguageSchema,
+  /** "TypeError: Cannot read properties of undefined", already cleaned. */
+  message: text.max(500),
+  file: fileRefSchema.optional(),
+  line: z.int().positive().optional(),
+  column: z.int().positive().optional(),
+  frames: z.array(stackFrameSchema).max(MAX_ERROR_FRAMES),
+  /** The agent command whose output showed the error. */
+  toolUseId: toolUseId.optional(),
+});
+
+/** The error itself, without the envelope: what the parsers produce and the terminal pushes. */
+export const detectedErrorSchema = errorDetectedSchema.pick({
+  origin: true,
+  language: true,
+  message: true,
+  file: true,
+  line: true,
+  column: true,
+  frames: true,
+  toolUseId: true,
+});
+export type DetectedError = z.infer<typeof detectedErrorSchema>;
+
 export const agentEventSchema = z.discriminatedUnion('type', [
   sessionStartedSchema,
   sessionEndedSchema,
@@ -186,6 +237,7 @@ export const agentEventSchema = z.discriminatedUnion('type', [
   permissionResolvedSchema,
   usageUpdatedSchema,
   notificationSchema,
+  errorDetectedSchema,
 ]);
 export type AgentEvent = z.infer<typeof agentEventSchema>;
 export type AgentEventType = AgentEvent['type'];

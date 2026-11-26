@@ -3,7 +3,7 @@
 // test. Only in the development and E2E builds (see LAB in shell/route.ts): the fixtures never
 // ship in the app.
 import { useEffect, useMemo, useState } from 'react';
-import type { AgentEvent } from '@control-center/event-schema';
+import { SCHEMA_VERSION, type AgentEvent } from '@control-center/event-schema';
 import {
   PROJECT_MODEL_VERSION,
   type ProjectFile,
@@ -92,7 +92,7 @@ function event<T extends AgentEvent['type']>(
 ): AgentEvent {
   const n = seq++;
   return {
-    schemaVersion: 1,
+    schemaVersion: SCHEMA_VERSION,
     id: `b${n}`,
     sessionId: 'bench',
     seq: n,

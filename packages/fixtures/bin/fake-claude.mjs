@@ -47,7 +47,13 @@ function readJsonl(file) {
 
 /** Replaces the recorded workspace path in every string, and the session id when resuming. */
 function relocate(value, cwd, sessionId) {
-  if (typeof value === 'string') return value.split(RECORDED_CWD).join(cwd);
+  // Stack traces print the path with forward slashes too (file:///C:/fixtures/workspace/…).
+  if (typeof value === 'string')
+    return value
+      .split(RECORDED_CWD)
+      .join(cwd)
+      .split(RECORDED_CWD.replaceAll('\\', '/'))
+      .join(cwd.replaceAll('\\', '/'));
   if (Array.isArray(value)) return value.map((v) => relocate(v, cwd, sessionId));
   if (value && typeof value === 'object') {
     const out = {};

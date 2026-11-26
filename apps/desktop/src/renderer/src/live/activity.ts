@@ -1,0 +1,472 @@
+// What the agents did to the project, folded from AgentEvents (phase 5b). `MapActivity` keeps the
+// tool calls of a session as operations; `viewAt(t)` says what the map shows at instant t. The
+// view is a pure function of the events seen so far and of t, so the replay of phase 5c can ask
+// for any instant, and the live map asks for "now".
+import type { AgentEvent, AgentId, FailureReason, ToolKind } from '@control-center/event-schema';
+import { isProjectPath } from '@control-center/project-model/schema';
+
+/** The semantic states of docs/memoria/DESIGN.md ("waiting" is waiting-user). */
+export type MapState = 'idle' | 'reading' | 'writing' | 'running' | 'waiting' | 'error' | 'done';
+
+/**
+ * Real tool calls last about 100 ms: an operation stays visibly active at least this long, or a
+ * live map would only flicker (same rule as the 1d prototype).
+ */
+export const HOLD_MS = 900;
+/** The done trail fades after this (cycle-trail-delay + cycle-trail-done). */
+export const TRAIL_MS = 700;
+/** A finished command or MCP node stays on the map this long, then leaves. */
+export const TEMP_LINGER_MS = 4000;
+
+type Outcome = 'ok' | FailureReason;
+
+interface Op {
+  id: string;
+  agent: AgentId;
+  kind: ToolKind;
+  target: string | null;
+  start: number;
+  end?: number;
+  outcome?: Outcome;
+  detail?: string;
+  /** Workspace files the call read or wrote. */
+  files: string[];
+  /** Workspace files a search returned. */
+  matches: string[];
+  write: boolean;
+  diff?: { add: number; del: number };
+  waitingSince?: number;
+  waitingUntil?: number;
+  /** Id of the temporary node (command, MCP server, web) the call lights up. */
+  temp?: string;
+}
+
+export type AgentKind = 'claude' | 'sub' | 'local';
+
+interface AgentRecord {
+  id: AgentId;
+  name: string;
+  code: string;
+  kind: AgentKind;
+  start: number;
+  end?: number;
+  ops: Op[];
+}
+
+export type TempKind = 'command' | 'mcp' | 'web';
+
+interface TempRecord {
+  id: string;
+  kind: TempKind;
+  label: string;
+  ops: Op[];
+}
+
+export interface NodeActivity {
+  state: MapState;
+  reads: number;
+  writes: number;
+  diff?: { add: number; del: number };
+  /** Short status on the node: "not found", "1 failing", "0:04". */
+  note?: string;
+  /** Inside the done trail. */
+  fresh: boolean;
+  /** Changes with every new read, so the node pulses once per event (never in a loop). */
+  pulse?: string;
+}
+
+export interface TempView extends NodeActivity {
+  id: string;
+  kind: TempKind;
+  label: string;
+}
+
+export interface AgentPresence {
+  id: AgentId;
+  name: string;
+  code: string;
+  kind: AgentKind;
+  state: MapState;
+  /** What the chip says: "reading", "waits", "thinking", "delegating", "done". */
+  label: string;
+  alive: boolean;
+  calls: number;
+  /** Map node the agent works on: `f:<path>` for a file, the temp id for a command. */
+  target?: string;
+  /** Time of the agent's latest event, to pick whom to follow. */
+  lastActive: number;
+}
+
+export interface ActivityView {
+  t: number;
+  files: Map<string, NodeActivity>;
+  temps: TempView[];
+  agents: AgentPresence[];
+}
+
+export interface ViewOptions {
+  /** The app has a permission request open (chat dock): the main agent waits for the user. */
+  pendingPermission?: boolean;
+}
+
+const RANK: Record<MapState, number> = {
+  idle: 0,
+  done: 1,
+  reading: 2,
+  running: 3,
+  writing: 4,
+  error: 5,
+  waiting: 6,
+};
+
+export const fileNodeId = (path: string) => `f:${path}`;
+
+const clock = (ms: number) => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+
+const visibleEnd = (op: Op) =>
+  op.end === undefined ? Infinity : Math.max(op.end, op.start + HOLD_MS);
+const isActive = (op: Op, t: number) => op.start <= t && t < visibleEnd(op);
+const isWaiting = (op: Op, t: number) =>
+  op.waitingSince !== undefined &&
+  op.waitingSince <= t &&
+  t < Math.min(op.waitingUntil ?? Infinity, op.end ?? Infinity);
+
+function activeState(op: Op, t: number): MapState {
+  if (isWaiting(op, t)) return 'waiting';
+  if (op.write) return 'writing';
+  if (op.kind === 'read' || op.kind === 'search') return 'reading';
+  if (op.kind === 'write') return 'writing';
+  return 'running';
+}
+
+const REASON_NOTE: Record<FailureReason, string> = {
+  'not-found': 'not found',
+  denied: 'denied',
+  'tests-failing': 'tests failing',
+  interrupted: 'interrupted',
+  failed: 'failed',
+};
+
+/** Two letters for an agent, with a digit when they collide (DESIGN.md: `C2`, `E2`). */
+function agentCode(name: string, taken: Set<string>): string {
+  const letters = name.replace(/[^A-Za-z]/g, '').toUpperCase();
+  const base = (letters.slice(0, 2) || 'AG').padEnd(2, 'X');
+  if (!taken.has(base)) return base;
+  for (let i = 2; i < 10; i++) {
+    const code = `${base[0]}${i}`;
+    if (!taken.has(code)) return code;
+  }
+  return base;
+}
+
+export class MapActivity {
+  private readonly ops = new Map<string, Op>();
+  private readonly fileOps = new Map<string, Op[]>();
+  private readonly temps = new Map<string, TempRecord>();
+  private readonly agents = new Map<AgentId, AgentRecord>();
+  private readonly codes = new Set<string>();
+  private lastTime = 0;
+  /** Grows by one with every batch of events that changed something. */
+  revision = 0;
+
+  /** Files the session touched, in the order they were first touched. */
+  touched(): string[] {
+    return [...this.fileOps.keys()];
+  }
+
+  /** Time of the latest event seen (ms since the epoch), 0 before any. */
+  latest(): number {
+    return this.lastTime;
+  }
+
+  apply(events: readonly AgentEvent[]): void {
+    if (!events.length) return;
+    for (const event of events) this.applyOne(event);
+    this.revision++;
+  }
+
+  private agent(id: AgentId, at: number): AgentRecord {
+    let agent = this.agents.get(id);
+    if (!agent) {
+      const kind: AgentKind = id === 'main' ? 'claude' : id.startsWith('ollama:') ? 'local' : 'sub';
+      const name =
+        id === 'main' ? 'Claude' : kind === 'local' ? id.slice('ollama:'.length) : 'Subagent';
+      const code = agentCode(id === 'main' ? 'CL' : name, this.codes);
+      this.codes.add(code);
+      agent = { id, name, code, kind, start: at, ops: [] };
+      this.agents.set(id, agent);
+    }
+    return agent;
+  }
+
+  private linkFile(op: Op, path: string, list: 'files' | 'matches'): void {
+    if (!op[list].includes(path)) op[list].push(path);
+    const ops = this.fileOps.get(path) ?? [];
+    if (!ops.includes(op)) {
+      ops.push(op);
+      this.fileOps.set(path, ops);
+    }
+  }
+
+  private openOp(agentId: AgentId): Op | undefined {
+    const ops = this.agents.get(agentId)?.ops ?? [];
+    for (let i = ops.length - 1; i >= 0; i--) if (ops[i]!.end === undefined) return ops[i];
+    return undefined;
+  }
+
+  private applyOne(event: AgentEvent): void {
+    const at = Date.parse(event.timestamp);
+    if (!Number.isFinite(at)) return;
+    this.lastTime = Math.max(this.lastTime, at);
+    const agent = this.agent(event.agentId, at);
+    switch (event.type) {
+      case 'tool.called': {
+        if (this.ops.has(event.toolUseId)) return;
+        const op: Op = {
+          id: event.toolUseId,
+          agent: event.agentId,
+          kind: event.kind,
+          target: event.target,
+          start: at,
+          files: [],
+          matches: [],
+          write: false,
+        };
+        // A new call means the agent got its answer: a permission it waited for is settled.
+        for (const other of agent.ops)
+          if (other.waitingSince !== undefined && other.waitingUntil === undefined)
+            other.waitingUntil = at;
+        this.ops.set(op.id, op);
+        agent.ops.push(op);
+        // file.read and file.written come after the call ends: the target lights the file up
+        // while the call runs (and keeps a failed read, "not found", on the map).
+        if ((event.kind === 'read' || event.kind === 'write') && isFileTarget(event.target))
+          this.linkFile(op, event.target, 'files');
+        if (event.kind === 'shell' || event.kind === 'web') {
+          const id = `t:${event.kind === 'shell' ? 'cmd' : 'web'}:${op.id}`;
+          const label = (event.kind === 'shell' ? '$ ' : '') + (event.target ?? event.tool);
+          this.temps.set(id, {
+            id,
+            kind: event.kind === 'shell' ? 'command' : 'web',
+            label,
+            ops: [op],
+          });
+          op.temp = id;
+        }
+        return;
+      }
+      case 'mcp.called': {
+        const op = this.ops.get(event.toolUseId);
+        if (!op) return;
+        const id = `t:mcp:${event.server}`;
+        const temp = this.temps.get(id) ?? { id, kind: 'mcp', label: event.server, ops: [] };
+        temp.ops.push(op);
+        this.temps.set(id, temp);
+        op.temp = id;
+        return;
+      }
+      case 'file.read':
+      case 'file.written': {
+        if (event.file.external) return;
+        const op = this.ops.get(event.toolUseId);
+        if (!op) return;
+        this.linkFile(op, event.file.path, 'files');
+        if (event.type === 'file.written') {
+          op.write = true;
+          if (event.diff) {
+            const d = op.diff ?? { add: 0, del: 0 };
+            op.diff = { add: d.add + event.diff.add, del: d.del + event.diff.del };
+          }
+        }
+        return;
+      }
+      case 'tool.completed': {
+        const op = this.ops.get(event.toolUseId);
+        if (!op || op.end !== undefined) return;
+        op.end = at;
+        op.outcome = 'ok';
+        for (const file of event.files ?? [])
+          if (!file.external) this.linkFile(op, file.path, 'matches');
+        return;
+      }
+      case 'tool.failed': {
+        const op = this.ops.get(event.toolUseId);
+        if (!op || op.end !== undefined) return;
+        op.end = at;
+        op.outcome = event.reason;
+        if (event.detail) op.detail = event.detail;
+        return;
+      }
+      case 'permission.requested': {
+        const op = event.toolUseId ? this.ops.get(event.toolUseId) : this.openOp(event.agentId);
+        if (op && op.end === undefined && op.waitingSince === undefined) op.waitingSince = at;
+        return;
+      }
+      case 'permission.resolved': {
+        const op = event.toolUseId ? this.ops.get(event.toolUseId) : this.openOp(event.agentId);
+        if (op && op.waitingSince !== undefined && op.waitingUntil === undefined)
+          op.waitingUntil = at;
+        return;
+      }
+      case 'agent.spawned': {
+        if (agent.kind === 'sub' && agent.name !== event.name) {
+          agent.name = event.name;
+          this.codes.delete(agent.code);
+          agent.code = agentCode(event.name, this.codes);
+          this.codes.add(agent.code);
+        }
+        agent.start = Math.min(agent.start, at);
+        return;
+      }
+      case 'agent.finished':
+        agent.end = at;
+        return;
+      case 'session.started':
+        agent.start = Math.min(agent.start, at);
+        return;
+      case 'session.ended':
+        agent.end = at;
+        for (const op of this.ops.values())
+          if (op.end === undefined) {
+            op.end = at;
+            op.outcome = 'interrupted';
+          }
+        return;
+      default:
+        return;
+    }
+  }
+
+  /** Earliest instant after t at which viewAt changes without new events (hold, trail, linger). */
+  nextChange(t: number): number | undefined {
+    let next = Infinity;
+    const consider = (time: number) => {
+      if (time > t && time < next) next = time;
+    };
+    for (const op of this.ops.values()) {
+      if (op.end === undefined) continue;
+      const end = visibleEnd(op);
+      consider(end);
+      consider(end + TRAIL_MS);
+      if (op.temp) consider(end + TEMP_LINGER_MS);
+    }
+    return next === Infinity ? undefined : next;
+  }
+
+  viewAt(t: number, options: ViewOptions = {}): ActivityView {
+    const pending = options.pendingPermission ? this.openOp('main') : undefined;
+    const files = new Map<string, NodeActivity>();
+    for (const [path, ops] of this.fileOps) {
+      const node = this.fold(ops, t, pending);
+      if (node) files.set(path, node);
+    }
+
+    const temps: TempView[] = [];
+    for (const temp of this.temps.values()) {
+      const started = temp.ops.filter((op) => op.start <= t);
+      if (!started.length) continue;
+      const lastEnd = Math.max(...started.map(visibleEnd));
+      if (t >= lastEnd + TEMP_LINGER_MS) continue;
+      const node = this.fold(started, t, pending);
+      if (node) temps.push({ ...node, id: temp.id, kind: temp.kind, label: temp.label });
+    }
+
+    const agents: AgentPresence[] = [];
+    for (const agent of this.agents.values()) {
+      if (agent.start > t) continue;
+      const mine = agent.ops.filter((op) => op.start <= t);
+      const alive =
+        t < (agent.end === undefined ? Infinity : Math.max(agent.end, agent.start + HOLD_MS));
+      const active = mine.filter((op) => isActive(op, t));
+      const stateOf = (op: Op) => (op === pending ? 'waiting' : activeState(op, t));
+      const op = active.sort((a, b) => RANK[stateOf(b)] - RANK[stateOf(a)] || b.start - a.start)[0];
+      let state: MapState = 'idle';
+      let label = alive ? 'thinking' : 'done';
+      if (op) {
+        state = op.kind === 'agent' ? 'running' : stateOf(op);
+        label = op.kind === 'agent' ? 'delegating' : state === 'waiting' ? 'waits' : state;
+      } else if (!alive) state = 'done';
+      if (alive && agent.id === 'main' && options.pendingPermission && !op) {
+        state = 'waiting';
+        label = 'waits';
+      }
+      const focus = op ?? (alive ? mine.at(-1) : undefined);
+      const target = focus && focus.kind !== 'agent' ? targetOf(focus) : undefined;
+      const last = mine.at(-1);
+      agents.push({
+        id: agent.id,
+        name: agent.name,
+        code: agent.code,
+        kind: agent.kind,
+        state,
+        label,
+        alive,
+        calls: mine.length,
+        ...(target ? { target } : {}),
+        lastActive: Math.max(agent.start, last ? Math.min(t, visibleEnd(last)) : agent.start),
+      });
+    }
+
+    return { t, files, temps, agents };
+  }
+
+  /** State of one map node from the operations that touched it, at instant t. */
+  private fold(ops: readonly Op[], t: number, pending: Op | undefined): NodeActivity | undefined {
+    let node: NodeActivity | undefined;
+    let activeRank = -1;
+    for (const op of ops) {
+      if (op.start > t) continue;
+      node ??= { state: 'idle', reads: 0, writes: 0, fresh: false };
+      if (op.kind === 'read' || op.kind === 'search') node.reads++;
+      if (op.write) node.writes++;
+      if (op.diff) {
+        const d = node.diff ?? { add: 0, del: 0 };
+        node.diff = { add: d.add + op.diff.add, del: d.del + op.diff.del };
+      }
+      if (isActive(op, t)) {
+        const state = op === pending ? 'waiting' : activeState(op, t);
+        if (RANK[state] >= activeRank) {
+          activeRank = RANK[state];
+          node.state = state;
+          node.pulse = state === 'reading' ? op.id : undefined;
+          node.note =
+            state === 'waiting'
+              ? `waiting ${clock(t - (op.waitingSince ?? op.start))}`
+              : op.kind === 'shell'
+                ? clock(t - op.start)
+                : undefined;
+          node.fresh = false;
+        }
+      } else if (activeRank < 0) {
+        const end = visibleEnd(op);
+        if (op.outcome && op.outcome !== 'ok') {
+          node.state = 'error';
+          node.note = op.detail ?? REASON_NOTE[op.outcome];
+          node.fresh = false;
+        } else if (op.write || op.kind === 'write' || op.temp) {
+          // A finished write (or a command that passed) clears an earlier error on the node.
+          node.state = 'done';
+          node.note = undefined;
+          node.fresh = t - end < TRAIL_MS;
+        } else if (node.state !== 'done' && node.state !== 'error') {
+          node.state = 'idle'; // reads never clear a done write or an error
+        }
+      }
+    }
+    return node;
+  }
+}
+
+/** A tool target that names one workspace file (not a pattern, a command or an outside path). */
+function isFileTarget(target: string | null): target is string {
+  return target !== null && !/[*?[\]{}]|\s(in|-)\s/.test(target) && isProjectPath(target);
+}
+
+function targetOf(op: Op): string | undefined {
+  if (op.temp) return op.temp;
+  const path = op.files[0] ?? op.matches[0];
+  return path ? fileNodeId(path) : undefined;
+}

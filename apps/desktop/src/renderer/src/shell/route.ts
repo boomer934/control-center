@@ -1,14 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SECTIONS, type SectionId } from '../keys/registry';
 
-/** Views of the app: the seven sections plus the internal components page. */
-export type RouteId = SectionId | 'components';
+/**
+ * The map lab (phase 5b) drives the map with the recorded fixtures for the visual and performance
+ * tests. It exists only in the development and E2E builds: elsewhere the flag is a false constant
+ * and the lab, with the fixtures, is left out of the bundle.
+ */
+export const MAP_LAB: boolean = __CC_E2E_FAULTS__ || import.meta.env.DEV;
 
-const ROUTE_IDS: readonly string[] = [...SECTIONS.map((s) => s.id), 'components'];
+/** Views of the app: the seven sections plus the internal pages. */
+export type RouteId = SectionId | 'components' | 'map-lab';
+
+const ROUTE_IDS: readonly string[] = [
+  ...SECTIONS.map((s) => s.id),
+  'components',
+  ...(MAP_LAB ? ['map-lab'] : []),
+];
 
 export function parseRoute(hash: string): RouteId {
-  const id = hash.replace(/^#\/?/, '');
+  const id = hash.replace(/^#\/?/, '').replace(/\?.*$/, '');
   return (ROUTE_IDS.includes(id) ? id : 'live') as RouteId;
+}
+
+/** Query parameters of the hash (`#/map-lab?scene=writing`). */
+export function routeParam(name: string): string | null {
+  const query = window.location.hash.split('?')[1];
+  return query ? new URLSearchParams(query).get(name) : null;
 }
 
 export function hrefOf(route: RouteId): string {

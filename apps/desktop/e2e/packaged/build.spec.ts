@@ -44,11 +44,13 @@ function readAsar(path: string): Array<[string, Buffer]> {
 test('the production code has no E2E fault injectors', () => {
   const files = readAsar(ASAR);
   const code = files.filter(([p]) => p.startsWith('/out/') && p.endsWith('.js'));
-  // main, preload and the renderer bundle
+  // main, preload, the renderer bundle and the map layout worker (ADR 0013). The list is exact:
+  // it also proves that the dev-only map lab chunk stays out of production builds.
   expect(code.map(([p]) => p).sort()).toEqual([
     expect.stringMatching(/^\/out\/main\/index\.js$/),
     expect.stringMatching(/^\/out\/preload\/index\.js$/),
     expect.stringMatching(/^\/out\/renderer\/assets\/index-[\w-]+\.js$/),
+    expect.stringMatching(/^\/out\/renderer\/assets\/layout\.worker-[\w-]+\.js$/),
   ]);
   for (const [p, bytes] of code) {
     const text = bytes.toString('utf8');

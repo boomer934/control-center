@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-19. Correzioni della revisione 5a sulla PR #56; correzioni della 4b unite con la PR #55._
+_Ultimo aggiornamento 2026-11-26. 5b (mappa) con CI verde sulla [PR #58](https://github.com/boomer934/control-center/pull/58), merge su richiesta dell'utente; 5a unita su `main` (PR #56)._
 
 ## Fase
 
@@ -14,7 +14,8 @@ _Ultimo aggiornamento 2026-11-19. Correzioni della revisione 5a sulla PR #56; co
 
 **Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore).
 
-- **5a**, modello del progetto: implementata, rivista e corretta nella [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
+- **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
+- **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26. Restano fuori dal merge la passata impeccable sulla PR e la prova con una sessione Claude reale (voce 2 di `PROSSIMI_PASSI.md`).
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -31,7 +32,7 @@ _Ultimo aggiornamento 2026-11-19. Correzioni della revisione 5a sulla PR #56; co
 
 ## Branch
 
-Claude: `feat/modello-progetto` (5a, [PR #56](https://github.com/boomer934/control-center/pull/56), con `main` unito dopo la #55). Codex: `feat/git-checkpoints` è superato (PR #52 e #55 unite).
+Claude: `feat/mappa` (5b, PR #58) unito su `main`; la prossima sotto-fase parte da un branch nuovo. Codex: `feat/git-checkpoints` è superato (PR #52 e #55 unite).
 
 ## Punto di ripresa
 
@@ -81,8 +82,19 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - E2E `project.spec.ts` 2/2 e `security.spec.ts` verdi; `pnpm e2e:packaged` 10/10;
   - suite `app`: rossi solo i 2 test visivi e il test della chat già noto.
 - **Non verificato:** il worker dentro l'app impacchettata (Playwright non si collega al pacchetto: provati solo i file estratti); la CI Windows.
-- **Ora:** [PR #56](https://github.com/boomer934/control-center/pull/56) di `feat/modello-progetto`: CI, poi `/code-review medium` (Codex, da `CORSIE.md`) e merge a CI verde.
-- **Poi:** 5b (mappa, Opus 5.5 high), dopo il merge della 5a.
+- **Fatto (5b, ADR 0013):** mappa della Vista Live in `apps/desktop/src/renderer/src/live/`:
+  - React Flow ed elkjs (`rectpacking` in un Web Worker); un contenitore per cartella di primo livello, file toccati e vicini diretti visibili, il resto collassato con barre di calore;
+  - `MapActivity` (puro, `viewAt(t)`) dagli `AgentEvent`: stati dei file, nodi temporanei per comandi/MCP/web, chip degli agenti con archi; store per nodo, eventi accorpati per frame;
+  - Segui agente (`F`, `Esc`), Fit (`0`), zoom semantico, minimappa a heatmap, anteprima diff dal canale `git:diff` esistente (clic → sezione Git), link degli import al passaggio del mouse;
+  - map lab `#/map-lab` solo nelle build di sviluppo ed E2E (verificato: niente chunk nella build di produzione).
+- **Verificato in locale (5b):**
+  - `pnpm verify` verde: 381 test (14 nuovi sulla mappa, sulle fixture vere);
+  - E2E `map.spec.ts`: 9 test di comportamento e prestazioni verdi; prestazioni 144 fps (schermo a 144 Hz), p95 7 ms, 511 nodi, 20 eventi/s;
+  - suite `app`: 66 verdi, rossi solo i test visivi (in locale falliscono sempre; per la mappa mancano ancora le baseline) e il test della chat già noto;
+  - impeccable: rilevatore senza rilievi; dalla verifica manuale corretti apertura del diff da tastiera e toolbar a finestra stretta.
+- **Fatto (5b, CI, 2026-11-26):** PR #58 aperta; baseline visive dal runner; `data-ready` solo sul layout giusto; props di `<ReactFlow>` stabili. Il budget dei 60 fps falliva in CI (12,2% di frame lunghi): il movimento della mappa ridipingeva tutti i 511 nodi a ogni frame. Ora il punto del viaggio va sul compositor, i nodi non hanno transizioni, il `readtick` agisce su `fill/stroke-opacity`; il test misura il tempo del main thread via DevTools (≤ 50%). CI: 64,1 fps, 0% di frame lunghi, main thread 15,8%.
+- **Non verificato:** mappa con una sessione Claude reale (provata con le fixture); passata impeccable sulla PR; `pnpm e2e:packaged` in locale (in CI verde).
+- **Ora (punto di ripresa):** 5b unita. Prossimo: prova a mano della mappa con una sessione reale e audit impeccable (piccola PR se servono correzioni), poi la 5c (Codex).
 
 ### Corsia Codex
 

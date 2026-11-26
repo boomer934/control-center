@@ -96,6 +96,27 @@ export const SHORTCUTS: readonly Shortcut[] = [
     scope: 'global',
   },
   {
+    id: 'live.follow',
+    combo: 'F',
+    label: 'Follow the agent on the map',
+    group: 'Live',
+    scope: 'live',
+  },
+  {
+    id: 'live.fit',
+    combo: '0',
+    label: 'Fit the map',
+    group: 'Live',
+    scope: 'live',
+  },
+  {
+    id: 'live.unfollow',
+    combo: 'Escape',
+    label: 'Stop following',
+    group: 'Live',
+    scope: 'live',
+  },
+  {
     id: 'activity.compact',
     combo: 'Ctrl+B',
     label: 'Compact activity bar',

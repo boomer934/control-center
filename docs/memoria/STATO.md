@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. Mappa 5b e rifinitura unite (PR #58 e #59). Timeline e replay 5c verificati nel branch Codex._
+_Ultimo aggiornamento 2026-11-26. Aperte le PR per timeline e replay 5c e per i checkpoint Git su Windows._
 
 ## Fase
 
@@ -17,7 +17,7 @@ _Ultimo aggiornamento 2026-11-26. Mappa 5b e rifinitura unite (PR #58 e #59). Ti
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
 - **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
-- **5c**, timeline e replay: implementata e verificata in locale. Apertura delle sessioni passate in sola lettura dalla Vista Live.
+- **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Verificata in locale e pubblicata con la [PR #62](https://github.com/boomer934/control-center/pull/62).
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -34,7 +34,7 @@ _Ultimo aggiornamento 2026-11-26. Mappa 5b e rifinitura unite (PR #58 e #59). Ti
 
 ## Branch
 
-Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `feat/timeline-replay` da `origin/main` (`3dadb8e`); correzione 4b sul ramo locale separato `fix/git-checkpoint-electron` (`6164bf6`).
+Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `feat/timeline-replay` (PR #62) e `fix/git-checkpoint-electron` (PR #61), entrambi pubblicati con base `3dadb8e`.
 
 ## Punto di ripresa
 
@@ -117,7 +117,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (5c):** la timeline mostra le corsie degli agenti e dei subagent su un asse comune, con scrubber, riproduzione e ritorno a Live. Gli eventi file coincidenti con il relativo Read/Edit confluiscono nel marcatore dello strumento.
 - **Replay (5c):** lo scrubber ricostruisce lo stato da un prefisso temporale degli `AgentEvent` e conserva la disposizione della mappa durante la riproduzione. Le sessioni salvate si aprono da History in sola lettura. I checkpoint restano confrontabili anche nel replay.
 - **Verificato (5c):** `pnpm verify` con 393 test passati e uno saltato. Tutti i 69 E2E funzionali passati, inclusi fixture con subagente, sessione salvata riaperta dopo il riavvio e checkpoint. Audit Impeccable senza rilievi in Electron a 960×600 nei due temi. I quattro errori dei confronti visivi locali si riproducono anche su `origin/main`.
-- **Ora:** 5c pronta per PR. La correzione 4b per i percorsi lunghi di Git su Windows resta sul ramo locale `fix/git-checkpoint-electron` per la revisione Claude a effort `medium`.
+- **Fatto (4b, Windows):** correzione pubblicata con la [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` senza bug confermati. Su Windows, scrittura di un riferimento con percorso di lock da 315 caratteri fallita senza l'override e riuscita con `core.longpaths=true`.
+- **Ora:** controllare gli esiti della CI sulle due PR prima del merge.
 
 ## Cosa funziona
 

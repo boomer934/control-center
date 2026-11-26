@@ -11,7 +11,10 @@ import {
   ViewportPortal,
   useReactFlow,
   useStore,
+  type Edge,
   type Node,
+  type NodeMouseHandler,
+  type OnMoveStart,
 } from '@xyflow/react';
 import {
   useCallback,
@@ -69,6 +72,11 @@ const EDGE: Partial<Record<MapState, string>> = {
   error: 'e e-err',
   waiting: 'e e-attach w',
 };
+
+// Props of <ReactFlow> keep their identity across renders: React Flow hands them to every node
+// wrapper, so a new array or handler on each event would re-render all the nodes (ADR 0013).
+const NO_EDGES: Edge[] = [];
+const PRO_OPTIONS = { hideAttribution: true };
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -365,6 +373,24 @@ function MapInner(props: LiveMapProps) {
   );
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
 
+  const hoverNode = useRef(context.hover);
+  hoverNode.current = context.hover;
+  const onNodeMouseEnter = useCallback<NodeMouseHandler>(
+    (event, n) =>
+      hoverNode.current(
+        n.type === 'file' ? (n.data as { path: string }).path : null,
+        event.currentTarget as HTMLElement,
+      ),
+    [],
+  );
+  const onNodeMouseLeave = useCallback<NodeMouseHandler>(() => hoverNode.current(null), []);
+  const onMoveStart = useCallback<OnMoveStart>((event) => {
+    if (!event) return;
+    userMoved.current = true;
+    setPreview(null);
+    setFollow((f) => (f.on ? { on: false, agent: f.agent, stopped: true } : f));
+  }, []);
+
   const importLinks = useMemo(() => {
     if (!hovered || !layout) return [];
     const from = layout.abs.get(`f:${hovered}`);
@@ -480,13 +506,14 @@ function MapInner(props: LiveMapProps) {
         data-zoom={zoomLevel}
         style={zoomStyle}
         data-testid="live-map"
-        data-ready={Boolean(layout)}
+        // Ready once the layout on screen is the one of the visible map, not a previous one.
+        data-ready={layout?.key === visible.key}
         data-files={visible.files.size}
         tabIndex={-1}
       >
         <ReactFlow
           nodes={nodes}
-          edges={[]}
+          edges={NO_EDGES}
           nodeTypes={nodeTypes}
           nodesDraggable={false}
           nodesConnectable={false}
@@ -496,21 +523,11 @@ function MapInner(props: LiveMapProps) {
           onlyRenderVisibleElements
           minZoom={0.08}
           maxZoom={2}
-          proOptions={{ hideAttribution: true }}
+          proOptions={PRO_OPTIONS}
           // Node events also give the nodes their pointer events (they are not selectable).
-          onNodeMouseEnter={(event, n) =>
-            context.hover(
-              n.type === 'file' ? (n.data as { path: string }).path : null,
-              event.currentTarget as HTMLElement,
-            )
-          }
-          onNodeMouseLeave={() => context.hover(null)}
-          onMoveStart={(event) => {
-            if (!event) return;
-            userMoved.current = true;
-            setPreview(null);
-            setFollow((f) => (f.on ? { on: false, agent: f.agent, stopped: true } : f));
-          }}
+          onNodeMouseEnter={onNodeMouseEnter}
+          onNodeMouseLeave={onNodeMouseLeave}
+          onMoveStart={onMoveStart}
         >
           <ViewportPortal>
             <svg className="lmap-links" aria-hidden="true">

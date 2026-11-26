@@ -75,6 +75,10 @@ export function useMapActivity(
     }
     state.count = records.length;
     activity.current.apply(batch);
+    // The touched files decide what the map shows: update them now, so the first layout is
+    // already the right one, instead of a layout without them followed by a second one.
+    const files = activity.current.touched();
+    setTouched((previous) => (previous.length === files.length ? previous : files));
     schedule();
   }, [records]);
 

@@ -128,51 +128,73 @@ test.describe('map (visual)', () => {
 
 /** A frame longer than this missed at least one refresh at 60 Hz. */
 const LONG_FRAME_MS = 25;
+/** Share of the main thread the map may take while the events stream. */
+const MAIN_THREAD_BUDGET = 0.5;
 
 test.describe('map performance', () => {
+  // What the test asserts, and why (PROBLEMI_NOTI, 2026-11-26): the frame intervals of the
+  // Windows runner (no GPU, frames paced by the 15.6 ms system timer) are too coarse to tell a
+  // map that keeps up from one that barely does: before the map render fix and after it both
+  // gave a p95 of 31.2 ms there. The work of the renderer's main thread is what the map costs:
+  // it is measured with the DevTools protocol, and the map may use at most half of it while 20
+  // events per second arrive, so every frame keeps room for the rest of the app. The frames are
+  // still counted (fps) and logged, with the share of long frames.
   test('keeps 60 fps with 500 nodes and 20 events per second', async () => {
     await scene('bench');
     await expect(page.getByTestId('live-map')).toHaveAttribute('data-files', '500');
-    const measure = (running: boolean, ms: number) =>
-      page.evaluate(
-        async ({ running, ms, long }) => {
-          const bench = (window as unknown as { __mapBench: (on: boolean) => void }).__mapBench;
-          bench(running);
-          // Let the stream settle, then count frames.
-          await new Promise((done) => setTimeout(done, 1000));
-          const frames: number[] = [];
-          await new Promise<void>((done) => {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Performance.enable');
+    /** Time the renderer's main thread spent running tasks so far, in ms. */
+    const mainThread = async () => {
+      const { metrics } = await cdp.send('Performance.getMetrics');
+      return metrics.find((m) => m.name === 'TaskDuration')!.value * 1000;
+    };
+    const measure = async (running: boolean, ms: number) => {
+      await page.evaluate((on) => {
+        (window as unknown as { __mapBench: (on: boolean) => void }).__mapBench(on);
+      }, running);
+      // Let the stream settle, then count frames and main-thread time over the same window.
+      await page.waitForTimeout(1000);
+      const busyBefore = await mainThread();
+      const frames = await page.evaluate(
+        (ms) =>
+          new Promise<number[]>((done) => {
+            const out: number[] = [];
             const start = performance.now();
             let last = start;
             const tick = (now: number) => {
-              frames.push(now - last);
+              out.push(now - last);
               last = now;
               if (now - start < ms) requestAnimationFrame(tick);
-              else done();
+              else done(out);
             };
             requestAnimationFrame(tick);
-          });
-          bench(false);
-          const total = frames.reduce((a, b) => a + b, 0);
-          const sorted = [...frames].sort((a, b) => a - b);
-          return {
-            fps: (frames.length / total) * 1000,
-            p95: sorted[Math.floor(sorted.length * 0.95)]!,
-            longest: sorted.at(-1)!,
-            longShare: frames.filter((f) => f > long).length / frames.length,
-            nodes: document.querySelectorAll('.react-flow__node').length,
-          };
-        },
-        { running, ms, long: LONG_FRAME_MS },
+          }),
+        ms,
       );
-    // The same map without events: what this machine's frame clock gives on its own. On the
-    // Windows runner frames are paced by the 15.6 ms system timer, so about 7% of the frames of
-    // an idle page last two ticks (31.2 ms) and a plain p95 can never reach 25 ms there.
+      const busyMs = (await mainThread()) - busyBefore;
+      const nodes = await page.evaluate(() => {
+        (window as unknown as { __mapBench: (on: boolean) => void }).__mapBench(false);
+        return document.querySelectorAll('.react-flow__node').length;
+      });
+      const total = frames.reduce((a, b) => a + b, 0);
+      const sorted = [...frames].sort((a, b) => a - b);
+      return {
+        fps: (frames.length / total) * 1000,
+        p95: sorted[Math.floor(sorted.length * 0.95)]!,
+        longest: sorted.at(-1)!,
+        longShare: frames.filter((f) => f > LONG_FRAME_MS).length / frames.length,
+        mainShare: busyMs / total,
+        nodes,
+      };
+    };
     const idle = await measure(false, 3000);
     const busy = await measure(true, 5000);
+    await cdp.detach();
     const describe = (r: typeof busy) =>
       `${r.fps.toFixed(1)} fps, p95 ${r.p95.toFixed(1)} ms, longest ${r.longest.toFixed(1)} ms, ` +
-      `${(r.longShare * 100).toFixed(1)}% frames > ${LONG_FRAME_MS} ms`;
+      `${(r.longShare * 100).toFixed(1)}% frames > ${LONG_FRAME_MS} ms, ` +
+      `main thread ${(r.mainShare * 100).toFixed(1)}% busy`;
     test.info().annotations.push({
       type: 'performance',
       description: `events: ${describe(busy)}, ${busy.nodes} nodes rendered; idle: ${describe(idle)}`,
@@ -180,8 +202,6 @@ test.describe('map performance', () => {
     console.log(`map performance: events: ${describe(busy)}; idle: ${describe(idle)}`);
     expect(busy.nodes).toBeGreaterThanOrEqual(500);
     expect(busy.fps).toBeGreaterThanOrEqual(55);
-    // The events may add at most 5% of long frames to what the idle map already has (a p95 of
-    // 25 ms on a machine whose clock never misses).
-    expect(busy.longShare).toBeLessThanOrEqual(idle.longShare + 0.05);
+    expect(busy.mainShare).toBeLessThanOrEqual(MAIN_THREAD_BUDGET);
   });
 });

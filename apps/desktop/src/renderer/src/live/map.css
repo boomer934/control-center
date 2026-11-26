@@ -193,27 +193,49 @@
 .lmap .achip {
   pointer-events: none;
 }
+/*
+ * Motion on a map of 500 positioned nodes: anything that repaints on every frame outside a node
+ * sign (a moving element, the link layer, a node border in transition) repaints and re-layers
+ * the whole map each frame, and on a slow CPU the events then miss frames. So node states change
+ * at once, the trip dot moves on the compositor (Trip in LiveMap.tsx) and the read pulse fades
+ * the glyph strokes in place (PROBLEMI_NOTI, 2026-11-26).
+ */
+.lmap .node {
+  transition: none;
+}
 .lmap-trip {
-  offset-rotate: 0deg;
-  offset-distance: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--sz-dot);
+  height: var(--sz-dot);
+  margin: calc(var(--sz-dot) / -2);
+  border-radius: 50%;
+  pointer-events: none;
   opacity: 0;
+  will-change: transform, opacity;
+}
+.lmap-trip.reading {
+  background: var(--st-reading);
+}
+.lmap-trip.writing {
+  background: var(--st-writing);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .lmap-trip {
-    animation: lmap-trip var(--dur-3) var(--ease-io) 1 both;
-  }
-  .lmap-trip.back {
-    animation-direction: reverse;
+  .lmap .s-reading.pulse .sign svg,
+  .lmap .s-reading.pulse > .g {
+    animation-name: lmap-readtick;
   }
 }
-@keyframes lmap-trip {
-  from {
-    offset-distance: 0%;
-    opacity: 1;
+/* readtick of the design system, on the glyph strokes and fills instead of its opacity. */
+@keyframes lmap-readtick {
+  0% {
+    fill-opacity: 0.35;
+    stroke-opacity: 0.35;
   }
-  to {
-    offset-distance: 100%;
-    opacity: 0;
+  100% {
+    fill-opacity: 1;
+    stroke-opacity: 1;
   }
 }
 
@@ -336,21 +358,6 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-.lmap-trip {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--sz-dot);
-  height: var(--sz-dot);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.lmap-trip.reading {
-  background: var(--st-reading);
-}
-.lmap-trip.writing {
-  background: var(--st-writing);
 }
 .lmap[data-zoom='far'] .ctr > .lg i {
   display: none;

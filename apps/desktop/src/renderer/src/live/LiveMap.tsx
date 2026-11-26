@@ -106,31 +106,89 @@ function linkEnd(x: number, target: Box): [number, number] {
 }
 
 /**
- * Link from a chip to the node its agent works on. Toward a file it runs in the gap above the
- * node's row and drops onto its top edge, so it never crosses the other nodes of the grid.
+ * Corners of the link from a chip to the node its agent works on. Toward a file it runs in the
+ * gap above the node's row and drops onto its top edge, so it never crosses the other nodes of
+ * the grid.
  */
-function linkPath(x: number, y: number, row: number, target: Box): string {
+function linkPoints(x: number, y: number, row: number, target: Box): [number, number][] {
   const cy = y + row / 2;
   const [tx, ty] = linkEnd(x, target);
   if (target.x > x) {
     const sx = x + CHIP_W;
     const mid = sx + GUTTER / 2;
-    return roundedPath([
+    return [
       [sx, cy],
       [mid, cy],
       [mid, ty],
       [tx, ty],
-    ]);
+    ];
   }
   const mid = x - GUTTER / 2;
   const lane = target.y - ROW_GAP / 2;
-  return roundedPath([
+  return [
     [x, cy],
     [mid, cy],
     [mid, lane],
     [tx, lane],
     [tx, ty],
-  ]);
+  ];
+}
+
+const linkPath = (x: number, y: number, row: number, target: Box) =>
+  roundedPath(linkPoints(x, y, row, target));
+
+/**
+ * The dot of a trip along a link, moved by a transform on the compositor (Web Animations).
+ * On a map of 500 nodes, motion that needs the main thread on every frame (an offset-path, or
+ * repainting the links) repaints and re-layers the whole map each frame, and a slow CPU then
+ * misses frames while the events stream (PROBLEMI_NOTI, 2026-11-26).
+ */
+function Trip({
+  trip,
+  reverse,
+  state,
+  points,
+}: {
+  /** The target of the trip: a new one starts a trip, later moves of the link do not. */
+  trip?: string;
+  /** From the node to the chip (reads) instead of toward the node (writes). */
+  reverse?: boolean;
+  state: MapState;
+  points: [number, number][];
+}) {
+  // One dot per agent, kept between trips: a new element would be a new compositor layer, and
+  // every new layer re-layers the whole map once.
+  const dot = useRef<HTMLElement>(null);
+  const running = useRef<Animation>(undefined);
+  const route = useRef(points);
+  route.current = reverse ? [...points].reverse() : points;
+  // The colour of the last trip: it ends even if the agent already moved on.
+  const tone = useRef(state);
+  if (state === 'reading' || state === 'writing') tone.current = state;
+  useEffect(() => () => running.current?.cancel(), []);
+  useEffect(() => {
+    const el = dot.current;
+    const stops = route.current;
+    if (!el || !trip || stops.length < 2 || reducedMotion()) return;
+    running.current?.cancel();
+    const lengths = stops
+      .slice(1)
+      .map(([x, y], i) => Math.hypot(x - stops[i]![0], y - stops[i]![1]));
+    const total = lengths.reduce((a, b) => a + b, 0) || 1;
+    let run = 0;
+    const frames: Keyframe[] = stops.map(([x, y], i) => {
+      run += i ? lengths[i - 1]! : 0;
+      return { transform: `translate(${x}px, ${y}px)`, offset: run / total };
+    });
+    frames[0]!.opacity = 1;
+    frames.at(-1)!.opacity = 0;
+    const style = getComputedStyle(el);
+    running.current = el.animate(frames, {
+      duration: parseFloat(style.getPropertyValue('--dur-3')) || 300,
+      easing: style.getPropertyValue('--ease-io').trim() || 'ease-in-out',
+    });
+  }, [trip]);
+  return <i ref={dot} className={`lmap-trip ${tone.current}`} aria-hidden="true" />;
 }
 
 interface Chip {
@@ -549,14 +607,14 @@ function MapInner(props: LiveMapProps) {
               })}
             </svg>
             {chips.map(({ agent, x, y, target }) => {
-              if (!target || (agent.state !== 'reading' && agent.state !== 'writing')) return null;
-              const d = linkPath(x, y, row, target);
               // One trip along the link per new target: reads flow to the agent, writes to the file.
+              const moving = target && (agent.state === 'reading' || agent.state === 'writing');
               return (
-                <i
-                  key={`${agent.id}:${agent.target}`}
-                  className={`lmap-trip ${agent.state}${agent.state === 'reading' ? ' back' : ''}`}
-                  style={{ offsetPath: `path('${d}')` }}
+                <Trip
+                  key={agent.id}
+                  {...(moving ? { trip: agent.target!, reverse: agent.state === 'reading' } : {})}
+                  state={agent.state}
+                  points={target ? linkPoints(x, y, row, target) : []}
                 />
               );
             })}

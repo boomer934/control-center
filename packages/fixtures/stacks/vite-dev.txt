@@ -1,0 +1,9 @@
+
+  VITE v7.2.4  ready in 412 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+12:01:33 [vite] Internal server error: Transform failed with 1 error:
+C:/dev/shop/src/main.tsx:8:4: ERROR: Unexpected "}"
+  Plugin: vite:esbuild
+  File: C:/dev/shop/src/main.tsx:8:4

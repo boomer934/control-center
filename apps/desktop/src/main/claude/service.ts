@@ -5,7 +5,7 @@
 // the window. A message is sent only while the session's workspace is still the active one.
 import { randomUUID } from 'node:crypto';
 import type { ErrorInput } from '@control-center/app-log';
-import { makeTextCleaner, type AgentEvent } from '@control-center/event-schema';
+import { makeTextCleaner, type AgentEvent, type ErrorDraft } from '@control-center/event-schema';
 import type { GitCheckpoint, GitError } from '@control-center/ipc-contract';
 import { GitFailure } from '../git/repository';
 import {
@@ -249,6 +249,17 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
     },
 
     isWorkspaceBusy,
+
+    /**
+     * Errors a terminal of `owner` found in `workspaceId` (phase 5e): they join the events of
+     * that window's open sessions on the same workspace, so the timeline and the history keep
+     * them next to what the agent did before.
+     */
+    reportErrors(owner: number, workspaceId: string, errors: readonly ErrorDraft[], at: Date) {
+      for (const entry of sessions.values())
+        if (entry.owner === owner && entry.workspaceId === workspaceId && !entry.closed)
+          entry.session?.reportErrors(errors, at);
+    },
 
     respond(
       owner: number | undefined,

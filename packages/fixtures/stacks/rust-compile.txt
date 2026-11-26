@@ -1,0 +1,9 @@
+   Compiling inventory v0.1.0 (C:\dev\shop\rs)
+error[E0425]: cannot find value `missing` in this scope
+ --> src\stock.rs:2:12
+  |
+2 |     v[3] + missing
+  |            ^^^^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `inventory` (bin "inventory") due to 1 previous error

@@ -1,6 +1,6 @@
 import type { AgentEvent, AgentId, ToolKind } from '@control-center/event-schema';
 import type { GitCheckpoint } from '@control-center/ipc-contract';
-import { HOLD_MS, MapActivity, type ViewOptions } from './activity';
+import { HOLD_MS, MapActivity, type ResolveFile, type ViewOptions } from './activity';
 
 export type ReplayRecord =
   | { kind: 'events'; events: readonly AgentEvent[] }
@@ -22,17 +22,24 @@ export function timedEvents(records: readonly ReplayRecord[]): TimedEvent[] {
 /** Fold only the events that had happened at the playhead. Forward seeks reuse the prefix. */
 export class ReplayActivity {
   private readonly events: TimedEvent[];
-  private activity = new MapActivity();
+  private activity: MapActivity;
   private cursor = 0;
   private last = -Infinity;
+  private readonly resolveFile: ResolveFile | undefined;
 
-  constructor(records: readonly ReplayRecord[], events = timedEvents(records)) {
+  constructor(
+    records: readonly ReplayRecord[],
+    events = timedEvents(records),
+    resolveFile?: ResolveFile,
+  ) {
     this.events = events;
+    this.resolveFile = resolveFile;
+    this.activity = new MapActivity(resolveFile);
   }
 
   viewAt(at: number, options?: ViewOptions) {
     if (at < this.last) {
-      this.activity = new MapActivity();
+      this.activity = new MapActivity(this.resolveFile);
       this.cursor = 0;
     }
     this.last = at;
@@ -58,6 +65,8 @@ export interface TimelineMark {
 }
 
 function mapNode(event: AgentEvent): string | undefined {
+  if (event.type === 'error.detected')
+    return event.file?.external === false ? `f:${event.file.path}` : undefined;
   if ((event.type === 'file.read' || event.type === 'file.written') && !event.file.external)
     return `f:${event.file.path}`;
   if (event.type === 'mcp.called') return `t:mcp:${event.server}`;
@@ -106,6 +115,12 @@ function point(event: AgentEvent): Pick<TimelineMark, 'label' | 'tone' | 'glyph'
         label: `Permission ${event.decision}`,
         tone: event.decision === 'allowed' ? 'neutral' : 'error',
         glyph: event.decision === 'allowed' ? 's-done' : 's-error',
+      };
+    case 'error.detected':
+      return {
+        label: `Error · ${event.message.length > 80 ? `${event.message.slice(0, 79)}…` : event.message}`,
+        tone: 'error',
+        glyph: 's-error',
       };
     case 'file.read':
       return { label: `Read ${event.file.path}`, tone: 'read' };

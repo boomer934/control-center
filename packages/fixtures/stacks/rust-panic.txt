@@ -1,0 +1,17 @@
+
+thread 'main' (4242) panicked at src\stock.rs:2:5:
+index out of bounds: the len is 2 but the index is 3
+stack backtrace:
+   0: std::panicking::panic_handler
+             at /rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library\std\src\panicking.rs:689
+   1: core::panicking::panic_fmt
+             at /rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library\core\src\panicking.rs:80
+   2: core::panicking::panic_bounds_check
+             at /rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library\core\src\panicking.rs:271
+   3: inventory::stock::first
+             at .\src\stock.rs:2
+   4: inventory::main
+             at .\src\main.rs:4
+   5: core::ops::function::FnOnce::call_once<void (*)(),tuple$<> >
+             at /rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library\core\src\ops\function.rs:250
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

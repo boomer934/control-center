@@ -3,7 +3,8 @@
 // change (hold, trail, a running clock), so an idle map costs nothing.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AgentEvent } from '@control-center/event-schema';
-import { MapActivity } from './activity';
+import type { TerminalError } from '@control-center/ipc-contract/terminal';
+import { MapActivity, type ResolveFile } from './activity';
 import { ReplayActivity, type ReplayRecord } from './replay';
 import { MapStore } from './store';
 
@@ -18,6 +19,10 @@ export interface MapActivityOptions {
   pendingPermission?: boolean;
   /** Folders shown as collapsed nodes or containers, with their file count. */
   folders: ReadonlyMap<string, number>;
+  /** Errors found outside the session (integrated terminals): live map only. */
+  errors?: readonly TerminalError[];
+  /** Map file of an error's culprit (suffix match against the project). */
+  resolveFile?: ResolveFile;
 }
 
 /** A clock on a node ("0:04") moves once a second while something runs or waits. */
@@ -28,12 +33,21 @@ export function useMapActivity(
   options: MapActivityOptions,
 ): { store: MapStore; touched: string[] } {
   const store = useMemo(() => new MapStore(), []);
-  const activity = useRef(new MapActivity());
-  const seen = useRef<{ first?: EventRecord; count: number }>({ count: 0 });
+  const resolver = useRef(options.resolveFile);
+  resolver.current = options.resolveFile;
+  const resolveFile = useRef<ResolveFile>((file) =>
+    resolver.current ? resolver.current(file) : file.external ? undefined : file.path,
+  ).current;
+  const activity = useRef(new MapActivity(resolveFile));
+  const seen = useRef<{
+    first?: EventRecord;
+    count: number;
+    errors?: readonly TerminalError[];
+  }>({ count: 0 });
   const opts = useRef(options);
   const replay = useMemo(
-    () => (options.historical ? new ReplayActivity(records) : undefined),
-    [options.historical, records],
+    () => (options.historical ? new ReplayActivity(records, undefined, resolveFile) : undefined),
+    [options.historical, records, resolveFile],
   );
   const [touched, setTouched] = useState<string[]>([]);
   const frame = useRef(0);
@@ -69,9 +83,10 @@ export function useMapActivity(
     const state = seen.current;
     // A new session or a loaded history replaces the records: start again from nothing.
     if (records[0] !== state.first || records.length < state.count) {
-      activity.current = new MapActivity();
+      activity.current = new MapActivity(resolveFile);
       state.count = 0;
       state.first = records[0];
+      state.errors = undefined;
     }
     const batch: AgentEvent[] = [];
     for (let i = state.count; i < records.length; i++) {
@@ -80,6 +95,11 @@ export function useMapActivity(
     }
     state.count = records.length;
     activity.current.apply(batch);
+    // Terminal errors are re-applied whole: the activity drops the ones it already has.
+    if (options.errors && options.errors !== state.errors) {
+      activity.current.applyErrors(options.errors);
+      state.errors = options.errors;
+    }
     // The touched files decide what the map shows: update them now, so the first layout is
     // already the right one, instead of a layout without them followed by a second one.
     const files = activity.current.touched();
@@ -89,7 +109,7 @@ export function useMapActivity(
         : files,
     );
     schedule();
-  }, [records]);
+  }, [records, options.errors]);
 
   useEffect(
     () => () => {

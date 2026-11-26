@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. Timeline e replay su `main`. Pannello agenti, ispettore e inventario locale nella PR #63._
+_Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 5e (errori del progetto sulla mappa) sul branch `feat/errori-progetto`, ADR 0015._
 
 ## Fase
 
@@ -12,12 +12,14 @@ _Ultimo aggiornamento 2026-11-26. Timeline e replay su `main`. Pannello agenti, 
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
-**Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore).
+**Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
 
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
 - **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
 - **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Unita su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`).
+- **5d**, pannello agenti, ispettore e inventario locale: unita su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`, ADR 0014).
+- **5e**, errori del progetto: schema `error.detected` (v2, migrazione 1 → 2), parser di stack trace e colorazione della mappa sul branch `feat/errori-progetto` (ADR 0015). La parte dei parser era della corsia Codex: l'ha fatta Claude su goal dell'utente.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -34,7 +36,7 @@ _Ultimo aggiornamento 2026-11-26. Timeline e replay su `main`. Pannello agenti, 
 
 ## Branch
 
-Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
+Claude: `feat/errori-progetto` (5e, da aprire in PR). Mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
 
 ## Punto di ripresa
 
@@ -102,7 +104,21 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Verificato in locale (rifinitura):** `pnpm verify` verde (386 test); `map.spec.ts` 9 test di comportamento verdi, i 2 visivi rossi (in locale sempre, e le baseline cambiano col nuovo `Fit`).
 - **Trovato, non corretto:** nell'app ogni sessione reale parte con "Turn started without a Git checkpoint (failed)"; lo stesso `checkpoint` del servizio Git, chiamato da un test sullo stesso repo, riesce. Voce in `PROSSIMI_PASSI.md` e `PROBLEMI_NOTI.md`.
 - **Fatto (rifinitura, CI):** in CI erano rossi solo i 2 test visivi della mappa (69 verdi). Le 14 baseline sono state sostituite con le immagini del run 45872508146, controllate a vista: contenuto invariato, mappa spostata sopra legenda e minimappa, nota vuota in alto.
-- **Ora (punto di ripresa):** PR #59 con le baseline nuove, in attesa della CI e poi del merge su richiesta dell'utente. Dopo: la 5c (Codex).
+- **Fatto (5e, ADR 0015, branch `feat/errori-progetto`):**
+  - schema v2: `error.detected` (origine, linguaggio, messaggio ripulito, colpevole con riga e colonna, fino a 20 frame, `toolUseId`); `migrateAgentEvent` porta gli eventi v1 della cronologia alla v2 prima della validazione;
+  - parser a registro in `packages/event-schema/src/stack/` (V8, Firefox, `tsc`, esbuild/Vite, Python, Go, Rust) con 13 fixture in `packages/fixtures/stacks/`, 7 catturate dai runtime veri (Node 26, Python 3.14, Rust 1.97, TypeScript 5.9); ANSI e movimenti del cursore di ConPTY tolti, prefissi di Docker Compose → origine `docker`;
+  - comandi degli agenti: il normalizzatore dello stream analizza l'output degli strumenti shell (origine dal comando: `docker`, test, dev server, `command`); nella `sessione-02` registrata il `npm test` fallito dà il colpevole `test/cart.test.js:10`;
+  - terminale integrato: scanner nel main (250 ms di quiete, banner dei dev server, ripetizioni scartate, 30 errori al minuto), aggiornamento `errors` di `terminal:updated` e iniezione nelle sessioni Claude aperte dalla stessa finestra sullo stesso workspace;
+  - mappa: nodo colpevole `error` con nota `L<riga> <Nome>` finché una scrittura sul file o lo stesso comando che passa non lo ripuliscono; percorsi non del progetto risolti per suffisso univoco; timeline con il segno "Error · …" e ispettore con messaggio, posizione e origine.
+- **Verificato in locale (5e):**
+  - `pnpm verify` verde (439 test, 1 saltato);
+  - E2E `project-errors.spec.ts` 3/3, ripetuto 3 volte (9/9): `node src/cart.js` nel PowerShell integrato colora `src/lib/price.js`; il `npm test` fallito di `sessione-02` (finto `claude`) dà il segno in timeline, `test/cart.test.js` rosso a quell'istante con "Tests · node" e pulito quando lo stesso comando passa; i log di Docker Compose (`/app/app/models.py` → `app/models.py`, "Docker · python") e un **Vite 8 vero** (quello della repo) che serve un modulo TypeScript rotto (`src/main.ts:3:13`, "Dev server · node") nel terminale con la sessione aperta;
+  - suite `app` completa: 73 verdi, rossi solo i 4 test visivi; `claude.spec.ts` torna 6/6 dopo la correzione di `cleanEnv` (vedi `PROBLEMI_NOTI.md`: gli E2E locali avviavano la CLI reale).
+- **Impeccable (audit mirato, nei due temi via CDP):** rilevatore pulito sul sorgente e senza rilievi sulle parti 5e nell'app (restano rilievi già esistenti: testo a 11 px della riga info, un colore ANSI di xterm, la legenda che copre la cartella `test` quando il dock del terminale rimpicciolisce la mappa). Corretti: nota dell'errore anche in `title` e `aria-label` del nodo; `AssertionError [ERR_ASSERTION]` faceva una nota lunga che sfondava il nodo e nascondeva il nome (ora `L10 AssertionError`, nome al massimo 18 caratteri).
+- **Baseline visive:** `map-error-dark.png` e `map-error-light.png` cambiano di proposito (la scena "error" usa `sessione-02`, ora con `test/cart.test.js` rosso): vanno rigenerate dall'artifact della CI, come le altre. Le altre 24 immagini hanno in locale le stesse differenze di `main` (font).
+- **Parser in più dalla prova con Vite 8:** diagnostica di Oxc/Rolldown (`[PARSE_ERROR] …` e `╭─[ file:riga:col ]`); il messaggio di uno stack di Vite si cerca sopra le righe `Plugin:`/`File:`. Fixture reale `vite8-dev.txt`.
+- **Non verificato:** log letti direttamente da Docker (Fase 6; qui il demone Docker non è attivo); la prova Docker è sull'output di `docker compose logs` nel terminale.
+- **Ora (punto di ripresa):** commit e PR di `feat/errori-progetto` (su richiesta dell'utente), baseline `map-error-*` dall'artifact della CI, CI verde, merge. Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
 
 ### Corsia Codex
 

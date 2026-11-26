@@ -5,6 +5,7 @@
 // (`parent_tool_use_id`) and token usage. Its timestamps are coarse (one per API message), so the
 // hooks normalizer gives the precise ones and mergeClaudeSession combines the two.
 import type { AgentEvent, AgentId } from '../schema';
+import { detectErrors, originOfCommand } from '../stack';
 import {
   agentOf,
   diffOf,
@@ -59,11 +60,13 @@ export interface StreamNormalizerOptions {
 export class ClaudeStreamNormalizer {
   private readonly log: EventLog;
   private cleaners: ReturnType<typeof makeTools>;
+  private cwd: string;
   private readonly s: StreamState;
 
   constructor(ctx: NormalizeContext, options: StreamNormalizerOptions = {}) {
     this.log = new EventLog(ctx.sessionId, 'stream', 'claude');
-    this.cleaners = makeTools(ctx.cwd ?? '');
+    this.cwd = ctx.cwd ?? '';
+    this.cleaners = makeTools(this.cwd);
     this.s = {
       cwdKnown: ctx.cwd !== undefined,
       now: options.startAt ?? EPOCH,
@@ -104,11 +107,24 @@ export class ClaudeStreamNormalizer {
     });
   }
 
+  /** Errors in the output of an agent's shell command become `error.detected` (phase 5e). */
+  private shellErrors(id: string, tool: PendingTool, output: string, now: string): void {
+    if (toolKind(tool.name) !== 'shell' || !output) return;
+    const command = str(tool.input.command);
+    for (const draft of detectErrors(output, {
+      cwd: this.cwd,
+      origin: originOfCommand(command),
+      toolUseId: id,
+    }))
+      this.log.push({ ...draft, type: 'error.detected', timestamp: now, agentId: tool.agentId });
+  }
+
   private line(line: Obj, at: string | undefined): void {
     const { log, s } = this;
     if (!s.cwdKnown && line.type === 'system' && line.subtype === 'init' && str(line.cwd)) {
       s.cwdKnown = true;
-      this.cleaners = makeTools(str(line.cwd) ?? '');
+      this.cwd = str(line.cwd) ?? '';
+      this.cleaners = makeTools(this.cwd);
     }
     const { text, file, target } = this.cleaners;
     const { tools, denied } = s;
@@ -240,6 +256,8 @@ export class ClaudeStreamNormalizer {
         if (!id || !tool) continue;
         const durationMs = Math.max(0, Date.parse(now) - Date.parse(tool.at));
         const body = resultText(c.content);
+        const streams = [str(response.stdout), str(response.stderr)].filter(Boolean).join('\n');
+        const output = streams || body;
         const decision = meta.find((m) => m.id === id);
         const rejected =
           isObj(decision?.permission_decision) &&
@@ -268,6 +286,7 @@ export class ClaudeStreamNormalizer {
             reason: failureReason(body),
             ...(detail ? { detail } : {}),
           });
+          this.shellErrors(id, tool, output, now);
           if (kind === 'agent')
             log.push({ type: 'agent.finished', timestamp: now, agentId: `sub:${id}`, ok: false });
           continue;
@@ -281,11 +300,13 @@ export class ClaudeStreamNormalizer {
               reason: 'tests-failing',
               detail: `${n} failing`,
             });
+            this.shellErrors(id, tool, output, now);
             continue;
           }
         }
         const files = kind === 'search' ? searchedFiles(response).map(file) : [];
         log.push({ ...base, type: 'tool.completed', ...(files.length ? { files } : {}) });
+        this.shellErrors(id, tool, output, now);
         const fp = filePathOf(tool.input);
         if (kind === 'read' && fp)
           log.push({

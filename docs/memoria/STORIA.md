@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Errori del progetto sulla mappa (5e)
+
+- **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).
+- **Decisioni.** Versione alzata anche se il cambio è additivo, per mettere in opera le migrazioni. Nessun canale IPC nuovo: gli errori del terminale passano da `terminal:updated`. Lo stesso errore da terminale e sessione conta una volta. Un errore di un comando si spegne quando lo stesso comando passa, non solo con una scrittura sul file. La parte dei parser, assegnata a Codex, l'ha fatta Claude su goal dell'utente (annotato in `CORSIE.md`).
+- **Verifica.** E2E 3/3 (terminale, comando dell'agente con `sessione-02`, Docker Compose e dev server), `pnpm verify` 438 test, audit impeccable via CDP nei due temi.
+- **Problemi.** In locale gli E2E con il finto `claude` avviavano la CLI reale: `cleanEnv` lasciava il `PATH` ereditato accanto al `Path` del test; corretto, con la nota in `PROBLEMI_NOTI.md` (il primo E2E della 5e era passato su risposte vere). L'audit ha trovato la nota `AssertionError [ERR_ASS…` che sfondava il nodo. ConPTY disegna lo schermo con movimenti del cursore: tolte le sequenze ANSI, il caret si incollava al messaggio (`^TypeError`); ora i movimenti diventano a capo e spazi. `src/lib/` veniva preso per la libreria standard di Python (`Lib/` senza distinzione di maiuscole). Gli heredoc della shell perdono gli escape (`\n`, `\u0000`): le modifiche ai sorgenti vanno fatte con l'editor.
+
+---
+
 ## 2026-11-26 — Riallineamento e revisione della Vista Live 5d
 
 - **Fatto.** Riallineata la PR #63 dopo la 5c e integrato il branch con la correzione Windows.

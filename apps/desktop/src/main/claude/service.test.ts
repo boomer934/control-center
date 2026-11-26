@@ -1,7 +1,7 @@
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { AgentEvent } from '@control-center/event-schema';
+import { SCHEMA_VERSION, type AgentEvent, type ErrorDraft } from '@control-center/event-schema';
 import type { ClaudeUpdate } from '@control-center/ipc-contract/claude';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GitFailure } from '../git/repository';
@@ -31,13 +31,15 @@ function setup(
       send: ReturnType<typeof vi.fn>;
       close: ReturnType<typeof vi.fn>;
       respond: ReturnType<typeof vi.fn>;
+      reportErrors: ReturnType<typeof vi.fn>;
     }
   > = [];
   const open = (async (options: ClaudeSessionOptions) => {
     const send = vi.fn(() => 'started' as const);
     const close = vi.fn(async () => {});
     const respond = vi.fn(() => true);
-    opened.push({ ...options, send, close, respond });
+    const reportErrors = vi.fn();
+    opened.push({ ...options, send, close, respond, reportErrors });
     await openGate;
     return {
       id: options.sessionId ?? '',
@@ -46,6 +48,7 @@ function setup(
       claudeSessionId: undefined,
       send,
       respond,
+      reportErrors,
       interrupt: () => true,
       terminate: () => {},
       close,
@@ -215,7 +218,7 @@ describe('Claude service', () => {
     const { service, opened, updates, publish } = setup();
     await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
     const event = (seq: number): AgentEvent => ({
-      schemaVersion: 1,
+      schemaVersion: SCHEMA_VERSION,
       type: 'session.started',
       id: `event-${seq}`,
       sessionId: ID,
@@ -283,6 +286,53 @@ describe('Claude service', () => {
     await expect(
       service.start(1, { id: ID, workspaceId: WS, historyId: summary!.id }, 'C:\\ws', publish),
     ).resolves.toBe('history-unavailable');
+  });
+
+  it('reads history saved with schema version 1 through the migration', async () => {
+    const { dataDir, service, publish } = setup();
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await service.send(1, ID, 'before the upgrade', active);
+    await service.closeAll();
+    const [summary] = await service.listHistory(WS);
+    const v1 = {
+      schemaVersion: 1,
+      type: 'session.started',
+      id: 'old-0',
+      sessionId: ID,
+      seq: 0,
+      timestamp: '2026-11-18T10:00:00.000Z',
+      source: 'stream',
+      provider: 'claude',
+      agentId: 'main',
+    };
+    writeFileSync(
+      join(dataDir, 'claude-history', WS, `${summary!.id}.jsonl`),
+      `${JSON.stringify({ kind: 'events', events: [v1] })}\n`,
+      { flag: 'a' },
+    );
+    await expect(service.readHistory(WS, summary!.id)).resolves.toEqual({
+      records: [
+        { kind: 'prompt', text: 'before the upgrade' },
+        { kind: 'events', events: [{ ...v1, schemaVersion: SCHEMA_VERSION }] },
+      ],
+      resumable: false,
+    });
+  });
+
+  it('adds terminal errors to the open sessions of the same window and workspace', async () => {
+    const { service, opened, publish } = setup();
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await service.start(2, { id: OTHER, workspaceId: WS }, 'C:\\ws', publish);
+    const errors: ErrorDraft[] = [
+      { origin: 'terminal', language: 'node', message: 'Error: x', frames: [] },
+    ];
+    const at = new Date('2026-11-26T10:00:00.000Z');
+    service.reportErrors(1, WS, errors, at);
+    service.reportErrors(1, 'b'.repeat(64), errors, at);
+    expect(opened[0]?.reportErrors).toHaveBeenCalledTimes(1);
+    expect(opened[0]?.reportErrors).toHaveBeenCalledWith(errors, at);
+    expect(opened[1]?.reportErrors).not.toHaveBeenCalled();
+    await service.closeAll();
   });
 
   it('closes the sessions of a window that goes away', async () => {

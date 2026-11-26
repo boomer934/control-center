@@ -1,0 +1,8 @@
+panic: runtime error: index out of range [3] with length 2
+
+goroutine 1 [running]:
+example.com/shop/internal/stock.First(...)
+	C:/dev/shop/internal/stock/stock.go:4
+main.main()
+	C:/dev/shop/cmd/shop/main.go:9 +0x1d
+exit status 2

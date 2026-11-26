@@ -6,8 +6,11 @@ export const APP_DIR = resolve(__dirname, '..');
 /** Environment without the variables that would change how Electron starts. */
 export function cleanEnv(extra: Record<string, string> = {}): Record<string, string> {
   const env: Record<string, string> = {};
+  // Windows variable names ignore case: an `extra.Path` must replace an inherited `PATH`, or the
+  // child sees both and may read the inherited one (a real `claude` instead of the fake one).
+  const overridden = new Set(Object.keys(extra).map((k) => k.toUpperCase()));
   for (const [k, v] of Object.entries(process.env)) {
-    if (v === undefined) continue;
+    if (v === undefined || overridden.has(k.toUpperCase())) continue;
     if (/^(ELECTRON_RENDERER_URL|ELECTRON_RUN_AS_NODE|NODE_OPTIONS)$/i.test(k)) continue;
     env[k] = v;
   }

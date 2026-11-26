@@ -96,17 +96,19 @@ export const FileNode = memo(function FileNode({ data }: NodeProps<ItemNode<'fil
     : a && inspectNode
       ? () => inspectNode(`f:${data.path}`)
       : undefined;
+  // The note ("L2 TypeError") says which error: the name on the node may be cut short.
+  const note = state === 'error' && a?.note ? a.note : undefined;
   return (
     <div
       className={stateClass(state, a?.fresh) + (diff ? ' has-diff' : '')}
       data-node={data.path}
       data-state={state}
-      title={`${data.path} · ${state}`}
+      title={`${data.path} · ${state}${note ? ` · ${note}` : ''}`}
       onClick={open}
       {...(open && {
         role: 'button',
         tabIndex: 0,
-        'aria-label': `${data.path}, ${state}, ${diff ? 'open the diff' : 'inspect activity'}`,
+        'aria-label': `${data.path}, ${state}${note ? ` ${note}` : ''}, ${diff ? 'open the diff' : 'inspect activity'}`,
         onKeyDown: (e: KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();

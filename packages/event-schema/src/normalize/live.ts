@@ -10,6 +10,7 @@
 // run opens with `session.started` and closes with `session.ended`, and `seq` keeps counting
 // across runs.
 import { SCHEMA_VERSION, type AgentEvent, type EventOf } from '../schema';
+import type { ErrorDraft } from '../stack';
 import { ClaudeHooksNormalizer } from './claude-hooks';
 import { ClaudeStreamNormalizer } from './claude-stream';
 import { EPOCH } from './common';
@@ -137,6 +138,17 @@ export class LiveClaudeSession {
       );
     }
     this.run = undefined;
+    return out;
+  }
+
+  /**
+   * Errors the app found in the project's own output (the integrated terminal, phase 5e), added
+   * to this session so the timeline shows them next to what the agent did before.
+   */
+  appErrors(drafts: readonly ErrorDraft[], at: string): AgentEvent[] {
+    const out: AgentEvent[] = [];
+    for (const draft of drafts)
+      this.emit({ ...this.envelope(at), ...draft, type: 'error.detected' }, out);
     return out;
   }
 

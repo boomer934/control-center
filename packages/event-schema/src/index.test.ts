@@ -58,6 +58,16 @@ const SAMPLES: Record<string, Record<string, unknown>> = {
     cacheCreationTokens: 0,
   },
   notification: { kind: 'permission', message: 'Claude needs your permission to use Bash' },
+  'error.detected': {
+    origin: 'command',
+    language: 'node',
+    message: "TypeError: Cannot read properties of undefined (reading 'reduce')",
+    file: { path: 'src/lib/price.js', external: false },
+    line: 2,
+    column: 21,
+    frames: [{ file: { path: 'src/lib/price.js', external: false }, line: 2, column: 21 }],
+    toolUseId: 't1',
+  },
 };
 
 describe('event envelope', () => {

@@ -126,6 +126,13 @@ export function mergeClaudeSession(
           ...(e.reason === undefined && hookEnd?.reason ? { reason: hookEnd.reason } : {}),
         });
         break;
+      case 'error.detected':
+        // shown by the command's output: right after the call ended
+        out.push({
+          ...e,
+          timestamp: (e.toolUseId && terminalAt.get(e.toolUseId)) || e.timestamp,
+        });
+        break;
       default:
         out.push(e);
     }

@@ -1,6 +1,8 @@
 import { spawn, type IPty } from 'node-pty';
+import type { ErrorDraft } from '@control-center/event-schema';
 import {
   MAX_TERMINALS,
+  MAX_TERMINAL_ERRORS,
   TERMINAL_CHUNK_SIZE,
   type TerminalSize,
   type TerminalStart,
@@ -8,6 +10,7 @@ import {
 } from '@control-center/ipc-contract/terminal';
 import { coalesce } from '../ipc-events';
 import type { WorkspaceRoot } from '../workspace/paths';
+import { createTerminalErrorScanner } from './errors';
 
 type Publish = (event: TerminalUpdate) => void;
 
@@ -33,12 +36,24 @@ export function createTerminalService(startPty = spawn) {
       cwd: WorkspaceRoot,
       shell: { file: string; args: string[] },
       publish: Publish,
+      /** Errors found in the output (phase 5e), also pushed to the owner as `errors`. */
+      onErrors?: (errors: ErrorDraft[], at: Date) => void,
     ): 'started' | 'limit' {
       const { id, workspaceId, cols, rows } = request;
       if (sessions.has(id) || sessions.size >= MAX_TERMINALS) return 'limit';
       const pty = startPty(shell.file, shell.args, { cwd, cols, rows, useConpty: true });
       let pending = '';
       let paused = false;
+      const scanner = createTerminalErrorScanner(cwd, (errors, at) => {
+        const stamp = at.toISOString();
+        for (let i = 0; i < errors.length; i += MAX_TERMINAL_ERRORS)
+          publish({
+            kind: 'errors',
+            id,
+            errors: errors.slice(i, i + MAX_TERMINAL_ERRORS).map((e) => ({ ...e, at: stamp })),
+          });
+        onErrors?.(errors, at);
+      });
 
       function sendChunk(): void {
         const data = pending.slice(0, TERMINAL_CHUNK_SIZE);
@@ -55,6 +70,7 @@ export function createTerminalService(startPty = spawn) {
         if (pending) batch.trigger();
       });
       const dataListener = pty.onData((data) => {
+        scanner.push(data);
         pending += data;
         if (!paused && pending.length >= TERMINAL_CHUNK_SIZE * 4) {
           paused = true;
@@ -64,6 +80,7 @@ export function createTerminalService(startPty = spawn) {
       });
       const exitListener = pty.onExit(({ exitCode }) => {
         while (pending) sendChunk();
+        scanner.flush();
         dispose(false);
         publish({ kind: 'exit', id, exitCode });
       });
@@ -71,6 +88,7 @@ export function createTerminalService(startPty = spawn) {
       function dispose(kill: boolean): void {
         sessions.delete(id);
         batch.cancel();
+        scanner.dispose();
         dataListener.dispose();
         exitListener.dispose();
         if (kill) {

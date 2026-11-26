@@ -18,7 +18,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 ## Dopo
 
-6. **[Codex] (F5d)** Dopo la 5c, pannello agenti e ispettore sincronizzati con mappa e timeline (`gpt-6.2-sol`, effort `medium`, revisione impeccable).
+6. **[Codex] (F5d)** Pannello agenti e ispettore verificati sul branch `feat/agents-inspector`. Dopo la PR #62, riallineare la base a `main`. Completare nell'E2E la risposta su Docker, porte e GPU/Ollama quando la Fase 6 espone l'inventario. Il test attuale verifica i comandi locali della sessione.
 7. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 8. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c.
 

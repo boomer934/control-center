@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Pannello agenti e ispettore della Vista Live (5d)
+
+- **Fatto.** Pannello Agents sincronizzato con il playhead, selezione tra timeline, mappa e pannello, ispettore con dettagli e JSON copiabile.
+- **Decisioni.** Il pannello deriva i dati dal prefisso di eventi al playhead. I token finali del turno sostituiscono il conteggio parziale dei messaggi. La 5d parte dalla PR #62 su un branch separato.
+- **Verifica.** Electron con `sessione-02`, inclusi selezione da tastiera e confronto con gli appunti. Impeccable senza rilievi a 960×600 nei due temi e in entrambe le viste dell'ispettore.
+- **Problemi.** Per la quarta domanda l'E2E mostra un comando locale avviato dall'agente. Docker, porte e GPU/Ollama richiedono l'inventario della Fase 6.
+
+---
+
 ## 2026-11-26 — Pubblicazione di timeline e checkpoint Windows
 
 - **Fatto.** Pubblicate la [PR #62](https://github.com/boomer934/control-center/pull/62) per timeline e replay 5c e la [PR #61](https://github.com/boomer934/control-center/pull/61) per il checkpoint Git su Windows.

@@ -30,10 +30,13 @@ async function setTheme(name: 'dark' | 'light') {
 }
 
 /** Opens a scene of the lab and waits until the map is laid out and fitted. */
-async function scene(name: string) {
-  await page.evaluate((n) => {
-    window.location.hash = `#/map-lab?scene=${n}`;
-  }, name);
+async function scene(name: string, fixture?: string) {
+  await page.evaluate(
+    ({ name, fixture }) => {
+      window.location.hash = `#/map-lab?${new URLSearchParams({ scene: name, ...(fixture && { fixture }) })}`;
+    },
+    { name, fixture },
+  );
   await expect(page.getByTestId('map-lab')).toHaveAttribute('data-scene', name);
   await expect(page.getByTestId('live-map')).toHaveAttribute('data-ready', 'true');
   // Two frames: the layout lands, then React Flow places the nodes.
@@ -107,6 +110,68 @@ test.describe('map states from the fixtures', () => {
     await expect(timeline.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
     await position.press('Space');
     await expect(timeline.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  });
+
+  test('shows recorded activity, errors, file changes, local commands and usage in replay', async () => {
+    await scene('replay', 'sessione-02');
+    const timeline = page.getByRole('region', { name: 'Session timeline' });
+    const agents = page.getByRole('region', { name: 'Agents', exact: true });
+    const inspector = page.getByRole('region', { name: 'Event inspector' });
+    const position = timeline.getByRole('slider', { name: 'Replay position' });
+    const command = timeline.getByRole('button', {
+      name: 'Bash · npm test 2>&1 | tail -40',
+      exact: true,
+    });
+    await command.click();
+
+    // What is the agent doing, and what local work is running at this point?
+    await expect(agents.getByRole('button', { name: /Claude Running/ })).toBeVisible();
+    await expect(agents.getByText('npm test 2>&1 | tail -40', { exact: true })).toBeInViewport();
+    await expect(agents.getByText('Local commands', { exact: true }).locator('..')).toContainText(
+      'npm test',
+    );
+    await expect(page.locator('[data-temp="command"][data-state="running"]')).toBeVisible();
+    await expect(inspector.getByRole('heading', { name: /Bash · npm test/ })).toBeVisible();
+    await inspector.getByRole('button', { name: 'JSON', exact: true }).click();
+    const raw = inspector.getByRole('textbox', { name: 'Event JSON' });
+    const event: unknown = JSON.parse(await raw.inputValue());
+    expect(event).toMatchObject({
+      type: 'tool.called',
+      kind: 'shell',
+      target: 'npm test 2>&1 | tail -40',
+    });
+    await inspector.getByRole('button', { name: 'Copy JSON' }).click();
+    await expect(inspector.getByRole('status')).toHaveText('Copied');
+    const clipboard = await app.evaluate(({ clipboard }) => clipboard.readText());
+    expect(JSON.parse(clipboard)).toEqual(event);
+
+    // Did something go wrong?
+    await timeline
+      .getByRole('button', { name: /^Tool failed/ })
+      .first()
+      .click();
+    await expect(agents.getByText(/^Last error/)).toBeVisible();
+    await expect(inspector.getByRole('heading', { name: /^Tool failed/ })).toBeVisible();
+
+    // Which files changed, and how much usage was recorded?
+    await position.press('End');
+    await expect(agents.getByText('1 read · 1 changed')).toBeVisible();
+    const edited = page.getByRole('button', { name: /^src\/cart\.js, done, inspect activity$/ });
+    await expect(edited).toContainText('+1');
+    await edited.press('Enter');
+    await expect(timeline.getByRole('button', { name: 'Edit · src/cart.js' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(inspector.getByRole('heading', { name: 'Edit · src/cart.js' })).toBeVisible();
+    await expect(inspector.getByText('+1 / −2', { exact: true })).toBeVisible();
+    await expect(agents.getByText('241,157 tokens · 240,524 cached')).toBeInViewport();
+    await expect(agents.getByText('No local tokens recorded')).toBeInViewport();
+
+    await position.press('Home');
+    await expect(agents.getByText('0 read · 0 changed')).toBeVisible();
+    await expect(inspector.getByText('Select an event, agent, or active map node.')).toBeVisible();
+    await expect(agents.getByText(/^Last error/)).toHaveCount(0);
   });
 
   test('a collapsed folder opens on click', async () => {

@@ -1,6 +1,6 @@
 import type { AgentEvent, AgentId, ToolKind } from '@control-center/event-schema';
 import type { GitCheckpoint } from '@control-center/ipc-contract';
-import { HOLD_MS, MapActivity } from './activity';
+import { HOLD_MS, MapActivity, type ViewOptions } from './activity';
 
 export type ReplayRecord =
   | { kind: 'events'; events: readonly AgentEvent[] }
@@ -9,7 +9,7 @@ export type ReplayRecord =
 
 type TimedEvent = { at: number; event: AgentEvent };
 
-function timedEvents(records: readonly ReplayRecord[]): TimedEvent[] {
+export function timedEvents(records: readonly ReplayRecord[]): TimedEvent[] {
   return records
     .flatMap((record) =>
       record.kind === 'events'
@@ -26,11 +26,11 @@ export class ReplayActivity {
   private cursor = 0;
   private last = -Infinity;
 
-  constructor(records: readonly ReplayRecord[]) {
-    this.events = timedEvents(records);
+  constructor(records: readonly ReplayRecord[], events = timedEvents(records)) {
+    this.events = events;
   }
 
-  viewAt(at: number) {
+  viewAt(at: number, options?: ViewOptions) {
     if (at < this.last) {
       this.activity = new MapActivity();
       this.cursor = 0;
@@ -41,7 +41,7 @@ export class ReplayActivity {
       batch.push(this.events[this.cursor++]!.event);
     }
     this.activity.apply(batch);
-    return this.activity.viewAt(at);
+    return this.activity.viewAt(at, options);
   }
 }
 
@@ -53,6 +53,18 @@ export interface TimelineMark {
   tone: ToolKind | 'neutral' | 'error' | 'waiting';
   glyph?: string;
   checkpoint?: GitCheckpoint;
+  event?: AgentEvent;
+  nodeId?: string;
+}
+
+function mapNode(event: AgentEvent): string | undefined {
+  if ((event.type === 'file.read' || event.type === 'file.written') && !event.file.external)
+    return `f:${event.file.path}`;
+  if (event.type === 'mcp.called') return `t:mcp:${event.server}`;
+  if (event.type !== 'tool.called') return undefined;
+  if (event.kind === 'shell') return `t:cmd:${event.toolUseId}`;
+  if (event.kind === 'web') return `t:web:${event.toolUseId}`;
+  if ((event.kind === 'read' || event.kind === 'write') && event.target) return `f:${event.target}`;
 }
 
 interface Lane {
@@ -138,6 +150,8 @@ export function buildTimeline(records: readonly ReplayRecord[]): Timeline | unde
         at,
         label: event.target ? `${event.tool} · ${event.target}` : event.tool,
         tone: event.kind,
+        event,
+        nodeId: mapNode(event),
       };
       lane.marks.push(mark);
       calls.set(event.toolUseId, { mark, target: event.target });
@@ -146,12 +160,15 @@ export function buildTimeline(records: readonly ReplayRecord[]): Timeline | unde
     if (call && (event.type === 'tool.completed' || event.type === 'tool.failed')) {
       call.mark.end ??= at;
     }
+    if (event.type === 'mcp.called' && call) call.mark.nodeId = mapNode(event);
     if (event.type === 'tool.failed') {
       lane.marks.push({
         id,
         at,
         label: `Tool failed · ${event.detail ?? event.reason}`,
         tone: 'error',
+        event,
+        nodeId: call?.mark.nodeId,
       });
       continue;
     }
@@ -165,7 +182,8 @@ export function buildTimeline(records: readonly ReplayRecord[]): Timeline | unde
       continue;
     }
     const mark = point(event);
-    if (mark) lane.marks.push({ id, at, ...mark });
+    if (mark)
+      lane.marks.push({ id, at, event, nodeId: mapNode(event) ?? call?.mark.nodeId, ...mark });
   }
   for (const record of records) {
     if (record.kind !== 'checkpoint') continue;

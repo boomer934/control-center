@@ -48,6 +48,7 @@ export function useReplay(records: readonly ReplayRecord[], archived = false) {
     at,
     archived,
     selected,
+    select: setSelected,
     playing: playFrom !== undefined,
     seek,
     togglePlayback,

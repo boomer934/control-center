@@ -12,6 +12,7 @@ import { CheckpointDialog } from './git/CheckpointDialog';
 import { GitView } from './git/GitView';
 import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
 import { LiveMap, type DiffPreview } from './live/LiveMap';
+import { LiveInspection } from './live/LiveInspection';
 import { SessionTimeline } from './live/SessionTimeline';
 import { useReplay } from './live/useReplay';
 import { useShortcuts } from './keys/useShortcuts';
@@ -123,40 +124,51 @@ function LiveView({
   return (
     <div className="live-view" data-focus-scope="live" data-testid="shell">
       <h1 className="sr-only">Control Center</h1>
-      <div className="lmap-area">
-        {project.kind === 'ready' ? (
-          <LiveMap
-            snapshot={project.snapshot}
-            records={chat.records}
-            at={replay.at}
-            historical={historical}
-            pendingPermission={chat.permissions.length > 0}
-            loadDiff={historical ? undefined : loadDiff}
-            openDiff={historical ? undefined : openGit}
-            aside={about}
-          />
-        ) : (
-          <>
-            <div className="tb lmap-tb">
-              <span className="tool">
-                <b>Live</b>
-              </span>
-              <span className="r">{about}</span>
-            </div>
-            <div className="map">
-              <div className="empty lmap-empty">
-                <Icon name={project.kind === 'idle' ? 'folder' : 'live'} className="g" />
-                <h2>{project.kind === 'idle' ? 'No workspace open' : describeProject(project)}</h2>
-                <p>
-                  {project.kind === 'idle'
-                    ? 'Open a folder to see its files and what the agents do to them.'
-                    : 'The map appears as soon as the file list is read.'}
-                </p>
-              </div>
-            </div>
-          </>
+      <LiveInspection
+        records={chat.records}
+        replay={replay}
+        pendingPermission={chat.permissions.length > 0}
+      >
+        {(inspection) => (
+          <div className="lmap-area">
+            {project.kind === 'ready' ? (
+              <LiveMap
+                snapshot={project.snapshot}
+                records={chat.records}
+                at={replay.at}
+                historical={historical}
+                pendingPermission={chat.permissions.length > 0}
+                loadDiff={historical ? undefined : loadDiff}
+                openDiff={historical ? undefined : openGit}
+                inspection={inspection}
+                aside={about}
+              />
+            ) : (
+              <>
+                <div className="tb lmap-tb">
+                  <span className="tool">
+                    <b>Live</b>
+                  </span>
+                  <span className="r">{about}</span>
+                </div>
+                <div className="map">
+                  <div className="empty lmap-empty">
+                    <Icon name={project.kind === 'idle' ? 'folder' : 'live'} className="g" />
+                    <h2>
+                      {project.kind === 'idle' ? 'No workspace open' : describeProject(project)}
+                    </h2>
+                    <p>
+                      {project.kind === 'idle'
+                        ? 'Open a folder to see its files and what the agents do to them.'
+                        : 'The map appears as soon as the file list is read.'}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         )}
-      </div>
+      </LiveInspection>
       <div className="live-timeline">
         <SessionTimeline
           replay={replay}

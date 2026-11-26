@@ -21,6 +21,7 @@ export interface MapContextValue {
   /** The pointer entered (element) or left (null) a file node; wired on React Flow's node events. */
   hover(path: string | null, element?: HTMLElement): void;
   openDiff?(path: string): void;
+  inspectNode?(id: string): void;
 }
 
 export const MapContext = createContext<MapContextValue | null>(null);
@@ -86,25 +87,30 @@ function stateClass(state: MapState, fresh?: boolean): string {
 type ItemNode<K extends MapItem['kind']> = Node<Extract<MapItem, { kind: K }>, K>;
 
 export const FileNode = memo(function FileNode({ data }: NodeProps<ItemNode<'file'>>) {
-  const { store, openDiff } = useMap();
+  const { store, openDiff, inspectNode } = useMap();
   const a = useFileActivity(store, data.path);
   const state = a?.state ?? 'idle';
   const diff = Boolean(a?.diff) && openDiff;
+  const open = diff
+    ? () => openDiff(data.path)
+    : a && inspectNode
+      ? () => inspectNode(`f:${data.path}`)
+      : undefined;
   return (
     <div
       className={stateClass(state, a?.fresh) + (diff ? ' has-diff' : '')}
       data-node={data.path}
       data-state={state}
       title={`${data.path} · ${state}`}
-      onClick={diff ? () => openDiff(data.path) : undefined}
-      {...(diff && {
+      onClick={open}
+      {...(open && {
         role: 'button',
         tabIndex: 0,
-        'aria-label': `${data.path}, ${state}, open the diff`,
+        'aria-label': `${data.path}, ${state}, ${diff ? 'open the diff' : 'inspect activity'}`,
         onKeyDown: (e: KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            openDiff(data.path);
+            open();
           }
         },
       })}
@@ -196,7 +202,7 @@ export const GroupNode = memo(function GroupNode({
 });
 
 export const TempNode = memo(function TempNode({ data }: NodeProps<Node<{ id: string }, 'temp'>>) {
-  const { store } = useMap();
+  const { store, inspectNode } = useMap();
   const t = useTempActivity(store, data.id);
   if (!t) return null;
   return (
@@ -205,6 +211,17 @@ export const TempNode = memo(function TempNode({ data }: NodeProps<Node<{ id: st
       data-temp={t.kind}
       data-state={t.state}
       title={t.label}
+      {...(inspectNode && {
+        role: 'button',
+        tabIndex: 0,
+        'aria-label': `Inspect ${t.label}`,
+        onClick: () => inspectNode(data.id),
+        onKeyDown: (event: KeyboardEvent) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          inspectNode(data.id);
+        },
+      })}
     >
       <span className="sign">
         <Glyph name={t.kind === 'mcp' ? 'i-mcp' : `s-${t.state}`} />

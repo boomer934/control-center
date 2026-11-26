@@ -12,7 +12,9 @@ import {
 import { routeParam } from '../shell/route';
 import { FIXTURE_PROJECT, fixture, projectFile as file } from './labFixtures';
 import { LiveMap, type DiffPreview } from './LiveMap';
+import { SessionTimeline } from './SessionTimeline';
 import type { EventRecord } from './useMapActivity';
+import { useReplay } from './useReplay';
 
 type Scene = { fixture?: string; at(events: AgentEvent[]): number };
 
@@ -177,11 +179,29 @@ function Bench() {
   return <LiveMap snapshot={snapshot} records={records} />;
 }
 
+function FixtureReplay({ records }: { records: EventRecord[] }) {
+  const replay = useReplay(records, true);
+  return (
+    <>
+      <div className="lmap-area">
+        <LiveMap snapshot={FIXTURE_PROJECT} records={records} at={replay.at} historical />
+      </div>
+      <div className="live-timeline">
+        <SessionTimeline replay={replay} />
+      </div>
+    </>
+  );
+}
+
+function labScene() {
+  return { scene: routeParam('scene') ?? 'empty', fixtureName: routeParam('fixture') };
+}
+
 /** The scene of `#/map-lab?scene=…`, following hash changes that keep the same route. */
-function useScene(): string {
-  const [scene, setScene] = useState(() => routeParam('scene') ?? 'empty');
+function useScene() {
+  const [scene, setScene] = useState(labScene);
   useEffect(() => {
-    const onHash = () => setScene(routeParam('scene') ?? 'empty');
+    const onHash = () => setScene(labScene());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -189,9 +209,10 @@ function useScene(): string {
 }
 
 export default function MapLab() {
-  const scene = useScene();
+  const { scene, fixtureName } = useScene();
   const chosen = SCENES[scene];
-  const events = useMemo(() => (chosen?.fixture ? fixture(chosen.fixture) : []), [chosen]);
+  const source = scene === 'replay' ? fixtureName || 'sessione-03' : chosen?.fixture;
+  const events = useMemo(() => (source ? fixture(source) : []), [source]);
   const records = useMemo<EventRecord[]>(
     () => (events.length ? [{ kind: 'events', events }] : []),
     [events],
@@ -207,24 +228,28 @@ export default function MapLab() {
       data-testid="map-lab"
       data-scene={scene}
     >
-      <div className="lmap-area">
-        {scene === 'bench' ? (
-          <Bench />
-        ) : chosen ? (
-          <LiveMap
-            key={scene}
-            snapshot={FIXTURE_PROJECT}
-            records={records}
-            at={at ?? Date.parse('2026-11-19T10:00:00Z')}
-            pendingPermission={false}
-            loadDiff={() => Promise.resolve(FAKE_DIFF)}
-          />
-        ) : (
-          <p className="shell-muted">
-            Unknown scene. Use one of: {[...Object.keys(SCENES), 'bench'].join(', ')}.
-          </p>
-        )}
-      </div>
+      {scene === 'replay' ? (
+        <FixtureReplay key={source} records={records} />
+      ) : (
+        <div className="lmap-area">
+          {scene === 'bench' ? (
+            <Bench />
+          ) : chosen ? (
+            <LiveMap
+              key={scene}
+              snapshot={FIXTURE_PROJECT}
+              records={records}
+              at={at ?? Date.parse('2026-11-19T10:00:00Z')}
+              pendingPermission={false}
+              loadDiff={() => Promise.resolve(FAKE_DIFF)}
+            />
+          ) : (
+            <p className="shell-muted">
+              Unknown scene. Use one of: {[...Object.keys(SCENES), 'bench', 'replay'].join(', ')}.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

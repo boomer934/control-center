@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
 import type { WorkspaceState } from '@control-center/ipc-contract/workspace';
-import { SessionDock, SessionTimeline } from './chat/SessionDock';
+import { SessionDock } from './chat/SessionDock';
 import { useClaudeChat, type ClaudeChat } from './chat/useClaudeChat';
 import { ErrorBoundary } from './errors/ErrorBoundary';
 import { ErrorConsole } from './errors/ErrorConsole';
@@ -12,6 +12,8 @@ import { CheckpointDialog } from './git/CheckpointDialog';
 import { GitView } from './git/GitView';
 import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
 import { LiveMap, type DiffPreview } from './live/LiveMap';
+import { SessionTimeline } from './live/SessionTimeline';
+import { useReplay } from './live/useReplay';
 import { useShortcuts } from './keys/useShortcuts';
 import { CommandPalette, type PaletteCommand } from './palette/CommandPalette';
 import { ShortcutHelp } from './palette/ShortcutHelp';
@@ -70,18 +72,26 @@ function LiveView({
   workspaceId,
   chat,
   onCheckpoint,
+  onHistory,
   reviewDisabled,
   openGit,
 }: {
   state: InfoState;
   workspaceId?: string;
   chat: ClaudeChat;
-  onCheckpoint(checkpoint: GitCheckpoint): void;
+  onCheckpoint(checkpoint: GitCheckpoint, readOnly: boolean): void;
+  onHistory?(): void;
   reviewDisabled: boolean;
   openGit(): void;
 }) {
   // Deltas re-render this view only, not the whole shell.
   const project = useProjectModel(workspaceId);
+  const replay = useReplay(chat.records, Boolean(chat.historyId && !chat.id));
+  const historical = replay.at !== undefined;
+  const reviewCheckpoint = useCallback(
+    (checkpoint: GitCheckpoint) => onCheckpoint(checkpoint, historical || replay.archived),
+    [historical, onCheckpoint, replay.archived],
+  );
   const loadDiff = useCallback(
     (path: string) => (workspaceId ? loadFileDiff(workspaceId, path) : Promise.reject(new Error())),
     [workspaceId],
@@ -118,9 +128,11 @@ function LiveView({
           <LiveMap
             snapshot={project.snapshot}
             records={chat.records}
+            at={replay.at}
+            historical={historical}
             pendingPermission={chat.permissions.length > 0}
-            loadDiff={loadDiff}
-            openDiff={openGit}
+            loadDiff={historical ? undefined : loadDiff}
+            openDiff={historical ? undefined : openGit}
             aside={about}
           />
         ) : (
@@ -147,8 +159,9 @@ function LiveView({
       </div>
       <div className="live-timeline">
         <SessionTimeline
-          records={chat.records}
-          onCheckpoint={onCheckpoint}
+          replay={replay}
+          onHistory={onHistory}
+          onCheckpoint={reviewCheckpoint}
           reviewDisabled={reviewDisabled}
         />
       </div>
@@ -236,10 +249,11 @@ function AppShell({
   const [info, setInfo] = useState<InfoState>({ kind: 'loading' });
   const workspaceId = workspaces.active?.id;
   const chat = useClaudeChat(workspaceId);
-  const [checkpoint, setCheckpoint] = useState<GitCheckpoint>();
+  const [checkpoint, setCheckpoint] = useState<{ value: GitCheckpoint; readOnly: boolean }>();
   const [gitRevision, setGitRevision] = useState(0);
   const [restoreNotice, setRestoreNotice] = useState('');
   const [permissionFocus, setPermissionFocus] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
   const { layout, setLayout } = useWorkspaceLayout(workspaceId);
   const { bottomOpen, bottomDock, rightOpen, compactBar } = layout;
   const [route, go] = useRoute(workspaceId ? (layout.route ?? 'live') : undefined);
@@ -248,6 +262,14 @@ function AppShell({
   const errors = useErrorList();
   const theme = useTheme();
   const total = errors.groups.reduce((n, g) => n + g.count, 0);
+  const reviewCheckpoint = useCallback(
+    (value: GitCheckpoint, readOnly = false) => setCheckpoint({ value, readOnly }),
+    [],
+  );
+  const openHistory = () => {
+    setLayout((value) => ({ ...value, rightOpen: true }));
+    setShowHistory(true);
+  };
 
   useEffect(() => {
     if (workspaceId) setLayout((previous) => ({ ...previous, route }));
@@ -420,10 +442,12 @@ function AppShell({
     route === 'live' ? (
       <>
         <LiveView
+          key={chat.id ?? chat.historyId ?? 'new'}
           state={info}
           workspaceId={workspaceId}
           chat={chat}
-          onCheckpoint={setCheckpoint}
+          onCheckpoint={reviewCheckpoint}
+          onHistory={workspaceId ? openHistory : undefined}
           reviewDisabled={chat.status === 'running' || chat.pending}
           openGit={() => go('git')}
         />
@@ -442,7 +466,7 @@ function AppShell({
         workspaceId={workspaceId}
         running={chat.status === 'running' || chat.pending}
         revision={gitRevision}
-        onCheckpoint={setCheckpoint}
+        onCheckpoint={reviewCheckpoint}
         onDraft={
           chat.draft.trim()
             ? undefined
@@ -464,7 +488,8 @@ function AppShell({
       {workspaceId && checkpoint && (
         <CheckpointDialog
           workspaceId={workspaceId}
-          checkpoint={checkpoint}
+          checkpoint={checkpoint.value}
+          readOnly={checkpoint.readOnly}
           close={() => setCheckpoint(undefined)}
           restored={(changed) => {
             setCheckpoint(undefined);
@@ -578,6 +603,9 @@ function AppShell({
                   chat={chat}
                   chooseWorkspace={toggleWorkspaces}
                   permissionFocus={permissionFocus}
+                  showHistory={showHistory}
+                  setShowHistory={setShowHistory}
+                  onHistoryLoaded={() => go('live')}
                 />
               </Panel>
             </>

@@ -1,7 +1,6 @@
-import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import type { AgentEvent } from '@control-center/event-schema';
-import type { GitCheckpoint } from '@control-center/ipc-contract';
 import {
   MAX_CLAUDE_MESSAGE_CHARS,
   type ClaudeHistoryRecord,
@@ -139,23 +138,28 @@ export function SessionDock({
   workspace,
   chooseWorkspace,
   permissionFocus,
+  showHistory,
+  setShowHistory,
+  onHistoryLoaded,
 }: {
   chat: ClaudeChat;
   workspace?: string;
   chooseWorkspace(): void;
   permissionFocus: number;
+  showHistory: boolean;
+  setShowHistory(show: boolean): void;
+  onHistoryLoaded(): void;
 }) {
   const [history, setHistory] = useState<ClaudeHistorySummary[] | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const scroll = useRef<HTMLDivElement>(null);
   const following = useRef(true);
-  const loading = useRef(false);
   const handledFocus = useRef(0);
   const running = chat.status === 'running';
   const archived = Boolean(chat.historyId && !chat.id);
   const permission = chat.permissions[0];
   const { draft } = chat;
+  const { listHistory } = chat;
 
   useLayoutEffect(() => {
     if (!showHistory && following.current && scroll.current)
@@ -168,20 +172,23 @@ export function SessionDock({
     document.getElementById(`${permission.requestId}-arguments`)?.focus();
   }, [permission, permissionFocus]);
 
-  const toggleHistory = async () => {
-    setShowHistory(!showHistory);
-    if (showHistory || loading.current) return;
-    loading.current = true;
+  useEffect(() => {
+    if (!showHistory) return;
+    let current = true;
     setHistory(null);
     setHistoryError(false);
-    try {
-      setHistory(await chat.listHistory());
-    } catch {
-      setHistoryError(true);
-    } finally {
-      loading.current = false;
-    }
-  };
+    void listHistory().then(
+      (sessions) => {
+        if (current) setHistory(sessions);
+      },
+      () => {
+        if (current) setHistoryError(true);
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [listHistory, showHistory]);
 
   return (
     <aside
@@ -197,7 +204,7 @@ export function SessionDock({
               variant="ghost"
               aria-pressed={showHistory}
               disabled={chat.pending}
-              onClick={() => void toggleHistory()}
+              onClick={() => setShowHistory(!showHistory)}
             >
               History
             </Button>
@@ -264,7 +271,7 @@ export function SessionDock({
                     disabled={running || chat.pending}
                     onClick={async () => {
                       following.current = false;
-                      await chat.loadHistory(id);
+                      if (await chat.loadHistory(id)) onHistoryLoaded();
                       setShowHistory(false);
                     }}
                   >
@@ -370,88 +377,3 @@ export function SessionDock({
     </aside>
   );
 }
-
-function describe(event: AgentEvent): string | undefined {
-  switch (event.type) {
-    case 'session.started':
-      return 'Turn started';
-    case 'session.ended':
-      return event.ok ? 'Turn completed' : 'Turn ended';
-    case 'tool.called':
-      return event.target ? `${event.tool} · ${event.target}` : event.tool;
-    case 'tool.failed':
-      return `Tool failed · ${event.reason}`;
-    case 'file.read':
-      return `Read ${event.file.path}`;
-    case 'file.written':
-      return `Wrote ${event.file.path}`;
-    case 'permission.requested':
-      return 'Permission requested';
-    case 'permission.resolved':
-      return `Permission ${event.decision}`;
-    case 'agent.spawned':
-      return `Started ${event.name}`;
-    default:
-      return undefined;
-  }
-}
-
-export const SessionTimeline = memo(function SessionTimeline({
-  records,
-  onCheckpoint,
-  reviewDisabled,
-}: {
-  records: ClaudeHistoryRecord[];
-  onCheckpoint(checkpoint: GitCheckpoint): void;
-  reviewDisabled: boolean;
-}) {
-  const rows = useMemo(
-    () =>
-      records.flatMap(
-        (
-          record,
-          index,
-        ): {
-          key: string;
-          label: string;
-          at: string;
-          checkpoint?: GitCheckpoint;
-        }[] => {
-          if (record.kind === 'checkpoint') {
-            const { checkpoint } = record;
-            return [{ key: checkpoint.id, label: 'Git checkpoint', at: checkpoint.at, checkpoint }];
-          }
-          if (record.kind !== 'events') return [];
-          return record.events.flatMap((event) => {
-            const label = describe(event);
-            return label ? [{ key: `${index}-${event.seq}`, label, at: event.timestamp }] : [];
-          });
-        },
-      ),
-    [records],
-  );
-  if (rows.length === 0) return null;
-  return (
-    <section className="session-timeline" aria-label="Session timeline">
-      <h2 className="dock-title">Timeline</h2>
-      <ol>
-        {rows.map(({ key, label, at, checkpoint }) => (
-          <li key={key}>
-            <time dateTime={at}>{new Date(at).toLocaleTimeString()}</time>
-            {checkpoint ? (
-              <Button
-                disabled={reviewDisabled}
-                title={reviewDisabled ? 'Wait for the Claude turn to finish' : undefined}
-                onClick={() => onCheckpoint(checkpoint)}
-              >
-                Review {label}
-              </Button>
-            ) : (
-              <span>{label}</span>
-            )}
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-});

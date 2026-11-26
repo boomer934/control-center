@@ -12,14 +12,15 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 2. ✅ **[Claude] (F5b)** Mappa unita con la [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013): baseline visive dal runner, budget dei 60 fps verde in CI (64 fps, main thread 15,8%).
 
-3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite nella [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
-4. **[Codex] (F4b, bug)** Correzione locale su `fix/git-checkpoint-electron`. Git per Windows può ora creare i file di lock dei riferimenti dei checkpoint e di recupero oltre il limite dei percorsi Win32. Resta la revisione Claude a effort medium sulla PR.
+3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite con la [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
+4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
+5. **[Codex] (F4b, bug)** Correzione dei percorsi lunghi di Git su Windows nella [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` completata senza bug confermati. Branch riallineato dopo la #62, merge dopo la nuova CI.
 
 ## Dopo
 
-5. **[Codex] (F5c)** Timeline e replay (`gpt-6.2-sol`, high): lo scrubber chiede alla mappa `MapActivity.viewAt(t)`; la mappa accetta già un istante fisso (`at`). Nota dalla prova reale: la timeline attuale mostra ogni lettura due volte ("Read · src/cart.js" dagli strumenti e "Read src/cart.js" dagli eventi file).
-6. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-7. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non compare "Waiting for approval." entro 5 s): capire se è l'ambiente o il test.
+6. **[Codex] (F5d)** Dopo la 5c, pannello agenti e ispettore sincronizzati con mappa e timeline (`gpt-6.2-sol`, effort `medium`, revisione impeccable).
+7. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+8. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c.
 
 ## Quando capita
 

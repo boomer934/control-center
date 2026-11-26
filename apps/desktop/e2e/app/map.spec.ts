@@ -79,6 +79,36 @@ test.describe('map states from the fixtures', () => {
     await expect(node('src/inventory.js')).toHaveAttribute('data-state', 'reading');
   });
 
+  test('replays a fixture through the parent and child swimlanes and the scrubber', async () => {
+    await scene('replay');
+    const timeline = page.getByRole('region', { name: 'Session timeline' });
+    const position = timeline.getByRole('slider', { name: 'Replay position' });
+    const lane = timeline.getByRole('group', { name: 'general-purpose events' });
+    await expect(timeline.getByRole('group', { name: 'Claude events' })).toBeVisible();
+    await expect(chip('GE')).toHaveCount(0);
+
+    const read = lane.getByRole('button', { name: 'Read · src/inventory.js', exact: true });
+    await read.click();
+    await expect(read).toHaveAttribute('aria-pressed', 'true');
+    await expect(node('src/inventory.js')).toHaveAttribute('data-state', 'reading');
+    await expect(chip('GE')).toHaveAttribute('data-state', 'reading');
+    const at = Number(await position.inputValue());
+
+    await position.fill(String(at + 1));
+    await expect(position).toHaveValue(String(at + 1));
+    await expect(node('src/inventory.js')).toHaveAttribute('data-state', 'reading');
+    await position.press('Home');
+    await expect(chip('GE')).toHaveCount(0);
+    await expect(node('src/inventory.js')).toHaveAttribute('data-state', 'idle');
+    await position.press('Space');
+    await expect
+      .poll(async () => Number(await position.inputValue()))
+      .toBeGreaterThan(Number(await position.getAttribute('min')));
+    await expect(timeline.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+    await position.press('Space');
+    await expect(timeline.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  });
+
   test('a collapsed folder opens on click', async () => {
     await scene('reading');
     await page.locator('[data-folder="docs"]').click();

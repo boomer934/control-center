@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo audit e prova reale nella [PR #59](https://github.com/boomer934/control-center/pull/59), in attesa delle baseline visive dalla CI._
+_Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo audit e prova reale nella [PR #59](https://github.com/boomer934/control-center/pull/59), con le baseline visive rigenerate dalla CI._
 
 ## Fase
 
@@ -16,7 +16,7 @@ _Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo
 
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
-- **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Mancano le baseline visive della mappa dal runner (`Fit` è cambiato).
+- **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -100,7 +100,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - corretti: il chip dell'agente non tornava dal secondo turno della chat (una run per messaggio: ora `MapActivity` tiene una run per turno); `Fit` lasciava nodi e chip sotto minimappa e legenda con mappe grandi e il riquadro "No session yet" copriva le cartelle; Segui agente tagliava il chip a destra.
 - **Verificato in locale (rifinitura):** `pnpm verify` verde (386 test); `map.spec.ts` 9 test di comportamento verdi, i 2 visivi rossi (in locale sempre, e le baseline cambiano col nuovo `Fit`).
 - **Trovato, non corretto:** nell'app ogni sessione reale parte con "Turn started without a Git checkpoint (failed)"; lo stesso `checkpoint` del servizio Git, chiamato da un test sullo stesso repo, riesce. Voce in `PROSSIMI_PASSI.md` e `PROBLEMI_NOTI.md`.
-- **Ora (punto di ripresa):** PR #59 aperta. Prossimo: baseline visive della mappa dall'artifact `playwright-results` della CI, poi merge su richiesta dell'utente; poi la 5c (Codex).
+- **Fatto (rifinitura, CI):** in CI erano rossi solo i 2 test visivi della mappa (69 verdi). Le 14 baseline sono state sostituite con le immagini del run 45872508146, controllate a vista: contenuto invariato, mappa spostata sopra legenda e minimappa, nota vuota in alto.
+- **Ora (punto di ripresa):** PR #59 con le baseline nuove, in attesa della CI e poi del merge su richiesta dell'utente. Dopo: la 5c (Codex).
 
 ### Corsia Codex
 

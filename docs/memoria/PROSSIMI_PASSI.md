@@ -16,7 +16,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
 5. ✅ **[Codex] (F4b, bug)** Percorsi lunghi di Git su Windows uniti su `main` con la [PR #61](https://github.com/boomer934/control-center/pull/61) (`6bcb9cf`).
 6. ✅ **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura uniti su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`). La schermata Infra completa resta nella Fase 6.
-7. **[Claude] (F5e)** Errori del progetto sulla mappa sul branch `feat/errori-progetto` (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Audit impeccable fatto. Resta: commit e PR su richiesta dell'utente, baseline `map-error-dark/light.png` dall'artifact della CI, CI verde, merge.
+7. **[Claude] (F5e)** Errori del progetto sulla mappa sul branch `feat/errori-progetto` (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Audit impeccable fatto. [PR #64](https://github.com/boomer934/control-center/pull/64) con le baseline `map-error-*` della CI. Resta: CI verde e merge su richiesta dell'utente.
 
 ## Dopo
 

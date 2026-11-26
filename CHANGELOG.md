@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/boomer934/control-center/compare/control-center-v1.2.0...control-center-v1.3.0) (2026-11-26)
+
+
+### Features
+
+* **live:** add the Live view map (phase 5b) ([#58](https://github.com/boomer934/control-center/issues/58)) ([b858988](https://github.com/boomer934/control-center/commit/b8589881ccfc498edeb8e37a20a10e3f1955ed93))
+* **live:** add the project model (phase 5a) ([#56](https://github.com/boomer934/control-center/issues/56)) ([89a3eac](https://github.com/boomer934/control-center/commit/89a3eacabe6a766e654fb7893d7625fb6f4e85a5))
+
+
+### Bug Fixes
+
+* **desktop:** apply the Git checkpoint review fixes ([#55](https://github.com/boomer934/control-center/issues/55)) ([6a17d71](https://github.com/boomer934/control-center/commit/6a17d71c0bccdf1b83c47f0c5eab7ffb9ba01968))
+
 ## [1.2.0](https://github.com/boomer934/control-center/compare/control-center-v1.1.0...control-center-v1.2.0) (2026-11-19)
 
 

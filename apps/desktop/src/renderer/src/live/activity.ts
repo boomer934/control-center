@@ -49,7 +49,11 @@ interface AgentRecord {
   code: string;
   kind: AgentKind;
   start: number;
-  end?: number;
+  /**
+   * When the agent was at work. The app runs `claude -p` once per message (ADR 0009), so the
+   * main agent of a chat has one run per turn, each from `session.started` to `session.ended`.
+   */
+  runs: { start: number; end?: number }[];
   ops: Op[];
 }
 
@@ -196,10 +200,24 @@ export class MapActivity {
         id === 'main' ? 'Claude' : kind === 'local' ? id.slice('ollama:'.length) : 'Subagent';
       const code = agentCode(id === 'main' ? 'CL' : name, this.codes);
       this.codes.add(code);
-      agent = { id, name, code, kind, start: at, ops: [] };
+      agent = { id, name, code, kind, start: at, runs: [{ start: at }], ops: [] };
       this.agents.set(id, agent);
     }
     return agent;
+  }
+
+  /** New work after the agent ended (the next turn of a chat) opens a new run. */
+  private resume(agent: AgentRecord, at: number): void {
+    agent.start = Math.min(agent.start, at);
+    const first = agent.runs[0]!;
+    first.start = Math.min(first.start, at);
+    const last = agent.runs.at(-1)!;
+    if (last.end !== undefined && at > last.end) agent.runs.push({ start: at });
+  }
+
+  private finish(agent: AgentRecord, at: number): void {
+    const last = agent.runs.at(-1)!;
+    last.end = Math.max(last.end ?? at, at);
   }
 
   private linkFile(op: Op, path: string, list: 'files' | 'matches'): void {
@@ -225,6 +243,7 @@ export class MapActivity {
     switch (event.type) {
       case 'tool.called': {
         if (this.ops.has(event.toolUseId)) return;
+        this.resume(agent, at);
         const op: Op = {
           id: event.toolUseId,
           agent: event.agentId,
@@ -318,17 +337,17 @@ export class MapActivity {
           agent.code = agentCode(event.name, this.codes);
           this.codes.add(agent.code);
         }
-        agent.start = Math.min(agent.start, at);
+        this.resume(agent, at);
         return;
       }
       case 'agent.finished':
-        agent.end = at;
+        this.finish(agent, at);
         return;
       case 'session.started':
-        agent.start = Math.min(agent.start, at);
+        this.resume(agent, at);
         return;
       case 'session.ended':
-        agent.end = at;
+        this.finish(agent, at);
         for (const op of this.ops.values())
           if (op.end === undefined) {
             op.end = at;
@@ -378,8 +397,11 @@ export class MapActivity {
     for (const agent of this.agents.values()) {
       if (agent.start > t) continue;
       const mine = agent.ops.filter((op) => op.start <= t);
-      const alive =
-        t < (agent.end === undefined ? Infinity : Math.max(agent.end, agent.start + HOLD_MS));
+      const alive = agent.runs.some(
+        (run) =>
+          run.start <= t &&
+          t < (run.end === undefined ? Infinity : Math.max(run.end, run.start + HOLD_MS)),
+      );
       const active = mine.filter((op) => isActive(op, t));
       const stateOf = (op: Op) => (op === pending ? 'waiting' : activeState(op, t));
       const op = active.sort((a, b) => RANK[stateOf(b)] - RANK[stateOf(a)] || b.start - a.start)[0];

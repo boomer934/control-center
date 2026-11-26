@@ -273,7 +273,8 @@
 .lmap-empty {
   position: absolute;
   left: 50%;
-  top: 30%;
+  /* At the top: Fit keeps the map below it (overlayInsets in LiveMap.tsx). */
+  top: var(--sp-6);
   transform: translateX(-50%);
   padding: var(--sp-6) var(--sp-7);
   background: var(--bg-1);

@@ -169,6 +169,24 @@ describe('MapActivity timing', () => {
     expect(view.files.get('b.ts')).toMatchObject({ state: 'waiting', note: 'waiting 0:05' });
     expect(view.agents[0]).toMatchObject({ state: 'waiting', label: 'waits' });
   });
+
+  it('brings the agent back for the next turn of the chat', () => {
+    // One `claude -p` run per message: each turn opens and closes the session again.
+    const turn = (ms: number, id: string, target: string): AgentEvent[] => [
+      { ...base(ms), type: 'session.started' },
+      { ...base(ms + 100), type: 'tool.called', toolUseId: id, tool: 'Read', kind: 'read', target },
+      { ...base(ms + 200), type: 'tool.completed', toolUseId: id },
+      { ...base(ms + 3000), type: 'session.ended', ok: true, status: 'completed' },
+    ];
+    const activity = activityOf([...turn(0, 't1', 'a.ts'), ...turn(10_000, 't2', 'b.ts')]);
+    expect(activity.viewAt(t0 + 6000).agents[0]).toMatchObject({ alive: false, state: 'done' });
+    expect(activity.viewAt(t0 + 10_150).agents[0]).toMatchObject({
+      alive: true,
+      state: 'reading',
+      target: 'f:b.ts',
+    });
+    expect(activity.viewAt(t0 + 20_000).agents[0]).toMatchObject({ alive: false });
+  });
 });
 
 describe('buildVisibleMap', () => {

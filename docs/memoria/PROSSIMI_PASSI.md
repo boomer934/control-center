@@ -12,13 +12,14 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 2. ✅ **[Claude] (F5b)** Mappa unita con la [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013): baseline visive dal runner, budget dei 60 fps verde in CI (64 fps, main thread 15,8%).
 
-3. **[Claude] (F5b, rifinitura)** Saltati prima del merge, su decisione dell'utente: passata impeccable (`audit` della mappa nei due temi) e prova a mano con una sessione Claude reale su un workspace vero (mappa, Segui agente, anteprima diff da Git). Eventuali correzioni in una PR piccola. Sonnet 5.5 o Opus 5.5, effort medium.
+3. **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni nella [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI. Resta: CI verde e merge su richiesta dell'utente.
+4. **[Codex] (F4b, bug)** Nell'app ogni sessione reale parte con "Turn started without a Git checkpoint (failed)", anche su un repo Git pulito. Lo stesso `createGitService().checkpoint` su quel repo, chiamato da un test Vitest, riesce; a mano riescono anche tutti i comandi git. Quindi il guasto dipende dall'ambiente dell'app (Electron, env, cartella temporanea, tempi del watcher). Il codice `failed` nasconde l'errore vero: prima esporlo nei Problems (senza percorsi), poi correggere. `gpt-6.2-sol`, high; revisione Claude.
 
 ## Dopo
 
-4. **[Codex] (F5c)** Timeline e replay (`gpt-6.2-sol`, high): lo scrubber chiede alla mappa `MapActivity.viewAt(t)`; la mappa accetta già un istante fisso (`at`).
-5. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-6. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non compare "Waiting for approval." entro 5 s): capire se è l'ambiente o il test.
+5. **[Codex] (F5c)** Timeline e replay (`gpt-6.2-sol`, high): lo scrubber chiede alla mappa `MapActivity.viewAt(t)`; la mappa accetta già un istante fisso (`at`). Nota dalla prova reale: la timeline attuale mostra ogni lettura due volte ("Read · src/cart.js" dagli strumenti e "Read src/cart.js" dagli eventi file).
+6. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+7. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" fallisce in locale anche su `main` (non compare "Waiting for approval." entro 5 s): capire se è l'ambiente o il test.
 
 ## Quando capita
 

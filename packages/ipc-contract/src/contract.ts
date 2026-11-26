@@ -7,6 +7,7 @@
 // capability means adding a channel here, with its own narrow schemas, and reviewed code in the
 // main process. See docs/memoria/SICUREZZA.md.
 import { z } from 'zod';
+import { MachineSnapshotSchema } from './infra';
 import {
   GitCheckpointTargetSchema,
   GitCommitSchema,
@@ -263,6 +264,9 @@ export const contract = {
   project: {
     open: invoke('project:open', ProjectWorkspaceSchema, ProjectOpenResultSchema),
     updated: event('project:updated', ProjectUpdateSchema),
+  },
+  infra: {
+    snapshot: invoke('infra:snapshot', NoRequest, MachineSnapshotSchema),
   },
 } as const;
 

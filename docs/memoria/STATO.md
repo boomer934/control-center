@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. Pannello agenti e ispettore 5d sul branch `feat/agents-inspector`, basato sulla 5c._
+_Ultimo aggiornamento 2026-11-26. Pannello agenti, ispettore e inventario locale nella PR #63, basata sulla 5c._
 
 ## Fase
 
@@ -119,8 +119,9 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Verificato (5c):** `pnpm verify` con 393 test passati e uno saltato. Tutti i 69 E2E funzionali passati, inclusi fixture con subagente, sessione salvata riaperta dopo il riavvio e checkpoint. Audit Impeccable senza rilievi in Electron a 960×600 nei due temi. I quattro errori dei confronti visivi locali si riproducono anche su `origin/main`.
 - **Fatto (4b, Windows):** correzione pubblicata con la [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` senza bug confermati. Su Windows, scrittura di un riferimento con percorso di lock da 315 caratteri fallita senza l'override e riuscita con `core.longpaths=true`.
 - **Fatto (5d):** in Vista Live e nel replay il pannello Agents mostra attività, attese, errori, file toccati e consumi. Timeline, mappa e pannello condividono la selezione. L'ispettore mostra i dettagli e il JSON dell'evento e permette di copiarlo.
-- **Verificato (5d):** l'E2E con `sessione-02` controlla stato, modifiche, errore, comando locale, token, appunti e riavvolgimento. Impeccable pulito sul sorgente e in Electron a 960×600 nei due temi, in Details e JSON.
-- **Ora:** `feat/agents-inspector` dipende dalla [PR #62](https://github.com/boomer934/control-center/pull/62), verde e in attesa di merge. La domanda sull'inventario Docker, porte e GPU/Ollama resta parziale. Il replay mostra il comando registrato dalla sessione. L'inventario macchina dipende dalla Fase 6.
+- **Fatto (5d, inventario):** su autorizzazione dell'utente, anticipato il riepilogo in sola lettura della Fase 6. **Machine now** mostra conteggi Docker e TCP, porte su tutte le interfacce, VRAM NVIDIA e modelli Ollama anche durante il replay. I dati sono correnti e separati dall'evento ispezionato (ADR 0014).
+- **Verificato (5d):** l'E2E con `sessione-02` e inventario deterministico nel main controlla tutte e cinque le risposte, appunti e riavvolgimento. Impeccable pulito sul sorgente e in Electron a 960×600 nei due temi, in Details e JSON.
+- **Ora:** [PR #63](https://github.com/boomer934/control-center/pull/63) in bozza, basata sulla [PR #62](https://github.com/boomer934/control-center/pull/62). Prima del merge, revisione Claude per il canale IPC e i probe locali.
 
 ## Cosa funziona
 

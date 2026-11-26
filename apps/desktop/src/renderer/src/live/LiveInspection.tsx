@@ -4,6 +4,7 @@ import { Glyph } from '../ui/icons';
 import { Button, Sigil } from '../ui/primitives';
 import type { ActivityView, AgentPresence } from './activity';
 import { indexInspection, summarizeEvents } from './inspection';
+import { MachineInventory } from './MachineInventory';
 import { elapsedTime, ReplayActivity, type ReplayRecord, type TimelineMark } from './replay';
 import type { Replay } from './useReplay';
 import './inspection.css';
@@ -213,119 +214,122 @@ export function LiveInspection({
   );
 
   return (
-    <div className="live-inspection-layout">
-      {children(inspection)}
-      {timeline && index.events.length > 0 && (
-        <aside className="live-inspection" aria-label="Live activity">
-          <section className="live-agents" aria-label="Agents">
-            <header className="inspection-header">
-              <h2 className="dock-title">Agents</h2>
-            </header>
-            <div className="inspection-body">
-              <ul className="inspection-agents">
-                {view.agents.map((agent) => {
-                  const permission = summary.permissions.get(agent.id);
-                  const failure = summary.failures.get(agent.id);
-                  const usage = summary.usage.get(agent.id);
-                  const status =
-                    agent.label === 'delegating' ? 'Delegating' : stateLabel[agent.state];
-                  const target = commands.some(
-                    (event) => event.toolUseId === agent.action?.toolUseId,
-                  )
-                    ? undefined
-                    : agent.action?.target;
-                  const seconds =
-                    agent.action && Math.floor(Math.max(0, time - agent.action.since) / 1000);
-                  return (
-                    <li key={agent.id}>
-                      <button
-                        type="button"
-                        className="inspection-agent"
-                        onClick={() => inspectAgent(agent.id)}
-                        aria-pressed={mark?.event?.agentId === agent.id}
-                      >
-                        <Sigil code={agent.code} agent={agent.kind} />
-                        <span>
-                          <strong>{agent.name}</strong>
-                          <span className={`inspection-state s-${agent.state}`}>
-                            <Glyph name={`s-${agent.state}`} />
-                            {status}
-                            {seconds !== undefined && <span>· {seconds}s</span>}
+    <div className="live-inspection-stack">
+      <div className="live-inspection-layout">
+        {children(inspection)}
+        {timeline && index.events.length > 0 && (
+          <aside className="live-inspection" aria-label="Live activity">
+            <section className="live-agents" aria-label="Agents">
+              <header className="inspection-header">
+                <h2 className="dock-title">Agents</h2>
+              </header>
+              <div className="inspection-body">
+                <ul className="inspection-agents">
+                  {view.agents.map((agent) => {
+                    const permission = summary.permissions.get(agent.id);
+                    const failure = summary.failures.get(agent.id);
+                    const usage = summary.usage.get(agent.id);
+                    const status =
+                      agent.label === 'delegating' ? 'Delegating' : stateLabel[agent.state];
+                    const target = commands.some(
+                      (event) => event.toolUseId === agent.action?.toolUseId,
+                    )
+                      ? undefined
+                      : agent.action?.target;
+                    const seconds =
+                      agent.action && Math.floor(Math.max(0, time - agent.action.since) / 1000);
+                    return (
+                      <li key={agent.id}>
+                        <button
+                          type="button"
+                          className="inspection-agent"
+                          onClick={() => inspectAgent(agent.id)}
+                          aria-pressed={mark?.event?.agentId === agent.id}
+                        >
+                          <Sigil code={agent.code} agent={agent.kind} />
+                          <span>
+                            <strong>{agent.name}</strong>
+                            <span className={`inspection-state s-${agent.state}`}>
+                              <Glyph name={`s-${agent.state}`} />
+                              {status}
+                              {seconds !== undefined && <span>· {seconds}s</span>}
+                            </span>
                           </span>
-                        </span>
-                      </button>
-                      {target && (
-                        <p>
-                          <code>{target}</code>
-                        </p>
-                      )}
-                      {agent.state === 'waiting' && permission?.detail && (
-                        <p>{permission.detail}</p>
-                      )}
-                      {failure && (
-                        <p className="inspection-failure">
-                          Last error · {failure.detail ?? failure.reason}
-                        </p>
-                      )}
-                      {usage && view.agents.length > 1 && (
-                        <p>{number.format(usage.total)} tokens</p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              {view.agents.length === 0 && <p>No activity at this time.</p>}
-              <div className="sr-only" role="status">
-                {view.agents
-                  .filter((agent) => agent.state === 'waiting' || agent.state === 'error')
-                  .map((agent) => `${agent.name}: ${stateLabel[agent.state]}`)
-                  .join('. ')}
-              </div>
-              <dl className="inspection-summary">
-                <div>
-                  <dt>Files</dt>
-                  <dd>
-                    {summary.reads.size} read · {summary.writes.size} changed
-                  </dd>
+                        </button>
+                        {target && (
+                          <p>
+                            <code>{target}</code>
+                          </p>
+                        )}
+                        {agent.state === 'waiting' && permission?.detail && (
+                          <p>{permission.detail}</p>
+                        )}
+                        {failure && (
+                          <p className="inspection-failure">
+                            Last error · {failure.detail ?? failure.reason}
+                          </p>
+                        )}
+                        {usage && view.agents.length > 1 && (
+                          <p>{number.format(usage.total)} tokens</p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {view.agents.length === 0 && <p>No activity at this time.</p>}
+                <div className="sr-only" role="status">
+                  {view.agents
+                    .filter((agent) => agent.state === 'waiting' || agent.state === 'error')
+                    .map((agent) => `${agent.name}: ${stateLabel[agent.state]}`)
+                    .join('. ')}
                 </div>
-                <div>
-                  <dt>Local commands</dt>
-                  <dd>
-                    {commands.length > 0
-                      ? commands.map((event) => event.target ?? event.tool).join(' · ')
-                      : 'None running in this session'}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Session usage</dt>
-                  <dd>
-                    {summary.usage.size
-                      ? `${number.format(summary.total)} tokens · ${number.format(summary.cache)} cached`
-                      : 'No token usage recorded'}
-                  </dd>
-                  {summary.usage.size > 0 && (
+                <dl className="inspection-summary">
+                  <div>
+                    <dt>Files</dt>
                     <dd>
-                      {summary.local > 0
-                        ? `${number.format(summary.local)} local tokens`
-                        : 'No local tokens recorded'}
+                      {summary.reads.size} read · {summary.writes.size} changed
                     </dd>
-                  )}
-                  {summary.durationMs !== undefined && (
-                    <dd>{elapsedTime(Math.round(summary.durationMs))} recorded</dd>
-                  )}
-                </div>
-              </dl>
-            </div>
-          </section>
-          <Inspector
-            key={mark?.id ?? 'none'}
-            mark={mark}
-            view={view}
-            summary={summary}
-            start={timeline.start}
-          />
-        </aside>
-      )}
+                  </div>
+                  <div>
+                    <dt>Local commands</dt>
+                    <dd>
+                      {commands.length > 0
+                        ? commands.map((event) => event.target ?? event.tool).join(' · ')
+                        : 'None running in this session'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Session usage</dt>
+                    <dd>
+                      {summary.usage.size
+                        ? `${number.format(summary.total)} tokens · ${number.format(summary.cache)} cached`
+                        : 'No token usage recorded'}
+                    </dd>
+                    {summary.usage.size > 0 && (
+                      <dd>
+                        {summary.local > 0
+                          ? `${number.format(summary.local)} local tokens`
+                          : 'No local tokens recorded'}
+                      </dd>
+                    )}
+                    {summary.durationMs !== undefined && (
+                      <dd>{elapsedTime(Math.round(summary.durationMs))} recorded</dd>
+                    )}
+                  </div>
+                </dl>
+              </div>
+            </section>
+            <Inspector
+              key={mark?.id ?? 'none'}
+              mark={mark}
+              view={view}
+              summary={summary}
+              start={timeline.start}
+            />
+          </aside>
+        )}
+      </div>
+      {timeline && index.events.length > 0 && <MachineInventory />}
     </div>
   );
 }

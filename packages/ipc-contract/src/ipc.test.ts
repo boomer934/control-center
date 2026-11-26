@@ -100,6 +100,7 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
     project: {
       open: () => ({ ok: false, error: 'workspace-unavailable' }),
     },
+    infra: { snapshot: () => ({ docker: null, ports: null, gpu: null, ollama: null }) },
   };
   return { handlers, getInfo, openExternal };
 }
@@ -147,6 +148,7 @@ describe('contract', () => {
       'git:restore',
       'project:open',
       'project:updated',
+      'infra:snapshot',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
       'errors:changed',
@@ -236,6 +238,12 @@ describe('registerIpcHandlers (main)', () => {
     expect(getInfo).not.toHaveBeenCalled();
   });
 
+  it('refuses renderer-supplied probe parameters for the machine inventory', async () => {
+    const { ipc } = setup();
+    const res = await ipc.call('infra:snapshot', trusted, { host: 'https://example.invalid' });
+    expect(res).toMatchObject({ ok: false, error: { code: 'invalid-request' } });
+  });
+
   it('never echoes received values in validation messages', async () => {
     const { ipc } = setup();
     const res = (await ipc.call('shell:open-external', trusted, { url: 999_111_333 })) as {
@@ -323,7 +331,9 @@ describe('createApi (preload)', () => {
       'claude',
       'git',
       'project',
+      'infra',
     ]);
+    expect(Object.keys(api.infra)).toEqual(['snapshot']);
     expect(Object.keys(api.project)).toEqual(['open', 'onUpdated']);
     expect(Object.keys(api.git)).toEqual([
       'status',

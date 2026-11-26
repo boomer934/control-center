@@ -6,7 +6,18 @@
 // carries an `E2E_MARK_*` comment on its throwing line: the tests read this file to check that the
 // stack the Console shows points at exactly that line.
 import type { ErrorInput } from '@control-center/app-log';
+import type { MachineSnapshot } from '@control-center/ipc-contract';
 import { superviseChild } from './children';
+
+export function e2eMachineSnapshot(): MachineSnapshot | undefined {
+  if (process.env.CC_E2E_MACHINE_SNAPSHOT !== '1') return undefined;
+  return {
+    docker: { running: 4 },
+    ports: { listening: 3, wildcard: 1 },
+    gpu: { usedMiB: 9216, totalMiB: 16384 },
+    ollama: { models: [{ name: 'qwen-coder:7b', inVram: true }] },
+  };
+}
 
 interface Faults {
   uncaught(): void;

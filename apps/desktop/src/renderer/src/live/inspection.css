@@ -1,7 +1,52 @@
+.live-inspection-stack {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
 .live-inspection-layout {
   display: flex;
   flex: 1 1 auto;
   min-block-size: calc(var(--sp-10) * 6);
+}
+
+.machine-inventory {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-5);
+  flex: none;
+  padding: var(--sp-2) var(--sp-5);
+  border-block-start: var(--sz-hair) solid var(--line);
+  background: var(--bg-1);
+  color: var(--fg-2);
+  font-size: var(--fs-m);
+  font-variant-numeric: tabular-nums;
+  max-block-size: calc(var(--sp-10) * 2);
+  overflow: auto;
+}
+
+.machine-inventory h2 {
+  flex: none;
+  color: var(--fg-1);
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.machine-inventory h2,
+.machine-inventory p,
+.machine-inventory ul {
+  margin: 0;
+}
+
+.machine-inventory ul {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sp-6);
+  min-inline-size: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
 }
 
 .live-inspection-layout > .lmap-area {

@@ -35,4 +35,5 @@ export {
   type Unsubscribe,
 } from './contract';
 export * from './git';
+export * from './infra';
 export * from './project';

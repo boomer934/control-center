@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Inventario macchina e cinque risposte del replay
+
+- **Fatto.** Su autorizzazione dell'utente, la Vista Live mostra container in esecuzione, porte TCP, VRAM NVIDIA e modelli Ollama durante il replay.
+- **Decisioni.** I probe sono in sola lettura. Il riepilogo IPC mostra lo stato corrente della macchina anche se il playhead è nel passato (ADR 0014).
+- **Verifica.** L'E2E con `sessione-02` e inventario deterministico nel main copre le cinque domande. Impeccable pulito in Details e JSON nei due temi.
+- **Problemi.** La [PR #63](https://github.com/boomer934/control-center/pull/63) è basata sulla #62. Il canale IPC e i probe locali richiedono la revisione Claude prima del merge.
+
+---
+
 ## 2026-11-26 — Pannello agenti e ispettore della Vista Live (5d)
 
 - **Fatto.** Pannello Agents sincronizzato con il playhead, selezione tra timeline, mappa e pannello, ispettore con dettagli e JSON copiabile.

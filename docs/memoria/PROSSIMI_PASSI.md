@@ -18,7 +18,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 ## Dopo
 
-6. **[Codex] (F5d)** Pannello agenti e ispettore verificati sul branch `feat/agents-inspector`. Dopo la PR #62, riallineare la base a `main`. Completare nell'E2E la risposta su Docker, porte e GPU/Ollama quando la Fase 6 espone l'inventario. Il test attuale verifica i comandi locali della sessione.
+6. **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura verificati nella [PR #63](https://github.com/boomer934/control-center/pull/63). Dopo la PR #62, riallineare la base a `main`. Revisione Claude sui probe locali e IPC prima del merge. La schermata Infra completa resta nella Fase 6.
 7. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 8. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c.
 

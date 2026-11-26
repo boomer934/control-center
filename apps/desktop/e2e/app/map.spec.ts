@@ -13,7 +13,7 @@ let userDataDir: string;
 
 test.beforeAll(async () => {
   userDataDir = mkdtempSync(join(tmpdir(), 'cc-map-'));
-  ({ app, page } = await launchApp({ userDataDir }));
+  ({ app, page } = await launchApp({ userDataDir, env: { CC_E2E_MACHINE_SNAPSHOT: '1' } }));
   await page.setViewportSize({ width: 1280, height: 800 }).catch(() => undefined);
 });
 
@@ -112,7 +112,7 @@ test.describe('map states from the fixtures', () => {
     await expect(timeline.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
   });
 
-  test('shows recorded activity, errors, file changes, local commands and usage in replay', async () => {
+  test('answers the five Live questions during replay and synchronizes the inspector', async () => {
     await scene('replay', 'sessione-02');
     const timeline = page.getByRole('region', { name: 'Session timeline' });
     const agents = page.getByRole('region', { name: 'Agents', exact: true });
@@ -145,6 +145,13 @@ test.describe('map states from the fixtures', () => {
     const clipboard = await app.evaluate(({ clipboard }) => clipboard.readText());
     expect(JSON.parse(clipboard)).toEqual(event);
 
+    // What is running on this machine? The fixed main-process inventory is live context.
+    const machine = page.getByRole('region', { name: 'Machine now' });
+    await expect(machine.getByText('4 containers running')).toBeInViewport();
+    await expect(machine.getByText('3 ports listening · 1 on all interfaces')).toBeInViewport();
+    await expect(machine.getByText('9 / 16 GiB VRAM')).toBeInViewport();
+    await expect(machine.getByText('qwen-coder:7b in VRAM')).toBeInViewport();
+
     // Did something go wrong?
     await timeline
       .getByRole('button', { name: /^Tool failed/ })
@@ -172,6 +179,7 @@ test.describe('map states from the fixtures', () => {
     await expect(agents.getByText('0 read · 0 changed')).toBeVisible();
     await expect(inspector.getByText('Select an event, agent, or active map node.')).toBeVisible();
     await expect(agents.getByText(/^Last error/)).toHaveCount(0);
+    await expect(machine.getByText('4 containers running')).toBeInViewport();
   });
 
   test('a collapsed folder opens on click', async () => {

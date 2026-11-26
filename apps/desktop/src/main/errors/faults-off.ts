@@ -2,3 +2,7 @@
 export function installE2eFaults(): void {
   // no fault injectors in this build
 }
+
+export function e2eMachineSnapshot(): undefined {
+  return undefined;
+}

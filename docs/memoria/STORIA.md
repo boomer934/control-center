@@ -4,6 +4,18 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Mappa 5b in CI: budget dei 60 fps e merge
+
+- **Fatto:** PR #58 portata a CI verde. Baseline visive della mappa dal runner Windows; `data-ready` solo sul layout del visibile corrente; props di `<ReactFlow>` stabili (un evento ri-renderizzava tutti i 511 nodi). Il test dei 60 fps falliva ancora (12,2% di frame > 25 ms): causa trovata con il protocollo DevTools e tracce del main thread. Ora il punto del viaggio si muove con `transform` sul compositor (`Trip`, un elemento per agente), i nodi della mappa non hanno transizioni e il `readtick` usa `fill/stroke-opacity`. Main thread durante il banco: 95% → 43% a CPU ×4, 25% → 9% a CPU ×1; in CI 64,1 fps, 0% di frame lunghi, 15,8% di main thread.
+- **Decisioni:**
+  - il test di prestazioni misura il tempo del main thread (`TaskDuration`, al massimo 50% con gli eventi) più fps ≥ 55 e 500 nodi: i frame del runner (senza GPU, timer da 15,6 ms) non distinguono una mappa che regge da una al limite;
+  - sulla mappa niente animazioni che ridipingono fuori dal segno di un nodo (`map.css`, `PROBLEMI_NOTI.md`);
+  - merge chiesto dall'utente prima della passata impeccable e della prova con una sessione reale (voce 3 di `PROSSIMI_PASSI.md`).
+- **Problemi:** l'ipotesi precedente (timer del runner) era sbagliata: a mappa ferma il runner dava 0% di frame lunghi. Sette baseline rigenerate per l'antialiasing del testo del chip, contenuto invariato.
+- **Verifica:** `pnpm verify` verde (385 test); CI della PR #58 verde su `fd558b6`.
+
+---
+
 ## 2026-11-19 — Mappa della Vista Live (5b)
 
 - **Fatto:** branch `feat/mappa` impilato sulla 5a (in revisione da Codex). Mappa React Flow in `renderer/src/live/`: contenitori per cartella con file toccati e vicini, resto collassato con calore; stati dei nodi dagli `AgentEvent`; chip e archi degli agenti; nodi temporanei per comandi e MCP; Segui agente, Fit, zoom semantico, minimappa a heatmap, anteprima diff; map lab con le fixture e banco da 500 file (ADR 0013).

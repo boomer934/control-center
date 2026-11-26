@@ -37,3 +37,4 @@ export {
 export * from './git';
 export * from './infra';
 export * from './project';
+export { MAX_SOURCE_BYTES } from './workspace';

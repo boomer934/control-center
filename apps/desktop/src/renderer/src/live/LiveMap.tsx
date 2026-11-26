@@ -274,6 +274,7 @@ function MapInner(props: LiveMapProps) {
   const rf = useReactFlow();
   const { density } = useTheme();
   const wrapper = useRef<HTMLDivElement>(null);
+  const showEmpty = !records.length && !errors?.some(({ file }) => file?.external === false);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
   const [folders, setFolders] = useState<ReadonlyMap<string, number>>(new Map());
@@ -411,13 +412,20 @@ function MapInner(props: LiveMapProps) {
 
   // The map opens fitted, and stays fitted while nobody moved it (DESIGN.md, 1b).
   const fittedKey = useRef('');
+  const fittedSize = useRef('');
   useEffect(() => {
-    if (!layout || !width || follow.on) return;
-    const key = `${layout.key}|${tempBoxes.size > 0}|${chips.length > 0}`;
-    if (key === fittedKey.current || (fittedKey.current && userMoved.current)) return;
-    fit(Boolean(fittedKey.current));
+    if (!layout || !width || !height || follow.on) return;
+    const key = `${layout.key}|${tempBoxes.size > 0}|${chips.length > 0}|${showEmpty}`;
+    const size = `${width}x${height}`;
+    if (
+      (key === fittedKey.current && size === fittedSize.current) ||
+      (fittedKey.current && userMoved.current)
+    )
+      return;
+    fit(Boolean(fittedKey.current) && size === fittedSize.current);
     fittedKey.current = key;
-  }, [layout, width, follow.on, tempBoxes.size, chips.length, fit]);
+    fittedSize.current = size;
+  }, [layout, width, height, follow.on, tempBoxes.size, chips.length, showEmpty, fit]);
 
   const followed = follow.on
     ? (chips.find((c) => c.agent.id === follow.agent) ??
@@ -492,7 +500,9 @@ function MapInner(props: LiveMapProps) {
         }, DIFF_DELAY_MS);
       },
       ...(openDiff ? { openDiff } : {}),
-      ...(canInspect ? { inspectNode: (id: string) => inspectNode.current?.(id) } : {}),
+      ...(canInspect
+        ? { inspectNode: (id: string, error?: boolean) => inspectNode.current?.(id, error) }
+        : {}),
     }),
     [store, loadDiff, openDiff, canInspect],
   );
@@ -739,7 +749,7 @@ function MapInner(props: LiveMapProps) {
             The map could not be laid out.
           </p>
         )}
-        {layout && !records.length && (
+        {layout && showEmpty && (
           <div className="empty lmap-empty" data-testid="map-empty">
             <Icon name="live" className="g" />
             <h2>No session yet</h2>

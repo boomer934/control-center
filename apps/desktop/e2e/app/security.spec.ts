@@ -117,7 +117,7 @@ test.describe('preload', () => {
         app: ['getInfo'],
         errors: ['list', 'reportRenderer', 'copyReport', 'clear', 'onChanged'],
         shell: ['openExternal'],
-        workspace: ['getState', 'chooseFolder', 'selectRecent', 'openFile'],
+        workspace: ['getState', 'chooseFolder', 'selectRecent', 'openFile', 'readSourceLocation'],
         terminal: ['start', 'write', 'resize', 'close', 'onUpdated'],
         claude: [
           'start',
@@ -131,9 +131,9 @@ test.describe('preload', () => {
         ],
         git: ['status', 'diff', 'stage', 'commit', 'preview', 'restore'],
         project: ['open', 'onUpdated'],
-        infra: ['snapshot'],
+        infra: ['snapshot', 'explainProjectError'],
       },
-      types: Array.from({ length: 33 }, () => 'function'),
+      types: Array.from({ length: 35 }, () => 'function'),
       frozen: true,
       leaked: [],
     });

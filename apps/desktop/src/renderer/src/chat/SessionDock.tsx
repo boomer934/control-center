@@ -1,5 +1,4 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import Markdown from 'react-markdown';
 import type { AgentEvent } from '@control-center/event-schema';
 import {
   MAX_CLAUDE_MESSAGE_CHARS,
@@ -9,16 +8,9 @@ import {
   type ClaudePermissionChoice,
 } from '@control-center/ipc-contract/claude';
 import { Button, StateTag } from '../ui/primitives';
+import { MessageMarkdown as Text } from '../ui/MessageMarkdown';
 import type { ClaudeChat } from './useClaudeChat';
 import './session.css';
-
-const Text = memo(function Text({ text }: { text: string }) {
-  return (
-    <Markdown skipHtml disallowedElements={['img', 'a']} unwrapDisallowed>
-      {text}
-    </Markdown>
-  );
-});
 
 type ToolResult = Extract<AgentEvent, { type: 'tool.completed' | 'tool.failed' }>;
 
@@ -138,6 +130,7 @@ export function SessionDock({
   workspace,
   chooseWorkspace,
   permissionFocus,
+  draftFocus,
   showHistory,
   setShowHistory,
   onHistoryLoaded,
@@ -146,6 +139,7 @@ export function SessionDock({
   workspace?: string;
   chooseWorkspace(): void;
   permissionFocus: number;
+  draftFocus: number;
   showHistory: boolean;
   setShowHistory(show: boolean): void;
   onHistoryLoaded(): void;
@@ -155,6 +149,8 @@ export function SessionDock({
   const scroll = useRef<HTMLDivElement>(null);
   const following = useRef(true);
   const handledFocus = useRef(0);
+  const handledDraftFocus = useRef(0);
+  const composer = useRef<HTMLTextAreaElement>(null);
   const running = chat.status === 'running';
   const archived = Boolean(chat.historyId && !chat.id);
   const permission = chat.permissions[0];
@@ -171,6 +167,13 @@ export function SessionDock({
     handledFocus.current = permissionFocus;
     document.getElementById(`${permission.requestId}-arguments`)?.focus();
   }, [permission, permissionFocus]);
+
+  useLayoutEffect(() => {
+    if (!composer.current || !draft || handledDraftFocus.current === draftFocus) return;
+    handledDraftFocus.current = draftFocus;
+    composer.current.focus();
+    composer.current.setSelectionRange(draft.length, draft.length);
+  }, [draft, draftFocus]);
 
   useEffect(() => {
     if (!showHistory) return;
@@ -345,6 +348,7 @@ export function SessionDock({
           >
             <label htmlFor="claude-prompt">Message Claude</label>
             <textarea
+              ref={composer}
               id="claude-prompt"
               rows={2}
               value={draft}

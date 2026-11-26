@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Azioni rapide sugli errori della Vista Live (5e+)
+
+- **Fatto.** Dall'errore selezionato sulla mappa o nella timeline si può preparare la correzione in Claude, chiedere una spiegazione a Ollama e aprire il file alla riga. Funziona anche per un errore del terminale prima di una chat. Codex ha coperto contratto e UI in subentro per crediti Claude esauriti.
+- **Decisioni.** La chat conserva la bozza esistente e richiede l'invio esplicito. Il visualizzatore interno in sola lettura usa i controlli canonici della 4.2. Ollama riceve i metadati ripuliti dell'errore e usa il modello di completamento locale installato più piccolo (ADR 0016).
+- **Verifica.** `pnpm verify` con 440 test passati e uno saltato. Tutti i 74 E2E funzionali passati, inclusi avvio da un errore del terminale, attraversamento del workspace rifiutato e apertura alla riga. Prova reale con `qwen2.5-coder:7b`. Impeccable in Electron a 960×602 nei due temi segnala solo la gerarchia tipografica compatta. I confronti visivi del runner Windows restano alla CI.
+- **Problemi.** La minimappa copriva il file quando si apriva l'ispettore a finestra stretta. Corretto il Fit al ridimensionamento e tolto l'invito ad avviare una sessione quando c'è già un errore sulla mappa. Il dialogo ripristina il focus dopo Escape.
+
+---
+
 ## 2026-11-26 — Errori del progetto sulla mappa (5e)
 
 - **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).

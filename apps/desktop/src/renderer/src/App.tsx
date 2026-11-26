@@ -76,6 +76,7 @@ function LiveView({
   terminalErrors,
   onCheckpoint,
   onHistory,
+  onErrorDraft,
   reviewDisabled,
   openGit,
 }: {
@@ -86,6 +87,7 @@ function LiveView({
   terminalErrors: readonly TerminalError[];
   onCheckpoint(checkpoint: GitCheckpoint, readOnly: boolean): void;
   onHistory?(): void;
+  onErrorDraft(text: string): void;
   reviewDisabled: boolean;
   openGit(): void;
 }) {
@@ -131,6 +133,9 @@ function LiveView({
       <LiveInspection
         records={chat.records}
         replay={replay}
+        terminalErrors={terminalErrors}
+        workspaceId={workspaceId}
+        onDraft={onErrorDraft}
         pendingPermission={chat.permissions.length > 0}
       >
         {(inspection) => (
@@ -270,6 +275,7 @@ function AppShell({
   const [gitRevision, setGitRevision] = useState(0);
   const [restoreNotice, setRestoreNotice] = useState('');
   const [permissionFocus, setPermissionFocus] = useState(0);
+  const [draftFocus, setDraftFocus] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const { layout, setLayout } = useWorkspaceLayout(workspaceId);
   const { bottomOpen, bottomDock, rightOpen, compactBar } = layout;
@@ -459,13 +465,19 @@ function AppShell({
     route === 'live' ? (
       <>
         <LiveView
-          key={chat.id ?? chat.historyId ?? 'new'}
+          key={`${workspaceId ?? 'no-workspace'}:${chat.id ?? chat.historyId ?? 'new'}`}
           state={info}
           workspaceId={workspaceId}
           chat={chat}
           terminalErrors={terminals.errorsFor(workspaceId)}
           onCheckpoint={reviewCheckpoint}
           onHistory={workspaceId ? openHistory : undefined}
+          onErrorDraft={(text) => {
+            chat.setDraft(chat.draft.trim() ? `${chat.draft}\n\n${text}` : text);
+            setShowHistory(false);
+            setLayout((value) => ({ ...value, rightOpen: true }));
+            setDraftFocus((value) => value + 1);
+          }}
           reviewDisabled={chat.status === 'running' || chat.pending}
           openGit={() => go('git')}
         />
@@ -621,6 +633,7 @@ function AppShell({
                   chat={chat}
                   chooseWorkspace={toggleWorkspaces}
                   permissionFocus={permissionFocus}
+                  draftFocus={draftFocus}
                   showHistory={showHistory}
                   setShowHistory={setShowHistory}
                   onHistoryLoaded={() => go('live')}

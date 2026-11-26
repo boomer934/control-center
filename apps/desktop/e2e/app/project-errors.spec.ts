@@ -2,7 +2,9 @@
 // The terminal case runs real Node in the integrated PowerShell; the agent case replays the
 // recorded session sessione-02 (a failing `npm test`) through the fake `claude`; the Docker and
 // dev server cases print their output in the terminal while a session is open.
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
+import { once } from 'node:events';
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -14,6 +16,8 @@ const FAKE_CLAUDE = resolve(__dirname, '../../../../packages/fixtures/bin/fake-c
 let app: ElectronApplication;
 let page: Page;
 let fixture: string;
+let ollama: Server;
+let ollamaRequests: Array<{ path: string | undefined; body: unknown }>;
 
 test.skip(process.platform !== 'win32', 'The terminal and the Claude session target Windows');
 
@@ -39,11 +43,45 @@ test.beforeEach(async () => {
   );
   await writeFile(join(shop, 'test/cart.test.js'), "require('node:test');\n");
   const workspace = await realpath(shop);
+  ollamaRequests = [];
+  ollama = createServer(async (request, response) => {
+    let input = '';
+    for await (const chunk of request) input += String(chunk);
+    const body: unknown = input ? JSON.parse(input) : null;
+    ollamaRequests.push({ path: request.url, body });
+    const result =
+      request.url === '/api/tags'
+        ? {
+            models: [
+              { name: 'renamed:latest', size: 1, remote_model: 'hosted' },
+              { name: 'remote:cloud', size: 2 },
+              { name: 'opaque:latest', size: 3 },
+              { name: 'qwen-coder:7b', size: 7 },
+            ],
+          }
+        : request.url === '/api/show'
+          ? {
+              capabilities: ['completion'],
+              ...((body as { model: string }).model === 'opaque:latest'
+                ? { remote_host: 'https://example.invalid' }
+                : {}),
+            }
+          : {
+              done: true,
+              message: { role: 'assistant', content: 'Check why cart.items is undefined.' },
+            };
+    response.end(JSON.stringify(result));
+  });
+  ollama.listen(0, '127.0.0.1');
+  await once(ollama, 'listening');
+  const address = ollama.address();
+  if (!address || typeof address === 'string') throw new Error('Expected a TCP address');
   ({ app, page } = await launchApp({
     userDataDir: join(fixture, 'user-data'),
     env: {
       Path: `${bin};${process.env.Path ?? process.env.PATH ?? ''}`,
       FAKE_CLAUDE_FIXTURE: 'sessione-02',
+      CC_E2E_OLLAMA_PORT: String(address.port),
     },
   }));
   await app.evaluate(({ dialog }, folder) => {
@@ -59,12 +97,16 @@ test.beforeEach(async () => {
 
 test.afterEach(async () => {
   await app?.close();
+  if (ollama?.listening) {
+    ollama.close();
+    await once(ollama, 'close');
+  }
   if (fixture) await rm(fixture, { recursive: true, force: true });
 });
 
 const node = (path: string) => page.locator(`[data-node="${path}"]`);
 
-test('a stack trace in the integrated terminal turns the culprit file red on the map', async () => {
+test('a terminal error lights the culprit and offers all three actions before a session', async () => {
   await page.keyboard.press('Control+Backquote');
   const terminal = page.getByRole('region', { name: 'Terminal' });
   await terminal.getByRole('button', { name: 'PowerShell', exact: true }).click();
@@ -81,6 +123,86 @@ test('a stack trace in the integrated terminal turns the culprit file red on the
   await expect(node('src/lib/price.js')).toContainText('L2 TypeError');
   // the caller is on the map (it imports the culprit) but is not the culprit
   await expect(node('src/cart.js')).not.toHaveAttribute('data-state', 'error');
+
+  await node('src/lib/price.js').click();
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  const actions = inspector.getByRole('group', { name: 'Project error actions' });
+  await expect(inspector).toContainText('src/lib/price.js:2:21');
+  const goToFile = actions.getByRole('button', { name: 'Go to file' });
+  await goToFile.click();
+  const source = page.getByRole('dialog', { name: 'src/lib/price.js:2:21' });
+  await expect(source.locator('mark')).toHaveText(
+    'return cart.items.reduce((s, i) => s + i.price, 0);',
+  );
+  await expect(source.getByLabel('Source file')).toContainText('module.exports');
+  await page.keyboard.press('Escape');
+  await expect(source).toHaveCount(0);
+  await expect(goToFile).toBeFocused();
+
+  await actions.getByRole('button', { name: 'Explain locally' }).click();
+  await expect(inspector.getByRole('region', { name: 'Local explanation' })).toContainText(
+    'Check why cart.items is undefined.',
+  );
+  expect(ollamaRequests.map(({ path }) => path)).toEqual([
+    '/api/tags',
+    '/api/show',
+    '/api/show',
+    '/api/chat',
+  ]);
+  expect(ollamaRequests.at(-1)?.body).toMatchObject({
+    model: 'qwen-coder:7b',
+    stream: false,
+    messages: [
+      { role: 'system' },
+      { role: 'user', content: expect.stringContaining('src/lib/price.js') },
+    ],
+  });
+
+  const chat = page.getByRole('complementary', { name: 'Session' });
+  const draft = chat.getByRole('textbox', { name: 'Message Claude' });
+  await draft.fill('Please add a regression test.');
+  await page.keyboard.press('Control+Alt+B');
+  await expect(chat).toHaveCount(0);
+  await actions.getByRole('button', { name: 'Ask Claude to fix' }).click();
+  await expect(draft).toBeFocused();
+  await expect(draft).toHaveValue(
+    /Please add a regression test\.[\s\S]*Investigate and fix[\s\S]*TypeError/,
+  );
+  await expect(chat.getByText('Please add a regression test.', { exact: true })).toHaveCount(0);
+  await chat.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(
+    page
+      .getByRole('region', { name: 'Session timeline' })
+      .getByRole('button', { name: 'Turn completed', exact: true }),
+  ).toBeVisible({ timeout: 30_000 });
+});
+
+test('source locations stay inside the active workspace and must identify a real line', async () => {
+  await writeFile(join(fixture, 'outside.js'), 'private');
+  await symlink(fixture, join(fixture, 'Shop', 'outside'), 'junction');
+  const results = await page.evaluate(async () => {
+    const { active } = await window.api.workspace.getState();
+    if (!active) throw new Error('Workspace missing');
+    const read = (path: string, line = 1, workspaceId = active.id) =>
+      window.api.workspace.readSourceLocation({ workspaceId, path, line });
+    return Promise.all([
+      read('outside/outside.js'),
+      read('src/cart.js', 999),
+      read('src/cart.js', 1, '0'.repeat(64)),
+    ]);
+  });
+  expect(results).toEqual([null, null, null]);
+  await expect(
+    page.evaluate(async () => {
+      const { active } = await window.api.workspace.getState();
+      if (!active) throw new Error('Workspace missing');
+      return window.api.workspace.readSourceLocation({
+        workspaceId: active.id,
+        path: '../outside.js',
+        line: 1,
+      });
+    }),
+  ).rejects.toThrow('[invalid-request]');
 });
 
 async function runTurn() {

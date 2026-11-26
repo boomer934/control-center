@@ -3,7 +3,7 @@
 // events to the trusted windows only (ADR 0007).
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { e2eMachineSnapshot } from '#e2e-faults';
+import { e2eMachineSnapshot, e2eOllamaPort } from '#e2e-faults';
 import { dirname, join, win32 } from 'node:path';
 import {
   app,
@@ -28,6 +28,7 @@ import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
 import { fail as failGit } from './git/repository';
 import { createGitService } from './git/service';
+import { createErrorExplainer } from './infra/explain-error';
 import { createMachineSnapshotReader } from './infra/snapshot';
 import { coalesce, makeFailureRouter } from './ipc-events';
 import { createProjectService } from './project/service';
@@ -37,6 +38,7 @@ import { resolveShell } from './terminal/shells';
 import { openInEditor } from './workspace/editor';
 import { resolveWorkspaceFile } from './workspace/paths';
 import { createWorkspaceService } from './workspace/service';
+import { readSourceLocation } from './workspace/source';
 
 /** Windows created by the app itself; IPC from any other WebContents is refused. */
 const trustedWindowIds = new Set<number>();
@@ -68,8 +70,8 @@ function makeHandlers(
   claude: Handlers['claude'],
   git: Handlers['git'],
   project: Handlers['project'],
+  infra: Handlers['infra'],
 ): Handlers {
-  const machineSnapshot = createMachineSnapshotReader();
   return {
     app: {
       getInfo: () => ({
@@ -102,9 +104,7 @@ function makeHandlers(
     claude,
     git,
     project,
-    infra: {
-      snapshot: () => e2eMachineSnapshot() ?? machineSnapshot(),
-    },
+    infra,
   };
 }
 
@@ -155,6 +155,8 @@ export function registerIpc(
   const reportFailure = makeFailureRouter(errors);
   const terminals = createTerminalService();
   const gitService = createGitService();
+  const machineSnapshot = createMachineSnapshotReader();
+  const explainError = createErrorExplainer(e2eOllamaPort());
   const projects = createProjectService({
     workerPath: unpacked(join(__dirname, 'project-worker.js')),
     wasmDir: treeSitterDir(),
@@ -191,7 +193,7 @@ export function registerIpc(
       return { claude, hooks };
     },
   });
-  const owners = new Map<number, { emit: Emit; close(): void }>();
+  const owners = new Map<number, { emit: Emit; controller: AbortController; close(): void }>();
   let workspaceService: ReturnType<typeof createWorkspaceService> | undefined;
   let choosingFolder = false;
 
@@ -209,11 +211,13 @@ export function registerIpc(
     const contents = webContents.fromId(id);
     if (!contents || contents.isDestroyed()) return;
     const owner = {
+      controller: new AbortController(),
       emit: createEventEmitter({
         targets: () => trustedReceivers(devServer, id),
         onFailure: reportFailure,
       }),
       close() {
+        owner.controller.abort();
         owners.delete(id);
         terminals.closeOwner(id);
         gitService.clearOwner(id);
@@ -265,6 +269,30 @@ export function registerIpc(
       const candidate = source === 'problems' ? win32.resolve(projectRoot, path) : path;
       const file = await resolveWorkspaceFile(root, candidate);
       return file && workspaces.isActive(workspaceId) ? openInEditor(file) : false;
+    },
+    readSourceLocation: async ({ workspaceId, path, line }, { senderId }) => {
+      if (senderId === undefined) return null;
+      const owner = windowOwner(senderId);
+      if (!owner) return null;
+      const workspaces = await getWorkspaces();
+      const root = await workspaces.activeRootFor(workspaceId);
+      if (!root || owner.controller.signal.aborted) return null;
+      const source = await readSourceLocation(root, path, line);
+      return !owner.controller.signal.aborted && workspaces.isActive(workspaceId) ? source : null;
+    },
+  };
+
+  const infra: Handlers['infra'] = {
+    snapshot: () => e2eMachineSnapshot() ?? machineSnapshot(),
+    explainProjectError: async ({ workspaceId, error }, { senderId }) => {
+      if (senderId === undefined) return 'unavailable';
+      const owner = windowOwner(senderId);
+      if (!owner) return 'unavailable';
+      const workspaces = await getWorkspaces();
+      const root = await workspaces.activeRootFor(workspaceId);
+      const { signal } = owner.controller;
+      if (!root || signal.aborted) return 'unavailable';
+      return explainError(error, signal, () => workspaces.isActive(workspaceId));
     },
   };
 
@@ -389,7 +417,7 @@ export function registerIpc(
 
   const disposeHandlers = registerIpcHandlers(
     ipcMain,
-    makeHandlers(errors, workspace, terminal, claude, git, project),
+    makeHandlers(errors, workspace, terminal, claude, git, project, infra),
     {
       isTrustedSender: makeSenderCheck(devServer),
       onFailure: reportFailure,

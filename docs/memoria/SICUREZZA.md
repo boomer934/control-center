@@ -113,6 +113,12 @@ Test: **S** = `packages/fixtures/src/stacks.test.ts`, **T** = `apps/desktop/src/
 - **Contro le inondazioni.** Scansione dopo 250 ms di quiete, al massimo 64 KiB di buffer e 256 KiB per scansione, ripetizioni scartate per 10 s, al massimo 30 errori al minuto per terminale (T).
 - **Migrazione.** Gli eventi della cronologia passano da `migrateAgentEvent` e poi dallo schema. Versioni sconosciute o future vengono scartate, non riparate.
 
+### Azioni rapide sugli errori (5e+, ADR 0016)
+
+- `workspace:read-source-location` richiede il mittente fidato, il workspace attivo, un percorso relativo e una riga positiva. Il main riusa `resolveWorkspaceFile`, confronta l'identità del descrittore aperto con il percorso canonico verificato e ricontrolla il workspace prima della risposta. Il payload è testo UTF-8 fino a 1 MiB. Il visualizzatore rende il testo senza interpretarlo ed evidenzia la riga richiesta.
+- `infra:explain-project-error` accetta messaggio, origine, linguaggio e posizione validati. Il main contatta Ollama su `127.0.0.1:11434`, senza proxy o redirect. Esclude nomi cloud e modelli con metadati remoti e controlla la capacità di completamento prima di inviare la richiesta. Il renderer non sceglie endpoint, modello o strumenti. Il main redige i segreti nel testo in entrata e in uscita, impone limiti di tempo e dimensione e annulla l'inferenza alla chiusura del proprietario.
+- «Ask Claude to fix» prepara una bozza nel flusso esistente. L'invio esplicito e il percorso dei permessi restano quelli della chat.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

@@ -21,7 +21,7 @@ export interface MapContextValue {
   /** The pointer entered (element) or left (null) a file node; wired on React Flow's node events. */
   hover(path: string | null, element?: HTMLElement): void;
   openDiff?(path: string): void;
-  inspectNode?(id: string): void;
+  inspectNode?(id: string, error?: boolean): void;
 }
 
 export const MapContext = createContext<MapContextValue | null>(null);
@@ -90,11 +90,13 @@ export const FileNode = memo(function FileNode({ data }: NodeProps<ItemNode<'fil
   const { store, openDiff, inspectNode } = useMap();
   const a = useFileActivity(store, data.path);
   const state = a?.state ?? 'idle';
+  const inspectError = state === 'error' && Boolean(a?.note);
   const diff = Boolean(a?.diff) && openDiff;
-  const open = diff
+  const opensDiff = diff && !(inspectError && inspectNode);
+  const open = opensDiff
     ? () => openDiff(data.path)
     : a && inspectNode
-      ? () => inspectNode(`f:${data.path}`)
+      ? () => inspectNode(`f:${data.path}`, inspectError)
       : undefined;
   // The note ("L2 TypeError") says which error: the name on the node may be cut short.
   const note = state === 'error' && a?.note ? a.note : undefined;
@@ -108,7 +110,7 @@ export const FileNode = memo(function FileNode({ data }: NodeProps<ItemNode<'fil
       {...(open && {
         role: 'button',
         tabIndex: 0,
-        'aria-label': `${data.path}, ${state}${note ? ` ${note}` : ''}, ${diff ? 'open the diff' : 'inspect activity'}`,
+        'aria-label': `${data.path}, ${state}${note ? ` ${note}` : ''}, ${opensDiff ? 'open the diff' : 'inspect activity'}`,
         onKeyDown: (e: KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();

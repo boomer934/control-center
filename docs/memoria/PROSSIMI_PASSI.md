@@ -17,10 +17,10 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 5. ✅ **[Codex] (F4b, bug)** Percorsi lunghi di Git su Windows uniti su `main` con la [PR #61](https://github.com/boomer934/control-center/pull/61) (`6bcb9cf`).
 6. ✅ **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura uniti su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`). La schermata Infra completa resta nella Fase 6.
 7. ✅ **[Claude] (F5e)** Errori del progetto sulla mappa (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`), CI verde.
+8. **[Codex] (F5e+)** Azioni rapide implementate su `feat/error-quick-actions` (ADR 0016). Restano la PR e l'integrazione a CI verde.
 
 ## Dopo
 
-8. **[Claude o Codex] (F5e+)** Azioni rapide sull'errore: "chiedi a Claude di sistemarlo", "spiegalo in locale" (Ollama), "vai al file" (serve un metodo IPC che apra un file a una riga, con i controlli di percorso della 4.2).
 9. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
 10. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 11. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.

@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Merge della timeline e riallineamento del checkpoint
+
+- **Fatto.** Unita la PR #62 su `main` a CI verde. Riallineata la PR #61.
+- **Decisioni.** Conservati i commit della 5c, che sono la base del pannello agenti. Riunite le voci di memoria delle due PR.
+- **Problemi.** Tre conflitti nella memoria di progetto. La correzione del checkpoint passa dalla nuova CI prima del merge.
+
+---
+
 ## 2026-11-26 — Pubblicazione di timeline e checkpoint Windows
 
 - **Fatto.** Pubblicate la [PR #62](https://github.com/boomer934/control-center/pull/62) per timeline e replay 5c e la [PR #61](https://github.com/boomer934/control-center/pull/61) per il checkpoint Git su Windows.
@@ -19,6 +27,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - **Decisioni.** Il replay applica a `MapActivity` solo gli eventi fino all'istante scelto e usa il grafo corrente del workspace come contesto. Il layout resta stabile durante la ricerca. Una lettura o scrittura sul target già indicato dalla chiamata usa lo stesso marcatore.
 - **Verifica.** `pnpm verify` verde (393 test, uno saltato). In Electron, 69 E2E funzionali verdi, inclusi replay della fixture, riapertura di una sessione dopo il riavvio e checkpoint. Audit Impeccable senza rilievi a 960×600 nei due temi.
 - **Problemi.** I quattro confronti visivi locali di mappa e componenti falliscono anche su `origin/main`.
+
+---
+
+## 2026-11-26 — Checkpoint Git nei workspace Windows con percorsi lunghi
+
+- **Fatto** Riprodotto il checkpoint mancante in Electron e corretto su `fix/git-checkpoint-electron`. Una sessione reale di Claude Code 2.1.326 ha modificato un file dopo la cattura. Il ripristino dalla timeline ha recuperato il contenuto originale mantenendo branch e HEAD.
+- **Decisioni** L'app abilita `core.longpaths` per i propri processi Git su Windows. In caso di errore, Problems riporta il sottocomando e il codice di uscita, se disponibili. Lo storico mantiene il codice applicativo.
+- **Problemi** Il file di lock del riferimento eccedeva il limite Windows perché il percorso include la radice Git, l'ID del workspace e l'UUID del checkpoint. La prova iniziale in Vitest usava un ID workspace più corto.
+- **Verifica** `pnpm verify` con 387 test passati e uno saltato. Test di integrazione con un repository temporaneo profondo e tre E2E Git verdi. Resta la revisione Claude.
 
 ---
 

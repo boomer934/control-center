@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. Aperte le PR per timeline e replay 5c e per i checkpoint Git su Windows._
+_Ultimo aggiornamento 2026-11-26. Timeline e replay 5c su `main`. Correzione dei checkpoint Windows riallineata alla 5c._
 
 ## Fase
 
@@ -17,7 +17,7 @@ _Ultimo aggiornamento 2026-11-26. Aperte le PR per timeline e replay 5c e per i 
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
 - **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
-- **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Verificata in locale e pubblicata con la [PR #62](https://github.com/boomer934/control-center/pull/62).
+- **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Unita su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`).
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -26,7 +26,7 @@ _Ultimo aggiornamento 2026-11-26. Aperte le PR per timeline e replay 5c e per i 
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
 - **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi sono unite con la [PR #55](https://github.com/boomer934/control-center/pull/55) (`6a17d71`, CI verde).
-- **Release:** 1.1.0 (PR #50, #51) e 1.2.0 (PR #54, `06525e4`) unite.
+- **Release:** 1.1.0 (PR #50, #51), 1.2.0 (PR #54, `06525e4`) e 1.3.0 (PR #57, `3dadb8e`) unite.
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -34,7 +34,7 @@ _Ultimo aggiornamento 2026-11-26. Aperte le PR per timeline e replay 5c e per i 
 
 ## Branch
 
-Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `feat/timeline-replay` (PR #62) e `fix/git-checkpoint-electron` (PR #61), entrambi pubblicati con base `3dadb8e`.
+Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) in bozza.
 
 ## Punto di ripresa
 
@@ -118,7 +118,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Replay (5c):** lo scrubber ricostruisce lo stato da un prefisso temporale degli `AgentEvent` e conserva la disposizione della mappa durante la riproduzione. Le sessioni salvate si aprono da History in sola lettura. I checkpoint restano confrontabili anche nel replay.
 - **Verificato (5c):** `pnpm verify` con 393 test passati e uno saltato. Tutti i 69 E2E funzionali passati, inclusi fixture con subagente, sessione salvata riaperta dopo il riavvio e checkpoint. Audit Impeccable senza rilievi in Electron a 960×600 nei due temi. I quattro errori dei confronti visivi locali si riproducono anche su `origin/main`.
 - **Fatto (4b, Windows):** correzione pubblicata con la [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` senza bug confermati. Su Windows, scrittura di un riferimento con percorso di lock da 315 caratteri fallita senza l'override e riuscita con `core.longpaths=true`.
-- **Ora:** controllare gli esiti della CI sulle due PR prima del merge.
+- **Ora:** verificare la CI aggiornata della [PR #61](https://github.com/boomer934/control-center/pull/61). Poi riallineare il pannello agenti e l’ispettore della [PR #63](https://github.com/boomer934/control-center/pull/63).
 
 ## Cosa funziona
 

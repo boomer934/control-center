@@ -22,7 +22,10 @@ export const DIFF_FLAGS = [
 ];
 
 export class GitFailure extends Error {
-  constructor(readonly reason: GitError) {
+  constructor(
+    readonly reason: GitError,
+    readonly detail?: string,
+  ) {
     super(reason);
   }
 }
@@ -82,6 +85,8 @@ function runner(cwd: string): RunGit {
           'core.protectNTFS=true',
           '-c',
           'core.protectHFS=true',
+          // Checkpoint and recovery ref lock paths can exceed MAX_PATH even in a valid workspace.
+          ...(process.platform === 'win32' ? ['-c', 'core.longpaths=true'] : []),
           '-c',
           'log.showSignature=false',
           ...(commitHooks ? [] : ['-c', `core.hooksPath=${NULL_DEVICE}`]),
@@ -110,7 +115,16 @@ function runner(cwd: string): RunGit {
           else if (commitHooks && error.code === 1) reject(new GitFailure('hook-failed'));
           else if (error.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER')
             reject(new GitFailure('too-large'));
-          else reject(new GitFailure('failed'));
+          else {
+            // Skip configuration overrides. The subcommand is supplied by the app, never Git.
+            let command = 0;
+            while (args[command] === '-c') command += 2;
+            const detail =
+              typeof error.code === 'number'
+                ? `git ${args[command]} exited with code ${error.code}`
+                : undefined;
+            reject(new GitFailure('failed', detail));
+          }
         },
       );
       child.stdin?.on('error', () => undefined);

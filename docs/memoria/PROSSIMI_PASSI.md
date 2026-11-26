@@ -14,11 +14,11 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite con la [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
 4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
-5. **[Codex] (F4b, bug)** Correzione dei percorsi lunghi di Git su Windows nella [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` completata senza bug confermati. Branch riallineato dopo la #62, merge dopo la nuova CI.
+5. **[Codex] (F4b, bug)** Correzione dei percorsi lunghi di Git su Windows nella [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` completata senza bug confermati. Branch riallineato dopo la #62. Esito di CI e integrazione nella PR.
 
 ## Dopo
 
-6. **[Codex] (F5d)** Dopo la 5c, pannello agenti e ispettore sincronizzati con mappa e timeline (`gpt-6.2-sol`, effort `medium`, revisione impeccable).
+6. **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura verificati nella [PR #63](https://github.com/boomer934/control-center/pull/63). Riallineata alla 5c e al branch della #61. Revisione Claude su IPC e probe locali completata senza rilievi bloccanti. Ordine di integrazione: #61, poi #63. Esito di CI e integrazione nelle rispettive PR. La schermata Infra completa resta nella Fase 6.
 7. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 8. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c.
 

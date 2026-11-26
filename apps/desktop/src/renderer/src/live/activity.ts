@@ -99,6 +99,7 @@ export interface AgentPresence {
   target?: string;
   /** Time of the agent's latest event, to pick whom to follow. */
   lastActive: number;
+  action?: { target: string | null; toolUseId: string; since: number };
 }
 
 export interface ActivityView {
@@ -428,6 +429,13 @@ export class MapActivity {
         alive,
         calls: mine.length,
         ...(target ? { target } : {}),
+        ...(op && {
+          action: {
+            target: op.target,
+            toolUseId: op.id,
+            since: state === 'waiting' ? (op.waitingSince ?? op.start) : op.start,
+          },
+        }),
         lastActive: Math.max(agent.start, last ? Math.min(t, visibleEnd(last)) : agent.start),
       });
     }

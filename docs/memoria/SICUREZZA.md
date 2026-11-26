@@ -106,6 +106,12 @@ Test: **M** = `packages/project-model/src/model.test.ts`, **I** = `packages/proj
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.
+
+## Riepilogo dell'inventario nella Vista Live (ADR 0014)
+
+- `infra:snapshot` passa dal gate IPC esistente e rifiuta argomenti. Il main decide tutti i percorsi, comandi e indirizzi. Richieste contemporanee riusano un risultato con validità di 10 secondi.
+- Docker usa un solo GET sulla named pipe locale. Ollama usa un solo GET su `127.0.0.1:11434`. Richieste senza redirect, limite di 1 MiB e timeout di 4 secondi. PowerShell e `nvidia-smi` partono da percorsi assoluti di sistema, con argomenti fissi e limiti equivalenti.
+- Al renderer arrivano conteggi, VRAM e nomi dei modelli. Risposte grezze e dettagli dei fallimenti restano fuori da log, storico e fixture di sessione.
 - Redazione automatica di chiavi, token, `env` delle config MCP e contenuti `.env` in log ed eventi.
 - Retention configurabile + "cancella tutto".
 - Servizi interni solo su localhost.

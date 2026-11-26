@@ -187,8 +187,11 @@ test('opens saved activity in read-only replay after restarting Electron', async
   await read.click();
   const file = page.locator('[data-node="src/cart.js"]');
   await expect(file).toHaveAttribute('data-state', 'reading');
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  await expect(inspector.getByRole('heading', { name: 'Read · src/cart.js' })).toBeVisible();
   await timeline.getByRole('button', { name: 'Back to live' }).click();
   await expect(timeline.getByRole('button', { name: 'Back to live' })).toHaveCount(0);
+  await expect(inspector.getByText('Select an event, agent, or active map node.')).toBeVisible();
 
   await app.close();
   ({ app, page } = await launchApp({ userDataDir: join(fixture, 'user-data') }));
@@ -206,6 +209,9 @@ test('opens saved activity in read-only replay after restarting Electron', async
   await reopened.getByRole('button', { name: 'Read · src/cart.js', exact: true }).click();
   const reopenedFile = page.locator('[data-node="src/cart.js"]');
   await expect(reopenedFile).toHaveAttribute('data-state', 'reading');
+  await expect(page.getByRole('region', { name: 'Event inspector' })).toContainText(
+    'Read · src/cart.js',
+  );
   const position = reopened.getByRole('slider', { name: 'Replay position' });
   await position.press('Home');
   await expect(reopenedFile).toHaveAttribute('data-state', 'idle');

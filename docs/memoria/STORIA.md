@@ -4,11 +4,38 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Riallineamento e revisione della Vista Live 5d
+
+- **Fatto.** Riallineata la PR #63 dopo la 5c e integrato il branch con la correzione Windows.
+- **Revisione.** Claude Opus a effort `high` non ha trovato rilievi bloccanti in IPC e probe locali. Verificati nel sorgente la validazione della risposta nel main, la documentazione di sicurezza e il polling della vista ogni 15 secondi.
+- **Verifica.** `pnpm verify` sul branch combinato con 399 test passati e uno saltato.
+- **Problemi.** L'inventario usa endpoint locali fissi. Docker era indisponibile nella prova sul computer, mentre l'E2E usa un inventario deterministico.
+
+---
+
 ## 2026-11-26 — Merge della timeline e riallineamento del checkpoint
 
 - **Fatto.** Unita la PR #62 su `main` a CI verde. Riallineata la PR #61.
 - **Decisioni.** Conservati i commit della 5c, che sono la base del pannello agenti. Riunite le voci di memoria delle due PR.
 - **Problemi.** Tre conflitti nella memoria di progetto. La correzione del checkpoint passa dalla nuova CI prima del merge.
+
+---
+
+## 2026-11-26 — Inventario macchina e cinque risposte del replay
+
+- **Fatto.** Su autorizzazione dell'utente, la Vista Live mostra container in esecuzione, porte TCP, VRAM NVIDIA e modelli Ollama durante il replay.
+- **Decisioni.** I probe sono in sola lettura. Il riepilogo IPC mostra lo stato corrente della macchina anche se il playhead è nel passato (ADR 0014).
+- **Verifica.** L'E2E con `sessione-02` e inventario deterministico nel main copre le cinque domande. Impeccable pulito in Details e JSON nei due temi.
+- **Problemi.** La [PR #63](https://github.com/boomer934/control-center/pull/63) è basata sulla #62. Il canale IPC e i probe locali richiedono la revisione Claude prima del merge.
+
+---
+
+## 2026-11-26 — Pannello agenti e ispettore della Vista Live (5d)
+
+- **Fatto.** Pannello Agents sincronizzato con il playhead, selezione tra timeline, mappa e pannello, ispettore con dettagli e JSON copiabile.
+- **Decisioni.** Il pannello deriva i dati dal prefisso di eventi al playhead. I token finali del turno sostituiscono il conteggio parziale dei messaggi. La 5d parte dalla PR #62 su un branch separato.
+- **Verifica.** Electron con `sessione-02`, inclusi selezione da tastiera e confronto con gli appunti. Impeccable senza rilievi a 960×600 nei due temi e in entrambe le viste dell'ispettore.
+- **Problemi.** Per la quarta domanda l'E2E mostra un comando locale avviato dall'agente. Docker, porte e GPU/Ollama richiedono l'inventario della Fase 6.
 
 ---
 

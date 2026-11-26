@@ -12,6 +12,7 @@ import {
 import { routeParam } from '../shell/route';
 import { FIXTURE_PROJECT, fixture, projectFile as file } from './labFixtures';
 import { LiveMap, type DiffPreview } from './LiveMap';
+import { LiveInspection } from './LiveInspection';
 import { SessionTimeline } from './SessionTimeline';
 import type { EventRecord } from './useMapActivity';
 import { useReplay } from './useReplay';
@@ -183,9 +184,19 @@ function FixtureReplay({ records }: { records: EventRecord[] }) {
   const replay = useReplay(records, true);
   return (
     <>
-      <div className="lmap-area">
-        <LiveMap snapshot={FIXTURE_PROJECT} records={records} at={replay.at} historical />
-      </div>
+      <LiveInspection records={records} replay={replay}>
+        {(inspection) => (
+          <div className="lmap-area">
+            <LiveMap
+              snapshot={FIXTURE_PROJECT}
+              records={records}
+              at={replay.at}
+              historical
+              inspection={inspection}
+            />
+          </div>
+        )}
+      </LiveInspection>
       <div className="live-timeline">
         <SessionTimeline replay={replay} />
       </div>

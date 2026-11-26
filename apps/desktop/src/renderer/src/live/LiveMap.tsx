@@ -17,6 +17,7 @@ import {
   type OnMoveStart,
 } from '@xyflow/react';
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -32,6 +33,7 @@ import { Glyph, Icon } from '../ui/icons';
 import { Kbd, Sigil } from '../ui/primitives';
 import type { AgentPresence, MapState } from './activity';
 import type { Box, MapLayout } from './layout';
+import type { MapInspection } from './LiveInspection';
 import { MapContext, MiniNode, nodeTypes, type MapContextValue } from './nodes';
 import { useAgents, useStoreRevision, useTemps, type MapStore } from './store';
 import { useMapActivity, type EventRecord } from './useMapActivity';
@@ -51,6 +53,7 @@ export interface LiveMapProps {
   historical?: boolean;
   loadDiff?(path: string): Promise<DiffPreview>;
   openDiff?(path: string): void;
+  inspection?: MapInspection;
   /** Extra tools on the right of the toolbar (the app info strip). */
   aside?: ReactNode;
 }
@@ -248,7 +251,21 @@ function placeChips(
 }
 
 function MapInner(props: LiveMapProps) {
-  const { snapshot, records, pendingPermission, at, historical, loadDiff, openDiff, aside } = props;
+  const {
+    snapshot,
+    records,
+    pendingPermission,
+    at,
+    historical,
+    loadDiff,
+    openDiff,
+    aside,
+    inspection,
+  } = props;
+  const inspectNode = useRef(inspection?.inspectNode);
+  inspectNode.current = inspection?.inspectNode;
+  const canInspect = Boolean(inspection);
+  const selectedNode = inspection?.selectedNode;
   const rf = useReactFlow();
   const { density } = useTheme();
   const wrapper = useRef<HTMLDivElement>(null);
@@ -319,6 +336,7 @@ function MapInner(props: LiveMapProps) {
     for (const it of layout.items)
       out.push({
         id: it.item.id,
+        className: it.item.id === selectedNode ? 'map-inspected' : undefined,
         type: it.item.kind,
         parentId: it.parent,
         position: { x: it.x, y: it.y },
@@ -330,6 +348,7 @@ function MapInner(props: LiveMapProps) {
     for (const [id, box] of tempBoxes)
       out.push({
         id,
+        className: id === selectedNode ? 'map-inspected' : undefined,
         type: 'temp',
         position: { x: box.x, y: box.y },
         ...size(box.w, box.h),
@@ -338,7 +357,7 @@ function MapInner(props: LiveMapProps) {
         selectable: false,
       });
     return out;
-  }, [layout, tempBoxes]);
+  }, [layout, tempBoxes, selectedNode]);
 
   const chips = useMemo(() => placeChips(agents, boxes, chipX, row), [agents, boxes, chipX, row]);
 
@@ -465,8 +484,9 @@ function MapInner(props: LiveMapProps) {
         }, DIFF_DELAY_MS);
       },
       ...(openDiff ? { openDiff } : {}),
+      ...(canInspect ? { inspectNode: (id: string) => inspectNode.current?.(id) } : {}),
     }),
-    [store, loadDiff, openDiff],
+    [store, loadDiff, openDiff, canInspect],
   );
   useEffect(() => {
     if (!loadDiff) setPreview(null);
@@ -666,10 +686,22 @@ function MapInner(props: LiveMapProps) {
             {chips.map(({ agent, x, y }) => (
               <div
                 key={agent.id}
-                className={`achip ag-${agent.kind} s-${agent.state}`}
+                className={`achip ag-${agent.kind} s-${agent.state}${inspection ? ' map-inspect-chip nodrag nopan' : ''}`}
                 style={{ left: x, top: y, width: CHIP_W }}
                 data-agent={agent.code}
                 data-state={agent.state}
+                {...(inspection && {
+                  role: 'button',
+                  tabIndex: 0,
+                  'aria-label': `Inspect ${agent.name}`,
+                  'aria-pressed': inspection.selectedAgent === agent.id,
+                  onClick: () => inspection.inspectAgent(agent.id),
+                  onKeyDown: (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    inspection.inspectAgent(agent.id);
+                  },
+                })}
               >
                 <Sigil code={agent.code} agent={agent.kind} />
                 <span className="nmx ell">{agent.name}</span>
@@ -799,12 +831,12 @@ function DiffPopover({
   );
 }
 
-export function LiveMap(props: LiveMapProps) {
+export const LiveMap = memo(function LiveMap(props: LiveMapProps) {
   return (
     <ReactFlowProvider>
       <MapInner {...props} />
     </ReactFlowProvider>
   );
-}
+});
 
 export type { MapLayout, MapStore };

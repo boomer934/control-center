@@ -3,6 +3,7 @@
 // events to the trusted windows only (ADR 0007).
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { e2eMachineSnapshot } from '#e2e-faults';
 import { dirname, join, win32 } from 'node:path';
 import {
   app,
@@ -27,6 +28,7 @@ import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
 import { fail as failGit } from './git/repository';
 import { createGitService } from './git/service';
+import { createMachineSnapshotReader } from './infra/snapshot';
 import { coalesce, makeFailureRouter } from './ipc-events';
 import { createProjectService } from './project/service';
 import { isAppUrl } from './security/urls';
@@ -67,6 +69,7 @@ function makeHandlers(
   git: Handlers['git'],
   project: Handlers['project'],
 ): Handlers {
+  const machineSnapshot = createMachineSnapshotReader();
   return {
     app: {
       getInfo: () => ({
@@ -99,6 +102,9 @@ function makeHandlers(
     claude,
     git,
     project,
+    infra: {
+      snapshot: () => e2eMachineSnapshot() ?? machineSnapshot(),
+    },
   };
 }
 

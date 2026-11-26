@@ -126,42 +126,62 @@ test.describe('map (visual)', () => {
   }
 });
 
+/** A frame longer than this missed at least one refresh at 60 Hz. */
+const LONG_FRAME_MS = 25;
+
 test.describe('map performance', () => {
   test('keeps 60 fps with 500 nodes and 20 events per second', async () => {
     await scene('bench');
     await expect(page.getByTestId('live-map')).toHaveAttribute('data-files', '500');
-    const result = await page.evaluate(async () => {
-      const bench = (window as unknown as { __mapBench: (on: boolean) => void }).__mapBench;
-      bench(true);
-      // Let the stream settle, then count frames for five seconds.
-      await new Promise((done) => setTimeout(done, 1000));
-      const frames: number[] = [];
-      await new Promise<void>((done) => {
-        const start = performance.now();
-        let last = start;
-        const tick = (now: number) => {
-          frames.push(now - last);
-          last = now;
-          if (now - start < 5000) requestAnimationFrame(tick);
-          else done();
-        };
-        requestAnimationFrame(tick);
-      });
-      bench(false);
-      const total = frames.reduce((a, b) => a + b, 0);
-      const sorted = [...frames].sort((a, b) => a - b);
-      return {
-        fps: (frames.length / total) * 1000,
-        p95: sorted[Math.floor(sorted.length * 0.95)]!,
-        longest: sorted.at(-1)!,
-        nodes: document.querySelectorAll('.react-flow__node').length,
-      };
-    });
+    const measure = (running: boolean, ms: number) =>
+      page.evaluate(
+        async ({ running, ms, long }) => {
+          const bench = (window as unknown as { __mapBench: (on: boolean) => void }).__mapBench;
+          bench(running);
+          // Let the stream settle, then count frames.
+          await new Promise((done) => setTimeout(done, 1000));
+          const frames: number[] = [];
+          await new Promise<void>((done) => {
+            const start = performance.now();
+            let last = start;
+            const tick = (now: number) => {
+              frames.push(now - last);
+              last = now;
+              if (now - start < ms) requestAnimationFrame(tick);
+              else done();
+            };
+            requestAnimationFrame(tick);
+          });
+          bench(false);
+          const total = frames.reduce((a, b) => a + b, 0);
+          const sorted = [...frames].sort((a, b) => a - b);
+          return {
+            fps: (frames.length / total) * 1000,
+            p95: sorted[Math.floor(sorted.length * 0.95)]!,
+            longest: sorted.at(-1)!,
+            longShare: frames.filter((f) => f > long).length / frames.length,
+            nodes: document.querySelectorAll('.react-flow__node').length,
+          };
+        },
+        { running, ms, long: LONG_FRAME_MS },
+      );
+    // The same map without events: what this machine's frame clock gives on its own. On the
+    // Windows runner frames are paced by the 15.6 ms system timer, so about 7% of the frames of
+    // an idle page last two ticks (31.2 ms) and a plain p95 can never reach 25 ms there.
+    const idle = await measure(false, 3000);
+    const busy = await measure(true, 5000);
+    const describe = (r: typeof busy) =>
+      `${r.fps.toFixed(1)} fps, p95 ${r.p95.toFixed(1)} ms, longest ${r.longest.toFixed(1)} ms, ` +
+      `${(r.longShare * 100).toFixed(1)}% frames > ${LONG_FRAME_MS} ms`;
     test.info().annotations.push({
       type: 'performance',
-      description: `${result.fps.toFixed(1)} fps, p95 ${result.p95.toFixed(1)} ms, longest ${result.longest.toFixed(1)} ms, ${result.nodes} nodes rendered`,
+      description: `events: ${describe(busy)}, ${busy.nodes} nodes rendered; idle: ${describe(idle)}`,
     });
-    expect(result.fps).toBeGreaterThanOrEqual(55);
-    expect(result.p95).toBeLessThanOrEqual(25);
+    console.log(`map performance: events: ${describe(busy)}; idle: ${describe(idle)}`);
+    expect(busy.nodes).toBeGreaterThanOrEqual(500);
+    expect(busy.fps).toBeGreaterThanOrEqual(55);
+    // The events may add at most 5% of long frames to what the idle map already has (a p95 of
+    // 25 ms on a machine whose clock never misses).
+    expect(busy.longShare).toBeLessThanOrEqual(idle.longShare + 0.05);
   });
 });

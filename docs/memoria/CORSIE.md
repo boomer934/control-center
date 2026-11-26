@@ -57,6 +57,17 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 | 10 Audit e verifica termini Anthropic                | Claude | Opus 5.5        | high   | `/code-review ultra` prima di pubblicare e `gpt-6.2-astra` high  |
 | Trasversale: fixture, bozze di test e documentazione | Codex  | `gpt-6-luna`    | medium | Verifica nel contesto della fase                                 |
 
+### Priorità Codex e lavoro simultaneo
+
+| Sotto-fase                                      | Corsia | Modello       | Effort | Consegna e verifica                                                                                                          |
+| ----------------------------------------------- | ------ | ------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| 5f.1 · Codex, processo e contratti              | Claude | Opus 5.5      | high   | Specifica ed eventi di esempio, poi schema e IPC, ciclo di vita, login e approvazioni. Revisione incrociata prima del merge. |
+| 5f.2 · Codex, chat e Vista Live                 | Codex  | `gpt-6.2-sol` | high   | Fixture, normalizzazione, selettore, attribuzione in chat, timeline e replay. Impeccable ed E2E su Windows.                  |
+| 5g.1 · Sessioni simultanee, isolamento nel main | Claude | Opus 5.5      | high   | Sessioni per worktree, autorizzazioni e interruzioni isolate. Revisione incrociata prima del merge.                          |
+| 5g.2 · Sessioni simultanee, UI e verifica       | Codex  | `gpt-6.2-sol` | high   | Corsie per sessione e ripresa dalla cronologia. Impeccable, E2E con fixture e prova con entrambe le CLI reali.               |
+
+Claude consegna per primi esempi di eventi e firme del contratto. Codex può chiudere la 5e+ e preparare le fixture e i test in un branch proprio mentre Claude lavora al main. Il collegamento di normalizzatore e UI parte quando il relativo contratto è su `main`. Per la 5g si segue lo stesso ordine: Claude definisce il contratto di isolamento, Codex prepara le verifiche del doppio flusso, poi li collega. Le due corsie mantengono worktree e branch distinti per tutto il lavoro.
+
 ### Fasi chiuse
 
 Le righe riportano le assegnazioni del piano precedente. I risultati e le PR sono in [STORIA.md](STORIA.md).

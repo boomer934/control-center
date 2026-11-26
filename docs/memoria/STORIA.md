@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Priorità Codex e uso simultaneo con Claude Code
+
+- **Fatto.** Aggiornati piano, prossimi passi e corsie. Codex in Vernier (5f) e sessioni simultanee di Claude Code e Codex (5g) precedono la Fase 6.
+- **Decisioni.** La prima consegna è una sessione Codex avviata da Vernier. Per la 5g il piano prevede due worktree Git e corsie distinte nella Vista Live. Claude prende contratti, runtime e isolamento. Codex prende fixture, trasformazione degli eventi, UI e verifica. Il lavoro sulle fixture può procedere in parallelo al runtime.
+- **Verifica.** `pnpm verify` verde: 439 test passati e uno saltato.
+- **Da verificare.** Comportamento dell'App Server su Windows, doppia sessione con le CLI reali e disponibilità di eventi live per chat avviate fuori da Vernier.
+
+---
+
 ## 2026-11-26 — Errori del progetto sulla mappa (5e)
 
 - **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).

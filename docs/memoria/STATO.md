@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 5e (errori del progetto sulla mappa) unita con la PR #64 (`1ce73a6`, ADR 0015): con la 5e la Fase 5 ha tutte le sotto-fasi su `main`._
+_Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. Le priorità di piano sono la 5f (integrazione Codex) e la 5g (sessioni simultanee Claude Code e Codex)._
 
 ## Fase
 
@@ -122,6 +122,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Ora (punto di ripresa):** Fase 5 con tutte le sotto-fasi su `main`: resta da decidere la chiusura della fase (sintesi in `STORIA.md`). Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
 
 ### Corsia Codex
+
+- **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è implementata nel branch `feat/error-quick-actions` (ADR 0016) e può essere chiusa mentre Claude specifica i contratti. La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`.
 
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.

@@ -2,7 +2,7 @@
 
 ## Context
 
-Vuoi un'app desktop personale (Electron) che faccia da centro di controllo per lo sviluppo con l'AI. Deve mostrare in tempo reale cosa fanno gli agenti (Claude Code e modelli locali Ollama) sulla mappa del progetto, insieme all'infrastruttura locale (Docker, porte, GPU), agli MCP e alle skill.
+Vuoi un'app desktop personale (Electron) che faccia da centro di controllo per lo sviluppo con l'AI. Deve mostrare in tempo reale cosa fanno gli agenti (Claude Code, Codex e modelli locali Ollama) sulla mappa del progetto, insieme all'infrastruttura locale (Docker, porte, GPU), agli MCP e alle skill.
 
 Le tue risposte hanno fissato questi vincoli:
 
@@ -52,6 +52,16 @@ Ogni fase ha deliverable, task e criterio di completamento (DoD). I dettagli com
 | 8   | MCP e Skills: registry, toggle per sessione, editor                             | M          |
 | 9   | Telemetria locale, risparmio Ollama compreso                                    | S          |
 | 10  | Packaging Windows, auto-update, rilascio open source                            | M          |
+
+### Priorità dopo la 5e — Codex e lavoro simultaneo
+
+Le sotto-fasi 5f e 5g precedono la ripresa della Fase 6. La chiusura delle azioni rapide 5e+ può procedere in parallelo alla specifica.
+
+- **5f · Codex in Vernier.** Avviare, interrompere e riprendere una sessione Codex dal workspace, usando il login gestito dalla CLI. La chat mostra lo streaming e le richieste di approvazione. La Vista Live e il replay ricevono eventi `AgentEvent` attribuiti a Codex. Punti da verificare con una prova su Windows: compatibilità della CLI, sandbox, permessi e chiusura dei processi. [Codex App Server](https://learn.chatgpt.com/docs/app-server)
+- **5g · Claude Code e Codex simultanei.** Avviare entrambi sullo stesso repository in worktree Git e branch distinti per le sessioni con scrittura. La Vista Live identifica provider, workspace e sessione di ogni evento e mostra le attività su corsie distinte. Chat, approvazioni, interruzioni e cronologia restano associate alla sessione corretta.
+- **Criterio di completamento della 5g.** Su Windows, una sessione reale per provider gira in parallelo su due worktree. I due agenti modificano un file ciascuno nei rispettivi worktree. Approvare o interrompere una sessione lascia proseguire l'altra. Dopo il riavvio, il replay attribuisce correttamente entrambi i flussi. Coprire lo stesso scenario con fixture ed E2E deterministici in CI.
+
+Il primo rilascio copre le sessioni avviate da Vernier. Il monitoraggio live delle chat già aperte nell'app Codex resta da verificare. La ripartizione del lavoro e i passaggi di consegne sono in [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
 
 ### Fase 0 — Repo
 
@@ -359,6 +369,14 @@ Per corsia, modello, effort e revisione di ogni fase o sotto-fase, consulta [COR
 - **Fase 5e**
 
   > I parser di stack trace per Node/TS, Python, Go, Rust e browser passano sulle fixture; gli errori da terminale, comandi degli agenti, Docker e dev server producono eventi error.detected e colorano il nodo giusto sulla mappa (test E2E verde); memoria aggiornata.
+
+- **Fase 5f**
+
+  > Una sessione Codex si avvia, si interrompe e riprende dalla chat di Vernier su Windows. Una richiesta di approvazione arriva alla sessione corretta. Gli eventi Codex si vedono nella Vista Live e nel replay. E2E con fixture e prova con la CLI reale verdi. Memoria aggiornata.
+
+- **Fase 5g**
+
+  > Claude Code e Codex girano contemporaneamente su due worktree dello stesso repository. Chat, eventi live, permessi, interruzioni e storico sono attribuiti alla sessione corretta. E2E deterministico e prova con entrambe le CLI reali su Windows verdi. Memoria aggiornata.
 
 - **Fase 6**
 

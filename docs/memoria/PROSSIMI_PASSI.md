@@ -6,7 +6,13 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
+**Priorità di prodotto · Codex e uso simultaneo con Claude Code.** I due filoni avanzano in worktree distinti secondo [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
+
+- **[Claude] (5f.1)** Aprire la specifica Codex App Server. Pubblicare per primi contratto ed esempi di eventi, poi integrare nel main sessione, login, permessi e interruzione.
+- **[Codex] (5f.2)** Portare a chiusura le azioni rapide 5e+ dal branch `feat/error-quick-actions`, quindi preparare fixture e test mentre Claude lavora al main. Collegare chat, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
+- **[Claude + Codex] (5g)** Dopo la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
+
+### Completati
 
 1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
 
@@ -20,10 +26,9 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 ## Dopo
 
-8. **[Claude o Codex] (F5e+)** Azioni rapide sull'errore: "chiedi a Claude di sistemarlo", "spiegalo in locale" (Ollama), "vai al file" (serve un metodo IPC che apra un file a una riga, con i controlli di percorso della 4.2).
-9. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
-10. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-11. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
+1. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
+2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+3. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
 
 ## Quando capita
 

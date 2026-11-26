@@ -13,12 +13,12 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 2. ✅ **[Claude] (F5b)** Mappa unita con la [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013): baseline visive dal runner, budget dei 60 fps verde in CI (64 fps, main thread 15,8%).
 
 3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite con la [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
-4. **[Codex] (F5c)** Timeline e replay verificati localmente e pubblicati con la [PR #62](https://github.com/boomer934/control-center/pull/62). Merge a CI verde.
-5. **[Codex] (F4b, bug)** Correzione dei percorsi lunghi di Git su Windows nella [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` completata senza bug confermati. Merge a CI verde.
+4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
+5. **[Codex] (F4b, bug)** Correzione dei percorsi lunghi di Git su Windows nella [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` completata senza bug confermati. Branch riallineato dopo la #62, merge dopo la nuova CI.
 
 ## Dopo
 
-6. **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura verificati nella [PR #63](https://github.com/boomer934/control-center/pull/63). Dopo la PR #62, riallineare la base a `main`. Revisione Claude sui probe locali e IPC prima del merge. La schermata Infra completa resta nella Fase 6.
+6. **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura verificati nella [PR #63](https://github.com/boomer934/control-center/pull/63). Riallineata alla 5c e al branch della #61. Revisione Claude su IPC e probe locali completata senza rilievi bloccanti. Merge dopo la #61 e la CI aggiornata. La schermata Infra completa resta nella Fase 6.
 7. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
 8. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c.
 

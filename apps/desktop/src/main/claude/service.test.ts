@@ -98,27 +98,48 @@ describe('Claude service', () => {
   });
 
   it.each([
-    [new GitFailure('unsupported'), 'unsupported'],
-    [new GitFailure('too-large'), 'too-large'],
-    [new Error('Private process output'), 'failed'],
-  ])('starts the turn and stores only the checkpoint error code for %s', async (error, code) => {
-    const prepare = vi.fn().mockRejectedValueOnce(error).mockResolvedValue(null);
-    const { service, opened, publish, updates } = setup(undefined, undefined, prepare);
-    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
-    expect(await service.send(1, ID, 'first', active)).toBe('started');
-    expect(opened[0]?.send).toHaveBeenCalledWith('first');
-    const warning = { kind: 'checkpoint-warning', code };
-    expect(updates).toContainEqual({ ...warning, id: ID });
-    expect(await service.send(1, ID, 'second', active)).toBe('started');
-    expect(prepare).toHaveBeenLastCalledWith('C:\\ws', WS, expect.any(Function), false);
-    await service.closeAll();
-    const [saved] = await service.listHistory(WS);
-    expect((await service.readHistory(WS, saved!.id))?.records).toEqual([
-      { kind: 'prompt', text: 'first' },
-      warning,
-      { kind: 'prompt', text: 'second' },
-    ]);
-  });
+    [new GitFailure('unsupported'), 'unsupported', undefined],
+    [new GitFailure('too-large'), 'too-large', 'too-large'],
+    [
+      new GitFailure('failed', 'git update-ref exited with code 128'),
+      'failed',
+      'git update-ref exited with code 128',
+    ],
+    [new Error('Private process output'), 'failed', 'failed'],
+  ])(
+    'starts the turn and stores only the checkpoint error code for %s',
+    async (error, code, detail) => {
+      const prepare = vi.fn().mockRejectedValueOnce(error).mockResolvedValue(null);
+      const { service, opened, publish, updates, reports } = setup(undefined, undefined, prepare);
+      await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+      expect(await service.send(1, ID, 'first', active)).toBe('started');
+      expect(opened[0]?.send).toHaveBeenCalledWith('first');
+      const warning = { kind: 'checkpoint-warning', code };
+      expect(updates).toContainEqual({ ...warning, id: ID });
+      expect(reports).toEqual(
+        detail
+          ? [
+              {
+                origin: 'main',
+                source: 'git',
+                kind: 'claude-setup',
+                name: 'CheckpointFailed',
+                message: `Could not save the Git checkpoint (${detail})`,
+              },
+            ]
+          : [],
+      );
+      expect(await service.send(1, ID, 'second', active)).toBe('started');
+      expect(prepare).toHaveBeenLastCalledWith('C:\\ws', WS, expect.any(Function), false);
+      await service.closeAll();
+      const [saved] = await service.listHistory(WS);
+      expect((await service.readHistory(WS, saved!.id))?.records).toEqual([
+        { kind: 'prompt', text: 'first' },
+        warning,
+        { kind: 'prompt', text: 'second' },
+      ]);
+    },
+  );
 
   it('refuses a send if workspace validation fails during checkpoint preparation', async () => {
     const prepare = vi.fn().mockRejectedValue(new GitFailure('workspace-unavailable'));

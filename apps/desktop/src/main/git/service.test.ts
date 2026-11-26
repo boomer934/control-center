@@ -1,5 +1,14 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -101,7 +110,17 @@ describe('Git workspace on temporary repositories', { timeout: 20_000 }, () => {
     );
   });
 
-  it('keeps HEAD and the stash intact and restores staged, working and untracked state independently', async () => {
+  it('restores staged, working and untracked state with long ref paths and keeps HEAD intact', async () => {
+    if (process.platform === 'win32') {
+      const deepParent = join(directory, 'nested'.repeat(9), 'workspace'.repeat(6));
+      await mkdir(deepParent, { recursive: true });
+      const nestedRoot = join(deepParent, 'Project');
+      await rename(root, nestedRoot);
+      root = nestedRoot;
+      git('config', 'core.longpaths', 'false');
+      const ref = checkpointRef(workspaceId, '00000000-0000-4000-8000-000000000000');
+      expect(join(root, '.git', ref + '.lock').length).toBeGreaterThan(260);
+    }
     const originalHead = await initialCommit();
     await write('tracked.txt', 'staged before');
     git('add', 'tracked.txt');

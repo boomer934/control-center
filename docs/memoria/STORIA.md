@@ -4,6 +4,23 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Riallineamento e revisione della Vista Live 5d
+
+- **Fatto.** Riallineata la PR #63 dopo la 5c e integrato il branch con la correzione Windows.
+- **Revisione.** Claude Opus a effort `high` non ha trovato rilievi bloccanti in IPC e probe locali. Verificati nel sorgente la validazione della risposta nel main, la documentazione di sicurezza e il polling della vista ogni 15 secondi.
+- **Verifica.** `pnpm verify` sul branch combinato con 399 test passati e uno saltato.
+- **Problemi.** L'inventario usa endpoint locali fissi. Docker era indisponibile nella prova sul computer, mentre l'E2E usa un inventario deterministico.
+
+---
+
+## 2026-11-26 — Merge della timeline e riallineamento del checkpoint
+
+- **Fatto.** Unita la PR #62 su `main` a CI verde. Riallineata la PR #61.
+- **Decisioni.** Conservati i commit della 5c, che sono la base del pannello agenti. Riunite le voci di memoria delle due PR.
+- **Problemi.** Tre conflitti nella memoria di progetto. La correzione del checkpoint passa dalla nuova CI prima del merge.
+
+---
+
 ## 2026-11-26 — Inventario macchina e cinque risposte del replay
 
 - **Fatto.** Su autorizzazione dell'utente, la Vista Live mostra container in esecuzione, porte TCP, VRAM NVIDIA e modelli Ollama durante il replay.
@@ -37,6 +54,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 - **Decisioni.** Il replay applica a `MapActivity` solo gli eventi fino all'istante scelto e usa il grafo corrente del workspace come contesto. Il layout resta stabile durante la ricerca. Una lettura o scrittura sul target già indicato dalla chiamata usa lo stesso marcatore.
 - **Verifica.** `pnpm verify` verde (393 test, uno saltato). In Electron, 69 E2E funzionali verdi, inclusi replay della fixture, riapertura di una sessione dopo il riavvio e checkpoint. Audit Impeccable senza rilievi a 960×600 nei due temi.
 - **Problemi.** I quattro confronti visivi locali di mappa e componenti falliscono anche su `origin/main`.
+
+---
+
+## 2026-11-26 — Checkpoint Git nei workspace Windows con percorsi lunghi
+
+- **Fatto** Riprodotto il checkpoint mancante in Electron e corretto su `fix/git-checkpoint-electron`. Una sessione reale di Claude Code 2.1.326 ha modificato un file dopo la cattura. Il ripristino dalla timeline ha recuperato il contenuto originale mantenendo branch e HEAD.
+- **Decisioni** L'app abilita `core.longpaths` per i propri processi Git su Windows. In caso di errore, Problems riporta il sottocomando e il codice di uscita, se disponibili. Lo storico mantiene il codice applicativo.
+- **Problemi** Il file di lock del riferimento eccedeva il limite Windows perché il percorso include la radice Git, l'ID del workspace e l'UUID del checkpoint. La prova iniziale in Vitest usava un ID workspace più corto.
+- **Verifica** `pnpm verify` con 387 test passati e uno saltato. Test di integrazione con un repository temporaneo profondo e tre E2E Git verdi. Resta la revisione Claude.
 
 ---
 

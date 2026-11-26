@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo audit e prova reale nella [PR #59](https://github.com/boomer934/control-center/pull/59), con le baseline visive rigenerate dalla CI._
+_Ultimo aggiornamento 2026-11-26. Mappa 5b e rifinitura unite (PR #58 e #59). Correzione dei checkpoint Git su Windows nel branch Codex._
 
 ## Fase
 
@@ -25,7 +25,7 @@ _Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo
 - **4.1**, hooks bridge e sessione Claude: ✅ unita su `main` (PR #42, `ecb78f3`, ADR 0009). La CI è verde: Verify (Windows), gitleaks, Conventional commits, memoria e GitGuardian. Con `/code-review high` sono emersi 7 punti: 6 corretti, 1 risolto dalla prova con la CLI vera. Dopo il merge, un test della sessione è risultato instabile sul runner (EPERM nella pulizia dopo `taskkill /T`) e ha fatto fallire la PR #43, che conteneva solo documentazione. È corretto con la PR #44 (`54bce84`).
 - **4.3**, chat, permessi e cronologia: ✅ unita su `main` (PR #47, `fe3cb61`, ADR 0010). `/code-review high` di Claude sul flusso dei permessi: 9 punti, tutti corretti nella PR #49 (unita su `main`, `f06cd09`).
 - **4b**, Git e checkpoint: ✅ unita su `main` con la [PR #52](https://github.com/boomer934/control-center/pull/52) (`e59beb7`, ADR 0011), nella versione precedente alla revisione. Le correzioni degli otto rilievi sono unite con la [PR #55](https://github.com/boomer934/control-center/pull/55) (`6a17d71`, CI verde).
-- **Release:** 1.1.0 (PR #50, #51) e 1.2.0 (PR #54, `06525e4`) unite.
+- **Release:** 1.3.0 unita con la PR #57 (`3dadb8e`).
 
 - **3a**, shell sicura e IPC: ✅ unita su `main` (PR #23, `985130d`, ADR 0004).
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
@@ -33,7 +33,7 @@ _Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo
 
 ## Branch
 
-Claude: `fix/mappa-rifinitura` (PR #59, aperta). `feat/mappa` (5b, PR #58) è unito su `main`. Codex: `feat/git-checkpoints` è superato (PR #52 e #55 unite).
+Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron`, da `origin/main` (`3dadb8e`).
 
 ## Punto di ripresa
 
@@ -113,7 +113,9 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
 - **Fatto (5a):** Codex ha corretto la PR #56 su richiesta dell'utente in un worktree separato. La radice Go è rappresentata da `''` in `importDirs`. Il worker chiude le richieste pendenti, il renderer recupera i delta in volo e il watcher riscansiona alla riattivazione. La scansione applica il limite del contratto e rispetta le reinclusioni dei `.gitignore` annidati e i confini di `.git/info/exclude`.
-- **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
+- **Fatto (4b, 2026-11-26):** Git per Windows usa `core.longpaths=true` nei processi avviati dall'app. I file di lock dei riferimenti dei checkpoint e di recupero potevano superare il limite di Windows anche con radici Git valide. Problems mostra il sottocomando Git e il suo codice di uscita quando disponibili. La cronologia conserva il solo codice dell'app.
+- **Verificato (4b, 2026-11-26):** test di integrazione su repository temporanei, tre E2E Git e una prova Electron con Claude Code 2.1.326. Su un repository con percorso profondo l'app ha catturato il checkpoint prima della modifica di Claude e ripristinato il file dalla timeline, mantenendo branch e HEAD.
+- **Ora:** correzione 4b pronta per la revisione Claude a effort medium. Poi 5c, timeline e replay.
 
 ## Cosa funziona
 

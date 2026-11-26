@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-26 — Checkpoint Git nei workspace Windows con percorsi lunghi
+
+- **Fatto** Riprodotto il checkpoint mancante in Electron e corretto su `fix/git-checkpoint-electron`. Una sessione reale di Claude Code 2.1.326 ha modificato un file dopo la cattura. Il ripristino dalla timeline ha recuperato il contenuto originale mantenendo branch e HEAD.
+- **Decisioni** L'app abilita `core.longpaths` per i propri processi Git su Windows. In caso di errore, Problems riporta il sottocomando e il codice di uscita, se disponibili. Lo storico mantiene il codice applicativo.
+- **Problemi** Il file di lock del riferimento eccedeva il limite Windows perché il percorso include la radice Git, l'ID del workspace e l'UUID del checkpoint. La prova iniziale in Vitest usava un ID workspace più corto.
+- **Verifica** `pnpm verify` con 387 test passati e uno saltato. Test di integrazione con un repository temporaneo profondo e tre E2E Git verdi. Resta la revisione Claude.
+
+---
+
 ## 2026-11-26 — Rifinitura della mappa: audit e sessione reale
 
 - **Fatto:** audit impeccable della mappa nei due temi: rilevatore pulito sul sorgente e sull'app via CDP, contrasto del testo ≥ 4,5:1. Prova con Claude Code 2.1.326 su un workspace Git di prova, guidata da Playwright: letture, permesso, edit con diff, due turni, Segui agente, anteprima diff. Tre correzioni nella PR #59: chip dell'agente dal secondo turno, `Fit` libero da legenda, readout, minimappa e nota vuota, Segui agente che inquadra file e chip insieme.

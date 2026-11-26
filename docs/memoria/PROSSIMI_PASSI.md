@@ -12,8 +12,8 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 2. ✅ **[Claude] (F5b)** Mappa unita con la [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013): baseline visive dal runner, budget dei 60 fps verde in CI (64 fps, main thread 15,8%).
 
-3. **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni nella [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI. Resta: CI verde e merge su richiesta dell'utente.
-4. **[Codex] (F4b, bug)** Nell'app ogni sessione reale parte con "Turn started without a Git checkpoint (failed)", anche su un repo Git pulito. Lo stesso `createGitService().checkpoint` su quel repo, chiamato da un test Vitest, riesce; a mano riescono anche tutti i comandi git. Quindi il guasto dipende dall'ambiente dell'app (Electron, env, cartella temporanea, tempi del watcher). Il codice `failed` nasconde l'errore vero: prima esporlo nei Problems (senza percorsi), poi correggere. `gpt-6.2-sol`, high; revisione Claude.
+3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite nella [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
+4. **[Codex] (F4b, bug)** Correzione locale su `fix/git-checkpoint-electron`. Git per Windows può ora creare i file di lock dei riferimenti dei checkpoint e di recupero oltre il limite dei percorsi Win32. Resta la revisione Claude a effort medium sulla PR.
 
 ## Dopo
 

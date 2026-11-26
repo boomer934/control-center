@@ -204,9 +204,19 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           );
         } catch (error) {
           if (entry.closed) return 'closed';
-          const code = error instanceof GitFailure ? error.reason : 'failed';
+          const failure = error instanceof GitFailure ? error : undefined;
+          const code = failure?.reason ?? 'failed';
           if (!active() || code === 'workspace-unavailable') return 'workspace-unavailable';
           if (code === 'busy') return 'checkpoint-busy';
+          if (code === 'failed' || code === 'too-large') {
+            deps.report({
+              origin: 'main',
+              source: 'git',
+              kind: 'claude-setup',
+              name: 'CheckpointFailed',
+              message: `Could not save the Git checkpoint (${failure?.detail ?? code})`,
+            });
+          }
           checkpointWarning = code;
         } finally {
           entry.preparing = false;

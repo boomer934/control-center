@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 5e (errori del progetto sulla mappa) sul branch `feat/errori-progetto`, ADR 0015._
+_Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 5e (errori del progetto sulla mappa) unita con la PR #64 (`1ce73a6`, ADR 0015): con la 5e la Fase 5 ha tutte le sotto-fasi su `main`._
 
 ## Fase
 
@@ -19,7 +19,7 @@ _Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 
 - **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
 - **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Unita su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`).
 - **5d**, pannello agenti, ispettore e inventario locale: unita su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`, ADR 0014).
-- **5e**, errori del progetto: schema `error.detected` (v2, migrazione 1 → 2), parser di stack trace e colorazione della mappa sul branch `feat/errori-progetto`, [PR #64](https://github.com/boomer934/control-center/pull/64) (ADR 0015). La parte dei parser era della corsia Codex: l'ha fatta Claude su goal dell'utente.
+- **5e**, errori del progetto: schema `error.detected` (v2, migrazione 1 → 2), parser di stack trace e colorazione della mappa: ✅ unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`, ADR 0015), CI verde (E2E 77/77). La parte dei parser era della corsia Codex: l'ha fatta Claude su goal dell'utente.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -36,7 +36,7 @@ _Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 
 
 ## Branch
 
-Claude: `feat/errori-progetto` (5e, [PR #64](https://github.com/boomer934/control-center/pull/64)). Mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
+Claude: `docs/memoria-5e` (questa nota). 5e unita su `main` (PR #64). Mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
 
 ## Punto di ripresa
 
@@ -118,7 +118,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Baseline visive:** `map-error-dark.png` e `map-error-light.png` cambiano di proposito (la scena "error" usa `sessione-02`, ora con `test/cart.test.js` rosso): rigenerate dall'artifact del run CI 45903635423 (75 E2E verdi, rossi solo questi due) e controllate a vista nei due temi. Le altre 24 immagini hanno in locale le stesse differenze di `main` (font).
 - **Parser in più dalla prova con Vite 8:** diagnostica di Oxc/Rolldown (`[PARSE_ERROR] …` e `╭─[ file:riga:col ]`); il messaggio di uno stack di Vite si cerca sopra le righe `Plugin:`/`File:`. Fixture reale `vite8-dev.txt`.
 - **Non verificato:** log letti direttamente da Docker (Fase 6; qui il demone Docker non è attivo); la prova Docker è sull'output di `docker compose logs` nel terminale.
-- **Ora (punto di ripresa):** PR #64 con le baseline nuove, in attesa della CI verde e del merge su richiesta dell'utente. Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
+- **Fatto (5e, merge):** CI del run 45904671666 verde (E2E 77/77, app impacchettata 10/10) con le baseline `map-error-*` prese dal run precedente; PR #64 unita su richiesta dell'utente (`1ce73a6`).
+- **Ora (punto di ripresa):** Fase 5 con tutte le sotto-fasi su `main`: resta da decidere la chiusura della fase (sintesi in `STORIA.md`). Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
 
 ### Corsia Codex
 

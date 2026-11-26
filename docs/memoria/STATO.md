@@ -34,7 +34,7 @@ _Ultimo aggiornamento 2026-11-26. Timeline e replay su `main`. Pannello agenti, 
 
 ## Branch
 
-Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) in bozza.
+Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
 
 ## Punto di ripresa
 
@@ -121,7 +121,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (5d):** in Vista Live e nel replay il pannello Agents mostra attività, attese, errori, file toccati e consumi. Timeline, mappa e pannello condividono la selezione. L'ispettore mostra i dettagli e il JSON dell'evento e permette di copiarlo.
 - **Fatto (5d, inventario):** su autorizzazione dell'utente, anticipato il riepilogo in sola lettura della Fase 6. **Machine now** mostra conteggi Docker e TCP, porte su tutte le interfacce, VRAM NVIDIA e modelli Ollama anche durante il replay. I dati sono correnti e separati dall'evento ispezionato (ADR 0014).
 - **Verificato (5d):** l'E2E con `sessione-02` e inventario deterministico nel main controlla tutte e cinque le risposte, appunti e riavvolgimento. Impeccable pulito sul sorgente e in Electron a 960×600 nei due temi, in Details e JSON.
-- **Ora:** [PR #63](https://github.com/boomer934/control-center/pull/63) riallineata alla 5c e al branch della correzione Windows. Revisione Claude Opus a effort `high` completata senza rilievi bloccanti. Il gate IPC valida la risposta nel main. Merge dopo la [PR #61](https://github.com/boomer934/control-center/pull/61) e la CI aggiornata.
+- **Integrazione 5d:** [PR #63](https://github.com/boomer934/control-center/pull/63) riallineata alla 5c e al branch della correzione Windows. Revisione Claude Opus a effort `high` completata senza rilievi bloccanti. Il gate IPC valida la risposta nel main. L’ordine di integrazione è la [PR #61](https://github.com/boomer934/control-center/pull/61) seguita dalla #63, entrambe a CI verde.
 
 ## Cosa funziona
 

@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo audit e prova reale nella [PR #59](https://github.com/boomer934/control-center/pull/59), con le baseline visive rigenerate dalla CI._
+_Ultimo aggiornamento 2026-11-26. Mappa 5b e rifinitura unite (PR #58 e #59). Timeline e replay 5c verificati nel branch Codex._
 
 ## Fase
 
@@ -17,6 +17,7 @@ _Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
 - **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
+- **5c**, timeline e replay: implementata e verificata in locale. Apertura delle sessioni passate in sola lettura dalla Vista Live.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -33,7 +34,7 @@ _Ultimo aggiornamento 2026-11-26. 5b unita (PR #58); rifinitura della mappa dopo
 
 ## Branch
 
-Claude: `fix/mappa-rifinitura` (PR #59, aperta). `feat/mappa` (5b, PR #58) è unito su `main`. Codex: `feat/git-checkpoints` è superato (PR #52 e #55 unite).
+Claude: mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `feat/timeline-replay` da `origin/main` (`3dadb8e`); correzione 4b sul ramo locale separato `fix/git-checkpoint-electron` (`6164bf6`).
 
 ## Punto di ripresa
 
@@ -113,7 +114,10 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
 - **Fatto (5a):** Codex ha corretto la PR #56 su richiesta dell'utente in un worktree separato. La radice Go è rappresentata da `''` in `importDirs`. Il worker chiude le richieste pendenti, il renderer recupera i delta in volo e il watcher riscansiona alla riattivazione. La scansione applica il limite del contratto e rispetta le reinclusioni dei `.gitignore` annidati e i confini di `.git/info/exclude`.
-- **Poi:** seconda opinione di `gpt-6.2-astra` a effort `high` sulla pipe della 4.1.
+- **Fatto (5c):** la timeline mostra le corsie degli agenti e dei subagent su un asse comune, con scrubber, riproduzione e ritorno a Live. Gli eventi file coincidenti con il relativo Read/Edit confluiscono nel marcatore dello strumento.
+- **Replay (5c):** lo scrubber ricostruisce lo stato da un prefisso temporale degli `AgentEvent` e conserva la disposizione della mappa durante la riproduzione. Le sessioni salvate si aprono da History in sola lettura. I checkpoint restano confrontabili anche nel replay.
+- **Verificato (5c):** `pnpm verify` con 393 test passati e uno saltato. Tutti i 69 E2E funzionali passati, inclusi fixture con subagente, sessione salvata riaperta dopo il riavvio e checkpoint. Audit Impeccable senza rilievi in Electron a 960×600 nei due temi. I quattro errori dei confronti visivi locali si riproducono anche su `origin/main`.
+- **Ora:** 5c pronta per PR. La correzione 4b per i percorsi lunghi di Git su Windows resta sul ramo locale `fix/git-checkpoint-electron` per la revisione Claude a effort `medium`.
 
 ## Cosa funziona
 

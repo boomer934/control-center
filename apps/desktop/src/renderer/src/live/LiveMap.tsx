@@ -48,6 +48,7 @@ export interface LiveMapProps {
   pendingPermission?: boolean;
   /** Fixed instant instead of "now" (replay, tests). */
   at?: number;
+  historical?: boolean;
   loadDiff?(path: string): Promise<DiffPreview>;
   openDiff?(path: string): void;
   /** Extra tools on the right of the toolbar (the app info strip). */
@@ -247,7 +248,7 @@ function placeChips(
 }
 
 function MapInner(props: LiveMapProps) {
-  const { snapshot, records, pendingPermission, at, loadDiff, openDiff, aside } = props;
+  const { snapshot, records, pendingPermission, at, historical, loadDiff, openDiff, aside } = props;
   const rf = useReactFlow();
   const { density } = useTheme();
   const wrapper = useRef<HTMLDivElement>(null);
@@ -256,7 +257,12 @@ function MapInner(props: LiveMapProps) {
   const [folders, setFolders] = useState<ReadonlyMap<string, number>>(new Map());
 
   const index = useMemo(() => indexSnapshot(snapshot), [snapshot]);
-  const { store, touched } = useMapActivity(records, { at, pendingPermission, folders });
+  const { store, touched } = useMapActivity(records, {
+    at,
+    historical,
+    pendingPermission,
+    folders,
+  });
   const visible: VisibleMap = useMemo(
     () => buildVisibleMap(index, touched, { expanded, showAll }),
     [index, touched, expanded, showAll],
@@ -462,7 +468,13 @@ function MapInner(props: LiveMapProps) {
     }),
     [store, loadDiff, openDiff],
   );
-  useEffect(() => () => clearTimeout(hoverTimer.current), []);
+  useEffect(() => {
+    if (!loadDiff) setPreview(null);
+    return () => {
+      clearTimeout(hoverTimer.current);
+      hoverRef.current = null;
+    };
+  }, [loadDiff]);
 
   const hoverNode = useRef(context.hover);
   hoverNode.current = context.hover;
@@ -702,7 +714,7 @@ function MapInner(props: LiveMapProps) {
             Following stopped · <Kbd>F</Kbd> to resume
           </p>
         )}
-        {preview && <DiffPopover preview={preview} host={wrapper.current} />}
+        {loadDiff && preview && <DiffPopover preview={preview} host={wrapper.current} />}
 
         <div className="legend" aria-label="Key">
           <span className="lk">Key</span>

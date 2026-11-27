@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27 (5f.1 PR A unita con la #77; correzioni F4.1 dalla revisione Astra nella PR #76). Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f e 5g, poi la Fase 6 (Codex)._
+_Ultimo aggiornamento 2026-11-27 (5f.1 PR B, sessione Codex nel main, su `feat/codex-session-main`; PR A #77 e correzioni F4.1 #76 unite). Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f e 5g, poi la Fase 6 (Codex)._
 
 ## Fase
 
@@ -15,7 +15,8 @@ _Ultimo aggiornamento 2026-11-27 (5f.1 PR A unita con la #77; correzioni F4.1 da
 **Fase 5 — Vista Live**: ✅ 5a–5e+ completate e unite su `main`. Sintesi in `STORIA.md`, voce "Chiusura Fase 5".
 
 - **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; unita su `main` con la PR #67 (`c33838b`), CI verde. Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
-- **5f.1, PR A (contratto e Claude):** in corso su `feat/codex-session-contract` (ADR 0017). Segue la PR B con la sessione Codex nel main.
+- **5f.1, PR A (contratto e Claude):** unita su `main` (PR #77, ADR 0017).
+- **5f.1, PR B (sessione Codex nel main):** su `feat/codex-session-main` (ADR 0018), da aprire come PR con revisione incrociata di Codex.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -36,7 +37,7 @@ _Ultimo aggiornamento 2026-11-27 (5f.1 PR A unita con la #77; correzioni F4.1 da
 
 ## Branch
 
-Claude: `fix/hooks-bridge-hardening` (correzioni F4.1 dalla revisione Astra e dalla revisione incrociata, PR #76, con `main` unito dopo la #77). La 5f.1 PR A è su `main` (#77); il worktree `..\control-center-5f1` resta finché non viene controllato e rimosso. Inoltre `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto: esiste in locale (un commit, `13589c8`, su una base vecchia di `main`), va ribasato. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
+Claude: `feat/codex-session-main` (5f.1 PR B, ADR 0018), dalla cartella principale. Le PR #76 e #77 sono unite: il worktree `..\control-center-5f1` e il branch locale `fix/hooks-bridge-hardening` si possono rimuovere. Inoltre `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto: esiste in locale (un commit, `13589c8`, su una base vecchia di `main`), va ribasato. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
 
 ## Punto di ripresa
 
@@ -77,7 +78,14 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Verificato (PR A):** `pnpm verify` verde (464 test, 0 errori di lint); E2E `claude.spec.ts` e `security.spec.ts` verdi (24). Prova reale con Claude Code 2.1.326: `--effort` accettato, `init` non riporta l'effort, il cambio del solo effort su `--resume` non invalida la cache (63 117 token letti contro 45 105).
 - **Fatto (revisione incrociata della PR A):** Codex ha dato "unire con correzioni" con cinque rilievi medi, tutti corretti con test (ADR 0017, "Conseguenze"). Il lavoro è nel worktree `..\control-center-5f1`: la cartella principale è su `fix/hooks-bridge-hardening`.
 - **Fatto (PR A unita):** [PR #77](https://github.com/boomer934/control-center/pull/77) su `main` (`4802a76`).
-- **Ora (punto di ripresa):** PR #76 (`fix/hooks-bridge-hardening`): CI verde e merge dell'utente; poi la PR B (sessione Codex nel main, vedi `PROSSIMI_PASSI.md`). La CLI Codex non è sul PATH: c'è `codex.exe` 0.171.0-alpha nel pacchetto Store dell'app Codex. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
+- **Fatto (5f.1, PR B, 2026-11-27, ADR 0018):**
+  - namespace IPC `codex` con le stesse forme di `claude` (`packages/ipc-contract/src/codex.ts`) e tipo di errore `codex-setup`;
+  - servizio comune `apps/desktop/src/main/agents/service.ts` (proprietà della finestra, cronologia, checkpoint, catalogo, `configure`); `claude/service.ts` ora lo configura, con la stessa interfaccia;
+  - `apps/desktop/src/main/codex/`: ricerca della CLI (PATH, poi pacchetto Store letto dal registro con editore fissato), client JSON-RPC, sessione su `codex app-server` (`untrusted` + `workspace-write`, approvazioni, `turn/interrupt`, `thread/resume`), catalogo da `model/list` e default da `config/read`, modello ed effort sempre espliciti in `turn/start`;
+  - normalizzatore minimo `LiveCodexSession` in `@control-center/event-schema`;
+  - finto `codex app-server` (`packages/fixtures/bin/fake-codex.mjs`) e prova reale `real-codex.smoke.test.ts` (`CC_REAL_CODEX=1`).
+- **Verificato (PR B):** `pnpm verify` verde (535 test, 2 saltati, 0 errori di lint). E2E `codex.spec.ts` (2), `claude.spec.ts`, `security.spec.ts` e `project-errors.spec.ts` verdi. Prova con la CLI vera 0.171.0-alpha.13.2: approvazione accettata e file scritto, interruzione durante lo streaming, ripresa del thread con memoria del turno prima.
+- **Ora (punto di ripresa):** aprire la PR di `feat/codex-session-main` e chiedere la revisione incrociata di Codex (tocca processi e IPC). Poi la 5f.2 di Codex collega `window.api.codex` a chat, pannello agenti, Vista Live e replay. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
 
 ### Corsia Codex
 

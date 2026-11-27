@@ -24,6 +24,7 @@ import {
 } from '@control-center/ipc-contract/main';
 import { resolveClaude, resolveHookNode } from './claude/cli';
 import { createClaudeService } from './claude/service';
+import { createCodexService } from './codex/service';
 import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
 import { fail as failGit } from './git/repository';
@@ -68,6 +69,7 @@ function makeHandlers(
   workspace: Handlers['workspace'],
   terminal: Handlers['terminal'],
   claude: Handlers['claude'],
+  codex: Handlers['codex'],
   git: Handlers['git'],
   project: Handlers['project'],
   infra: Handlers['infra'],
@@ -102,6 +104,7 @@ function makeHandlers(
     workspace,
     terminal,
     claude,
+    codex,
     git,
     project,
     infra,
@@ -193,6 +196,21 @@ export function registerIpc(
       return { claude, hooks };
     },
   });
+  const codexSessions = createCodexService({
+    dataDir: app.getPath('userData'),
+    report: errors.report,
+    clientVersion: app.getVersion(),
+    prepareTurn: async (root, workspaceId, active, create) => {
+      const current = await getWorkspaces()
+        .then((workspaces) => workspaces.activeRootFor(workspaceId))
+        .catch(() => failGit('workspace-unavailable'));
+      if (root !== current) failGit('workspace-unavailable');
+      return gitService.checkpoint(root, workspaceId, active, create);
+    },
+  });
+  /** A turn of either provider, or a checkpoint being taken, keeps the workspace busy. */
+  const agentsBusy = (workspaceId: string) =>
+    claudeSessions.isWorkspaceBusy(workspaceId) || codexSessions.isWorkspaceBusy(workspaceId);
   const owners = new Map<number, { emit: Emit; controller: AbortController; close(): void }>();
   let workspaceService: ReturnType<typeof createWorkspaceService> | undefined;
   let choosingFolder = false;
@@ -224,6 +242,9 @@ export function registerIpc(
         projects.closeOwner(id);
         void claudeSessions.closeOwner(id).catch(() => {
           errors.logger.error('main', 'claude-window-close-failed');
+        });
+        void codexSessions.closeOwner(id).catch(() => {
+          errors.logger.error('main', 'codex-window-close-failed');
         });
         contents.off('did-start-navigation', onNavigation);
         contents.off('render-process-gone', owner.close);
@@ -331,7 +352,10 @@ export function registerIpc(
         cwd,
         shell,
         (update) => owner.emit(contract.terminal.updated, update),
-        (found, at) => claudeSessions.reportErrors(senderId, request.workspaceId, found, at),
+        (found, at) => {
+          claudeSessions.reportErrors(senderId, request.workspaceId, found, at);
+          codexSessions.reportErrors(senderId, request.workspaceId, found, at);
+        },
       );
     },
     write: async ({ id, data }, { senderId }) =>
@@ -352,7 +376,13 @@ export function registerIpc(
       );
     },
     send: async ({ id, text }, { senderId }) =>
-      claudeSessions.send(senderId, id, text, (await getWorkspaces()).isActive),
+      claudeSessions.send(
+        senderId,
+        id,
+        text,
+        (await getWorkspaces()).isActive,
+        codexSessions.isWorkspaceBusy,
+      ),
     respond: async (request, { senderId }) =>
       claudeSessions.respond(senderId, request, (await getWorkspaces()).isActive),
     configure: (request, { senderId }) => claudeSessions.configure(senderId, request),
@@ -372,6 +402,44 @@ export function registerIpc(
     close: ({ id }, { senderId }) => claudeSessions.close(senderId, id),
   };
 
+  const codex: Handlers['codex'] = {
+    start: async (request, { senderId }) => {
+      if (senderId === undefined) return 'workspace-unavailable';
+      const owner = windowOwner(senderId);
+      if (!owner) return 'workspace-unavailable';
+      const cwd = await (await getWorkspaces()).activeRootFor(request.workspaceId);
+      if (!cwd || owners.get(senderId) !== owner) return 'workspace-unavailable';
+      return codexSessions.start(senderId, request, cwd, (update) =>
+        owner.emit(contract.codex.updated, update),
+      );
+    },
+    send: async ({ id, text }, { senderId }) =>
+      codexSessions.send(
+        senderId,
+        id,
+        text,
+        (await getWorkspaces()).isActive,
+        claudeSessions.isWorkspaceBusy,
+      ),
+    respond: async (request, { senderId }) =>
+      codexSessions.respond(senderId, request, (await getWorkspaces()).isActive),
+    configure: (request, { senderId }) => codexSessions.configure(senderId, request),
+    listHistory: async ({ workspaceId }, { senderId }) => {
+      const workspaces = await getWorkspaces();
+      if (senderId === undefined || !windowOwner(senderId) || !workspaces.isActive(workspaceId))
+        return [];
+      return codexSessions.listHistory(workspaceId);
+    },
+    readHistory: async ({ workspaceId, historyId }, { senderId }) => {
+      const workspaces = await getWorkspaces();
+      if (senderId === undefined || !windowOwner(senderId) || !workspaces.isActive(workspaceId))
+        return null;
+      return codexSessions.readHistory(workspaceId, historyId);
+    },
+    interrupt: ({ id }, { senderId }) => codexSessions.interrupt(senderId, id),
+    close: ({ id }, { senderId }) => codexSessions.close(senderId, id),
+  };
+
   async function gitContext(workspaceId: string, senderId?: number) {
     if (senderId === undefined) return null;
     const owner = windowOwner(senderId);
@@ -385,7 +453,7 @@ export function registerIpc(
           workspaceId,
           owner: senderId,
           active,
-          busy: () => claudeSessions.isWorkspaceBusy(workspaceId),
+          busy: () => agentsBusy(workspaceId),
         }
       : null;
   }
@@ -438,7 +506,7 @@ export function registerIpc(
 
   const disposeHandlers = registerIpcHandlers(
     ipcMain,
-    makeHandlers(errors, workspace, terminal, claude, git, project, infra),
+    makeHandlers(errors, workspace, terminal, claude, codex, git, project, infra),
     {
       isTrustedSender: makeSenderCheck(devServer),
       onFailure: reportFailure,
@@ -457,11 +525,12 @@ export function registerIpc(
 
   return () => {
     claudeSessions.terminateAll();
+    codexSessions.terminateAll();
     projects.dispose();
     for (const owner of owners.values()) owner.close();
     stopErrors();
     errorsChanged.cancel();
     disposeHandlers();
-    return claudeSessions.closeAll();
+    return Promise.all([claudeSessions.closeAll(), codexSessions.closeAll()]).then(() => undefined);
   };
 }

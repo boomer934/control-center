@@ -104,6 +104,7 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
     infra: {
       snapshot: () => ({ docker: null, ports: null, gpu: null, ollama: null }),
       explainProjectError: () => 'unavailable',
+      cancelProjectErrorExplanation: () => false,
     },
   };
   return { handlers, getInfo, openExternal };
@@ -155,6 +156,7 @@ describe('contract', () => {
       'project:updated',
       'infra:snapshot',
       'infra:explain-project-error',
+      'infra:cancel-project-error-explanation',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
       'errors:changed',
@@ -253,22 +255,34 @@ describe('registerIpcHandlers (main)', () => {
   it('accepts an error summary but rejects renderer-specified model, host and extra messages', async () => {
     const { ipc } = setup();
     const workspaceId = 'a'.repeat(64);
+    const requestId = '75e81e15-48a4-4c73-8800-d211abc90c7c';
     const error = { message: 'TypeError: invalid cart', origin: 'terminal', language: 'node' };
     const channel = 'infra:explain-project-error';
-    await expect(ipc.call(channel, trusted, { workspaceId, error })).resolves.toMatchObject({
+    const valid = { workspaceId, requestId, error };
+    await expect(ipc.call(channel, trusted, valid)).resolves.toMatchObject({
       ok: true,
       value: 'unavailable',
     });
     for (const invalid of [
-      { workspaceId, error, model: 'example:cloud' },
-      { workspaceId, error, host: 'https://example.invalid' },
-      { workspaceId, error: { ...error, messages: [] } },
+      { workspaceId, error },
+      { ...valid, model: 'example:cloud' },
+      { ...valid, host: 'https://example.invalid' },
+      { ...valid, error: { ...error, messages: [] } },
     ]) {
       await expect(ipc.call(channel, trusted, invalid)).resolves.toMatchObject({
         ok: false,
         error: { code: 'invalid-request' },
       });
     }
+    const cancel = 'infra:cancel-project-error-explanation';
+    await expect(ipc.call(cancel, trusted, { requestId })).resolves.toMatchObject({
+      ok: true,
+      value: false,
+    });
+    await expect(ipc.call(cancel, trusted, { requestId: 'invalid' })).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'invalid-request' },
+    });
   });
 
   it('never echoes received values in validation messages', async () => {
@@ -360,7 +374,11 @@ describe('createApi (preload)', () => {
       'project',
       'infra',
     ]);
-    expect(Object.keys(api.infra)).toEqual(['snapshot', 'explainProjectError']);
+    expect(Object.keys(api.infra)).toEqual([
+      'snapshot',
+      'explainProjectError',
+      'cancelProjectErrorExplanation',
+    ]);
     expect(Object.keys(api.project)).toEqual(['open', 'onUpdated']);
     expect(Object.keys(api.git)).toEqual([
       'status',

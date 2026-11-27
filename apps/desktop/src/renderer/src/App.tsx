@@ -275,7 +275,8 @@ function AppShell({
   const [gitRevision, setGitRevision] = useState(0);
   const [restoreNotice, setRestoreNotice] = useState('');
   const [permissionFocus, setPermissionFocus] = useState(0);
-  const [draftFocus, setDraftFocus] = useState(0);
+  const [draftFocus, setDraftFocus] = useState(false);
+  const consumeDraftFocus = useCallback(() => setDraftFocus(false), []);
   const [showHistory, setShowHistory] = useState(false);
   const { layout, setLayout } = useWorkspaceLayout(workspaceId);
   const { bottomOpen, bottomDock, rightOpen, compactBar } = layout;
@@ -476,7 +477,7 @@ function AppShell({
             chat.setDraft(chat.draft.trim() ? `${chat.draft}\n\n${text}` : text);
             setShowHistory(false);
             setLayout((value) => ({ ...value, rightOpen: true }));
-            setDraftFocus((value) => value + 1);
+            setDraftFocus(true);
           }}
           reviewDisabled={chat.status === 'running' || chat.pending}
           openGit={() => go('git')}
@@ -634,6 +635,7 @@ function AppShell({
                   chooseWorkspace={toggleWorkspaces}
                   permissionFocus={permissionFocus}
                   draftFocus={draftFocus}
+                  consumeDraftFocus={consumeDraftFocus}
                   showHistory={showHistory}
                   setShowHistory={setShowHistory}
                   onHistoryLoaded={() => go('live')}

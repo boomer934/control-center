@@ -19,7 +19,8 @@ export async function readSourceLocation(
       const confirmed = await resolveWorkspaceFile(root, path);
       if (confirmed !== file) return null;
       const current = await stat(confirmed, { bigint: true });
-      if (current.dev !== opened.dev || current.ino !== opened.ino) return null;
+      if (opened.ino === 0n || current.dev !== opened.dev || current.ino !== opened.ino)
+        return null;
 
       // A file that grows during this read still cannot exceed the response limit.
       const buffer = Buffer.alloc(Number(opened.size) + 1);

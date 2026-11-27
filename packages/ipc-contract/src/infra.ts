@@ -35,13 +35,14 @@ export const ProjectErrorContextSchema = detectedErrorSchema
   .extend({ path: z.string().max(1024).pipe(SourcePathSchema).optional() });
 export type ProjectErrorContext = z.infer<typeof ProjectErrorContextSchema>;
 
-export const ExplainProjectErrorSchema = z.strictObject({
+export const CancelProjectErrorExplanationSchema = z.strictObject({ requestId: z.uuid() });
+export const ExplainProjectErrorSchema = CancelProjectErrorExplanationSchema.extend({
   workspaceId: WorkspaceIdSchema,
   error: ProjectErrorContextSchema,
 });
 export const OllamaModelNameSchema = z.string().regex(/^[A-Za-z0-9_.:/-]{1,180}$/);
 export const ExplainProjectErrorResultSchema = z.union([
-  z.enum(['unavailable', 'no-model', 'busy', 'failed']),
+  z.enum(['unavailable', 'no-model', 'busy', 'failed', 'cancelled', 'timed-out']),
   z.strictObject({ model: OllamaModelNameSchema, text: z.string().min(1).max(16_000) }),
 ]);
 export type ExplainProjectErrorResult = z.infer<typeof ExplainProjectErrorResultSchema>;

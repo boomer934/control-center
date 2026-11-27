@@ -10,6 +10,8 @@ const explanationStatus = {
   'no-model': 'No local text model is installed in Ollama.',
   busy: 'Ollama is explaining another error. Try again when it finishes.',
   failed: 'Ollama could not explain this error. Try again.',
+  cancelled: 'The local explanation was cancelled.',
+  'timed-out': 'Ollama took too long to respond. Try again.',
 };
 
 function SourceView({
@@ -87,6 +89,7 @@ export function ProjectErrorActions({
   const [explanation, setExplanation] = useState<ExplainProjectErrorResult>();
   const [explaining, setExplaining] = useState(false);
   const sourceButton = useRef<HTMLButtonElement>(null);
+  const explanationRequest = useRef<string | undefined>(undefined);
   const { line, column, language, origin, message } = error;
   const path = error.file?.external === false ? error.file.path : undefined;
   const context: ProjectErrorContext = {
@@ -111,15 +114,36 @@ export function ProjectErrorActions({
     }
   }
 
+  useLayoutEffect(
+    () => () => {
+      const requestId = explanationRequest.current;
+      if (!requestId) return;
+      explanationRequest.current = undefined;
+      void window.api.infra.cancelProjectErrorExplanation({ requestId }).catch(() => {});
+    },
+    [],
+  );
+
   async function explain() {
+    if (explanationRequest.current) return;
+    const requestId = crypto.randomUUID();
+    explanationRequest.current = requestId;
     setExplanation(undefined);
     setExplaining(true);
     try {
-      setExplanation(await window.api.infra.explainProjectError({ workspaceId, error: context }));
+      const result = await window.api.infra.explainProjectError({
+        requestId,
+        workspaceId,
+        error: context,
+      });
+      if (explanationRequest.current === requestId) setExplanation(result);
     } catch {
-      setExplanation('unavailable');
+      if (explanationRequest.current === requestId) setExplanation('unavailable');
     } finally {
-      setExplaining(false);
+      if (explanationRequest.current === requestId) {
+        explanationRequest.current = undefined;
+        setExplaining(false);
+      }
     }
   }
 

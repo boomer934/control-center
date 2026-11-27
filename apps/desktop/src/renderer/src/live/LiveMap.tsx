@@ -413,19 +413,35 @@ function MapInner(props: LiveMapProps) {
   // The map opens fitted, and stays fitted while nobody moved it (DESIGN.md, 1b).
   const fittedKey = useRef('');
   const fittedSize = useRef('');
+  const fittedFrame = useRef('');
+  const inspectionLayout = inspection?.layoutRef;
   useEffect(() => {
     if (!layout || !width || !height || follow.on) return;
     const key = `${layout.key}|${tempBoxes.size > 0}|${chips.length > 0}|${showEmpty}`;
     const size = `${width}x${height}`;
-    if (
-      (key === fittedKey.current && size === fittedSize.current) ||
-      (fittedKey.current && userMoved.current)
-    )
-      return;
-    fit(Boolean(fittedKey.current) && size === fittedSize.current);
+    const frameWidth = inspectionLayout?.current?.clientWidth ?? width;
+    const frame = `${frameWidth}x${height}`;
+    const sameLayout = key === fittedKey.current;
+    const sameSize = size === fittedSize.current;
+    const inspectorResized = frame === fittedFrame.current;
+    if (fittedKey.current && userMoved.current) return;
+    // An inspector opening or closing changes the canvas width without resizing the live view.
+    if (!sameLayout || (!sameSize && !inspectorResized))
+      fit(Boolean(fittedKey.current) && sameSize);
     fittedKey.current = key;
     fittedSize.current = size;
-  }, [layout, width, height, follow.on, tempBoxes.size, chips.length, showEmpty, fit]);
+    fittedFrame.current = frame;
+  }, [
+    layout,
+    width,
+    height,
+    follow.on,
+    tempBoxes.size,
+    chips.length,
+    showEmpty,
+    fit,
+    inspectionLayout,
+  ]);
 
   const followed = follow.on
     ? (chips.find((c) => c.agent.id === follow.agent) ??

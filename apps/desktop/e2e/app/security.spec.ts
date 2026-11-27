@@ -1,14 +1,18 @@
 // Electron checklist of docs/memoria/SICUREZZA.md, verified on the running app.
 import { readFileSync } from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { APP_DIR, launchApp } from '../launch';
 
 let app: ElectronApplication;
 let page: Page;
+let profile: string | undefined;
 
 test.beforeAll(async () => {
-  ({ app, page } = await launchApp());
+  profile = await mkdtemp(join(tmpdir(), 'cc-security-e2e-'));
+  ({ app, page } = await launchApp({ userDataDir: profile }));
   // Record shell.openExternal calls instead of opening the system browser.
   await app.evaluate(({ shell }) => {
     const g = globalThis as unknown as { __opened: string[] };
@@ -21,6 +25,7 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   await app?.close();
+  if (profile) await rm(profile, { recursive: true, force: true, maxRetries: 3 });
 });
 
 const opened = () =>
@@ -131,9 +136,9 @@ test.describe('preload', () => {
         ],
         git: ['status', 'diff', 'stage', 'commit', 'preview', 'restore'],
         project: ['open', 'onUpdated'],
-        infra: ['snapshot', 'explainProjectError'],
+        infra: ['snapshot', 'explainProjectError', 'cancelProjectErrorExplanation'],
       },
-      types: Array.from({ length: 35 }, () => 'function'),
+      types: Array.from({ length: 36 }, () => 'function'),
       frozen: true,
       leaked: [],
     });

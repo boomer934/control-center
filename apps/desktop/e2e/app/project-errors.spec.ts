@@ -18,6 +18,8 @@ let page: Page;
 let fixture: string;
 let ollama: Server;
 let ollamaRequests: Array<{ path: string | undefined; body: unknown }>;
+let holdFirstChat: boolean;
+let firstChatClosed: boolean;
 
 test.skip(process.platform !== 'win32', 'The terminal and the Claude session target Windows');
 
@@ -44,11 +46,24 @@ test.beforeEach(async () => {
   await writeFile(join(shop, 'test/cart.test.js'), "require('node:test');\n");
   const workspace = await realpath(shop);
   ollamaRequests = [];
+  holdFirstChat = false;
+  firstChatClosed = false;
   ollama = createServer(async (request, response) => {
     let input = '';
     for await (const chunk of request) input += String(chunk);
     const body: unknown = input ? JSON.parse(input) : null;
     ollamaRequests.push({ path: request.url, body });
+    if (request.url === '/api/chat' && (body as { model: string }).model === 'small:latest') {
+      if (holdFirstChat) {
+        holdFirstChat = false;
+        response.once('close', () => {
+          firstChatClosed = true;
+        });
+        return;
+      }
+      response.writeHead(500).end();
+      return;
+    }
     const result =
       request.url === '/api/tags'
         ? {
@@ -56,6 +71,7 @@ test.beforeEach(async () => {
               { name: 'renamed:latest', size: 1, remote_model: 'hosted' },
               { name: 'remote:cloud', size: 2 },
               { name: 'opaque:latest', size: 3 },
+              { name: 'small:latest', size: 4 },
               { name: 'qwen-coder:7b', size: 7 },
             ],
           }
@@ -107,6 +123,7 @@ test.afterEach(async () => {
 const node = (path: string) => page.locator(`[data-node="${path}"]`);
 
 test('a terminal error lights the culprit and offers all three actions before a session', async () => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.keyboard.press('Control+Backquote');
   const terminal = page.getByRole('region', { name: 'Terminal' });
   await terminal.getByRole('button', { name: 'PowerShell', exact: true }).click();
@@ -124,10 +141,19 @@ test('a terminal error lights the culprit and offers all three actions before a 
   // the caller is on the map (it imports the culprit) but is not the culprit
   await expect(node('src/cart.js')).not.toHaveAttribute('data-state', 'error');
 
+  const map = page.getByTestId('live-map');
+  const viewport = map.locator('.react-flow__viewport');
+  await page.getByTestId('map-fit').click();
+  const originalWidth = await map.evaluate((element) => element.clientWidth);
+  const beforeInspection = await viewport.evaluate((element) => element.style.transform);
   await node('src/lib/price.js').click();
   const inspector = page.getByRole('region', { name: 'Event inspector' });
   const actions = inspector.getByRole('group', { name: 'Project error actions' });
   await expect(inspector).toContainText('src/lib/price.js:2:21');
+  await expect
+    .poll(() => map.evaluate((element) => element.clientWidth))
+    .toBeLessThan(originalWidth);
+  expect(await viewport.evaluate((element) => element.style.transform)).toBe(beforeInspection);
   const goToFile = actions.getByRole('button', { name: 'Go to file' });
   await goToFile.click();
   const source = page.getByRole('dialog', { name: 'src/lib/price.js:2:21' });
@@ -147,8 +173,11 @@ test('a terminal error lights the culprit and offers all three actions before a 
     '/api/tags',
     '/api/show',
     '/api/show',
+    '/api/show',
+    '/api/chat',
     '/api/chat',
   ]);
+  expect(ollamaRequests.at(-2)?.body).toMatchObject({ model: 'small:latest' });
   expect(ollamaRequests.at(-1)?.body).toMatchObject({
     model: 'qwen-coder:7b',
     stream: false,
@@ -169,12 +198,43 @@ test('a terminal error lights the culprit and offers all three actions before a 
     /Please add a regression test\.[\s\S]*Investigate and fix[\s\S]*TypeError/,
   );
   await expect(chat.getByText('Please add a regression test.', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Control+Alt+B');
+  await expect(chat).toHaveCount(0);
+  await page.keyboard.press('Control+Alt+B');
+  await expect(draft).toHaveValue(/Investigate and fix/);
+  await expect(draft).not.toBeFocused();
   await chat.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(
     page
       .getByRole('region', { name: 'Session timeline' })
       .getByRole('button', { name: 'Turn completed', exact: true }),
   ).toBeVisible({ timeout: 30_000 });
+});
+
+test('selecting another error cancels the pending request and frees Ollama', async () => {
+  holdFirstChat = true;
+  await writeFile(join(fixture, 'Shop', 'test/cart.test.js'), 'throw new Error("Second error");\n');
+  const run = await openTerminal();
+  await run('node src/cart.js', 'Node.js v');
+  await run('node test/cart.test.js', 'Error: Second error');
+  await expect(node('test/cart.test.js')).toHaveAttribute('data-state', 'error');
+
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  const explain = inspector.getByRole('button', { name: 'Explain locally' });
+  await node('src/lib/price.js').click();
+  await explain.click();
+  await expect.poll(() => ollamaRequests.some(({ path }) => path === '/api/chat')).toBe(true);
+  await node('test/cart.test.js').click();
+  await expect(inspector).toContainText('Second error');
+  await explain.click();
+  await expect(inspector.getByRole('region', { name: 'Local explanation' })).toBeVisible();
+  await expect.poll(() => firstChatClosed).toBe(true);
+  expect(ollamaRequests.at(-1)?.body).toMatchObject({
+    messages: [
+      { role: 'system' },
+      { role: 'user', content: expect.stringContaining('Second error') },
+    ],
+  });
 });
 
 test('source locations stay inside the active workspace and must identify a real line', async () => {
@@ -280,7 +340,6 @@ test('Docker Compose logs and a real Vite dev server in the terminal reach the m
     'const a: number = 1;\nexport function f() {\n  return a +;\n}\n',
   );
   const vite = join(dirname(require.resolve('vite/package.json')), 'bin', 'vite.js');
-  const port = 51_000 + Math.floor(Math.random() * 1000);
   const timeline = await runTurn();
   const run = await openTerminal();
   const inspector = page.getByRole('region', { name: 'Event inspector' });
@@ -294,13 +353,21 @@ test('Docker Compose logs and a real Vite dev server in the terminal reach the m
   await expect(inspector).toContainText('Docker · python');
   await timeline.getByRole('button', { name: 'Back to live' }).click();
 
+  // Let Windows pick an available loopback port instead of sampling its reserved ranges.
+  const probe = createServer().listen(0, '127.0.0.1');
+  await once(probe, 'listening');
+  const address = probe.address();
+  probe.close();
+  await once(probe, 'close');
+  if (!address || typeof address === 'string') throw new Error('Expected a TCP address');
+  const { port } = address;
   // The banner scrolls away under the dependency scan's error: wait for the server itself.
-  await run(`node "${vite}" --port ${port} --strictPort`, 'vite');
+  await run(`node "${vite}" --host 127.0.0.1 --port ${port} --strictPort`, 'vite');
   // the browser asks for the module: Vite fails to transform it and prints the error
   await expect
     .poll(
       async () =>
-        fetch(`http://localhost:${port}/src/main.ts`).then(
+        fetch(`http://127.0.0.1:${port}/src/main.ts`).then(
           (r) => r.status,
           () => 0,
         ),

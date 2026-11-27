@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import type { AgentEvent, ErrorOrigin } from '@control-center/event-schema';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import { Glyph } from '../ui/icons';
@@ -12,6 +20,7 @@ import type { Replay } from './useReplay';
 import './inspection.css';
 
 export interface MapInspection {
+  layoutRef: RefObject<HTMLDivElement | null>;
   selectedNode?: string;
   selectedAgent?: string;
   inspectNode(node: string, error?: boolean): void;
@@ -210,6 +219,7 @@ export function LiveInspection({
   children(inspection: MapInspection): ReactNode;
 }) {
   const { timeline, at, selected, select } = replay;
+  const layoutRef = useRef<HTMLDivElement>(null);
   const index = useMemo(() => indexInspection(records, timeline), [records, timeline]);
   const projection = useMemo(() => new ReplayActivity(records, index.events), [records, index]);
   const [clock, setClock] = useState(Date.now);
@@ -236,7 +246,15 @@ export function LiveInspection({
   }, [at, active]);
 
   const current = selected && index.byId.get(selected.id);
-  const terminalMark = at === undefined && selected?.terminalError ? selected : undefined;
+  const selectedError = selected?.terminalError;
+  const terminalMark =
+    at === undefined &&
+    selectedError &&
+    terminalErrors.some(
+      ({ at, file }) => at === selectedError.at && file?.path === selectedError.file?.path,
+    )
+      ? selected
+      : undefined;
   const mark = terminalMark ?? (current && current.at <= time ? current : undefined);
   const cutoff = at ?? Infinity;
   const inspectNode = useCallback(
@@ -279,6 +297,7 @@ export function LiveInspection({
   );
   const inspection = useMemo(
     () => ({
+      layoutRef,
       selectedNode: mark?.nodeId,
       selectedAgent: mark?.event?.agentId,
       inspectNode,
@@ -290,7 +309,7 @@ export function LiveInspection({
 
   return (
     <div className="live-inspection-stack">
-      <div className="live-inspection-layout">
+      <div className="live-inspection-layout" ref={layoutRef}>
         {children(inspection)}
         {(hasActivity || terminalMark) && (
           <aside

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import {
   ExplainProjectErrorResultSchema,
   ExplainProjectErrorSchema,
+  CancelProjectErrorExplanationSchema,
   MachineSnapshotSchema,
 } from './infra';
 import {
@@ -286,6 +287,11 @@ export const contract = {
       'infra:explain-project-error',
       ExplainProjectErrorSchema,
       ExplainProjectErrorResultSchema,
+    ),
+    cancelProjectErrorExplanation: invoke(
+      'infra:cancel-project-error-explanation',
+      CancelProjectErrorExplanationSchema,
+      z.boolean(),
     ),
   },
 } as const;

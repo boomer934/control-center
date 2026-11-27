@@ -131,6 +131,7 @@ export function SessionDock({
   chooseWorkspace,
   permissionFocus,
   draftFocus,
+  consumeDraftFocus,
   showHistory,
   setShowHistory,
   onHistoryLoaded,
@@ -139,7 +140,8 @@ export function SessionDock({
   workspace?: string;
   chooseWorkspace(): void;
   permissionFocus: number;
-  draftFocus: number;
+  draftFocus: boolean;
+  consumeDraftFocus(): void;
   showHistory: boolean;
   setShowHistory(show: boolean): void;
   onHistoryLoaded(): void;
@@ -149,7 +151,6 @@ export function SessionDock({
   const scroll = useRef<HTMLDivElement>(null);
   const following = useRef(true);
   const handledFocus = useRef(0);
-  const handledDraftFocus = useRef(0);
   const composer = useRef<HTMLTextAreaElement>(null);
   const running = chat.status === 'running';
   const archived = Boolean(chat.historyId && !chat.id);
@@ -169,11 +170,11 @@ export function SessionDock({
   }, [permission, permissionFocus]);
 
   useLayoutEffect(() => {
-    if (!composer.current || !draft || handledDraftFocus.current === draftFocus) return;
-    handledDraftFocus.current = draftFocus;
+    if (!composer.current || !draft || !draftFocus) return;
     composer.current.focus();
     composer.current.setSelectionRange(draft.length, draft.length);
-  }, [draft, draftFocus]);
+    consumeDraftFocus();
+  }, [draft, draftFocus, consumeDraftFocus]);
 
   useEffect(() => {
     if (!showHistory) return;

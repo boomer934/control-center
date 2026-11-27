@@ -282,17 +282,37 @@ export function registerIpc(
     },
   };
 
+  let activeExplanation:
+    | { senderId: number; requestId: string; controller: AbortController; signal: AbortSignal }
+    | undefined;
   const infra: Handlers['infra'] = {
     snapshot: () => e2eMachineSnapshot() ?? machineSnapshot(),
-    explainProjectError: async ({ workspaceId, error }, { senderId }) => {
+    explainProjectError: async ({ requestId, workspaceId, error }, { senderId }) => {
       if (senderId === undefined) return 'unavailable';
       const owner = windowOwner(senderId);
       if (!owner) return 'unavailable';
-      const workspaces = await getWorkspaces();
-      const root = await workspaces.activeRootFor(workspaceId);
-      const { signal } = owner.controller;
-      if (!root || signal.aborted) return 'unavailable';
-      return explainError(error, signal, () => workspaces.isActive(workspaceId));
+      if (activeExplanation && !activeExplanation.signal.aborted) return 'busy';
+      const controller = new AbortController();
+      const signal = AbortSignal.any([controller.signal, owner.controller.signal]);
+      const request = { senderId, requestId, controller, signal };
+      // Register before awaiting workspace validation so an immediate cancellation is honored.
+      activeExplanation = request;
+      try {
+        const workspaces = await getWorkspaces();
+        const root = await workspaces.activeRootFor(workspaceId);
+        if (signal.aborted) return 'cancelled';
+        if (!root) return 'unavailable';
+        return await explainError(error, signal, () => workspaces.isActive(workspaceId));
+      } finally {
+        if (activeExplanation === request) activeExplanation = undefined;
+      }
+    },
+    cancelProjectErrorExplanation: ({ requestId }, { senderId }) => {
+      const request = activeExplanation;
+      if (!request || request.senderId !== senderId || request.requestId !== requestId)
+        return false;
+      request.controller.abort();
+      return true;
     },
   };
 

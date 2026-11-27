@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f e 5g, poi la Fase 6 (Codex)._
+_Ultimo aggiornamento 2026-11-27 (correzioni F4.1 dalla revisione Astra). Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f e 5g, poi la Fase 6 (Codex)._
 
 ## Fase
 
@@ -35,7 +35,7 @@ _Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi 
 
 ## Branch
 
-Claude: `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto al 2026-11-27: va verificato sul computer dell'utente. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
+Claude: `fix/hooks-bridge-hardening` (correzioni F4.1 dalla revisione Astra, da `main`), in attesa di PR; `feat/codex-session-contract` (5f.1, PR A) resta in locale. Inoltre `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto al 2026-11-27: va verificato sul computer dell'utente. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
 
 ## Punto di ripresa
 
@@ -65,13 +65,14 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
     - il test dell'editor di `workspace-terminal.spec.ts`, instabile nella suite completa ma verde da solo e insieme a `claude.spec.ts`;
   - `pnpm e2e:packaged` non rieseguito.
 - **Prova con la CLI vera (Claude Code 2.1.326):** una run breve che legge un file. Claude Code ha eseguito il comando degli hooks tra virgolette e la pipe ha accettato tutti i messaggi (zero rifiuti), con `file.read` arrivato dagli hooks. La prova ha mostrato che `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`: ora il merge dal vivo li trattiene finché arriva `init`, così `session.started` conserva modello e versione. Il test resta nella repo, saltato salvo `CC_REAL_CLAUDE=1` (`real-claude.smoke.test.ts`). La 2.1.326 è stata aggiunta alle versioni testate.
-- **Non verificato:** manca la seconda opinione di Astra sulla pipe.
+- **Fatto (F4.1, correzioni Astra, `fix/hooks-bridge-hardening`):** hooks a `claude --settings` come JSON inline (niente `settings.json`); `bridge.json` scritto dopo `listen()`; scadenza assoluta per connessione, limite di 1024 frammenti (`fragmented`), rifiuti raggruppati in Console (un riepilogo ogni 2 s, 20 per sessione, conteggio finale alla chiusura); `bin.ts` con un solo `open`, `fstat` sull'handle e lettura di al massimo 4 KiB + 1; `killTree` ritenta `taskkill` e segnala `ProcessTreeNotEnded`; `removeStaleSessions` con `maxRetries` e `StaleSessionCleanupFailed` in Console. `SICUREZZA.md` e ADR 0009 aggiornati.
+- **Verificato (correzioni Astra):** `pnpm verify` verde (455 test, 1 saltato, 0 errori di lint). `pnpm e2e`: 79 verdi, 5 rossi non legati al branch (4 test visivi, sempre rossi in locale; `dev.spec.ts` si aspetta l'URL senza `#/live`). DACL letta con `GetSecurityInfo` su Electron 45.4.1: Everyone e Anonymous in lettura. Processo a bassa integrità: lettura sì, scrittura negata. **Non provati:** secondo account locale e AppContainer.
 - **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi): 9 punti, tutti corretti da Codex nella PR #49 (`f06cd09`) dopo una passata `/code-review medium` di Claude.
 - **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
 - **Fatto (4b, correzioni):** su richiesta dell'utente, cherry-pick delle correzioni di Codex (`5bc30ae`) su `origin/main` nella [PR #55](https://github.com/boomer934/control-center/pull/55), con il test del terminale di `main` e una correzione in più (commit con hook: timeout di 5 minuti, niente `GIT_LITERAL_PATHSPECS` agli hook).
 - **Fase 5 chiusa (2026-11-27):** sintesi in `STORIA.md`, voce "Chiusura Fase 5".
 - **Repo pubblica (2026-11-27):** GitHub Actions non partiva più per il limite di spesa dell'account; dopo un controllo di segreti e dati personali su tutta la storia la repo è stata resa pubblica e la PR #67 è stata unita a CI verde.
-- **Ora (punto di ripresa):** la Fase 6 (infrastruttura) spetta a Codex; Claude fa poi `/code-review high` su socket Docker e processi. Per Claude restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita" di `PROSSIMI_PASSI.md`.
+- **Ora (punto di ripresa):** aprire la PR di `fix/hooks-bridge-hardening` (tocca processi e named pipe: revisione incrociata di Codex prima del merge), poi riprendere la PR A della 5f.1 (`feat/codex-session-contract`, rebase su `main` dopo il merge). La Fase 6 (infrastruttura) spetta a Codex; Claude fa poi `/code-review high` su socket Docker e processi. Per Claude restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita" di `PROSSIMI_PASSI.md`.
 
 ### Corsia Codex
 

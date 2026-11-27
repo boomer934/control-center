@@ -96,9 +96,21 @@ export const REJECT_CODES = [
   'bad-token',
   'invalid-event',
   'timeout',
+  'fragmented',
   'busy',
 ] as const;
 export type RejectCode = (typeof REJECT_CODES)[number];
+
+/** Refused messages, grouped: what the app reports instead of one line per refusal. */
+export interface RejectSummary {
+  /** How many of each code since the previous summary. */
+  counts: Partial<Record<RejectCode, number>>;
+  total: number;
+  /** The last summary before the cap: later refusals are only counted, until close. */
+  capped: boolean;
+  /** Sent by close() with what was counted since the previous summary. */
+  final: boolean;
+}
 
 /** The message envelope. Its fields are checked one by one by the server, in this order. */
 export const bridgeMessageSchema = z.strictObject({

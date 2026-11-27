@@ -35,3 +35,11 @@ La 4.1 porta nell'app una sessione Claude Code dal vivo. Lo stream-json di `clau
 - La 4.3 usa `claude:*` così com'è. Per i permessi servirà un canale di risposta su stdin (control protocol di stream-json), da progettare lì.
 - Le versioni della CLI testate sono quelle delle fixture (2.1.322) e quelle provate con `real-claude.smoke.test.ts` (2.1.326). Il test resta saltato salvo `CC_REAL_CLAUDE=1`. Una versione nuova va provata con quel test e poi aggiunta a `TESTED_CLAUDE_VERSIONS`.
 - Con la CLI vera, `SessionStart` e `UserPromptSubmit` arrivano prima della riga `init`. Il merge dal vivo trattiene gli eventi degli hooks fino a `init`, così `session.started` viene dallo stream con modello e versione.
+
+## Aggiornamento 2026-11-27 (correzioni dalla revisione Astra)
+
+- Gli hooks passano a `claude --settings` come JSON inline: la cartella della sessione contiene solo `bridge.json`, scritto dopo che la pipe ascolta.
+- La scadenza di 5 s per connessione è assoluta; un messaggio in più di 1024 frammenti è rifiutato (`fragmented`). I rifiuti arrivano in Console raggruppati (un riepilogo ogni 2 s al massimo, 20 per sessione, poi un conteggio finale alla chiusura).
+- Lo script apre `bridge.json` una volta sola, lo controlla sull'handle e ne legge al massimo 4 KiB + 1.
+- `taskkill` che fallisce si ritenta e poi si segnala; la pulizia delle cartelle rimaste ritenta e segnala i fallimenti. `taskkill /T` non garantisce l'intero albero: un Job Object resta da valutare con un'ADR.
+- DACL reale e limiti del modello delle minacce in `docs/memoria/SICUREZZA.md`.

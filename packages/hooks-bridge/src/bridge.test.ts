@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,6 +15,7 @@ import {
   type BridgeServerOptions,
   type HookPayload,
   type RejectCode,
+  type RejectSummary,
 } from './index.ts';
 
 const BIN = fileURLToPath(new URL('./bin.ts', import.meta.url));
@@ -36,12 +37,17 @@ async function startServer(extra: Partial<BridgeServerOptions> = {}) {
   const pipe = newPipeName();
   const token = newToken();
   const events: HookPayload[] = [];
+  /** Every refused code, in order, from the grouped summaries. */
   const rejects: RejectCode[] = [];
   const server = createBridgeServer({
     pipe,
     token,
     onEvent: (p) => events.push(p),
-    onReject: (code) => rejects.push(code),
+    onReject: (summary) => {
+      for (const [code, n] of Object.entries(summary.counts))
+        for (let i = 0; i < n; i++) rejects.push(code as RejectCode);
+    },
+    reportIntervalMs: 10,
     ...extra,
   });
   await server.listen();
@@ -112,7 +118,7 @@ describe('bridge server', () => {
     const { pipe, token, events, rejects } = await startServer();
     const answer = await raw(pipe, make(token));
     expect(events).toEqual([]);
-    expect(rejects).toEqual([code]);
+    await expect.poll(() => rejects).toEqual([code]);
     // a client that closed its end of the pipe cannot read the answer any more
     if (answer) expect(JSON.parse(answer)).toEqual({ ok: false, code });
   });
@@ -120,7 +126,7 @@ describe('bridge server', () => {
   it('refuses a client that sends nothing in time', async () => {
     const { pipe, rejects } = await startServer({ timeoutMs: 100 });
     const answer = await raw(pipe, null, true);
-    expect(rejects).toEqual(['timeout']);
+    await expect.poll(() => rejects).toEqual(['timeout']);
     expect(JSON.parse(answer)).toEqual({ ok: false, code: 'timeout' });
   });
 
@@ -136,7 +142,7 @@ describe('bridge server', () => {
       code: 'busy',
     });
     await hanging;
-    expect(rejects).toEqual(['busy', 'timeout']);
+    await expect.poll(() => rejects).toEqual(['busy', 'timeout']);
     expect(events).toEqual([]);
   });
 
@@ -144,7 +150,71 @@ describe('bridge server', () => {
     const seen: unknown[] = [];
     const { pipe } = await startServer({ onReject: (...args) => seen.push(args) });
     await raw(pipe, line({ v: 1, token: 'guess', payload }));
-    expect(JSON.stringify(seen)).toBe('[["bad-token"]]');
+    await expect.poll(() => seen.length).toBe(1);
+    expect(seen).toEqual([[{ counts: { 'bad-token': 1 }, total: 1, capped: false, final: false }]]);
+  });
+
+  it('gives a client a fixed time from connecting, however slowly it writes', async () => {
+    const { pipe, rejects } = await startServer({ timeoutMs: 300 });
+    const started = Date.now();
+    const answer = await new Promise<string>((resolve) => {
+      let text = '';
+      const socket = connect(pipe);
+      const drip = setInterval(() => socket.write('{'), 50);
+      socket.setEncoding('utf8');
+      socket.on('data', (c: string) => (text += c));
+      socket.on('close', () => {
+        clearInterval(drip);
+        resolve(text);
+      });
+      socket.on('error', () => undefined);
+    });
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect(JSON.parse(answer)).toEqual({ ok: false, code: 'timeout' });
+    await expect.poll(() => rejects).toEqual(['timeout']);
+  });
+
+  it('refuses a message split into too many pieces', async () => {
+    const { pipe, rejects } = await startServer({ maxFragments: 3 });
+    await new Promise<void>((resolve) => {
+      const socket = connect(pipe, async () => {
+        for (let i = 0; i < 8 && !socket.destroyed; i++) {
+          socket.write('{');
+          await new Promise((r) => setTimeout(r, 30));
+        }
+      });
+      socket.on('close', () => resolve());
+      socket.on('error', () => undefined);
+    });
+    await expect.poll(() => rejects).toEqual(['fragmented']);
+  });
+
+  it('groups refusals and stops reporting after the cap until it closes', async () => {
+    const summaries: RejectSummary[] = [];
+    const { pipe, server } = await startServer({
+      onReject: (s) => summaries.push(s),
+      reportIntervalMs: 200,
+      maxReports: 1,
+    });
+    const bad = line({ v: 1, token: 'guess', payload });
+    await Promise.all([raw(pipe, bad), raw(pipe, bad), raw(pipe, 'nope\n')]);
+    await expect.poll(() => summaries.length).toBe(1);
+    expect(summaries[0]).toEqual({
+      counts: { 'bad-token': 2, malformed: 1 },
+      total: 3,
+      capped: true,
+      final: false,
+    });
+    await raw(pipe, bad);
+    await new Promise((r) => setTimeout(r, 400));
+    expect(summaries).toHaveLength(1);
+    await server.close();
+    expect(summaries[1]).toEqual({
+      counts: { 'bad-token': 1 },
+      total: 1,
+      capped: false,
+      final: true,
+    });
   });
 
   it('cannot take a pipe name that is already in use', async () => {
@@ -225,6 +295,42 @@ describe('hook script', () => {
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({ hook_event_name: 'PostToolUseFailure', truncated: true });
     expect(events[0]?.error).toHaveLength(16_384);
+  });
+
+  it('refuses a bridge file that is a link, too big, or not a file', async () => {
+    const { pipe, token, events } = await startServer();
+    const dir = sessionDir({ v: 1, pipe, token });
+    const real = join(dir, BRIDGE_FILE);
+
+    const linked = mkdtempSync(join(tmpdir(), 'cc-bridge-link-'));
+    cleanups.push(() => rmSync(linked, { recursive: true, force: true }));
+    let linkMade = true;
+    try {
+      symlinkSync(real, join(linked, BRIDGE_FILE), 'file');
+    } catch {
+      linkMade = false; // creating links needs Developer Mode or admin rights on Windows
+    }
+    if (linkMade) {
+      const viaLink = await runHook([join(linked, BRIDGE_FILE)], JSON.stringify(payload));
+      expect(viaLink).toMatchObject({ code: 0, stdout: '' });
+      expect(viaLink.stderr).toContain('no-config');
+    }
+
+    const big = mkdtempSync(join(tmpdir(), 'cc-bridge-big-'));
+    cleanups.push(() => rmSync(big, { recursive: true, force: true }));
+    writeFileSync(
+      join(big, BRIDGE_FILE),
+      `${JSON.stringify({ v: 1, pipe, token })}${' '.repeat(4096)}`,
+    );
+    const tooBig = await runHook([join(big, BRIDGE_FILE)], JSON.stringify(payload));
+    expect(tooBig.stderr).toContain('no-config');
+
+    const folder = mkdtempSync(join(tmpdir(), 'cc-bridge-dir-'));
+    cleanups.push(() => rmSync(folder, { recursive: true, force: true }));
+    mkdirSync(join(folder, BRIDGE_FILE));
+    const notFile = await runHook([join(folder, BRIDGE_FILE)], JSON.stringify(payload));
+    expect(notFile.stderr).toContain('no-config');
+    expect(events).toEqual([]);
   });
 
   it('always exits 0 and never prints the token', async () => {

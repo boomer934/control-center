@@ -26,13 +26,20 @@ import {
   newToken,
   type BridgeServer,
   type HookPayload,
+  type RejectSummary,
 } from '@control-center/hooks-bridge';
 import { z } from 'zod';
 import { superviseChild } from '../errors/children';
 import { TESTED_CLAUDE_VERSIONS, type Program } from './cli';
 import { ClaudeNativeSessionId } from './history';
 import { createClaudePermissions } from './permissions';
-import { writeSessionFiles, type HookRunner, type SessionFiles } from './session-files';
+import {
+  createSessionDir,
+  hookCommand,
+  hookSettings,
+  type HookRunner,
+  type SessionFiles,
+} from './session-files';
 
 export type ClaudeSessionStatus = 'idle' | 'running' | 'closed';
 export type SendResult = 'started' | 'busy' | 'closed';
@@ -100,11 +107,17 @@ export const MAX_MESSAGE_CHARS = 100_000;
 
 const warnedVersions = new Set<string>();
 
+/** taskkill's exit code when the process is gone already: nothing left to end. */
+const TASKKILL_NOT_FOUND = 128;
+
 /**
- * Ends a run with everything it started (hook scripts, the commands of the agent's tools): on
- * Windows killing the process alone would leave its children running in the workspace.
+ * Ends a run with what it started (hook scripts, the commands of the agent's tools): on Windows
+ * killing the process alone would leave its children running in the workspace. `taskkill /T`
+ * follows the parent links that still exist, so a process whose parent already exited (or one
+ * started detached) escapes it; only a Job Object would hold the whole tree (see SICUREZZA.md).
+ * A failed taskkill is retried once, then reported and the run's own process killed.
  */
-function killTree(child: ChildProcess, wait = false): void {
+export function killTree(child: ChildProcess, onFailure: () => void, wait = false): void {
   const pid = child.pid;
   if (process.platform !== 'win32' || pid === undefined) {
     child.kill();
@@ -113,18 +126,46 @@ function killTree(child: ChildProcess, wait = false): void {
   // full path: never a taskkill found on PATH or in the workspace
   const taskkill = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'taskkill.exe');
   const args = ['/PID', String(pid), '/T', '/F'];
-  if (wait) {
-    // the app is quitting: an asynchronous taskkill would never get to run
+  const giveUp = () => {
     try {
-      execFileSync(taskkill, args, { windowsHide: true, stdio: 'ignore', timeout: 5000 });
-    } catch {
+      onFailure();
+    } finally {
       child.kill();
     }
+  };
+  if (wait) {
+    // the app is quitting: an asynchronous taskkill would never get to run
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        execFileSync(taskkill, args, { windowsHide: true, stdio: 'ignore', timeout: 5000 });
+        return;
+      } catch (error) {
+        if ((error as { status?: unknown }).status === TASKKILL_NOT_FOUND) return;
+      }
+    }
+    giveUp();
     return;
   }
-  execFile(taskkill, args, { windowsHide: true }, (error) => {
-    if (error) child.kill();
-  });
+  const attempt = (retries: number) =>
+    execFile(taskkill, args, { windowsHide: true, timeout: 5000 }, (error) => {
+      if (!error || error.code === TASKKILL_NOT_FOUND) return;
+      if (retries > 0) setTimeout(() => attempt(retries - 1), 250);
+      else giveUp();
+    });
+  attempt(1);
+}
+
+/** One Console line for a batch of refused hook messages: codes and counts, nothing else. */
+export function describeRejects(summary: RejectSummary): string {
+  const parts = Object.entries(summary.counts).map(([code, n]) =>
+    n === 1 ? code : `${code} ×${n}`,
+  );
+  const more = summary.final
+    ? ''
+    : summary.capped
+      ? '; further refusals counted until the session closes'
+      : '';
+  return `Refused ${summary.total} hook message(s) (${parts.join(', ')})${more}`;
 }
 
 /** The user's environment minus Electron's own switches. */
@@ -162,7 +203,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       const input = current?.child.stdin;
       if (!current || current.stopping || !input?.writable) return false;
       input.write(`${line}\n`, (error) => {
-        if (error && run === current && !current.stopping) killTree(current.child);
+        if (error && run === current && !current.stopping) killTree(current.child, killFailed);
       });
       return true;
     },
@@ -203,44 +244,54 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
 
   // ── the bridge: pipe server and session files ──
   let server: BridgeServer | undefined;
-  let files: SessionFiles | undefined;
+  /** The hooks, as inline JSON for `--settings`: no settings file on disk. */
+  let settingsArg: string | undefined;
   const onHook = (payload: HookPayload, receivedAt: string) => {
     if (!run) return; // a late hook of a finished run
     emit(live.hook({ capturedAt: receivedAt, payload }));
   };
-  if (options.hooks) {
+  const files: SessionFiles = await createSessionDir(options.dataDir, id);
+  const command = options.hooks && hookCommand(options.hooks, files.bridgeFile);
+  if (command) {
     const config = { v: 1 as const, pipe: newPipeName(), token: newToken() };
-    files = await writeSessionFiles(options.dataDir, id, { runner: options.hooks, config });
-    if (files.settingsFile) {
-      server = createBridgeServer({
-        pipe: config.pipe,
-        token: config.token,
-        onEvent: onHook,
-        onReject: (code) =>
-          options.report({
-            origin: 'main',
-            source: 'hooks-bridge',
-            kind: 'bridge-rejected',
-            name: 'BridgeRejected',
-            message: `Refused a hook message (${code})`,
-          }),
-      });
-      try {
-        await server.listen();
-      } catch (error) {
-        await files.remove();
-        throw error;
-      }
-    } else {
-      report({
-        kind: 'claude-setup',
-        name: 'HooksUnavailable',
-        message: 'The data folder path cannot be passed to a hook command: hooks are off',
-      });
+    const bridge = createBridgeServer({
+      pipe: config.pipe,
+      token: config.token,
+      onEvent: onHook,
+      onReject: (summary) =>
+        options.report({
+          origin: 'main',
+          source: 'hooks-bridge',
+          kind: 'bridge-rejected',
+          name: 'BridgeRejected',
+          message: describeRejects(summary),
+        }),
+    });
+    try {
+      await bridge.listen();
+      // the pipe exists before anyone can learn its name from the bridge file
+      await files.writeBridge(config);
+    } catch (error) {
+      await bridge.close();
+      await files.remove();
+      throw error;
     }
-  } else {
-    files = await writeSessionFiles(options.dataDir, id, undefined);
+    server = bridge;
+    settingsArg = JSON.stringify(hookSettings(command));
+  } else if (options.hooks) {
+    report({
+      kind: 'claude-setup',
+      name: 'HooksUnavailable',
+      message: 'The data folder path cannot be passed to a hook command: hooks are off',
+    });
   }
+  const killFailed = () =>
+    report({
+      kind: 'child-exit',
+      name: 'ProcessTreeNotEnded',
+      message:
+        'Could not end every process of a Claude run (taskkill failed twice): commands it started may still be running',
+    });
 
   // ── stream-json from stdout ──
   let droppedLines = 0;
@@ -329,7 +380,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       '--verbose',
       ...(options.onPartial ? ['--include-partial-messages'] : []),
       ...(options.onPermissions ? ['--permission-prompt-tool', 'stdio'] : []),
-      ...(files?.settingsFile ? ['--settings', files.settingsFile] : []),
+      ...(settingsArg ? ['--settings', settingsArg] : []),
       ...(claudeSessionId ? ['--resume', claudeSessionId] : []),
     ];
     emit(live.startRun(now()));
@@ -398,26 +449,26 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       run.stopping = true;
       clearPreview();
       permissions.clear();
-      killTree(run.child);
+      killTree(run.child, killFailed);
       return true;
     },
     terminate() {
       const current = run;
       if (!current) return;
       current.stopping = true;
-      killTree(current.child, true);
+      killTree(current.child, killFailed, true);
     },
     async close() {
       if (status === 'closed') return;
       const current = run;
       if (current) {
         current.stopping = true;
-        killTree(current.child);
+        killTree(current.child, killFailed);
         await Promise.race([current.done, new Promise((r) => setTimeout(r, 3000))]);
       }
       setStatus('closed');
       await server?.close();
-      await files?.remove();
+      await files.remove();
     },
   };
 }

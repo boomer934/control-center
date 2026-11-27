@@ -122,6 +122,21 @@ test.afterEach(async () => {
 
 const node = (path: string) => page.locator(`[data-node="${path}"]`);
 
+/**
+ * Opens a node in the inspector. A new error can lay the map out again right under the cursor
+ * (slow CI runner), so the click is retried once the layout is ready until the inspector shows
+ * `text`. Selecting a node is idempotent, so a repeated click never closes the inspector.
+ */
+async function inspectNode(path: string, text: string) {
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  await expect(async () => {
+    await expect(page.getByTestId('live-map')).toHaveAttribute('data-ready', 'true');
+    await node(path).click({ timeout: 5_000 });
+    await expect(inspector).toContainText(text, { timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  return inspector;
+}
+
 test('a terminal error lights the culprit and offers all three actions before a session', async () => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.keyboard.press('Control+Backquote');
@@ -219,13 +234,11 @@ test('selecting another error cancels the pending request and frees Ollama', asy
   await run('Get-Content second.log');
   await expect(node('test/cart.test.js')).toHaveAttribute('data-state', 'error');
 
-  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  const inspector = await inspectNode('src/lib/price.js', 'src/lib/price.js:2');
   const explain = inspector.getByRole('button', { name: 'Explain locally' });
-  await node('src/lib/price.js').click();
   await explain.click();
   await expect.poll(() => ollamaRequests.some(({ path }) => path === '/api/chat')).toBe(true);
-  await node('test/cart.test.js').click();
-  await expect(inspector).toContainText('Second error');
+  await inspectNode('test/cart.test.js', 'Second error');
   await expect(inspector.getByText('Waiting for Ollama…')).toHaveCount(0);
   await expect(inspector.getByRole('region', { name: 'Local explanation' })).toHaveCount(0);
   await expect(explain).toBeEnabled();
@@ -374,10 +387,7 @@ test('Go to file does not show .env source', async () => {
   await run('Get-Content dotenv-error.log', 'ValueError: Invalid environment file');
   const culprit = node('.env');
   await expect(culprit).toHaveAttribute('data-state', 'error');
-  await culprit.click();
-
-  const inspector = page.getByRole('region', { name: 'Event inspector' });
-  await expect(inspector).toContainText('.env:1');
+  const inspector = await inspectNode('.env', '.env:1');
   await inspector.getByRole('button', { name: 'Go to file' }).click();
   await expect(inspector.getByRole('status')).toContainText(
     'Source or line unavailable in this workspace.',
@@ -405,10 +415,8 @@ test('a Docker terminal error opens the resolved workspace source before a sessi
   const culprit = node('api/app/models.py');
   await expect(culprit).toHaveAttribute('data-state', 'error', { timeout: 10_000 });
   await expect(page.getByTestId('live-map').getByText('No session yet')).toHaveCount(0);
-  await culprit.click();
-  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  const inspector = await inspectNode('api/app/models.py', 'api/app/models.py:2');
   await expect(inspector).toContainText('Docker · python');
-  await expect(inspector).toContainText('api/app/models.py:2');
   await inspector.getByRole('button', { name: 'Go to file' }).click();
   const source = page.getByRole('dialog', { name: 'api/app/models.py:2', exact: true });
   await expect(source.locator('mark')).toHaveText('return int(row["qty"])');

@@ -118,6 +118,7 @@ Test: **S** = `packages/fixtures/src/stacks.test.ts`, **T** = `apps/desktop/src/
 - `workspace:read-source-location` richiede il mittente fidato, il workspace attivo, un percorso relativo e una riga positiva. Il main riusa `resolveWorkspaceFile`, confronta l'identità del descrittore aperto con il percorso canonico verificato e ricontrolla il workspace prima della risposta. Il payload è testo UTF-8 fino a 1 MiB. Il visualizzatore rende il testo senza interpretarlo ed evidenzia la riga richiesta.
 - `infra:explain-project-error` accetta messaggio, origine, linguaggio e posizione validati. Il main contatta Ollama su `127.0.0.1:11434`, senza proxy o redirect. Esclude nomi cloud e modelli con metadati remoti e controlla la capacità di completamento prima di inviare la richiesta. Il renderer non sceglie endpoint, modello o strumenti. Il main redige i segreti nel testo in entrata e in uscita, impone limiti di tempo e dimensione e annulla l'inferenza alla chiusura del proprietario.
 - «Ask Claude to fix» prepara una bozza nel flusso esistente. L'invio esplicito e il percorso dei permessi restano quelli della chat.
+- **Proposta da approvare:** escludere dal visualizzatore i file con nome `.env*`, senza distinzione tra maiuscole e minuscole. Applicare il controllo nel main prima di leggere il contenuto. L'esclusione evita che formati o valori non riconosciuti da un redattore arrivino al renderer.
 
 ## Privacy
 

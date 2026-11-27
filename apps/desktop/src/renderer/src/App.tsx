@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
@@ -15,7 +15,9 @@ import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
 import { LiveMap, type DiffPreview } from './live/LiveMap';
 import { LiveInspection } from './live/LiveInspection';
 import { SessionTimeline } from './live/SessionTimeline';
+import { makeResolveFile } from './live/resolve';
 import { useReplay } from './live/useReplay';
+import { indexSnapshot } from './live/visible';
 import { useShortcuts } from './keys/useShortcuts';
 import { CommandPalette, type PaletteCommand } from './palette/CommandPalette';
 import { ShortcutHelp } from './palette/ShortcutHelp';
@@ -93,6 +95,12 @@ function LiveView({
 }) {
   // Deltas re-render this view only, not the whole shell.
   const project = useProjectModel(workspaceId);
+  const snapshot = project.kind === 'ready' ? project.snapshot : undefined;
+  const mapIndex = useMemo(() => (snapshot ? indexSnapshot(snapshot) : undefined), [snapshot]);
+  const resolveFile = useMemo(
+    () => (mapIndex ? makeResolveFile(mapIndex.byPath) : undefined),
+    [mapIndex],
+  );
   const replay = useReplay(chat.records, Boolean(chat.historyId && !chat.id));
   const historical = replay.at !== undefined;
   const reviewCheckpoint = useCallback(
@@ -134,15 +142,17 @@ function LiveView({
         records={chat.records}
         replay={replay}
         terminalErrors={terminalErrors}
+        resolveFile={resolveFile}
         workspaceId={workspaceId}
         onDraft={onErrorDraft}
         pendingPermission={chat.permissions.length > 0}
       >
         {(inspection) => (
           <div className="lmap-area">
-            {project.kind === 'ready' ? (
+            {mapIndex && resolveFile ? (
               <LiveMap
-                snapshot={project.snapshot}
+                index={mapIndex}
+                resolveFile={resolveFile}
                 records={chat.records}
                 errors={terminalErrors}
                 at={replay.at}

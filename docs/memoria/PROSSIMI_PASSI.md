@@ -17,7 +17,7 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 5. ✅ **[Codex] (F4b, bug)** Percorsi lunghi di Git su Windows uniti su `main` con la [PR #61](https://github.com/boomer934/control-center/pull/61) (`6bcb9cf`).
 6. ✅ **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura uniti su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`). La schermata Infra completa resta nella Fase 6.
 7. ✅ **[Claude] (F5e)** Errori del progetto sulla mappa (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`), CI verde.
-8. **[Codex] (F5e+)** Azioni rapide implementate su `feat/error-quick-actions` (ADR 0016). Restano la PR e l'integrazione a CI verde.
+8. **[Codex] (F5e+)** Correzioni della seconda revisione Claude verificate in locale sulla [PR #68](https://github.com/boomer934/control-center/pull/68) (ADR 0016). Resta il merge dell'utente a CI verde. La proposta sui file `.env*` attende conferma.
 
 ## Dopo
 

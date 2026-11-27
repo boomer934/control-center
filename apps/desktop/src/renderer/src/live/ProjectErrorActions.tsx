@@ -77,10 +77,12 @@ function SourceView({
 
 export function ProjectErrorActions({
   error,
+  path,
   workspaceId,
   onDraft,
 }: {
   error: DetectedError;
+  path: string | undefined;
   workspaceId: string;
   onDraft?: ((text: string) => void) | undefined;
 }) {
@@ -91,7 +93,6 @@ export function ProjectErrorActions({
   const sourceButton = useRef<HTMLButtonElement>(null);
   const explanationRequest = useRef<string | undefined>(undefined);
   const { line, column, language, origin, message } = error;
-  const path = error.file?.external === false ? error.file.path : undefined;
   const context: ProjectErrorContext = {
     message,
     language,

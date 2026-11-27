@@ -226,9 +226,12 @@ test('selecting another error cancels the pending request and frees Ollama', asy
   await expect.poll(() => ollamaRequests.some(({ path }) => path === '/api/chat')).toBe(true);
   await node('test/cart.test.js').click();
   await expect(inspector).toContainText('Second error');
+  await expect(inspector.getByText('Waiting for Ollama…')).toHaveCount(0);
+  await expect(inspector.getByRole('region', { name: 'Local explanation' })).toHaveCount(0);
+  await expect(explain).toBeEnabled();
+  await expect.poll(() => firstChatClosed).toBe(true);
   await explain.click();
   await expect(inspector.getByRole('region', { name: 'Local explanation' })).toBeVisible();
-  await expect.poll(() => firstChatClosed).toBe(true);
   expect(ollamaRequests.at(-1)?.body).toMatchObject({
     messages: [
       { role: 'system' },
@@ -289,6 +292,35 @@ async function openTerminal() {
     await expect(terminal.locator('.xterm-rows')).toContainText(done, { timeout: 15_000 });
   };
 }
+
+test('a Docker terminal error opens the resolved workspace source before a session', async () => {
+  const shop = join(fixture, 'Shop');
+  await mkdir(join(shop, 'api/app'), { recursive: true });
+  await writeFile(join(shop, 'api/app/models.py'), 'def parse(row):\n    return int(row["qty"])\n');
+  await writeFile(
+    join(shop, 'compose.log'),
+    [
+      'api-1  | Traceback (most recent call last):',
+      'api-1  |   File "/srv/api/app/models.py", line 2, in parse',
+      'api-1  |     return int(row["qty"])',
+      "api-1  | ValueError: invalid literal for int() with base 10: 'x'",
+      'api-1 exited with code 1',
+      '',
+    ].join('\n'),
+  );
+  const run = await openTerminal();
+  await run('Get-Content compose.log', 'exited with code 1');
+  const culprit = node('api/app/models.py');
+  await expect(culprit).toHaveAttribute('data-state', 'error', { timeout: 10_000 });
+  await expect(page.getByTestId('live-map').getByText('No session yet')).toHaveCount(0);
+  await culprit.click();
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  await expect(inspector).toContainText('Docker · python');
+  await expect(inspector).toContainText('api/app/models.py:2');
+  await inspector.getByRole('button', { name: 'Go to file' }).click();
+  const source = page.getByRole('dialog', { name: 'api/app/models.py:2', exact: true });
+  await expect(source.locator('mark')).toHaveText('return int(row["qty"])');
+});
 
 test('a failing test run by the agent shows its error in the timeline, the inspector and the map', async () => {
   // sessione-02: `npm test` fails on an assertion, the agent fixes src/cart.js, the tests pass.

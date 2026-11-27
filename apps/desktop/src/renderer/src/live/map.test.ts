@@ -3,10 +3,12 @@
 import { describe, expect, it } from 'vitest';
 import { SCHEMA_VERSION, type AgentEvent } from '@control-center/event-schema';
 import { commandKey, errorName, HOLD_MS, MapActivity, TRAIL_MS } from './activity';
+import { markForNode } from './inspection';
 import { assembleLayout, packRequest, sizeGroup } from './layout';
 import { packBoxes } from './pack';
 import { fixture } from './labFixtures';
-import { makeResolveFile } from './resolve';
+import { makeResolveFile, resolveErrorPath } from './resolve';
+import type { TimelineMark } from './replay';
 import { MapStore } from './store';
 import { buildVisibleMap, indexProject, NEIGHBOR_LIMIT, VISIBLE_BUDGET } from './visible';
 
@@ -319,6 +321,64 @@ describe('MapActivity errors (phase 5e)', () => {
       },
     ]);
     expect(activity.touched()).toEqual(['rs/src/stock.rs']);
+  });
+
+  it('selects the same Rust and Docker terminal errors as the map by resolved path', () => {
+    const resolveFile = makeResolveFile(
+      new Map(
+        ['rs/src/stock.rs', 'app/models.py', 'api/app/models.py'].map((path) => [path, null]),
+      ),
+    );
+    const terminalErrors = [
+      { ...detected, at: at(1000), file: { path: 'src/stock.rs', external: false } },
+      { ...detected, at: at(2000), file: { path: '/srv/api/app/models.py', external: true } },
+      { ...detected, at: at(3000), file: { path: '/app/app/models.py', external: true } },
+    ];
+    const activity = new MapActivity(resolveFile);
+    activity.applyErrors(terminalErrors);
+    const paths = ['rs/src/stock.rs', 'api/app/models.py'];
+    expect(activity.touched()).toEqual(paths);
+    for (const [index, path] of paths.entries()) {
+      const node = `f:${path}`;
+      const mark = markForNode(undefined, {
+        node,
+        cutoff: Infinity,
+        preferError: true,
+        terminalErrors,
+        resolveFile,
+      });
+      expect(mark?.nodeId).toBe(node);
+      expect(mark?.terminalError).toBe(terminalErrors[index]);
+      expect(mark?.terminalError && resolveErrorPath(mark.terminalError, resolveFile)).toBe(path);
+    }
+  });
+
+  it('falls back to the latest visible mark of a red node without a matching error', () => {
+    const node = 'f:src/lib/price.js';
+    const visible: TimelineMark = {
+      id: 'read',
+      at: 1000,
+      label: 'Read',
+      tone: 'read',
+      nodeId: node,
+    };
+    const future: TimelineMark = {
+      id: 'error',
+      at: 3000,
+      label: 'Error',
+      tone: 'error',
+      nodeId: node,
+      event: error(3000),
+    };
+    expect(
+      markForNode([visible, future], {
+        node,
+        cutoff: 2000,
+        preferError: true,
+        terminalErrors: [],
+        resolveFile: undefined,
+      }),
+    ).toBe(visible);
   });
 });
 

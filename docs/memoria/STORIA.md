@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Seconda revisione delle azioni rapide (PR #68)
+
+- **Fatto.** Stato delle azioni isolato per errore, risoluzione dei percorsi del terminale condivisa con la mappa e ripiego sull'ultimo marcatore visibile del nodo.
+- **Decisioni.** L'ADR 0016 esplicita il limite dell'inode zero per il visualizzatore. In `SICUREZZA.md` è proposta l'esclusione dei file `.env*` prima della lettura, in attesa di conferma.
+- **Verifica.** `pnpm verify` con 443 test passati e uno saltato, `project-errors.spec.ts` 6/6, dieci E2E funzionali della mappa e rilevatore Impeccable senza rilievi.
+
+---
+
 ## 2026-11-27 — Azioni rapide sugli errori della Vista Live (5e+)
 
 - **Fatto.** Dall'errore selezionato sulla mappa o nella timeline si può preparare la correzione in Claude, chiedere una spiegazione a Ollama e aprire il file alla riga. Funziona anche per un errore del terminale prima di una chat. Codex ha coperto contratto e UI in subentro per crediti Claude esauriti.

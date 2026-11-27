@@ -11,7 +11,7 @@ import { launchApp } from '../launch';
 
 // Playwright loads specs as CommonJS: the fixtures package (ESM) is located by path instead.
 const FAKE_CLAUDE = resolve(__dirname, '../../../../packages/fixtures/bin/fake-claude.mjs');
-const test = base.extend<{ chatMode: 'normal' | 'permissions' }>({
+const test = base.extend<{ chatMode: 'normal' | 'permissions' | 'configuration' }>({
   chatMode: ['normal', { option: true }],
 });
 
@@ -35,11 +35,15 @@ test.beforeEach(async ({ chatMode }) => {
     `import(${JSON.stringify(pathToFileURL(FAKE_CLAUDE).href)});\n`,
   );
   await mkdir(join(fixture, 'Project'));
+  const home = join(fixture, 'home');
+  await mkdir(join(home, '.claude'), { recursive: true });
+  await writeFile(join(home, '.claude', 'settings.json'), '{"model":"sonnet"}');
   const workspace = await realpath(join(fixture, 'Project'));
   ({ app, page } = await launchApp({
     userDataDir: join(fixture, 'user-data'),
     env: {
       Path: `${bin};${process.env.Path ?? process.env.PATH ?? ''}`,
+      USERPROFILE: home,
       FAKE_CLAUDE_FIXTURE: 'sessione-01',
       FAKE_CLAUDE_MODE: chatMode,
       FAKE_CLAUDE_ARGV_LOG: join(fixture, 'argv.jsonl'),
@@ -169,6 +173,82 @@ test.describe('chat dock', () => {
 test.afterEach(async () => {
   await app?.close();
   if (fixture) await rm(fixture, { recursive: true, force: true });
+});
+
+test.describe('turn configuration', () => {
+  test.use({ chatMode: 'configuration' });
+
+  test('applies model and effort, warns before a model change, and replays the recorded values', async () => {
+    const dock = page.getByRole('complementary', { name: 'Session' });
+    const timeline = page.getByRole('region', { name: 'Session timeline' });
+    const agents = page.getByRole('region', { name: 'Agents', exact: true });
+    const inspector = page.getByRole('region', { name: 'Event inspector' });
+    const mapConfig = page.getByRole('group', { name: 'Claude turn configuration' });
+    const model = dock.getByRole('combobox', { name: 'Model' });
+    const effort = dock.getByRole('combobox', { name: 'Effort' });
+    const warning = dock.getByText(/will reread the conversation/i);
+    const completed = timeline.getByRole('button', { name: 'Turn completed', exact: true });
+    const send = async (text: string, count: number) => {
+      await dock.getByRole('textbox', { name: 'Message Claude' }).fill(text);
+      await dock.getByRole('button', { name: 'Send', exact: true }).click();
+      await expect(completed).toHaveCount(count);
+    };
+
+    await dock.getByRole('button', { name: 'Configure Claude' }).click();
+    await expect(model).toHaveValue('');
+    await expect(model).toBeFocused();
+    await model.selectOption('sonnet');
+    await effort.selectOption('low');
+    await expect(warning).toHaveCount(0);
+    await send('Record the Sonnet turn', 1);
+    await expect(agents).toContainText('claude-sonnet-5-5 · low');
+
+    await effort.selectOption('high');
+    await expect(effort).toHaveValue('high');
+    await expect(warning).toHaveCount(0);
+    await expect(agents).toContainText('claude-sonnet-5-5 · low');
+    await model.selectOption('opus');
+    await expect(warning).toContainText('1,300');
+    await dock.getByRole('button', { name: 'Dismiss warning' }).click();
+    await expect(warning).toHaveCount(0);
+    await send('Record the Opus turn', 2);
+    await expect(agents).toContainText('claude-opus-5-5 · high');
+    await expect(mapConfig).toContainText('claude-opus-5-5 · high');
+    await timeline.getByRole('button', { name: /Configuration changed.*opus.*high/i }).click();
+    await expect(inspector).toContainText('Previous model');
+    await expect(inspector).toContainText('Previous effort');
+
+    await dock.getByRole('button', { name: 'History', exact: true }).click();
+    await dock.getByRole('button', { name: /Record the Sonnet turn/ }).click();
+    await expect(timeline).toContainText('Replay · read-only');
+    await expect(model).toHaveCount(0);
+    await expect(agents).toContainText('claude-opus-5-5 · high');
+    await timeline.getByRole('slider', { name: 'Replay position' }).press('Home');
+    await expect(agents).toContainText('claude-sonnet-5-5 · low');
+    await expect(mapConfig).toContainText('claude-sonnet-5-5 · low');
+    await timeline.getByRole('button', { name: 'Turn started', exact: true }).first().click();
+    await expect(inspector.getByText('claude-sonnet-5-5', { exact: true })).toBeVisible();
+    await expect(inspector.getByText('low', { exact: true })).toBeVisible();
+    await dock.getByRole('button', { name: 'Resume session' }).click();
+    await expect(model).toHaveValue('opus');
+    await expect(effort).toHaveValue('high');
+    await expect(warning).toHaveCount(0);
+    await send('Resume the Opus turn', 3);
+    await model.selectOption('sonnet');
+    await expect(warning).toBeVisible();
+    await dock.getByRole('button', { name: 'Hide for this session' }).click();
+    await expect(model).toBeFocused();
+    await model.selectOption('haiku');
+    await expect(warning).toHaveCount(0);
+
+    const argv = (await readFile(join(fixture, 'argv.jsonl'), 'utf8')).trim().split('\n');
+    expect(argv).toHaveLength(3);
+    expect(argv[0]).toContain('"--model","sonnet","--effort","low"');
+    expect(argv[1]).toContain('"--model","opus","--effort","high"');
+    expect(argv[1]).toContain('"--resume","fake-config-session"');
+    expect(argv[2]).toContain('"--model","opus","--effort","high"');
+    expect(argv[2]).toContain('"--resume","fake-config-session"');
+  });
 });
 
 test('opens saved activity in read-only replay after restarting Electron', async () => {

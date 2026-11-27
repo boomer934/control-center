@@ -63,6 +63,8 @@ function samePresence(a: readonly AgentPresence[], b: readonly AgentPresence[]):
       x.alive === y.alive &&
       x.target === y.target &&
       x.name === y.name &&
+      x.model === y.model &&
+      x.effort === y.effort &&
       x.code === y.code &&
       x.calls === y.calls
     );

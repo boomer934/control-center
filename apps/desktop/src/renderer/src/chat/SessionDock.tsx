@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AgentEvent } from '@control-center/event-schema';
 import {
   MAX_CLAUDE_MESSAGE_CHARS,
@@ -9,8 +9,130 @@ import {
 } from '@control-center/ipc-contract/claude';
 import { Button, StateTag } from '../ui/primitives';
 import { MessageMarkdown as Text } from '../ui/MessageMarkdown';
+import { claudeTurn, modelWarning } from './claudeConfig';
 import type { ClaudeChat } from './useClaudeChat';
 import './session.css';
+
+const tokenCount = new Intl.NumberFormat('en-US');
+
+function ClaudeConfiguration({ chat }: { chat: ClaudeChat }) {
+  const turn = useMemo(() => claudeTurn(chat.records), [chat.records]);
+  const modelSelect = useRef<HTMLSelectElement>(null);
+  const focusModel = useRef(false);
+  const { catalog } = chat;
+  useLayoutEffect(() => {
+    if (!catalog || !focusModel.current) return;
+    focusModel.current = false;
+    modelSelect.current?.focus();
+  }, [catalog]);
+  if (!catalog) {
+    return (
+      <Button
+        variant="ghost"
+        disabled={chat.pending}
+        onClick={() => {
+          focusModel.current = true;
+          void chat.prepare();
+        }}
+      >
+        Configure Claude
+      </Button>
+    );
+  }
+
+  const { current, defaults, models } = catalog;
+  const selectedModel = models.find((model) => model.id === (current.model ?? defaults.model));
+  const defaultModel = models.find((model) => model.id === defaults.model)?.label ?? defaults.model;
+  const availableEfforts = selectedModel?.efforts ?? [...new Set(models.flatMap((m) => m.efforts))];
+  const efforts =
+    current.effort && !availableEfforts.includes(current.effort)
+      ? [...availableEfforts, current.effort]
+      : availableEfforts;
+  const warning =
+    !chat.dismissedModelWarning && !chat.muteModelWarnings && modelWarning(turn, catalog);
+  const disabled = chat.status !== 'idle';
+  const dismiss = (mute: boolean) => {
+    modelSelect.current?.focus();
+    chat.dismissModelWarning(mute);
+  };
+
+  return (
+    <>
+      <div className="session-config" role="group" aria-label="Next turn configuration">
+        <label>
+          Model
+          <select
+            ref={modelSelect}
+            value={current.model ?? ''}
+            disabled={disabled}
+            aria-disabled={chat.pending || undefined}
+            onChange={(event) => {
+              if (chat.pending) return;
+              const model = event.target.value || null;
+              const next = models.find((item) => item.id === model);
+              const effort = current.effort;
+              void chat.configure({
+                model,
+                effort: next && effort && !next.efforts.includes(effort) ? null : effort,
+              });
+            }}
+          >
+            <option value="">CLI default{defaultModel && ` (${defaultModel})`}</option>
+            {models.map(({ id, label }) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Effort
+          <select
+            value={current.effort ?? ''}
+            disabled={disabled || !efforts.length}
+            aria-disabled={chat.pending || undefined}
+            onChange={(event) => {
+              if (!chat.pending)
+                void chat.configure({ model: current.model, effort: event.target.value || null });
+            }}
+          >
+            <option value="">CLI default{defaults.effort && ` (${defaults.effort})`}</option>
+            {efforts.map((effort) => (
+              <option key={effort} value={effort}>
+                {effort}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className={warning ? 'session-model-warning' : 'sr-only'}>
+        <p role="status">
+          {warning && (
+            <>
+              {warning.uncertain
+                ? 'If the model changes, Claude will reread the conversation'
+                : 'Claude will reread the conversation'}
+              {warning.contextTokens === undefined
+                ? '. Token estimate unavailable.'
+                : ` (about ${tokenCount.format(warning.contextTokens)} input tokens).`}{' '}
+              The next turn may take longer and cost more.
+            </>
+          )}
+        </p>
+        {warning && (
+          <div className="session-actions">
+            <Button variant="ghost" onClick={() => dismiss(false)}>
+              Dismiss warning
+            </Button>
+            <Button variant="ghost" onClick={() => dismiss(true)}>
+              Hide for this session
+            </Button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 type ToolResult = Extract<AgentEvent, { type: 'tool.completed' | 'tool.failed' }>;
 
@@ -347,6 +469,7 @@ export function SessionDock({
               await chat.send(draft);
             }}
           >
+            <ClaudeConfiguration chat={chat} />
             <label htmlFor="claude-prompt">Message Claude</label>
             <textarea
               ref={composer}

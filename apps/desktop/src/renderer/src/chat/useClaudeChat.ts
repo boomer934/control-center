@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AgentCatalog, AgentConfig } from '@control-center/ipc-contract';
 import type {
   ClaudeHistoryRecord,
   ClaudeHistorySummary,
@@ -17,6 +18,9 @@ interface Chat {
   partial: string;
   permissions: ClaudePermission[];
   draft: string;
+  catalog?: AgentCatalog | undefined;
+  dismissedModelWarning?: boolean;
+  muteModelWarnings?: boolean;
   error?: string;
 }
 
@@ -42,8 +46,13 @@ function applyUpdate(chat: Chat, update: ClaudeUpdate): Chat {
         ...(update.status !== 'running' && { partial: '', permissions: [] }),
       };
     case 'config':
-      // the model and effort selector arrives with phase 5f.2
-      return chat;
+      return {
+        ...chat,
+        catalog: update.catalog,
+        dismissedModelWarning:
+          chat.catalog?.current.model === update.catalog.current.model &&
+          Boolean(chat.dismissedModelWarning),
+      };
     case 'events':
       return { ...chat, records: [...chat.records, { kind: 'events', events: update.events }] };
     case 'prompt':
@@ -162,6 +171,31 @@ export function useClaudeChat(workspaceId?: string) {
       perform(async (workspace) => {
         if (chat.historyId && chat.resumable && !chat.id) await open(workspace, chat.historyId);
       }),
+    prepare: () =>
+      perform(async (workspace) => {
+        if (!chat.id && !chat.historyId) await open(workspace);
+      }),
+    configure: (config: AgentConfig) =>
+      perform(async (workspace) => {
+        if (!chat.id || chat.status !== 'idle') return;
+        const result = await api.configure({ id: chat.id, ...config });
+        if (result === 'applied') return;
+        update(workspace, (value) => ({
+          ...value,
+          error:
+            result === 'invalid'
+              ? 'Claude does not offer this model and effort combination.'
+              : 'This Claude session is closed. Start a new chat to change its settings.',
+        }));
+      }),
+    dismissModelWarning(mute = false) {
+      if (!workspaceId) return;
+      update(workspaceId, (value) => ({
+        ...value,
+        dismissedModelWarning: true,
+        muteModelWarnings: mute || Boolean(value.muteModelWarnings),
+      }));
+    },
     newSession: () =>
       perform(async (workspace) => {
         if (chat.status === 'running') return;
@@ -183,6 +217,7 @@ export function useClaudeChat(workspaceId?: string) {
           update(workspace, (value) => ({
             ...value,
             id: undefined,
+            catalog: undefined,
             status: 'closed',
             permissions: [],
           }));

@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Modello ed effort per turno di Claude (5f.2)
+
+- **Fatto.** Fixture, test e selettori nel compositore su `feat/5f2-model-effort-ui`. La scelta del turno successivo usa il catalogo IPC e torna alla ripresa. Vista Live, Agents, Inspector e replay mostrano i valori registrati. La timeline segnala `session.configChanged` e l'ispettore mostra anche i valori precedenti quando disponibili.
+- **Decisioni.** L'avviso precede l'invio quando cambia il modello e si può chiudere o nascondere per la sessione. La stima usa input, letture e scritture della cache dell'ultimo `usage.updated` del Claude principale con `scope: message`. Se l'alias non è risolvibile con i dati del turno precedente, l'avviso è condizionale. I dati mancanti nei turni storici restano assenti.
+- **Verifica.** `pnpm verify` verde con 498 test passati e 2 saltati. E2E di configurazione con CLI simulata verde. Impeccable in Electron nei temi scuro e chiaro a 1440×900 e 960×600. La riga della mappa mantiene leggibile il modello alla larghezza minima.
+- **Problemi.** `pnpm e2e` locale ha 79 verdi, quattro snapshot falliti e due confronti dell'URL dev falliti per `#/live`. I sei fallimenti si riproducono sul checkout di `origin/main` (`3786c40`).
+
+---
+
 ## 2026-11-27 — Correzioni del bridge degli hooks dalla revisione Astra (F4.1)
 
 - **Fatto.** Su `fix/hooks-bridge-hardening`: hooks passati a `claude --settings` come JSON inline, quindi nessun `settings.json` su disco; `bridge.json` scritto solo dopo `listen()`. Server della pipe con scadenza assoluta, limite di frammenti (`fragmented`) e rifiuti raggruppati e limitati prima della Console (`RejectSummary`). Lo script legge `bridge.json` con un solo `open`, verifica con `fstat` sull'handle e legge al massimo 4 KiB + 1 byte. `killTree` ritenta `taskkill` e segnala `ProcessTreeNotEnded`. La pulizia delle cartelle rimaste usa `maxRetries` e segnala `StaleSessionCleanupFailed`. Nuovi test: in `bridge.test.ts`, `cli.test.ts`, `session.test.ts` e `kill-tree.test.ts`.

@@ -55,6 +55,23 @@
 .lmap-tb .r {
   min-width: 0;
 }
+.lmap-config {
+  display: flex;
+  align-items: baseline;
+  flex: none;
+  min-width: 0;
+  gap: var(--sp-3);
+  padding: var(--sp-1) var(--sp-5);
+  border-bottom: var(--sz-hair) solid var(--line);
+  background: var(--bg-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-2);
+}
+.lmap-config code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .lmap-about {
   min-width: 0;
   overflow: hidden;

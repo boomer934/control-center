@@ -1,7 +1,13 @@
 import type { AgentEvent, AgentId, ToolKind } from '@control-center/event-schema';
 import type { GitCheckpoint } from '@control-center/ipc-contract';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
-import { HOLD_MS, MapActivity, type ResolveFile, type ViewOptions } from './activity';
+import {
+  configurationLabel,
+  HOLD_MS,
+  MapActivity,
+  type ResolveFile,
+  type ViewOptions,
+} from './activity';
 
 export type ReplayRecord =
   | { kind: 'events'; events: readonly AgentEvent[] }
@@ -96,6 +102,11 @@ function point(event: AgentEvent): Pick<TimelineMark, 'label' | 'tone' | 'glyph'
   switch (event.type) {
     case 'session.started':
       return { label: 'Turn started', tone: 'neutral', glyph: 'i-play' };
+    case 'session.configChanged': {
+      if (event.provider !== 'claude') return;
+      const config = configurationLabel(event) ?? 'CLI defaults';
+      return { label: `Configuration changed · ${config}`, tone: 'neutral', glyph: 'i-gear' };
+    }
     case 'session.ended':
       return {
         label: event.ok ? 'Turn completed' : 'Turn ended',

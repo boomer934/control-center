@@ -62,6 +62,7 @@ interface AgentRecord {
    */
   runs: { start: number; end?: number }[];
   ops: Op[];
+  configurations: { at: number; model: string | undefined; effort: string | undefined }[];
 }
 
 export type TempKind = 'command' | 'mcp' | 'web';
@@ -132,6 +133,8 @@ export interface AgentPresence {
   state: MapState;
   /** What the chip says: "reading", "waits", "thinking", "delegating", "done". */
   label: string;
+  model?: string | undefined;
+  effort?: string | undefined;
   alive: boolean;
   calls: number;
   /** Map node the agent works on: `f:<path>` for a file, the temp id for a command. */
@@ -139,6 +142,11 @@ export interface AgentPresence {
   /** Time of the agent's latest event, to pick whom to follow. */
   lastActive: number;
   action?: { target: string | null; toolUseId: string; since: number };
+}
+
+export function configurationLabel({ model, effort }: Pick<AgentPresence, 'model' | 'effort'>) {
+  if (model && effort) return `${model} · ${effort}`;
+  return model ?? (effort && `Effort · ${effort}`);
 }
 
 export interface ActivityView {
@@ -281,7 +289,16 @@ export class MapActivity {
         id === 'main' ? 'Claude' : kind === 'local' ? id.slice('ollama:'.length) : 'Subagent';
       const code = agentCode(id === 'main' ? 'CL' : name, this.codes);
       this.codes.add(code);
-      agent = { id, name, code, kind, start: at, runs: [{ start: at }], ops: [] };
+      agent = {
+        id,
+        name,
+        code,
+        kind,
+        start: at,
+        runs: [{ start: at }],
+        ops: [],
+        configurations: [],
+      };
       this.agents.set(id, agent);
     }
     return agent;
@@ -430,7 +447,10 @@ export class MapActivity {
         this.finish(agent, at);
         return;
       case 'session.started':
-        this.resume(agent, at);
+      case 'session.configChanged':
+        if (event.type === 'session.started') this.resume(agent, at);
+        if (event.provider === 'claude')
+          agent.configurations.push({ at, model: event.model, effort: event.effort });
         return;
       case 'session.ended':
         this.finish(agent, at);
@@ -509,11 +529,13 @@ export class MapActivity {
       const focus = op ?? (alive ? mine.at(-1) : undefined);
       const target = focus && focus.kind !== 'agent' ? targetOf(focus) : undefined;
       const last = mine.at(-1);
+      const config = agent.configurations.findLast((item) => item.at <= t);
       agents.push({
         id: agent.id,
         name: agent.name,
         code: agent.code,
         kind: agent.kind,
+        ...(config && { model: config.model, effort: config.effort }),
         state,
         label,
         alive,

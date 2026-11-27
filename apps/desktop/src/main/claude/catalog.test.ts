@@ -6,7 +6,13 @@ import { join } from 'node:path';
 import type { ErrorInput } from '@control-center/app-log';
 import { FAKE_CLAUDE, SANITIZED_DIR } from '@control-center/fixtures';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parseClaudeInitialize, probeClaude, readCatalogCache, writeCatalogCache } from './catalog';
+import {
+  parseClaudeInitialize,
+  parseClaudeInitLine,
+  probeClaude,
+  readCatalogCache,
+  writeCatalogCache,
+} from './catalog';
 
 const recorded = () =>
   JSON.parse(readFileSync(join(SANITIZED_DIR, 'claude-initialize.control.jsonl'), 'utf8')).response
@@ -107,6 +113,33 @@ describe('Claude catalog from initialize (phase 5h)', () => {
   it('is not an answer when the shape is wrong', () => {
     expect(parseClaudeInitialize(null)).toBeUndefined();
     expect(parseClaudeInitialize({ models: 'opus' })).toBeUndefined();
+  });
+});
+
+describe('Claude session init line (phase 5h.2)', () => {
+  it('lists tools, MCP servers, plugins and skills, and the kinds it covers', () => {
+    const read = parseClaudeInitLine({
+      type: 'system',
+      subtype: 'init',
+      claude_code_version: '2.1.326',
+      cwd: 'C:\\Users\\someone\\repo',
+      tools: ['Read', 'mcp__github__search', 'bad tool', 42],
+      mcp_servers: [{ name: 'github', status: 'connected' }, { status: 'failed' }],
+      plugins: [{ name: 'impeccable', path: 'C:\\Users\\someone\\.claude\\plugins\\x' }],
+    });
+    expect(read?.version).toBe('2.1.326');
+    expect(read?.kinds).toEqual(['tool', 'mcp', 'plugin']);
+    expect(read?.entries.map((e) => [e.kind, e.id, e.tags])).toEqual([
+      ['tool', 'Read', []],
+      ['tool', 'mcp__github__search', ['mcp']],
+      ['mcp', 'github', []],
+      ['plugin', 'impeccable', []],
+    ]);
+    expect(JSON.stringify(read)).not.toContain('someone');
+  });
+
+  it('is not a read when the shape is wrong', () => {
+    expect(parseClaudeInitLine({ tools: 'Read' })).toBeUndefined();
   });
 });
 

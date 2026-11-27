@@ -1,6 +1,10 @@
 // JSON-RPC over the stdio of `codex app-server` (one JSON object per line, no `jsonrpc` field):
 // the app's requests and their responses, the server's notifications and the server's own
 // requests (approvals), each checked by shape before it reaches the session.
+//
+// The app-server also offers powerful writes (`config/value/write`, `plugin/install`, `fs/*`,
+// `command/exec`, `account/*`…). Every client is built with a closed list of the methods it may
+// call (./methods.ts): anything else is refused before it is sent.
 import { z } from 'zod';
 
 export const MAX_LINE_CHARS = 16 * 1024 * 1024;
@@ -24,7 +28,7 @@ export class RpcError extends Error {
   override name = 'CodexRpcError';
   constructor(
     readonly method: string,
-    readonly code: number | 'timeout' | 'closed',
+    readonly code: number | 'timeout' | 'closed' | 'refused',
     message: string,
   ) {
     super(message);
@@ -36,6 +40,8 @@ export interface RpcHandlers {
   onRequest: (id: number | string, method: string, params: unknown) => void;
   /** A line that is not one of the three shapes: counted by the session, never shown. */
   onInvalid: () => void;
+  /** A call to a method outside the client's list: refused, never sent. */
+  onRefused?: (method: string) => void;
 }
 
 export interface RpcClient {
@@ -52,8 +58,15 @@ export interface RpcClient {
 export function createRpcClient(
   write: (line: string) => boolean,
   handlers: RpcHandlers,
+  /** The only methods this client may call or notify. */
+  allowed: ReadonlySet<string>,
   defaultTimeoutMs = 30_000,
 ): RpcClient {
+  const permitted = (method: string) => {
+    if (allowed.has(method)) return true;
+    handlers.onRefused?.(method.slice(0, 128));
+    return false;
+  };
   let next = 1;
   let closed = false;
   let buffer = '';
@@ -102,6 +115,8 @@ export function createRpcClient(
 
   return {
     request<T>(method: string, params: unknown, timeoutMs = defaultTimeoutMs): Promise<T> {
+      if (!permitted(method))
+        return Promise.reject(new RpcError(method, 'refused', 'Not a method this client calls'));
       if (closed) return Promise.reject(new RpcError(method, 'closed', 'The Codex server is gone'));
       const id = next++;
       return new Promise<T>((resolve, reject) => {
@@ -118,6 +133,7 @@ export function createRpcClient(
       });
     },
     notify(method, params) {
+      if (!permitted(method)) return;
       send(params === undefined ? { method } : { method, params });
     },
     respond(id, result) {

@@ -31,6 +31,7 @@ import { ClaudeNativeSessionId } from '../claude/history';
 import { killTree, type Teardown } from '../claude/kill-tree';
 import { superviseChild } from '../errors/children';
 import { codexVersion, TESTED_CODEX_VERSIONS } from './cli';
+import { CODEX_SESSION_METHODS } from './methods';
 import {
   codexCatalog,
   codexDefaults,
@@ -45,6 +46,12 @@ export interface CodexSessionOptions extends AgentOpenOptions {
   /** The app's version, for the `initialize` client info. */
   clientVersion?: string;
   testedVersions?: readonly string[];
+  /**
+   * Codex said its skills changed (`skills/changed`): the capability inventory is due for a new
+   * read. `mcpServer/startupStatus/updated` and `app/list/updated` are not news of the inventory
+   * (it holds neither the start status of a server nor the apps) and arrive with every thread.
+   */
+  onCapabilitiesChanged?: () => void;
   now?: () => Date;
   /** Test seams. */
   timeouts?: { open?: number; turn?: number; interrupt?: number; close?: number };
@@ -125,6 +132,12 @@ const approvalParams = z.looseObject({
   availableDecisions: z.array(z.unknown()).nullable().optional(),
 });
 const threadParams = z.looseObject({ threadId: z.string() });
+const deprecationParams = z.looseObject({
+  summary: z.string(),
+  details: z.string().nullable().optional(),
+});
+/** Server-wide notifications (no thread) that change what the capability inventory lists. */
+const CAPABILITY_NOTIFICATIONS = new Set(['skills/changed']);
 const deltaParams = z.looseObject({ delta: z.string() });
 const resolvedParams = z.looseObject({ requestId: z.union([z.number(), z.string()]) });
 const turnParams = z.looseObject({ turn: z.looseObject({ id: z.string() }) });
@@ -296,7 +309,20 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
   };
 
   // ── the server ──
+  const deprecations = new Set<string>();
   const onNotification = (method: string, params: unknown) => {
+    if (CAPABILITY_NOTIFICATIONS.has(method)) return options.onCapabilitiesChanged?.();
+    if (method === 'deprecationNotice') {
+      const notice = deprecationParams.safeParse(params);
+      if (!notice.success) return;
+      const text = clean(
+        [notice.data.summary, notice.data.details].filter(Boolean).join(': '),
+      ).slice(0, 500);
+      // each notice once per session: the server may repeat it at every thread
+      if (!text || deprecations.has(text) || deprecations.size >= 20) return;
+      deprecations.add(text);
+      return report({ kind: 'codex-setup', name: 'CodexDeprecationNotice', message: text });
+    }
     const thread = threadParams.safeParse(params);
     if (!thread.success || thread.data.threadId !== threadId) return;
     if (method === 'item/agentMessage/delta') {
@@ -358,7 +384,14 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
         else rpc.respondError(rpcId, -32601, 'Not supported by this client');
       },
       onInvalid: () => invalidLines++,
+      onRefused: (method) =>
+        report({
+          kind: 'codex-setup',
+          name: 'CodexMethodRefused',
+          message: `The app refused to call ${method}: it is not one of the methods a session uses`,
+        }),
     },
+    CODEX_SESSION_METHODS,
   );
 
   const killFailed = () =>

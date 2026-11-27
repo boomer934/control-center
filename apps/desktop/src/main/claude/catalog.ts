@@ -146,6 +146,56 @@ export function parseClaudeInitialize(value: unknown): ClaudeDiscovery | undefin
   };
 }
 
+// ── the `system/init` line of a chat session ──
+//
+// Each run of a session starts with this line: the tools (MCP tools included, as
+// `mcp__server__tool`), the MCP servers with their status, the plugins and, in newer versions,
+// the skills. They depend on the workspace (its `.mcp.json`, its skills), so they go to the
+// inventory as an additive read: added or updated, never removed by a session that lacks them.
+
+const initNameSchema = z.union([
+  z.string(),
+  z.object({ name: z.string(), status: z.string().max(32).optional() }),
+]);
+export const claudeInitLineSchema = z.object({
+  tools: z.array(z.unknown()).max(4096).optional(),
+  mcp_servers: z.array(z.unknown()).max(512).optional(),
+  plugins: z.array(z.unknown()).max(1024).optional(),
+  skills: z.array(z.unknown()).max(4096).optional(),
+  claude_code_version: z.string().max(64).optional(),
+});
+
+/** A `system/init` line → the session's tools, MCP servers, plugins and skills. */
+export function parseClaudeInitLine(
+  line: unknown,
+): { version: string | null; entries: Capability[]; kinds: CapabilityKind[] } | undefined {
+  const parsed = claudeInitLineSchema.safeParse(line);
+  if (!parsed.success) return undefined;
+  const init = parsed.data;
+  const named = (items: readonly unknown[] | undefined) =>
+    each(items, initNameSchema).map((n) => (typeof n === 'string' ? { name: n } : n));
+  const fields: [CapabilityKind, readonly unknown[] | undefined][] = [
+    ['tool', init.tools],
+    ['mcp', init.mcp_servers],
+    ['plugin', init.plugins],
+    ['skill', init.skills],
+  ];
+  const entries = fields.flatMap(([kind, items]) =>
+    named(items).map((n) =>
+      makeCapability('claude', {
+        kind,
+        id: n.name,
+        tags: kind === 'tool' && n.name.startsWith('mcp__') ? ['mcp'] : [],
+      }),
+    ),
+  );
+  return {
+    version: AgentVersionSchema.safeParse(init.claude_code_version).data ?? null,
+    entries: entries.filter((c): c is Capability => c !== undefined),
+    kinds: fields.filter(([, items]) => items !== undefined).map(([kind]) => kind),
+  };
+}
+
 export const PROBE_TIMEOUT_MS = 30_000;
 /** How long the probe waits for its process tree to end once it has the answer. */
 const CLOSE_WAIT_MS = 5000;

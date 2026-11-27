@@ -3,8 +3,18 @@ import { createRpcClient, MAX_LINE_CHARS, RpcError } from './rpc';
 
 function setup(timeoutMs?: number) {
   const written: string[] = [];
-  const handlers = { onNotification: vi.fn(), onRequest: vi.fn(), onInvalid: vi.fn() };
-  const rpc = createRpcClient((line) => (written.push(line), true), handlers, timeoutMs);
+  const handlers = {
+    onNotification: vi.fn(),
+    onRequest: vi.fn(),
+    onInvalid: vi.fn(),
+    onRefused: vi.fn(),
+  };
+  const rpc = createRpcClient(
+    (line) => (written.push(line), true),
+    handlers,
+    new Set(['initialize', 'initialized', 'model/list', 'thread/start']),
+    timeoutMs,
+  );
   const sent = () => written.map((l) => JSON.parse(l) as Record<string, unknown>);
   return { rpc, handlers, sent };
 }
@@ -58,7 +68,7 @@ describe('createRpcClient', () => {
       await expect(slow).rejects.toMatchObject({ code: 'timeout' });
       rpc.close();
       await expect(pending).rejects.toBeInstanceOf(RpcError);
-      await expect(rpc.request('x', {})).rejects.toMatchObject({ code: 'closed' });
+      await expect(rpc.request('model/list', {})).rejects.toMatchObject({ code: 'closed' });
     } finally {
       vi.useRealTimers();
     }
@@ -73,6 +83,48 @@ describe('createRpcClient', () => {
       { id: 0, result: { decision: 'accept' } },
       { id: 'a', error: { code: -32601, message: 'no' } },
       { method: 'initialized' },
+    ]);
+  });
+
+  it('refuses a method outside its list before sending it', async () => {
+    const { rpc, handlers, sent } = setup();
+    await expect(rpc.request('config/value/write', { key: 'x' })).rejects.toMatchObject({
+      name: 'CodexRpcError',
+      code: 'refused',
+      method: 'config/value/write',
+    });
+    rpc.notify('experimentalFeature/enablement/set', { name: 'x', enabled: true });
+    expect(sent()).toEqual([]);
+    expect(handlers.onRefused.mock.calls).toEqual([
+      ['config/value/write'],
+      ['experimentalFeature/enablement/set'],
+    ]);
+  });
+
+  it('lists the methods of a session and of the probe, and no write', async () => {
+    const { CODEX_PROBE_METHODS, CODEX_SESSION_METHODS } = await import('./methods');
+    expect([...CODEX_SESSION_METHODS].sort()).toEqual([
+      'account/read',
+      'config/read',
+      'initialize',
+      'initialized',
+      'model/list',
+      'thread/resume',
+      'thread/start',
+      'turn/interrupt',
+      'turn/start',
+    ]);
+    expect([...CODEX_PROBE_METHODS].sort()).toEqual([
+      'experimentalFeature/list',
+      'hooks/list',
+      'initialize',
+      'initialized',
+      'mcpServerStatus/list',
+      'model/list',
+      'modelProvider/capabilities/read',
+      'permissionProfile/list',
+      'plugin/installed',
+      'skills/list',
     ]);
   });
 });

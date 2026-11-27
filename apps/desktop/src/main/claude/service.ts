@@ -6,7 +6,7 @@ import { MAX_CLAUDE_SESSIONS, type ClaudeStartResult } from '@control-center/ipc
 import { createAgentService, type AgentSession } from '../agents/service';
 import type { Program } from './cli';
 import { claudeCatalog, readClaudeDefaults } from './models';
-import { openClaudeSession } from './session';
+import { openClaudeSession, type ClaudeSessionOptions } from './session';
 import { removeStaleSessions, type HookRunner } from './session-files';
 
 export { lastChosenConfig } from '../agents/service';
@@ -21,6 +21,8 @@ export interface ClaudeServiceDeps {
   defaults?: () => Promise<AgentConfig>;
   /** The models Claude Code listed (phase 5h); undefined: the built-in aliases. */
   models?: () => Promise<readonly AgentModel[] | undefined>;
+  /** What a session's `system/init` line listed (phase 5h.2), for the capability inventory. */
+  onCapabilities?: ClaudeSessionOptions['onCapabilities'];
   open?: typeof openClaudeSession;
   prepareTurn?: (
     root: string,
@@ -72,7 +74,13 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       ]);
       return claudeCatalog(defaults, saved, models);
     },
-    open: (options, claude) => open({ ...options, claude, hooks }) as Promise<AgentSession>,
+    open: (options, claude) =>
+      open({
+        ...options,
+        claude,
+        hooks,
+        onCapabilities: deps.onCapabilities,
+      }) as Promise<AgentSession>,
   });
   return {
     ...service,

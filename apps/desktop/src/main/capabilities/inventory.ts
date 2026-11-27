@@ -145,6 +145,12 @@ export interface CapabilityRead {
    * `commands` field says nothing about the commands, it does not remove them.
    */
   kinds: readonly CapabilityKind[];
+  /**
+   * Entries of the covered kinds are added or updated, none is removed, and the agent's last
+   * read (version, time) stays: a chat session's answer depends on its workspace (its MCP
+   * servers, its skills), so what one session lacks may still be there in another.
+   */
+  additive?: boolean;
 }
 
 /**
@@ -174,8 +180,11 @@ export function applyRead(
   }
 
   const present: StoredEntry[] = [];
+  let touched = false;
   for (const [k, c] of incoming) {
     const old = previous.get(k);
+    if (old === undefined || old.removedAt !== undefined || signature(old) !== signature(c))
+      touched = true;
     if (!old) {
       present.push({
         ...capability(c),
@@ -201,7 +210,7 @@ export function applyRead(
   for (const [k, old] of previous) {
     if (incoming.has(k)) continue;
     if (old.removedAt !== undefined) removed.push(old);
-    else if (!covered.has(old.kind)) present.push(old);
+    else if (!covered.has(old.kind) || read.additive) present.push(old);
     else removed.push({ ...old, removedAt: at, changedAt: at, changedRevision: revision });
   }
   // present entries first, then the newest removals while there is room: the snapshot never
@@ -210,19 +219,24 @@ export function applyRead(
   removed.sort((a, b) => b.changedRevision - a.changedRevision);
   const kept = removed.slice(0, MAX_CAPABILITIES_PER_AGENT - current.length);
 
+  // an additive read that brings nothing new is no change at all (no new revision)
+  if (read.additive && !touched && current.length + kept.length === previous.size) return snapshot;
+
   const record = snapshot.agents.find((a) => a.agent === agent);
   const baseline = !record?.readAt;
-  const agents = [
-    ...snapshot.agents.filter((a) => a.agent !== agent),
-    {
-      agent,
-      state: 'ready' as const,
-      version,
-      readAt: at,
-      seenAt: baseline ? at : (record?.seenAt ?? null),
-      seenRevision: baseline ? revision : (record?.seenRevision ?? null),
-    },
-  ].sort(byAgent);
+  const agents = read.additive
+    ? snapshot.agents
+    : [
+        ...snapshot.agents.filter((a) => a.agent !== agent),
+        {
+          agent,
+          state: 'ready' as const,
+          version,
+          readAt: at,
+          seenAt: baseline ? at : (record?.seenAt ?? null),
+          seenRevision: baseline ? revision : (record?.seenRevision ?? null),
+        },
+      ].sort(byAgent);
 
   return {
     v: SNAPSHOT_VERSION,

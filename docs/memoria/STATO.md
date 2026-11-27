@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27 (PR #79, 5f.1 PR B, in attesa del merge; poi 5h da `main`). Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f.2 (Codex) e 5h (Claude), poi 5g e la Fase 6._
+_Ultimo aggiornamento 2026-11-27 (PR #79 unita: 5f.1 chiusa; 5h.1 in corso su `feat/capabilities-contract`). Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f.2 (Codex) e 5h (Claude), poi 5g e la Fase 6._
 
 ## Fase
 
@@ -16,8 +16,8 @@ _Ultimo aggiornamento 2026-11-27 (PR #79, 5f.1 PR B, in attesa del merge; poi 5h
 
 - **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; unita su `main` con la PR #67 (`c33838b`), CI verde. Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
 - **5f.1, PR A (contratto e Claude):** unita su `main` (PR #77, ADR 0017).
-- **5f.1, PR B (sessione Codex nel main):** [PR #79](https://github.com/boomer934/control-center/pull/79) (ADR 0018), revisione incrociata fatta e rilievi corretti; in attesa del merge.
-- **5h, capacità e aggiornamento automatico:** piano approvato in `FASE_5h.md`; si parte dopo il merge della #79.
+- **5f.1, PR B (sessione Codex nel main):** unita su `main` (PR #79, `c9c38b9`, ADR 0018). Il commit del piano 5h (`e32f4e6`) era rimasto fuori dallo squash: riportato su `feat/capabilities-contract`.
+- **5h, capacità e aggiornamento automatico:** piano approvato in `FASE_5h.md`; 5h.1 in corso su `feat/capabilities-contract`.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -38,7 +38,7 @@ _Ultimo aggiornamento 2026-11-27 (PR #79, 5f.1 PR B, in attesa del merge; poi 5h
 
 ## Branch
 
-Claude: `feat/codex-session-main` (5f.1 PR B, [PR #79](https://github.com/boomer934/control-center/pull/79), ADR 0018), dalla cartella principale; dopo il merge si passa a `feat/capabilities-contract` (5h.1) da `main`. Le PR #76 e #77 sono unite: il worktree `..\control-center-5f1` e il branch locale `fix/hooks-bridge-hardening` si possono rimuovere. Inoltre `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto: esiste in locale (un commit, `13589c8`, su una base vecchia di `main`), va ribasato. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
+Claude: `feat/capabilities-contract` (5h.1) dalla cartella principale, creato da `main` dopo il merge della #79. Worktree `..\control-center-5f1` e branch locali `feat/codex-session-main`/`feat/codex-session-contract` rimossi; resta da rimuovere `fix/hooks-bridge-hardening` (PR #76 unita). Inoltre `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto: esiste in locale (un commit, `13589c8`, su una base vecchia di `main`), va ribasato. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
 
 ## Punto di ripresa
 
@@ -89,7 +89,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **PR B aperta:** [PR #79](https://github.com/boomer934/control-center/pull/79). Revisione incrociata di Codex: "unire con correzioni", 6 rilievi. Corretti i tre visibili: P1 `approvalsReviewer: user` esplicito (la CLI reale riportava `auto_review`) con verifica della politica restituita (`CodexPolicyRejected`) e ripetizione in ogni `turn/start`; P2 interruzione non confermata → chiusura dell'albero dei processi invece di liberare il workspace; P2 approvazioni accettate solo con l'id del turno confermato. `pnpm verify` 538 test, E2E `codex.spec.ts` + `security.spec.ts` verdi (20), prova reale `CC_REAL_CODEX=1` verde.
 - **Revisione PR #79 chiusa:** corretti anche gli altri tre rilievi: P2 ambito effettivo nel testo dell'approvazione (tipo, cartella, host di rete, copertura di «Sempre»; tipi sconosciuti rifiutati); P2 `initialize`/`account/read` fuori schema → `CodexUnexpectedResponse`; P3 ricerca della CLI che prosegue dopo uno shim o un pacchetto inutilizzabile. `pnpm verify` 542 test, E2E 20 verdi, prova reale verde.
 - **Piano 5h approvato (2026-11-27):** capacità, sezione "Novità e capacità", controllo giornaliero delle CLI e aggiornamento con electron-updater. Piano in [`FASE_5h.md`](FASE_5h.md), sotto-fasi in `CORSIE.md`, goal in `PIANO.md`. Il passo 0 (prove di `initialize` di Claude 2.1.326 e dell'app-server Codex 0.171.0-alpha.13.2) è fatto; codice dell'app non ancora toccato.
-- **Ora (punto di ripresa):** l'utente unisce la PR #79. Poi, dalla cartella principale: `git switch main`, `git pull`, `git switch -c feat/capabilities-contract` e la 5h.1 (Opus 5.5 high). Si possono cancellare il branch locale `feat/codex-session-main` e il worktree `..\control-center-5f1`. Codex in parallelo: rebase della 5f.2 su `main`. Poi la 5f.2 di Codex collega `window.api.codex` a chat, pannello agenti, Vista Live e replay. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
+- **PR #79 unita (2026-11-27).** Branch `feat/capabilities-contract` creato da `main`, worktree `control-center-5f1` rimosso.
+- **Ora (punto di ripresa):** 5h.1 (Opus 5.5 high) su `feat/capabilities-contract`. Codex in parallelo: rebase della 5f.2 su `main`. Poi la 5f.2 di Codex collega `window.api.codex` a chat, pannello agenti, Vista Live e replay. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
 
 ### Corsia Codex
 

@@ -216,3 +216,66 @@ describe('LiveClaudeSession', () => {
     expect(live.endRun()).toEqual([]);
   });
 });
+
+describe('model and effort per run (phase 5f)', () => {
+  const { stream, hooks } = loadClaudeSession('sessione-01');
+  const run = (
+    live: LiveClaudeSession,
+    at: string,
+    config?: { model?: string; effort?: string },
+  ) => [...live.startRun(at, config), ...replay(live, arrivals(stream, hooks))];
+
+  it('reports nothing while the CLI configuration applies', () => {
+    const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
+    const events = run(live, '2026-11-27T10:00:00.000Z');
+    expect(events.some((e) => e.type === 'session.configChanged')).toBe(false);
+    const started = events.find((e) => e.type === 'session.started');
+    expect(started && 'effort' in started ? started.effort : undefined).toBeUndefined();
+  });
+
+  it('records a choice before the run that applies it, and the effort on session.started', () => {
+    const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
+    const first = run(live, '2026-11-27T10:00:00.000Z', { model: 'opus', effort: 'high' });
+    expect(first[0]).toMatchObject({
+      type: 'session.configChanged',
+      source: 'app',
+      provider: 'claude',
+      seq: 0,
+      model: 'opus',
+      effort: 'high',
+      by: 'user',
+    });
+    expect(first[0]).not.toHaveProperty('previousModel');
+    expect(first[1]).toMatchObject({ type: 'session.started', effort: 'high' });
+
+    // same choice: no event; a new one names the previous configuration
+    const same = run(live, '2026-11-27T11:00:00.000Z', { model: 'opus', effort: 'high' });
+    expect(same.some((e) => e.type === 'session.configChanged')).toBe(false);
+    const changed = run(live, '2026-11-27T12:00:00.000Z', { model: 'sonnet' });
+    expect(changed[0]).toMatchObject({
+      type: 'session.configChanged',
+      model: 'sonnet',
+      previousModel: 'opus',
+      previousEffort: 'high',
+    });
+    expect(changed[0]).not.toHaveProperty('effort');
+    const all = [...first, ...same, ...changed];
+    expect(all.map((e) => e.seq)).toEqual(all.map((_, i) => i));
+    for (const e of all) expect(agentEventSchema.safeParse(e).success).toBe(true);
+  });
+
+  it('a session resumed from the history reports only a real change', () => {
+    const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
+    live.restoreConfig({ model: 'opus', effort: 'max' });
+    const events = run(live, '2026-11-27T10:00:00.000Z', { model: 'opus', effort: 'max' });
+    expect(events.some((e) => e.type === 'session.configChanged')).toBe(false);
+    // back to the CLI's own configuration
+    const reset = run(live, '2026-11-27T11:00:00.000Z');
+    expect(reset[0]).toMatchObject({
+      type: 'session.configChanged',
+      previousModel: 'opus',
+      previousEffort: 'max',
+    });
+    expect(reset[0]).not.toHaveProperty('model');
+  });
+});

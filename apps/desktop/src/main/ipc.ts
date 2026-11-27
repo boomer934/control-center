@@ -355,6 +355,7 @@ export function registerIpc(
       claudeSessions.send(senderId, id, text, (await getWorkspaces()).isActive),
     respond: async (request, { senderId }) =>
       claudeSessions.respond(senderId, request, (await getWorkspaces()).isActive),
+    configure: (request, { senderId }) => claudeSessions.configure(senderId, request),
     listHistory: async ({ workspaceId }, { senderId }) => {
       const workspaces = await getWorkspaces();
       if (senderId === undefined || !windowOwner(senderId) || !workspaces.isActive(workspaceId))

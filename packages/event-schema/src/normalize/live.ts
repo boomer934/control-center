@@ -34,6 +34,14 @@ interface Run {
   early: AgentEvent[];
   started: boolean;
   ended: boolean;
+  /** Effort the app started the run with: the stream does not report it. */
+  effort?: string;
+}
+
+/** Model and effort the app passes to a run (phase 5f); absent: the CLI's own configuration. */
+export interface RunConfig {
+  model?: string;
+  effort?: string;
 }
 
 /** Key under which two copies of the same fact are recognized; undefined: always kept. */
@@ -64,6 +72,7 @@ export class LiveClaudeSession {
   private seq = 0;
   private last = EPOCH;
   private run: Run | undefined;
+  private config: RunConfig | undefined;
   private readonly ctx: LiveSessionContext;
 
   constructor(ctx: LiveSessionContext) {
@@ -75,9 +84,35 @@ export class LiveClaudeSession {
     return this.seq;
   }
 
-  /** Starts a new run (a new `claude` process), ending the previous one if it is still open. */
-  startRun(at?: string): AgentEvent[] {
+  /**
+   * Starts a new run (a new `claude` process), ending the previous one if it is still open.
+   * `config`: what the app passes to the run; when it differs from the previous run's, a
+   * `session.configChanged` (by the user) comes before the run's `session.started`.
+   */
+  startRun(at?: string, config?: RunConfig): AgentEvent[] {
     const out = this.run ? this.endRun(at) : [];
+    const next = { model: config?.model, effort: config?.effort };
+    const before = this.config;
+    if (
+      before === undefined
+        ? next.model !== undefined || next.effort !== undefined
+        : before.model !== next.model || before.effort !== next.effort
+    ) {
+      const timestamp = at ?? (this.last === EPOCH ? new Date().toISOString() : this.last);
+      this.emit(
+        {
+          ...this.envelope(timestamp),
+          type: 'session.configChanged',
+          ...(next.model === undefined ? {} : { model: next.model }),
+          ...(next.effort === undefined ? {} : { effort: next.effort }),
+          ...(before?.model === undefined ? {} : { previousModel: before.model }),
+          ...(before?.effort === undefined ? {} : { previousEffort: before.effort }),
+          by: 'user',
+        },
+        out,
+      );
+    }
+    this.config = next;
     const norm = { sessionId: this.ctx.sessionId, cwd: this.ctx.cwd };
     const startAt = at ?? (this.last === EPOCH ? undefined : this.last);
     this.run = {
@@ -88,8 +123,17 @@ export class LiveClaudeSession {
       early: [],
       started: false,
       ended: false,
+      effort: next.effort,
     };
     return out;
+  }
+
+  /**
+   * The configuration of the session's earlier runs, when it resumes from the history: the first
+   * run then reports a change only if it differs.
+   */
+  restoreConfig(config: RunConfig): void {
+    this.config = { model: config.model, effort: config.effort };
   }
 
   /** One stream-json line of the current run. `at`: when it arrived (few lines carry a time). */
@@ -244,6 +288,8 @@ export class LiveClaudeSession {
   }
 
   private emit(e: AgentEvent, out: AgentEvent[]): void {
+    if (e.type === 'session.started' && e.effort === undefined && this.run?.effort !== undefined)
+      e = { ...e, effort: this.run.effort };
     const seq = this.seq++;
     const timestamp = e.timestamp < this.last ? this.last : e.timestamp;
     this.last = timestamp;

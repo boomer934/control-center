@@ -128,6 +128,7 @@ test.describe('preload', () => {
           'start',
           'send',
           'respond',
+          'configure',
           'listHistory',
           'readHistory',
           'interrupt',
@@ -138,7 +139,7 @@ test.describe('preload', () => {
         project: ['open', 'onUpdated'],
         infra: ['snapshot', 'explainProjectError', 'cancelProjectErrorExplanation'],
       },
-      types: Array.from({ length: 36 }, () => 'function'),
+      types: Array.from({ length: 37 }, () => 'function'),
       frozen: true,
       leaked: [],
     });

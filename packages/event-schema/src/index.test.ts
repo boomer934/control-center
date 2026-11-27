@@ -24,8 +24,16 @@ const ws = (path: string) => ({ path, external: false });
 const SAMPLES: Record<string, Record<string, unknown>> = {
   'session.started': {
     model: 'claude-sonnet-5-5',
+    effort: 'high',
     permissionMode: 'default',
     cliVersion: '2.1.322',
+  },
+  'session.configChanged': {
+    model: 'opus',
+    effort: 'max',
+    previousModel: 'claude-sonnet-5-5',
+    previousEffort: 'high',
+    by: 'user',
   },
   'session.ended': { ok: true, status: 'completed', durationMs: 1200, turns: 2, costUsd: 0.12 },
   'message.user': { text: 'Run the tests' },
@@ -79,8 +87,8 @@ describe('event envelope', () => {
     expect(eventEnvelopeSchema.safeParse({ ...envelope, schemaVersion: 999 }).success).toBe(false);
   });
 
-  it('only knows the claude and ollama providers', () => {
-    expect(providerSchema.options).toEqual(['claude', 'ollama']);
+  it('only knows the claude, codex and ollama providers', () => {
+    expect(providerSchema.options).toEqual(['claude', 'codex', 'ollama']);
   });
 
   it('accepts only the known agent id forms', () => {

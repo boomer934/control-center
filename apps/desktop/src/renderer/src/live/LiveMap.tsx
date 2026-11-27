@@ -31,7 +31,12 @@ import { useShortcuts } from '../keys/useShortcuts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Glyph, Icon } from '../ui/icons';
 import { Kbd, Sigil } from '../ui/primitives';
-import type { AgentPresence, MapState, ResolveFile } from './activity';
+import {
+  configurationLabel,
+  type AgentPresence,
+  type MapState,
+  type ResolveFile,
+} from './activity';
 import type { Box, MapLayout } from './layout';
 import type { MapInspection } from './LiveInspection';
 import { MapContext, MiniNode, nodeTypes, type MapContextValue } from './nodes';
@@ -594,6 +599,8 @@ function MapInner(props: LiveMapProps) {
     chips.find((c) => c.agent.state === 'waiting') ?? chips.find((c) => c.agent.state === 'error');
   const otherAgents = chips.filter((c) => c.agent.alive);
   const followName = (followed ?? otherAgents.at(0))?.agent.name ?? 'Claude';
+  const mainAgent = agents.find((agent) => agent.id === 'main');
+  const configuration = mainAgent && configurationLabel(mainAgent);
 
   return (
     <MapContext.Provider value={context}>
@@ -659,6 +666,12 @@ function MapInner(props: LiveMapProps) {
           </button>
         </span>
       </div>
+      {inspection && configuration && (
+        <div className="lmap-config" role="group" aria-label="Claude turn configuration">
+          <span>Claude</span>
+          <code title={configuration}>{configuration}</code>
+        </div>
+      )}
       <div
         ref={wrapper}
         className="map lmap"

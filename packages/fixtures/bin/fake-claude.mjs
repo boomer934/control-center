@@ -2,7 +2,8 @@
 // A stand-in for the `claude` CLI, for tests only: the CI never calls the real service.
 //
 // It accepts the flags the app passes (`-p --input-format stream-json --output-format stream-json
-// --verbose [--settings <file-or-json>] [--resume <id>]`), reads one user message from stdin, then
+// --verbose [--settings <file-or-json>] [--resume <id>] [--model <id>] [--effort <level>]`),
+// reads one user message from stdin, then
 // replays a sanitized recording: stream-json lines on stdout and, at their recorded moments, the
 // hook commands of `--settings` with the recorded payloads on stdin, through a shell, one at a
 // time, as Claude Code does. The recorded workspace path becomes the current folder.
@@ -11,6 +12,7 @@
 //   FAKE_CLAUDE_FIXTURE   name of a recording in ../sanitized (required)
 //   FAKE_CLAUDE_MODE      normal (default) | hang (stops after the first tool call and waits)
 //                         | crash (exits 3 halfway) | permissions (bidirectional chat fixture)
+//                         | configuration (model aliases and cache usage)
 //   FAKE_CLAUDE_VERSION   version reported in the init line (default: the recorded one)
 //   FAKE_CLAUDE_ARGV_LOG  file to which the received arguments are appended, one JSON per run
 import { spawn } from 'node:child_process';
@@ -90,6 +92,39 @@ function runHook(command, payload) {
 const iso = (v) => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : undefined);
 
 const emit = (message) => process.stdout.write(JSON.stringify(message) + '\n');
+
+function configurationTurn(resume) {
+  const session_id = resume ?? 'fake-config-session';
+  const requested = flag('--model') ?? 'sonnet';
+  const aliases = new Map([
+    ['sonnet', 'claude-sonnet-5-5'],
+    ['opus', 'claude-opus-5-5'],
+  ]);
+  const model = aliases.get(requested) ?? requested;
+  emit({ type: 'system', subtype: 'init', session_id, model, claude_code_version: '2.1.326' });
+  emit({
+    type: 'assistant',
+    session_id,
+    message: {
+      id: 'config-message',
+      model,
+      content: [{ type: 'text', text: 'Configuration test turn completed.' }],
+      usage: {
+        input_tokens: 100,
+        output_tokens: 50,
+        cache_read_input_tokens: 1000,
+        cache_creation_input_tokens: 200,
+      },
+    },
+  });
+  emit({
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    session_id,
+    usage: { input_tokens: 9000, output_tokens: 50 },
+  });
+}
 
 async function permissionTurn(lines, message, resume) {
   if (flag('--permission-prompt-tool') !== 'stdio' || !argv.includes('--include-partial-messages'))
@@ -198,6 +233,10 @@ async function main() {
   if (mode === 'permissions') {
     await permissionTurn(lines, message, resume);
     await closed;
+    return;
+  }
+  if (mode === 'configuration') {
+    configurationTurn(resume);
     return;
   }
 

@@ -11,7 +11,13 @@ import type { AgentEvent, ErrorOrigin } from '@control-center/event-schema';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import { Glyph } from '../ui/icons';
 import { Button, Sigil } from '../ui/primitives';
-import { fileNodeId, type ActivityView, type AgentPresence, type ResolveFile } from './activity';
+import {
+  configurationLabel,
+  fileNodeId,
+  type ActivityView,
+  type AgentPresence,
+  type ResolveFile,
+} from './activity';
 import { indexInspection, markForNode, summarizeEvents } from './inspection';
 import { MachineInventory } from './MachineInventory';
 import { ProjectErrorActions } from './ProjectErrorActions';
@@ -65,6 +71,7 @@ function eventFields(
   event: InspectionEvent,
   summary: ReturnType<typeof summarizeEvents>,
   errorPath: string | undefined,
+  agent: AgentPresence | undefined,
 ) {
   const call =
     'toolUseId' in event && event.toolUseId ? summary.calls.get(event.toolUseId) : undefined;
@@ -74,6 +81,8 @@ function eventFields(
   const write = event.type === 'file.written' ? event : path ? summary.writes.get(path) : undefined;
   const diff =
     write && 'toolUseId' in event && write.toolUseId === event.toolUseId ? write.diff : undefined;
+  const change = event.type === 'session.configChanged' ? event : undefined;
+  const start = event.type === 'session.started' ? event : undefined;
   return [
     [
       'Tool',
@@ -88,7 +97,16 @@ function eventFields(
     ],
     ['Origin', error && `${ERROR_ORIGIN[error.origin]} · ${error.language}`],
     ['Changes', diff && `+${diff.add} / −${diff.del}`],
-    ['Model', 'model' in event ? event.model : undefined],
+    [
+      'Model',
+      change
+        ? (change.model ?? 'CLI default')
+        : (('model' in event ? event.model : undefined) ?? (!start && agent?.model)),
+    ],
+    ['Effort', change ? (change.effort ?? 'CLI default') : start ? start.effort : agent?.effort],
+    ['Previous model', change?.previousModel],
+    ['Previous effort', change?.previousEffort],
+    ['Changed by', change && (change.by === 'user' ? 'You' : 'Provider')],
     ['Task', event.type === 'agent.spawned' ? event.task : undefined],
     ['Detail', 'detail' in event ? event.detail : 'reason' in event ? event.reason : undefined],
     [
@@ -189,7 +207,7 @@ function Inspector({
               )}
             </p>
             <dl>
-              {eventFields(event, summary, errorPath).map(([name, value]) => (
+              {eventFields(event, summary, errorPath, agent).map(([name, value]) => (
                 <div key={name}>
                   <dt>{name}</dt>
                   <dd>{value}</dd>
@@ -331,6 +349,7 @@ export function LiveInspection({
                     const permission = summary.permissions.get(agent.id);
                     const failure = summary.failures.get(agent.id);
                     const usage = summary.usage.get(agent.id);
+                    const config = configurationLabel(agent);
                     const status =
                       agent.label === 'delegating' ? 'Delegating' : stateLabel[agent.state];
                     const target = commands.some(
@@ -358,6 +377,11 @@ export function LiveInspection({
                             </span>
                           </span>
                         </button>
+                        {config && (
+                          <p>
+                            <code>{config}</code>
+                          </p>
+                        )}
                         {target && (
                           <p>
                             <code>{target}</code>

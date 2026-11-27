@@ -162,6 +162,54 @@
   justify-content: flex-end;
 }
 
+.session-composer > .btn {
+  justify-self: start;
+}
+
+.session-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.session-config label {
+  display: grid;
+  flex: 1 1 calc(var(--sz-ctl) * 3);
+  min-width: 0;
+  gap: var(--sp-1);
+}
+
+.session-config select {
+  width: 100%;
+  min-height: var(--sz-ctl);
+  padding-inline: var(--sp-2);
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border: var(--sz-hair) solid var(--line-2);
+  border-radius: var(--r-2);
+  font: inherit;
+  text-overflow: ellipsis;
+}
+
+.session-config select:disabled {
+  color: var(--fg-3);
+}
+
+.session-model-warning {
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--sz-hair) solid var(--st-waiting);
+  border-radius: var(--r-2);
+}
+
+.session-model-warning p {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-s);
+}
+
+.session-model-warning .session-actions {
+  justify-content: flex-start;
+}
+
 .session-history {
   margin: 0;
   padding: 0;

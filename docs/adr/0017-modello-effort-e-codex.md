@@ -44,4 +44,4 @@ Prove su Windows del 2026-11-27:
 - I file della cronologia scritti dalla v3 non si leggono con le versioni precedenti dell'app, che scartano le versioni future. È lo stesso comportamento della v2.
 - Il renderer riceve l'aggiornamento `config` ma lo ignora finché la 5f.2 non aggiunge selettore e avviso. L'avviso sul contesto usa gli eventi `usage.updated` già presenti.
 - Un modello Claude nuovo compare nel selettore solo dopo un aggiornamento dell'elenco degli alias, oppure se è configurato in `settings.json`.
-- La ricerca di `codex.exe` nel pacchetto Store si decide nella seconda PR: oggi la CLI non è sul PATH dell'utente.
+- La ricerca di `codex.exe` nel pacchetto Store e il resto della seconda PR sono in [ADR 0018](0018-sessione-codex-nel-main.md).

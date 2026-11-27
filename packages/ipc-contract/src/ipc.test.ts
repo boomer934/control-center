@@ -91,6 +91,16 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
       interrupt: () => false,
       close: () => false,
     },
+    codex: {
+      start: () => 'workspace-unavailable',
+      send: () => 'closed',
+      respond: () => false,
+      configure: () => 'closed',
+      listHistory: () => [],
+      readHistory: () => null,
+      interrupt: () => false,
+      close: () => false,
+    },
     git: {
       status: () => ({ ok: false, error: 'workspace-unavailable' }),
       diff: () => ({ ok: false, error: 'workspace-unavailable' }),
@@ -148,6 +158,15 @@ describe('contract', () => {
       'claude:interrupt',
       'claude:close',
       'claude:updated',
+      'codex:start',
+      'codex:send',
+      'codex:respond',
+      'codex:configure',
+      'codex:list-history',
+      'codex:read-history',
+      'codex:interrupt',
+      'codex:close',
+      'codex:updated',
       'git:status',
       'git:diff',
       'git:stage',
@@ -164,6 +183,7 @@ describe('contract', () => {
       'errors:changed',
       'terminal:updated',
       'claude:updated',
+      'codex:updated',
       'project:updated',
     ]);
     expect(listMethods()).toHaveLength(listChannels().length - listEvents().length);
@@ -372,6 +392,7 @@ describe('createApi (preload)', () => {
       'workspace',
       'terminal',
       'claude',
+      'codex',
       'git',
       'project',
       'infra',
@@ -418,6 +439,7 @@ describe('createApi (preload)', () => {
       'close',
       'onUpdated',
     ]);
+    expect(Object.keys(api.codex)).toEqual(Object.keys(api.claude));
     expect(Object.isFrozen(api)).toBe(true);
     expect(Object.isFrozen(api.app)).toBe(true);
     expect(Object.isFrozen(api.shell)).toBe(true);

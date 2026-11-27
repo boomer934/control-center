@@ -25,3 +25,4 @@ export function normalizeClaudeSession(
 export { ClaudeStreamNormalizer, type StreamNormalizerOptions } from './claude-stream';
 export { ClaudeHooksNormalizer, type HooksNormalizerOptions } from './claude-hooks';
 export { LiveClaudeSession, type LiveSessionContext, type RunConfig } from './live';
+export { LiveCodexSession, countDiff } from './codex';

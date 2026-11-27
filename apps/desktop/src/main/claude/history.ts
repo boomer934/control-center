@@ -38,8 +38,12 @@ function migrateRecord(value: unknown): unknown {
   return { ...record, events: record.events.map(migrateAgentEvent) };
 }
 
-export function createClaudeHistory(dataDir: string) {
-  const base = join(dataDir, 'claude-history');
+/** The saved sessions of one provider, under `<dataDir>/<folder>/<workspace>/<id>.jsonl`. */
+export function createClaudeHistory(
+  dataDir: string,
+  folder: 'claude-history' | 'codex-history' = 'claude-history',
+) {
+  const base = join(dataDir, folder);
   const writes = new Map<string, Promise<void>>();
   const directory = (workspaceId: string) => join(base, workspaceKey.parse(workspaceId));
   const file = (workspaceId: string, id: string) =>

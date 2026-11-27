@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Sessione Codex nel main (5f.1, PR B)
+
+- **Fatto.** Su `feat/codex-session-main` (ADR 0018): namespace IPC `codex` con le stesse forme di `claude`; servizio comune ai due provider estratto dal servizio Claude (`main/agents/service.ts`); sessione su `codex app-server` con JSON-RPC su stdio, approvazioni, interruzione, ripresa del thread, catalogo da `model/list`, default da `config/read`; ricerca della CLI dal PATH o dal pacchetto Store letto dal registro; normalizzatore minimo `LiveCodexSession`; finto `codex app-server`; E2E `codex.spec.ts`; prova reale `real-codex.smoke.test.ts`.
+- **Decisioni.** Ogni `turn/start` manda modello ed effort espliciti, perché l'override di Codex vale anche per i turni successivi: `null` torna al valore configurato. L'effort senza modello si valida sul modello configurato. «Sempre in questa sessione» solo se il server offre `acceptForSession`. Un turno di un provider rende il workspace occupato anche per l'altro.
+- **Verifica.** `pnpm verify` verde (535 test). E2E Codex, Claude, sicurezza ed errori del progetto verdi. Prova con la CLI vera 0.171.0-alpha.13.2 verde.
+- **Problemi.** Lo stderr di Codex scrive righe `ERROR` anche per un comando rifiutato: arrivano in Console come `child-stderr`. Alla ripresa arriva un `tokenUsage` del turno precedente: lo scarta il normalizzatore.
+
+---
+
 ## 2026-11-27 — Correzioni del bridge degli hooks dalla revisione Astra (F4.1)
 
 - **Fatto.** Su `fix/hooks-bridge-hardening`: hooks passati a `claude --settings` come JSON inline, quindi nessun `settings.json` su disco; `bridge.json` scritto solo dopo `listen()`. Server della pipe con scadenza assoluta, limite di frammenti (`fragmented`) e rifiuti raggruppati e limitati prima della Console (`RejectSummary`). Lo script legge `bridge.json` con un solo `open`, verifica con `fstat` sull'handle e legge al massimo 4 KiB + 1 byte. `killTree` ritenta `taskkill` e segnala `ProcessTreeNotEnded`. La pulizia delle cartelle rimaste usa `maxRetries` e segnala `StaleSessionCleanupFailed`. Nuovi test: in `bridge.test.ts`, `cli.test.ts`, `session.test.ts` e `kill-tree.test.ts`.

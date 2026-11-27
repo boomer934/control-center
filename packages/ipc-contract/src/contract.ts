@@ -42,6 +42,20 @@ import {
   ClaudeWorkspaceSchema,
 } from './claude';
 import {
+  CodexConfigureSchema,
+  CodexHistoryListSchema,
+  CodexHistorySchema,
+  CodexHistoryTargetSchema,
+  CodexRespondSchema,
+  CodexSendResultSchema,
+  CodexSendSchema,
+  CodexStartResultSchema,
+  CodexStartSchema,
+  CodexTargetSchema,
+  CodexUpdateSchema,
+  CodexWorkspaceSchema,
+} from './codex';
+import {
   TerminalResizeSchema,
   TerminalResultSchema,
   TerminalStartSchema,
@@ -146,6 +160,7 @@ export const ERROR_KINDS = [
   'ipc-failure',
   'bridge-rejected',
   'claude-setup',
+  'codex-setup',
 ] as const;
 
 export const StackFrameSchema = z
@@ -271,6 +286,21 @@ export const contract = {
     interrupt: invoke('claude:interrupt', ClaudeTargetSchema, z.boolean()),
     close: invoke('claude:close', ClaudeTargetSchema, z.boolean()),
     updated: event('claude:updated', ClaudeUpdateSchema),
+  },
+  codex: {
+    start: invoke('codex:start', CodexStartSchema, CodexStartResultSchema),
+    send: invoke('codex:send', CodexSendSchema, CodexSendResultSchema),
+    respond: invoke('codex:respond', CodexRespondSchema, z.boolean()),
+    configure: invoke('codex:configure', CodexConfigureSchema, AgentConfigureResultSchema),
+    listHistory: invoke('codex:list-history', CodexWorkspaceSchema, CodexHistoryListSchema),
+    readHistory: invoke(
+      'codex:read-history',
+      CodexHistoryTargetSchema,
+      CodexHistorySchema.nullable(),
+    ),
+    interrupt: invoke('codex:interrupt', CodexTargetSchema, z.boolean()),
+    close: invoke('codex:close', CodexTargetSchema, z.boolean()),
+    updated: event('codex:updated', CodexUpdateSchema),
   },
   git: {
     status: invoke('git:status', GitWorkspaceSchema, GitStatusSchema),

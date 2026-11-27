@@ -10,6 +10,8 @@
 //   [patch]      the patch asks for approval first
 //   [hang]       starts answering, then waits for `turn/interrupt`
 //   [deaf]       like [hang], but never honours `turn/interrupt`
+//   [network]    with [approve]: the approval names a network host
+//   [kind:x]     with [approve]: the approval has kind `x` (default `command`)
 //   [early]      also asks approval for another turn before answering `turn/start`
 //   [reroute]    the provider reroutes the turn to another model
 //   [fail]       the turn fails with an error
@@ -17,6 +19,7 @@
 // Environment:
 //   FAKE_CODEX_VERSION     version in the `initialize` user agent (default 0.171.0-alpha.13.2)
 //   FAKE_CODEX_SIGNED_OUT  1: `account/read` answers no account
+//   FAKE_CODEX_ACCOUNT_REPLY  empty: `account/read` answers without an `account` field
 //   FAKE_CODEX_REVIEWER    approvals reviewer reported for the thread, whatever the app asked
 //   FAKE_CODEX_LOG         file to which every request the app sent is appended, one JSON per line
 import { appendFileSync } from 'node:fs';
@@ -175,7 +178,10 @@ async function playTurn(turnId, text) {
   let commandStatus = 'completed';
   if (text.includes('[approve]')) {
     const answer = await ask('item/commandExecution/requestApproval', {
-      kind: 'command',
+      kind: /\[kind:(\w+)\]/.exec(text)?.[1] ?? 'command',
+      ...(text.includes('[network]')
+        ? { networkApprovalContext: { host: 'registry.example.org', protocol: 'https' } }
+        : {}),
       threadId,
       turnId,
       itemId: command.id,
@@ -274,6 +280,7 @@ function answer(id, method, params) {
         platformOs: 'windows',
       };
     case 'account/read':
+      if (process.env.FAKE_CODEX_ACCOUNT_REPLY === 'empty') return { requiresOpenaiAuth: true };
       return {
         account:
           process.env.FAKE_CODEX_SIGNED_OUT === '1'

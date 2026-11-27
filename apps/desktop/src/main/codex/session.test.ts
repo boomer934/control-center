@@ -170,6 +170,9 @@ describe('openCodexSession', () => {
     const request = await prompt;
     expect(request).toMatchObject({ tool: 'Shell', canRemember: true, truncated: false });
     expect(request.details).toContain("Get-Content -LiteralPath 'notes.txt'");
+    // the scope: where it runs (the workspace, redacted) and what "always" covers
+    expect(request.details).toContain('in: .');
+    expect(request.details).toContain('"always" applies to similar requests');
     expect(h.session.respond('not-a-request', 'approve')).toBe(false);
     expect(h.session.respond(request.requestId, 'approve')).toBe(true);
     expect(h.session.respond(request.requestId, 'approve')).toBe(false);
@@ -184,6 +187,26 @@ describe('openCodexSession', () => {
     });
     expect(h.events.find((e) => e.type === 'tool.completed')).toBeDefined();
     expect(h.permissions.at(-1)).toEqual([]);
+  });
+
+  it('shows the network host and the input kind an approval covers', async () => {
+    const h = await open();
+    const prompt = h.prompt();
+    h.session.send('[approve] [network] [kind:writeStdin] install', NONE);
+    const request = await prompt;
+    expect(request.details).toContain('input to a running command');
+    expect(request.details).toContain('network: https registry.example.org');
+    h.session.respond(request.requestId, 'deny');
+    await h.idle();
+  });
+
+  it('declines an approval of a kind it cannot describe', async () => {
+    const h = await open();
+    h.session.send('[approve] [kind:humanCommand] run', NONE);
+    await h.idle();
+    expect(h.permissions.flat()).toEqual([]);
+    const answers = h.sent().filter((m) => (m as { result?: unknown }).result !== undefined);
+    expect(answers).toEqual([expect.objectContaining({ result: { decision: 'decline' } })]);
   });
 
   it('a denied command is reported as denied', async () => {
@@ -297,6 +320,13 @@ describe('openCodexSession', () => {
   it('refuses to open when Codex is not signed in', async () => {
     await expect(open({ fakeEnv: { FAKE_CODEX_SIGNED_OUT: '1' } })).rejects.toMatchObject({
       name: 'CodexNotSignedIn',
+    });
+  });
+
+  it('refuses to open when the account answer does not say who is signed in', async () => {
+    await expect(open({ fakeEnv: { FAKE_CODEX_ACCOUNT_REPLY: 'empty' } })).rejects.toMatchObject({
+      name: 'CodexUnexpectedResponse',
+      message: expect.stringContaining('account/read') as string,
     });
   });
 

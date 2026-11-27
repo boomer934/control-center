@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  codexPackages,
   codexVersion,
-  newestCodexPackage,
   packagedCodexPath,
   resolveCodex,
   resolveCodexOnPath,
@@ -33,9 +33,12 @@ const REG = [
 ].join('\r\n');
 
 describe('Codex app package', () => {
-  it('picks the newest package of the pinned publisher only', () => {
-    expect(newestCodexPackage(REG)).toBe('OpenAI.Codex_26.1120.6357.0_x64__2p2nqsd0c76g0');
-    expect(newestCodexPackage('')).toBeUndefined();
+  it('lists the packages of the pinned publisher only, newest first', () => {
+    expect(codexPackages('')).toEqual([]);
+    expect(codexPackages(REG)).toEqual([
+      'OpenAI.Codex_26.1120.6357.0_x64__2p2nqsd0c76g0',
+      'OpenAI.Codex_26.999.1.0_x64__2p2nqsd0c76g0',
+    ]);
   });
 
   it('builds the path under Program Files and refuses anything else', () => {
@@ -78,6 +81,17 @@ describe('resolveCodex', () => {
     expect(resolveCodexOnPath({ Path: bin })).toBeUndefined();
   });
 
+  it('goes on past an npm shim it cannot run', () => {
+    const broken = temp();
+    const later = temp();
+    writeFileSync(join(broken, 'codex.cmd'), ''); // no node_modules next to it
+    writeFileSync(join(later, 'codex.exe'), '');
+    expect(resolveCodexOnPath({ Path: `${broken};${later}` })).toEqual({
+      command: join(later, 'codex.exe'),
+      args: [],
+    });
+  });
+
   it.skipIf(process.platform !== 'win32')('falls back to the Codex app package', async () => {
     const calls: { file: string; args: readonly string[] }[] = [];
     const env = { Path: '', SystemRoot: 'C:\\Windows', ProgramW6432: 'C:\\Program Files' };
@@ -109,6 +123,13 @@ describe('resolveCodex', () => {
       ),
     ).toBeUndefined();
     expect(await resolveCodex(env, async () => '')).toBeUndefined();
+    // the newest package without its executable: the next one is used
+    const older = await resolveCodex(
+      env,
+      async () => REG,
+      (p) => p.includes('26.999.1.0'),
+    );
+    expect(older?.command).toContain('OpenAI.Codex_26.999.1.0_x64__2p2nqsd0c76g0');
   });
 });
 

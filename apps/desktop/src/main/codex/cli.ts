@@ -8,7 +8,7 @@
 //    registry (`reg.exe query`, absolute path, fixed arguments) and the path is built from it.
 import { execFile } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
-import { dirname, win32 } from 'node:path';
+import { delimiter, isAbsolute, join, win32 } from 'node:path';
 import { findOnPath, type Program } from '../claude/cli';
 
 /** Codex CLI versions the session and its normalizer were checked against (manual real run). */
@@ -37,18 +37,18 @@ const compareVersions = (a: string, b: string) => {
 };
 
 /**
- * The newest Codex app package among the key names `reg query` printed. Anything that is not
- * exactly a package of the pinned publisher is ignored.
+ * The Codex app packages among the key names `reg query` printed, newest first. Anything that is
+ * not exactly a package of the pinned publisher is ignored.
  */
-export function newestCodexPackage(regOutput: string): string | undefined {
-  let best: { name: string; version: string } | undefined;
+export function codexPackages(regOutput: string): string[] {
+  const found: { name: string; version: string }[] = [];
   for (const line of regOutput.split(/\r?\n/)) {
     const name = line.trim().split('\\').pop() ?? '';
     const match = CODEX_PACKAGE.exec(name);
-    if (!match?.[1]) continue;
-    if (!best || compareVersions(match[1], best.version) > 0) best = { name, version: match[1] };
+    if (!match?.[1] || found.some((p) => p.name === name)) continue;
+    found.push({ name, version: match[1] });
   }
-  return best?.name;
+  return found.sort((a, b) => compareVersions(b.version, a.version)).map((p) => p.name);
 }
 
 /** `codex.exe` inside a Store package, under the system's own Program Files. */
@@ -59,16 +59,25 @@ export function packagedCodexPath(packageName: string, env: NodeJS.ProcessEnv): 
   return win32.join(programFiles, 'WindowsApps', packageName, 'app', 'resources', 'codex.exe');
 }
 
-/** `codex` on the PATH, without a shell, or undefined. */
+/**
+ * `codex` on the PATH, without a shell, or undefined. Like a terminal, the first usable entry
+ * wins: an npm shim whose script or Node is missing does not stop the search.
+ */
 export function resolveCodexOnPath(env: NodeJS.ProcessEnv = process.env): Program | undefined {
-  const found = findOnPath(['codex.exe', 'codex.cmd'], env);
-  if (!found) return undefined;
-  if (found.toLowerCase().endsWith('.exe')) return { command: found, args: [] };
-  // npm shim: <prefix>/codex.cmd → <prefix>/node_modules/@openai/codex/bin/codex.js
-  const script = win32.join(dirname(found), 'node_modules', '@openai', 'codex', 'bin', 'codex.js');
-  const node = findOnPath(['node.exe'], env);
-  if (!node || !existsSync(script)) return undefined;
-  return { command: node, args: [script] };
+  const path = env.Path ?? env.PATH ?? '';
+  for (const entry of path.split(delimiter)) {
+    const dir = entry.trim().replace(/^"(.*)"$/, '$1');
+    // relative PATH entries would resolve against the app's own folder: never trust them
+    if (!dir || !isAbsolute(dir)) continue;
+    const exe = join(dir, 'codex.exe');
+    if (isFile(exe)) return { command: exe, args: [] };
+    if (!isFile(join(dir, 'codex.cmd'))) continue;
+    // npm shim: <prefix>/codex.cmd → <prefix>/node_modules/@openai/codex/bin/codex.js
+    const script = win32.join(dir, 'node_modules', '@openai', 'codex', 'bin', 'codex.js');
+    const node = findOnPath(['node.exe'], env);
+    if (node && existsSync(script)) return { command: node, args: [script] };
+  }
+  return undefined;
 }
 
 type RunReg = (file: string, args: readonly string[]) => Promise<string>;
@@ -95,9 +104,12 @@ export async function resolveCodex(
     return undefined;
   const reg = win32.join(systemRoot, 'System32', 'reg.exe');
   const output = await runReg(reg, ['query', PACKAGES_KEY, '/f', 'OpenAI.Codex_', '/k']);
-  const name = newestCodexPackage(output);
-  const path = name && packagedCodexPath(name, env);
-  return path && exists(path) ? { command: path, args: [] } : undefined;
+  // newest first; a package whose executable is missing (half-removed, staged) is skipped
+  for (const name of codexPackages(output)) {
+    const path = packagedCodexPath(name, env);
+    if (path && exists(path)) return { command: path, args: [] };
+  }
+  return undefined;
 }
 
 /** `vernier/0.171.0-alpha.13.2 (Windows …)` (the `initialize` user agent) → the CLI version. */

@@ -99,7 +99,10 @@ function checkThreadPolicy(opened: z.infer<typeof threadResponse>): void {
 }
 const turnResponse = z.looseObject({ turn: z.looseObject({ id: z.string().min(1).max(128) }) });
 const initializeResponse = z.looseObject({ userAgent: z.string().max(1024) });
-const accountResponse = z.looseObject({ account: z.unknown().nullable() });
+/** `account` must be there: null when signed out, an account with its type when signed in. */
+const accountResponse = z.looseObject({
+  account: z.looseObject({ type: z.string().min(1).max(64) }).nullable(),
+});
 const configResponse = z.looseObject({
   config: z.looseObject({
     model: z.unknown().optional(),
@@ -110,7 +113,13 @@ const approvalParams = z.looseObject({
   threadId: z.string(),
   turnId: z.string(),
   itemId: z.string().min(1).max(256),
+  kind: z.string().max(64).nullable().optional(),
   command: z.string().nullable().optional(),
+  cwd: z.string().max(4096).nullable().optional(),
+  networkApprovalContext: z
+    .looseObject({ host: z.string().max(512), protocol: z.string().max(32) })
+    .nullable()
+    .optional(),
   reason: z.string().nullable().optional(),
   grantRoot: z.string().nullable().optional(),
   availableDecisions: z.array(z.unknown()).nullable().optional(),
@@ -130,6 +139,12 @@ const fileItem = z.looseObject({
 const APPROVALS = {
   'item/commandExecution/requestApproval': 'shell',
   'item/fileChange/requestApproval': 'apply_patch',
+} as const;
+
+/** Command approval kinds this client can describe; others are declined. */
+const APPROVAL_KINDS = {
+  command: '',
+  writeStdin: 'input to a running command',
 } as const;
 
 const warnedVersions = new Set<string>();
@@ -245,18 +260,33 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
       return;
     }
     const p = params.data;
+    const kind = p.kind ?? 'command';
+    // a kind this client does not know could approve something it cannot describe
+    if (tool === 'shell' && !Object.hasOwn(APPROVAL_KINDS, kind)) {
+      rpc.respond(rpcId, { decision: 'decline' });
+      return;
+    }
     const offered = p.availableDecisions;
     const canRemember = offered ? offered.includes('acceptForSession') : tool === 'apply_patch';
     const files = (patchFiles.get(p.itemId) ?? []).map((f) => toFileRef(options.cwd, f).path);
+    const net = p.networkApprovalContext;
     const requestId = randomUUID();
+    // What an approval actually allows, so the prompt shows its whole scope: what runs (or the
+    // input sent to a running command), where, which host, which files, and any extra root.
     const view: ClaudePermission = {
       requestId,
       tool: tool === 'shell' ? 'Shell' : 'Patch',
       ...details([
+        tool === 'shell' ? APPROVAL_KINDS[kind as keyof typeof APPROVAL_KINDS] : '',
         p.command,
+        p.cwd ? `in: ${p.cwd}` : '',
+        net ? `network: ${net.protocol} ${net.host}` : '',
         ...files,
         p.reason,
         p.grantRoot ? `write access: ${p.grantRoot}` : '',
+        canRemember
+          ? `"always" applies to similar requests until this Codex session ends${p.grantRoot ? ', including writes under the root above' : ''}`
+          : '',
       ]),
       canRemember,
     };
@@ -446,6 +476,11 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
   };
 
   // ── handshake ──
+  const unexpected = (method: string) => {
+    const error = new Error(`Unexpected answer to ${method}: the Codex session was not opened`);
+    error.name = 'CodexUnexpectedResponse';
+    return error;
+  };
   const handshake = async () => {
     const init = initializeResponse.safeParse(
       await rpc.request(
@@ -461,7 +496,8 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
         timeouts.open,
       ),
     );
-    cliVersion = init.success ? codexVersion(init.data.userAgent) : undefined;
+    if (!init.success) throw unexpected('initialize');
+    cliVersion = codexVersion(init.data.userAgent);
     if (cliVersion && !tested.includes(cliVersion) && !warnedVersions.has(cliVersion)) {
       warnedVersions.add(cliVersion);
       report({
@@ -472,7 +508,9 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
     }
     rpc.notify('initialized');
     const account = accountResponse.safeParse(await rpc.request('account/read', {}, timeouts.open));
-    if (account.success && account.data.account === null) {
+    // an answer that does not say who is signed in is not taken as a sign-in
+    if (!account.success) throw unexpected('account/read');
+    if (account.data.account === null) {
       const error = new Error(
         'Codex is not signed in: run `codex login` or sign in to the Codex app',
       );

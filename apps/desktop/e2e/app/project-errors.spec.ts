@@ -240,6 +240,44 @@ test('selecting another error cancels the pending request and frees Ollama', asy
   });
 });
 
+test('switching between errors in the same file clears and cancels local explanations', async () => {
+  await writeFile(
+    join(fixture, 'Shop', 'test/cart.test.js'),
+    'throw new Error(process.argv[2]);\n',
+  );
+  const timeline = await runTurn();
+  const run = await openTerminal();
+  const first = timeline.getByRole('button', { name: 'Error · Error: First error', exact: true });
+  const second = timeline.getByRole('button', { name: 'Error · Error: Second error', exact: true });
+  await run('node test/cart.test.js "First error"', 'Error: First error');
+  await expect(first).toBeVisible();
+  await run('node test/cart.test.js "Second error"', 'Error: Second error');
+  await expect(second).toBeVisible();
+
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  const explain = inspector.getByRole('button', { name: 'Explain locally' });
+  const explanation = inspector.getByRole('region', { name: 'Local explanation' });
+  await first.click();
+  await expect(inspector).toContainText('test/cart.test.js:1');
+  await explain.click();
+  await expect(explanation).toBeVisible();
+  await second.click();
+  await expect(inspector).toContainText('Second error');
+  await expect(inspector).toContainText('test/cart.test.js:1');
+  await expect(explanation).toHaveCount(0);
+
+  await first.click();
+  holdFirstChat = true;
+  await explain.click();
+  await expect.poll(() => holdFirstChat).toBe(false);
+  await expect(inspector.getByText('Waiting for Ollama…')).toBeVisible();
+  await second.click();
+  await expect(inspector).toContainText('Second error');
+  await expect(inspector.getByText('Waiting for Ollama…')).toHaveCount(0);
+  await expect(explain).toBeEnabled();
+  await expect.poll(() => firstChatClosed).toBe(true);
+});
+
 test('source locations stay inside the active workspace and must identify a real line', async () => {
   await writeFile(join(fixture, 'outside.js'), 'private');
   await symlink(fixture, join(fixture, 'Shop', 'outside'), 'junction');

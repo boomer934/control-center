@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Selezione di errori nello stesso file (PR #68)
+
+- **Fatto.** Ripristinata la chiave `mark.id` per `ProjectErrorActions`. Un E2E verifica che il cambio di errore nello stesso file rimuova la spiegazione precedente e annulli la richiesta in corso.
+- **Verifica.** `pnpm verify` verde con 443 test passati e uno saltato. `project-errors.spec.ts` 9/9. Il nuovo caso passa anche sul commit precedente perché l'ispettore padre usa già `mark.id` come chiave.
+
+---
+
 ## 2026-11-27 — Seconda revisione delle azioni rapide (PR #68)
 
 - **Fatto.** Stato delle azioni isolato per errore, risoluzione dei percorsi del terminale condivisa con la mappa e ripiego sull'ultimo marcatore visibile del nodo.

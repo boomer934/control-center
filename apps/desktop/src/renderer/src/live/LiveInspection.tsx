@@ -198,7 +198,7 @@ function Inspector({
             </dl>
             {error && workspaceId && (
               <ProjectErrorActions
-                key={errorPath}
+                key={mark.id}
                 workspaceId={workspaceId}
                 error={error}
                 path={errorPath}

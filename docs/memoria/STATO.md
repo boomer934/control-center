@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. La 5e è su `main`. Le azioni rapide 5e+ sono implementate in `feat/error-quick-actions` (ADR 0016)._
+_Ultimo aggiornamento 2026-11-27. La 5e e le azioni rapide 5e+ sono su `main` (PR #64 e #68, ADR 0015 e 0016)._
 
 ## Fase
 
@@ -20,7 +20,7 @@ _Ultimo aggiornamento 2026-11-27. La 5e è su `main`. Le azioni rapide 5e+ sono 
 - **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Unita su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`).
 - **5d**, pannello agenti, ispettore e inventario locale: unita su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`, ADR 0014).
 - **5e**, errori del progetto: schema `error.detected` (v2, migrazione 1 → 2), parser di stack trace e colorazione della mappa: ✅ unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`, ADR 0015), CI verde (E2E 77/77). La parte dei parser era della corsia Codex: l'ha fatta Claude su goal dell'utente.
-- **5e+**, azioni rapide dall'ispettore: bozza Claude, spiegazione Ollama e apertura del sorgente alla riga anche per gli errori del terminale prima di una chat.
+- **5e+**, azioni rapide dall'ispettore: bozza Claude, spiegazione Ollama e apertura del sorgente alla riga anche per gli errori del terminale prima di una chat. ✅ Unita su `main` con la [PR #68](https://github.com/boomer934/control-center/pull/68) (`a5681b9`, ADR 0016), CI verde su `fe06caf` dopo la correzione di due E2E instabili sullo schermo piccolo del runner.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -37,7 +37,7 @@ _Ultimo aggiornamento 2026-11-27. La 5e è su `main`. Le azioni rapide 5e+ sono 
 
 ## Branch
 
-Claude: 5e unita su `main` (PR #64). Codex: `feat/error-quick-actions` nel worktree dedicato, da `origin/main` (`11cd9e4`). Correzione checkpoint e pannello agenti già su `main` (PR #61 e #63).
+Claude: `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR. Codex: `feat/error-quick-actions` unita con la PR #68; il worktree `control-center-codex` va riallineato a `main` prima della prossima sotto-fase. Correzione checkpoint e pannello agenti già su `main` (PR #61 e #63).
 
 ## Punto di ripresa
 

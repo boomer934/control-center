@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
@@ -15,7 +15,9 @@ import { SECTIONS, shortcutFor, type SectionId } from './keys/registry';
 import { LiveMap, type DiffPreview } from './live/LiveMap';
 import { LiveInspection } from './live/LiveInspection';
 import { SessionTimeline } from './live/SessionTimeline';
+import { makeResolveFile } from './live/resolve';
 import { useReplay } from './live/useReplay';
+import { indexSnapshot } from './live/visible';
 import { useShortcuts } from './keys/useShortcuts';
 import { CommandPalette, type PaletteCommand } from './palette/CommandPalette';
 import { ShortcutHelp } from './palette/ShortcutHelp';
@@ -76,6 +78,7 @@ function LiveView({
   terminalErrors,
   onCheckpoint,
   onHistory,
+  onErrorDraft,
   reviewDisabled,
   openGit,
 }: {
@@ -86,11 +89,18 @@ function LiveView({
   terminalErrors: readonly TerminalError[];
   onCheckpoint(checkpoint: GitCheckpoint, readOnly: boolean): void;
   onHistory?(): void;
+  onErrorDraft(text: string): void;
   reviewDisabled: boolean;
   openGit(): void;
 }) {
   // Deltas re-render this view only, not the whole shell.
   const project = useProjectModel(workspaceId);
+  const snapshot = project.kind === 'ready' ? project.snapshot : undefined;
+  const mapIndex = useMemo(() => (snapshot ? indexSnapshot(snapshot) : undefined), [snapshot]);
+  const resolveFile = useMemo(
+    () => (mapIndex ? makeResolveFile(mapIndex.byPath) : undefined),
+    [mapIndex],
+  );
   const replay = useReplay(chat.records, Boolean(chat.historyId && !chat.id));
   const historical = replay.at !== undefined;
   const reviewCheckpoint = useCallback(
@@ -131,13 +141,18 @@ function LiveView({
       <LiveInspection
         records={chat.records}
         replay={replay}
+        terminalErrors={terminalErrors}
+        resolveFile={resolveFile}
+        workspaceId={workspaceId}
+        onDraft={onErrorDraft}
         pendingPermission={chat.permissions.length > 0}
       >
         {(inspection) => (
           <div className="lmap-area">
-            {project.kind === 'ready' ? (
+            {mapIndex && resolveFile ? (
               <LiveMap
-                snapshot={project.snapshot}
+                index={mapIndex}
+                resolveFile={resolveFile}
                 records={chat.records}
                 errors={terminalErrors}
                 at={replay.at}
@@ -270,6 +285,8 @@ function AppShell({
   const [gitRevision, setGitRevision] = useState(0);
   const [restoreNotice, setRestoreNotice] = useState('');
   const [permissionFocus, setPermissionFocus] = useState(0);
+  const [draftFocus, setDraftFocus] = useState(false);
+  const consumeDraftFocus = useCallback(() => setDraftFocus(false), []);
   const [showHistory, setShowHistory] = useState(false);
   const { layout, setLayout } = useWorkspaceLayout(workspaceId);
   const { bottomOpen, bottomDock, rightOpen, compactBar } = layout;
@@ -459,13 +476,19 @@ function AppShell({
     route === 'live' ? (
       <>
         <LiveView
-          key={chat.id ?? chat.historyId ?? 'new'}
+          key={`${workspaceId ?? 'no-workspace'}:${chat.id ?? chat.historyId ?? 'new'}`}
           state={info}
           workspaceId={workspaceId}
           chat={chat}
           terminalErrors={terminals.errorsFor(workspaceId)}
           onCheckpoint={reviewCheckpoint}
           onHistory={workspaceId ? openHistory : undefined}
+          onErrorDraft={(text) => {
+            chat.setDraft(chat.draft.trim() ? `${chat.draft}\n\n${text}` : text);
+            setShowHistory(false);
+            setLayout((value) => ({ ...value, rightOpen: true }));
+            setDraftFocus(true);
+          }}
           reviewDisabled={chat.status === 'running' || chat.pending}
           openGit={() => go('git')}
         />
@@ -621,6 +644,8 @@ function AppShell({
                   chat={chat}
                   chooseWorkspace={toggleWorkspaces}
                   permissionFocus={permissionFocus}
+                  draftFocus={draftFocus}
+                  consumeDraftFocus={consumeDraftFocus}
                   showHistory={showHistory}
                   setShowHistory={setShowHistory}
                   onHistoryLoaded={() => go('live')}

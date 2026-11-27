@@ -11,6 +11,8 @@ import {
 } from '@control-center/project-model/schema';
 import { routeParam } from '../shell/route';
 import { FIXTURE_PROJECT, fixture, projectFile as file } from './labFixtures';
+import { makeResolveFile } from './resolve';
+import { indexSnapshot } from './visible';
 import { LiveMap, type DiffPreview } from './LiveMap';
 import { LiveInspection } from './LiveInspection';
 import { SessionTimeline } from './SessionTimeline';
@@ -170,14 +172,19 @@ function useBench(snapshot: ProjectSnapshot, running: boolean): EventRecord[] {
   return records;
 }
 
+const fixtureIndex = indexSnapshot(FIXTURE_PROJECT);
+const resolveFixtureFile = makeResolveFile(fixtureIndex.byPath);
+
 function Bench() {
   const snapshot = useMemo(benchProject, []);
+  const index = useMemo(() => indexSnapshot(snapshot), [snapshot]);
+  const resolveFile = useMemo(() => makeResolveFile(index.byPath), [index]);
   const [running, setRunning] = useState(false);
   const records = useBench(snapshot, running);
   useEffect(() => {
     (window as unknown as { __mapBench?: (on: boolean) => void }).__mapBench = setRunning;
   }, []);
-  return <LiveMap snapshot={snapshot} records={records} />;
+  return <LiveMap index={index} resolveFile={resolveFile} records={records} />;
 }
 
 function FixtureReplay({ records }: { records: EventRecord[] }) {
@@ -188,7 +195,8 @@ function FixtureReplay({ records }: { records: EventRecord[] }) {
         {(inspection) => (
           <div className="lmap-area">
             <LiveMap
-              snapshot={FIXTURE_PROJECT}
+              index={fixtureIndex}
+              resolveFile={resolveFixtureFile}
               records={records}
               at={replay.at}
               historical
@@ -248,7 +256,8 @@ export default function MapLab() {
           ) : chosen ? (
             <LiveMap
               key={scene}
-              snapshot={FIXTURE_PROJECT}
+              index={fixtureIndex}
+              resolveFile={resolveFixtureFile}
               records={records}
               at={at ?? Date.parse('2026-11-19T10:00:00Z')}
               pendingPermission={false}

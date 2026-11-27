@@ -1,22 +1,35 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import type { AgentEvent, ErrorOrigin } from '@control-center/event-schema';
+import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import { Glyph } from '../ui/icons';
 import { Button, Sigil } from '../ui/primitives';
-import type { ActivityView, AgentPresence } from './activity';
-import { indexInspection, summarizeEvents } from './inspection';
+import { fileNodeId, type ActivityView, type AgentPresence, type ResolveFile } from './activity';
+import { indexInspection, markForNode, summarizeEvents } from './inspection';
 import { MachineInventory } from './MachineInventory';
+import { ProjectErrorActions } from './ProjectErrorActions';
 import { elapsedTime, ReplayActivity, type ReplayRecord, type TimelineMark } from './replay';
+import { resolveErrorPath } from './resolve';
 import type { Replay } from './useReplay';
 import './inspection.css';
 
 export interface MapInspection {
+  layoutRef: RefObject<HTMLDivElement | null>;
   selectedNode?: string;
   selectedAgent?: string;
-  inspectNode(node: string): void;
+  inspectNode(node: string, error?: boolean): void;
   inspectAgent(agent: string): void;
 }
 
 const number = new Intl.NumberFormat('en-US');
+const noTerminalErrors: readonly TerminalError[] = [];
 const stateLabel: Record<AgentPresence['state'], string> = {
   idle: 'Thinking',
   reading: 'Reading',
@@ -46,11 +59,18 @@ function eventCount(events: readonly { at: number }[], at: number) {
   return from;
 }
 
-function eventFields(event: AgentEvent, summary: ReturnType<typeof summarizeEvents>) {
+type InspectionEvent = AgentEvent | (TerminalError & { type: 'terminal.error' });
+
+function eventFields(
+  event: InspectionEvent,
+  summary: ReturnType<typeof summarizeEvents>,
+  errorPath: string | undefined,
+) {
   const call =
     'toolUseId' in event && event.toolUseId ? summary.calls.get(event.toolUseId) : undefined;
-  const path = 'file' in event ? event.file?.path : call?.target;
-  const error = event.type === 'error.detected' ? event : undefined;
+  const path = errorPath ?? ('file' in event ? event.file?.path : call?.target);
+  const error =
+    event.type === 'error.detected' || event.type === 'terminal.error' ? event : undefined;
   const write = event.type === 'file.written' ? event : path ? summary.writes.get(path) : undefined;
   const diff =
     write && 'toolUseId' in event && write.toolUseId === event.toolUseId ? write.diff : undefined;
@@ -85,18 +105,29 @@ function Inspector({
   view,
   summary,
   start,
+  workspaceId,
+  errorPath,
+  onDraft,
 }: {
   mark?: TimelineMark;
   view: ActivityView;
   summary: ReturnType<typeof summarizeEvents>;
   start: number;
+  workspaceId?: string | undefined;
+  errorPath: string | undefined;
+  onDraft?: ((text: string) => void) | undefined;
 }) {
   const [json, setJson] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const raw = useRef<HTMLTextAreaElement>(null);
   const copyButton = useRef<HTMLButtonElement>(null);
-  const event = mark?.event;
-  const agent = view.agents.find((item) => item.id === event?.agentId);
+  const event: InspectionEvent | undefined = mark?.terminalError
+    ? { ...mark.terminalError, type: 'terminal.error' }
+    : mark?.event;
+  const agentId = mark?.event?.agentId;
+  const agent = view.agents.find((item) => item.id === agentId);
+  const error =
+    event?.type === 'error.detected' || event?.type === 'terminal.error' ? event : undefined;
 
   function copy() {
     if (!raw.current) return;
@@ -109,7 +140,10 @@ function Inspector({
   }
 
   return (
-    <section className="live-inspector" aria-label="Event inspector">
+    <section
+      className={error && workspaceId ? 'live-inspector inspection-with-error' : 'live-inspector'}
+      aria-label="Event inspector"
+    >
       <header className="inspection-header">
         <h2 className="dock-title">Inspector</h2>
         {event && (
@@ -130,7 +164,7 @@ function Inspector({
               ref={raw}
               readOnly
               aria-label="Event JSON"
-              value={JSON.stringify(event, null, 2)}
+              value={JSON.stringify(mark.terminalError ?? event, null, 2)}
             />
             <div className="inspection-copy">
               <Button ref={copyButton} onClick={copy}>
@@ -143,17 +177,34 @@ function Inspector({
           <div className="inspection-detail">
             <h3>{mark.label}</h3>
             <p>
-              {agent?.name ?? event.agentId} ·{' '}
-              <time dateTime={event.timestamp}>{elapsedTime(mark.at - start)}</time>
+              {agentId ? (
+                <>
+                  {agent?.name ?? agentId} ·{' '}
+                  <time dateTime={mark.event?.timestamp}>{elapsedTime(mark.at - start)}</time>
+                </>
+              ) : (
+                <time dateTime={mark.terminalError?.at}>
+                  {new Date(mark.at).toLocaleTimeString()}
+                </time>
+              )}
             </p>
             <dl>
-              {eventFields(event, summary).map(([name, value]) => (
+              {eventFields(event, summary, errorPath).map(([name, value]) => (
                 <div key={name}>
                   <dt>{name}</dt>
                   <dd>{value}</dd>
                 </div>
               ))}
             </dl>
+            {error && workspaceId && (
+              <ProjectErrorActions
+                key={mark.id}
+                workspaceId={workspaceId}
+                error={error}
+                path={errorPath}
+                onDraft={onDraft}
+              />
+            )}
           </div>
         )
       ) : (
@@ -166,15 +217,24 @@ function Inspector({
 export function LiveInspection({
   records,
   replay,
+  terminalErrors = noTerminalErrors,
+  resolveFile,
+  workspaceId,
+  onDraft,
   pendingPermission,
   children,
 }: {
   records: readonly ReplayRecord[];
   replay: Replay;
+  terminalErrors?: readonly TerminalError[];
+  resolveFile?: ResolveFile | undefined;
+  workspaceId?: string | undefined;
+  onDraft?: ((text: string) => void) | undefined;
   pendingPermission?: boolean;
   children(inspection: MapInspection): ReactNode;
 }) {
   const { timeline, at, selected, select } = replay;
+  const layoutRef = useRef<HTMLDivElement>(null);
   const index = useMemo(() => indexInspection(records, timeline), [records, timeline]);
   const projection = useMemo(() => new ReplayActivity(records, index.events), [records, index]);
   const [clock, setClock] = useState(Date.now);
@@ -201,13 +261,34 @@ export function LiveInspection({
   }, [at, active]);
 
   const current = selected && index.byId.get(selected.id);
-  const mark = current && current.at <= time ? current : undefined;
+  const selectedError = selected?.terminalError;
+  const terminalPath =
+    at === undefined && selectedError && resolveFile && terminalErrors.includes(selectedError)
+      ? resolveErrorPath(selectedError, resolveFile)
+      : undefined;
+  const terminalMark =
+    terminalPath !== undefined && selected?.nodeId === fileNodeId(terminalPath)
+      ? selected
+      : undefined;
+  const mark = terminalMark ?? (current && current.at <= time ? current : undefined);
+  const agentError = mark?.event?.type === 'error.detected' ? mark.event : undefined;
+  const errorPath = terminalMark
+    ? terminalPath
+    : agentError && resolveFile && resolveErrorPath(agentError, resolveFile);
   const cutoff = at ?? Infinity;
   const inspectNode = useCallback(
-    (node: string) => {
-      select(index.byNode.get(node)?.findLast((item) => item.at <= cutoff));
+    (node: string, preferError = false) => {
+      select(
+        markForNode(index.byNode.get(node), {
+          node,
+          cutoff,
+          preferError,
+          terminalErrors,
+          resolveFile,
+        }),
+      );
     },
-    [index, select, cutoff],
+    [index, select, cutoff, terminalErrors, resolveFile],
   );
   const inspectAgent = useCallback(
     (id: string) => {
@@ -221,6 +302,7 @@ export function LiveInspection({
   );
   const inspection = useMemo(
     () => ({
+      layoutRef,
       selectedNode: mark?.nodeId,
       selectedAgent: mark?.event?.agentId,
       inspectNode,
@@ -228,14 +310,18 @@ export function LiveInspection({
     }),
     [mark, inspectNode, inspectAgent],
   );
+  const hasActivity = Boolean(timeline && index.events.length);
 
   return (
     <div className="live-inspection-stack">
-      <div className="live-inspection-layout">
+      <div className="live-inspection-layout" ref={layoutRef}>
         {children(inspection)}
-        {timeline && index.events.length > 0 && (
-          <aside className="live-inspection" aria-label="Live activity">
-            <section className="live-agents" aria-label="Agents">
+        {(hasActivity || terminalMark) && (
+          <aside
+            className={hasActivity ? 'live-inspection' : 'live-inspection inspection-only'}
+            aria-label="Live activity"
+          >
+            <section className="live-agents" aria-label="Agents" hidden={!hasActivity}>
               <header className="inspection-header">
                 <h2 className="dock-title">Agents</h2>
               </header>
@@ -340,7 +426,10 @@ export function LiveInspection({
               mark={mark}
               view={view}
               summary={summary}
-              start={timeline.start}
+              start={timeline?.start ?? 0}
+              workspaceId={workspaceId}
+              errorPath={errorPath}
+              onDraft={replay.archived ? undefined : onDraft}
             />
           </aside>
         )}

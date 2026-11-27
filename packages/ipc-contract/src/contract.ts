@@ -7,7 +7,12 @@
 // capability means adding a channel here, with its own narrow schemas, and reviewed code in the
 // main process. See docs/memoria/SICUREZZA.md.
 import { z } from 'zod';
-import { MachineSnapshotSchema } from './infra';
+import {
+  ExplainProjectErrorResultSchema,
+  ExplainProjectErrorSchema,
+  CancelProjectErrorExplanationSchema,
+  MachineSnapshotSchema,
+} from './infra';
 import {
   GitCheckpointTargetSchema,
   GitCommitSchema,
@@ -43,7 +48,13 @@ import {
   TerminalWriteSchema,
 } from './terminal';
 import { ProjectOpenResultSchema, ProjectUpdateSchema, ProjectWorkspaceSchema } from './project';
-import { WorkspaceIdSchema, WorkspacePathSchema, WorkspaceStateSchema } from './workspace';
+import {
+  SourceLocationSchema,
+  SourceTextSchema,
+  WorkspaceIdSchema,
+  WorkspacePathSchema,
+  WorkspaceStateSchema,
+} from './workspace';
 
 /** One request/response method: renderer → main, answered by a single handler. */
 export interface InvokeSpec<
@@ -231,6 +242,11 @@ export const contract = {
       }),
       z.boolean(),
     ),
+    readSourceLocation: invoke(
+      'workspace:read-source-location',
+      SourceLocationSchema,
+      SourceTextSchema,
+    ),
   },
   terminal: {
     start: invoke('terminal:start', TerminalStartSchema, TerminalResultSchema),
@@ -267,6 +283,16 @@ export const contract = {
   },
   infra: {
     snapshot: invoke('infra:snapshot', NoRequest, MachineSnapshotSchema),
+    explainProjectError: invoke(
+      'infra:explain-project-error',
+      ExplainProjectErrorSchema,
+      ExplainProjectErrorResultSchema,
+    ),
+    cancelProjectErrorExplanation: invoke(
+      'infra:cancel-project-error-explanation',
+      CancelProjectErrorExplanationSchema,
+      z.boolean(),
+    ),
   },
 } as const;
 

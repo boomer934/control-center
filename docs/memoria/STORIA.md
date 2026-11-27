@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Specifica modello ed effort per turno nella 5f
+
+- **Fatto.** In `PIANO.md` il cambio di modello/effort per provider è ora parte della 5f: vale dal turno seguente, si conserva nella ripresa e compare in `session.started`/`session.configChanged` per Vista Live e replay. Aggiunti avviso sul contesto, stima token e opzione per non ripeterlo nella sessione.
+- **Decisioni.** Avviso per il solo effort solo se una prova mostra invalidazione della cache. In `CORSIE.md`, Claude possiede contratto, validazione e CLI; Codex selettore, avviso e superfici UI/E2E. Aggiornati goal, prossimi passi e Vault.
+- **Verifica.** `npx pnpm@10.34.9 verify` verde: 439 test passati, 1 saltato; lint con 418 warning e zero errori.
+- **Da verificare.** Su Windows il supporto all'effort di Claude Code e ai parametri per turno del Codex App Server.
+
+---
+
 ## 2026-11-27 — Collaudo dell'integrazione Claude Code e Codex
 
 - **Fatto.** Definiti i criteri di accettazione per worktree, conflitti Git, attribuzione di eventi e richieste, ripresa dopo errori, accessibilità e prestazioni della Vista Live.

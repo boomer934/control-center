@@ -58,6 +58,8 @@ Ogni fase ha deliverable, task e criterio di completamento (DoD). I dettagli com
 Le sotto-fasi 5f e 5g precedono la ripresa della Fase 6. La chiusura delle azioni rapide 5e+ può procedere in parallelo alla specifica.
 
 - **5f · Codex in Vernier.** Avviare, interrompere e riprendere una sessione Codex dal workspace, usando il login gestito dalla CLI. La chat mostra lo streaming e le richieste di approvazione. La Vista Live e il replay ricevono eventi `AgentEvent` attribuiti a Codex. Punti da verificare con una prova su Windows: compatibilità della CLI, sandbox, permessi e chiusura dei processi. [Codex App Server](https://learn.chatgpt.com/docs/app-server)
+- **Modello ed effort per turno.** La chat offre un selettore di modello ed effort per ciascun provider. La scelta vale dal messaggio successivo, si può cambiare tra turni e viene conservata quando si riprende una sessione dalla cronologia. Modelli ed effort provengono da elenchi specifici del provider, validati con zod; i valori iniziali derivano dalla configurazione della CLI. `session.started` e il nuovo evento `session.configChanged` registrano modello ed effort, così pannello agenti, timeline e replay mostrano quale modello ha eseguito ogni turno.
+- **Avviso al cambio di modello.** Quando si cambia modello in una sessione già avviata, prima dell'invio compare nel compositore un avviso non bloccante: il nuovo modello rileggerà tutto il contesto (circa N token, stima basata sugli eventi di consumo), quindi il turno successivo sarà più lento e costoso. L'avviso si può chiudere e offre l'opzione «non mostrare più per questa sessione». Per il solo cambio di effort si mostra un avviso soltanto se una prova dimostra che invalida la cache. Verificare su Windows come Claude Code riceve effort e come l'App Server di Codex accetta parametri per turno.
 - **5g · Claude Code e Codex simultanei.** Avviare entrambi sullo stesso repository in worktree Git e branch distinti per le sessioni con scrittura. La Vista Live identifica provider, workspace e sessione di ogni evento e mostra le attività su corsie distinte. Chat, approvazioni, interruzioni e cronologia restano associate alla sessione corretta.
 - **Criterio di completamento della 5g.** Su Windows, una sessione reale per provider gira in parallelo su due worktree. I due agenti modificano un file ciascuno nei rispettivi worktree. Approvare o interrompere una sessione lascia proseguire l'altra. Dopo il riavvio, il replay attribuisce correttamente entrambi i flussi. Coprire lo stesso scenario con fixture ed E2E deterministici in CI.
 
@@ -388,7 +390,7 @@ Per corsia, modello, effort e revisione di ogni fase o sotto-fase, consulta [COR
 
 - **Fase 5f**
 
-  > Una sessione Codex si avvia, si interrompe e riprende dalla chat di Vernier su Windows. Una richiesta di approvazione arriva alla sessione corretta. Gli eventi Codex si vedono nella Vista Live e nel replay. E2E con fixture e prova con la CLI reale verdi. Memoria aggiornata.
+  > Una sessione Codex si avvia, si interrompe e riprende dalla chat di Vernier su Windows. Una richiesta di approvazione arriva alla sessione corretta. Gli eventi Codex si vedono nella Vista Live e nel replay. Modello ed effort si scelgono dalla chat per entrambi i provider, valgono dal turno successivo, risultano negli eventi e nel replay; il cambio di modello mostra l'avviso sul contesto. E2E con fixture e prova con la CLI reale verdi. Memoria aggiornata.
 
 - **Fase 5g**
 

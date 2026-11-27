@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. Le priorità di piano sono la 5f (integrazione Codex) e la 5g (sessioni simultanee Claude Code e Codex)._
+_Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. La specifica documentale della 5f è aggiornata e verificata sul branch `codex/roadmap-codex-claude`; resta la PR prima di avviare l'implementazione._
 
 ## Fase
 
@@ -13,6 +13,8 @@ _Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. Le priorità
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
 **Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
+
+- **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati su `codex/roadmap-codex-claude`; `pnpm verify` verde (439 test, 1 saltato). PR da aprire prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
 
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.

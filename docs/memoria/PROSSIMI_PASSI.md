@@ -8,8 +8,8 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 **Priorità di prodotto · Codex e uso simultaneo con Claude Code.** I due filoni avanzano in worktree distinti secondo [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
 
-- **[Claude] (5f.1)** Aprire la specifica Codex App Server. Pubblicare per primi contratto ed esempi di eventi, poi integrare nel main sessione, login, permessi e interruzione.
-- **[Codex] (5f.2)** Portare a chiusura le azioni rapide 5e+ dal branch `feat/error-quick-actions`, quindi preparare fixture e test mentre Claude lavora al main. Collegare chat, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
+- **[Claude] (5f.1)** Aprire la specifica Codex App Server. Definire i campi `model`/`effort` per provider, la validazione e gli argomenti CLI, quindi pubblicare contratto ed esempi con `session.configChanged` prima di integrare nel main sessione, login, permessi e interruzione. Verificare su Windows l'effort di Claude Code e i parametri per turno dell'App Server di Codex.
+- **[Codex] (5f.2)** Portare a chiusura le azioni rapide 5e+ dal branch `feat/error-quick-actions`, quindi preparare fixture e test mentre Claude lavora al main. Collegare selettore e avviso nel compositore, pannello agenti, ispettore, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
 - **[Claude + Codex] (5g)** Dopo la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
 
 Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) su Windows. Includere due richieste pendenti, un arresto con l'altra sessione attiva, lo stesso percorso relativo in due worktree e la revisione UI in Electron.

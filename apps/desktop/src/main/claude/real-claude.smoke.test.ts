@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import type { ErrorInput } from '@control-center/app-log';
 import { agentEventSchema, type AgentEvent } from '@control-center/event-schema';
 import { expect, it } from 'vitest';
+import { probeClaude } from './catalog';
 import { resolveClaude, resolveHookNode } from './cli';
 import { openClaudeSession } from './session';
 
@@ -57,4 +58,30 @@ it.skipIf(process.env.CC_REAL_CLAUDE !== '1')(
     }
   },
   180_000,
+);
+
+it.skipIf(process.env.CC_REAL_CLAUDE !== '1')(
+  'a real claude lists its models and capabilities through initialize, without a turn',
+  async () => {
+    const claude = resolveClaude();
+    expect(claude, 'claude on PATH').toBeDefined();
+    if (!claude) return;
+    const data = mkdtempSync(join(tmpdir(), 'cc-real-probe-'));
+    try {
+      const found = await probeClaude({
+        claude,
+        cwd: data,
+        env: process.env,
+        report: () => undefined,
+      });
+      expect(found?.version).toMatch(/^\d+\.\d+\.\d+/);
+      expect(found?.models.length).toBeGreaterThan(0);
+      expect(found?.capabilities.some((c) => c.kind === 'command')).toBe(true);
+      // nothing of the account leaves the probe
+      expect(JSON.stringify(found)).not.toMatch(/[\w.+-]+@[\w-]+\.[a-z]{2,}/i);
+    } finally {
+      rmSync(data, { recursive: true, force: true, maxRetries: 5 });
+    }
+  },
+  60_000,
 );

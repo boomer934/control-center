@@ -146,6 +146,16 @@ Test: **R** = `apps/desktop/src/main/codex/rpc.test.ts`, **L** = `codex/cli.test
 - **Cronologia:** `userData/codex-history/<workspace>/<id>.jsonl`, stesse regole della cronologia Claude; l'id del thread per la ripresa è validato con lo stesso schema (V).
 - **Da tenere d'occhio:** lo stderr di Codex va in Console così com'è, senza payload dell'utente ma con righe di log del server.
 
+### Catalogo Claude e inventario delle capacità (5h.1)
+
+Test: **C** = `apps/desktop/src/main/claude/catalog.test.ts`, **D** = `claude/discovery.test.ts`, **I** = `capabilities/inventory.test.ts`, **K** = `capabilities/service.test.ts`, **P** = `packages/ipc-contract/src/capabilities.test.ts`, **E2E** = `apps/desktop/e2e/app/claude.spec.ts` › «offers the models Claude Code lists…».
+
+- **Sonda senza turno:** `claude -p --input-format stream-json --output-format stream-json --verbose`, senza shell, con l'ambiente dell'utente senza `ELECTRON_*` e con cartella di lavoro `userData` (mai un workspace). Riceve solo la richiesta `initialize` con un id casuale. Non manda un prompt, quindi nessun modello viene chiamato. Si accetta solo la `control_response` con quell'id. Entro 30 s, o al massimo 4 Mi caratteri di output, l'albero dei processi si chiude con `killTree` e la risposta arriva solo a processo finito (C). Al più una sonda per avvio dell'app, e solo se la versione (`claude --version`, timeout 10 s) è cambiata o l'ultima lettura ha più di 24 h. All'avvio non parte nulla: parte alla prima sessione Claude o alla prima `capabilities:list` (D).
+- **Account mai letto:** la risposta contiene email e organizzazione. Gli schemi zod nominano solo `models`, `commands`, `agents`, `available_output_styles`, `capabilities` e `claude_code_version`; il resto si scarta prima di ogni uso (C, prova reale `CC_REAL_CLAUDE=1`). La fixture `claude-initialize.control.jsonl` non ha campi account ed è coperta da `sanitize.mjs --check`.
+- **Valori ostili:** gli id dei modelli passano da `safeModelId` (niente `-` iniziale, spazi o forme da segreto). Gli effort passano da `effortSchema` (C). `claudeConfigArgs` resta l'ultimo controllo prima della riga di comando. Le voci dell'inventario passano tutte da `makeCapability`: id stampabile e senza spazi, testo con le cartelle personali ridotte a `~`, segreti redatti, spazi compressi e limiti di lunghezza (I, P). Nel renderer sono solo testo.
+- **File:** `userData/agent-catalog.json` (modelli, ≤ 256 KiB) e `userData/capabilities.json` (istantanea, ≤ 8 MiB). Si leggono con un'apertura sola e un limite sul descrittore, si validano con zod e si scrivono interi passando da un file temporaneo. Un file non valido vale vuoto, con `CapabilitySnapshotInvalid` in Console (K).
+- **IPC:** `capabilities:list` non ha argomenti. `capabilities:mark-seen` prende solo l'agente e la revisione mostrata, e una revisione superata non segna nulla (`stale`). `capabilities:changed` porta solo il numero di revisione (P, I). Nessun canale fa scegliere al renderer un programma, un metodo o un flag.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

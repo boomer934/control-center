@@ -28,6 +28,12 @@ import {
 } from './git';
 import { AgentConfigureResultSchema } from './agent-config';
 import {
+  CapabilitiesChangedSchema,
+  CapabilityListSchema,
+  CapabilityMarkSeenResultSchema,
+  CapabilityMarkSeenSchema,
+} from './capabilities';
+import {
   ClaudeConfigureSchema,
   ClaudeHistoryListSchema,
   ClaudeHistorySchema,
@@ -161,6 +167,7 @@ export const ERROR_KINDS = [
   'bridge-rejected',
   'claude-setup',
   'codex-setup',
+  'capabilities',
 ] as const;
 
 export const StackFrameSchema = z
@@ -301,6 +308,15 @@ export const contract = {
     interrupt: invoke('codex:interrupt', CodexTargetSchema, z.boolean()),
     close: invoke('codex:close', CodexTargetSchema, z.boolean()),
     updated: event('codex:updated', CodexUpdateSchema),
+  },
+  capabilities: {
+    list: invoke('capabilities:list', NoRequest, CapabilityListSchema),
+    markSeen: invoke(
+      'capabilities:mark-seen',
+      CapabilityMarkSeenSchema,
+      CapabilityMarkSeenResultSchema,
+    ),
+    changed: event('capabilities:changed', CapabilitiesChangedSchema),
   },
   git: {
     status: invoke('git:status', GitWorkspaceSchema, GitStatusSchema),

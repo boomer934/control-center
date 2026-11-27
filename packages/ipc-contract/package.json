@@ -13,6 +13,7 @@
     "./workspace": "./src/workspace.ts",
     "./terminal": "./src/terminal.ts",
     "./agent-config": "./src/agent-config.ts",
+    "./capabilities": "./src/capabilities.ts",
     "./claude": "./src/claude.ts",
     "./codex": "./src/codex.ts",
     "./project": "./src/project.ts"

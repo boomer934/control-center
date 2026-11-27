@@ -420,3 +420,50 @@ test('runs a Claude session from the renderer and streams its AgentEvents', asyn
   expect(result.emptyMessage).toContain('invalid-request');
   expect(result.closed).toBe(true);
 });
+
+test('offers the models Claude Code lists and keeps its capabilities without a chat', async () => {
+  const result = await page.evaluate(async () => {
+    const api = window.api;
+    // the capability list first: it starts the probe (initialize) without any session
+    const changed = new Promise<number>((r) => {
+      const stop = api.capabilities.onChanged(({ revision }) => {
+        stop();
+        r(revision);
+      });
+    });
+    const before = await api.capabilities.list();
+    await Promise.race([changed, new Promise((r) => setTimeout(r, 30_000))]);
+    const after = await api.capabilities.list();
+
+    const state = await api.workspace.getState();
+    const id = crypto.randomUUID();
+    const catalog = new Promise<string[][]>((r) => {
+      const stop = api.claude.onUpdated((u) => {
+        if (u.id !== id || u.kind !== 'config') return;
+        stop();
+        r(u.catalog.models.map((m) => [m.id, m.efforts.join('/')]));
+      });
+    });
+    await api.claude.start({ id, workspaceId: state.active?.id ?? '' });
+    const models = await Promise.race([
+      catalog,
+      new Promise<string[][]>((r) => setTimeout(() => r([]), 30_000)),
+    ]);
+    await api.claude.close({ id });
+    const seen = await api.capabilities.markSeen({ revision: after.revision });
+    return { before, after, models, seen };
+  });
+
+  expect(result.before.agents.find((a) => a.agent === 'claude')?.state).toBe('not-read');
+  const claude = result.after.agents.find((a) => a.agent === 'claude');
+  expect(claude).toMatchObject({ state: 'ready', version: '2.1.326' });
+  const ids = result.after.entries
+    .filter((e) => e.agent === 'claude')
+    .map((e) => `${e.kind}:${e.id}`);
+  expect(ids).toEqual(expect.arrayContaining(['model:opus', 'command:clear', 'agent:Plan']));
+  // the first read is the baseline: nothing is news yet
+  expect(result.after.entries.every((e) => e.status === 'seen')).toBe(true);
+  expect(result.models).toContainEqual(['opus', 'low/medium/high/xhigh/max']);
+  expect(result.models).toContainEqual(['claude-haiku-4-5-20251001', '']);
+  expect(result.seen).toBe('marked');
+});

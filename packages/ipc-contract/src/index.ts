@@ -35,6 +35,7 @@ export {
   type Unsubscribe,
 } from './contract';
 export * from './agent-config';
+export * from './capabilities';
 export * from './git';
 export * from './infra';
 export * from './project';

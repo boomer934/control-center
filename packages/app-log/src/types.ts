@@ -16,7 +16,8 @@ export type ErrorKind =
   | 'ipc-failure'
   | 'bridge-rejected'
   | 'claude-setup'
-  | 'codex-setup';
+  | 'codex-setup'
+  | 'capabilities';
 
 /** `project`: our own source. `dependency`: inside node_modules. `internal`: Node, Electron, V8. */
 export type FrameKind = 'project' | 'dependency' | 'internal';

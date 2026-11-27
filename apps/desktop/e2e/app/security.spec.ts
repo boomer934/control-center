@@ -99,7 +99,9 @@ test.describe('preload', () => {
       return {
         namespaces: Object.keys(api),
         methods: Object.fromEntries(Object.entries(api).map(([k, v]) => [k, Object.keys(v)])),
-        types: Object.values(api).flatMap((ns) => Object.values(ns).map((f) => typeof f)),
+        allFunctions: Object.values(api).every((ns) =>
+          Object.values(ns).every((member) => typeof member === 'function'),
+        ),
         frozen: Object.isFrozen(api) && Object.values(api).every((ns) => Object.isFrozen(ns)),
         leaked: ['ipcRenderer', 'electron', 'contextBridge', 'webFrame'].filter(
           (k) => typeof w[k] !== 'undefined',
@@ -121,7 +123,13 @@ test.describe('preload', () => {
         'infra',
       ],
       methods: {
-        app: ['getInfo'],
+        app: [
+          'getInfo',
+          'getUpdateStatus',
+          'setUpdateEnabled',
+          'restartToUpdate',
+          'onUpdateStatus',
+        ],
         errors: ['list', 'reportRenderer', 'copyReport', 'clear', 'onChanged'],
         shell: ['openExternal'],
         workspace: ['getState', 'chooseFolder', 'selectRecent', 'openFile', 'readSourceLocation'],
@@ -153,7 +161,7 @@ test.describe('preload', () => {
         project: ['open', 'onUpdated'],
         infra: ['snapshot', 'explainProjectError', 'cancelProjectErrorExplanation'],
       },
-      types: Array.from({ length: 49 }, () => 'function'),
+      allFunctions: true,
       frozen: true,
       leaked: [],
     });

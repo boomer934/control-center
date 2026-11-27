@@ -30,7 +30,7 @@ pnpm non è installato globalmente: si usa `npx pnpm@10.34.9 <comando>`, oppure 
 
 - `pnpm verify`: format check + typecheck + lint + test. **Deve passare prima di ogni commit.**
 - `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm format`
-- In arrivo: `pnpm dev` (Fase 3), `pnpm e2e` (Fase 3), `pnpm dist` (Fase 10).
+- `pnpm dev` · `pnpm e2e` · `pnpm dist` (installer Windows x64 NSIS e metadati di aggiornamento, Fase 5h.7).
 
 ## Regole fisse
 
@@ -48,7 +48,7 @@ pnpm non è installato globalmente: si usa `npx pnpm@10.34.9 <comando>`, oppure 
 5. **Design system obbligatorio** nella UI: niente colori, spaziature o durate fuori dai token; gli stati semantici (idle, reading, writing, running, waiting-user, error, done) sono quelli di `docs/memoria/DESIGN.md`. Ogni PR di UI passa da impeccable.
 6. **Commit:** Conventional Commits con scope (vedi `commitlint.config.mjs`). Branch brevi `feat/…`, `fix/…`. Merge su `main` solo via PR con CI verde.
 7. **Dipendenze:** ogni nuova dipendenza di runtime richiede un'ADR in `docs/adr/`.
-8. **Mai modificare** i file di configurazione dell'utente (`~/.claude*`, `.mcp.json` altrui) senza conferma esplicita e backup.
+8. **Mai modificare** i file di configurazione dell'utente (`~/.claude*`, `~/.codex*`, `.mcp.json` altrui) senza conferma esplicita e backup.
 9. **Lingue:** codice, commenti, README/CONTRIBUTING/SECURITY in inglese (repo open source); memoria di progetto e comunicazione con l'utente in italiano.
 
 ## Memoria di progetto (`docs/memoria/`)

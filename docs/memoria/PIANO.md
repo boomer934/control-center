@@ -219,7 +219,7 @@ Eseguire il collaudo con fixture che alternano gli eventi dei due provider e con
 
 ### Fase 10 — Rilascio
 
-- **Installer:** NSIS per Windows, auto-update da GitHub Releases (canali stable e beta), release-please.
+- **Installer:** NSIS x64, canale stabile su GitHub Releases e release-please anticipati in 5h.7. In Fase 10 restano il canale beta e la valutazione della firma.
 - **Prima di rendere pubblica la repo:**
   - audit con gitleaks su tutta la cronologia;
   - verifica dei termini Anthropic sull'uso della CLI in un'app di terzi (ogni utente con il proprio login);

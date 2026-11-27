@@ -1,10 +1,13 @@
-// electron-builder configuration. Phase 3a only builds the unpacked app (`--dir`) to verify the
-// Electron Fuses in e2e/packaged; installers, signing and updates come in phase 10.
+// The unpacked build verifies Electron Fuses. The NSIS build also emits stable update metadata.
 import type { Configuration } from 'electron-builder';
+import release from '../../package.json';
 
 const config: Configuration = {
   appId: 'dev.control-center.app',
   productName: 'Control Center',
+  extraMetadata: { version: release.version },
+  artifactName: 'Control-Center-Setup-${version}-${arch}.${ext}',
+  publish: { provider: 'github', owner: 'boomer934', repo: 'control-center' },
   directories: { output: 'release', buildResources: 'build' },
   // The native terminal module and its worker need real filesystem paths.
   // Source maps stay inside the package: the Errors Console maps stacks to the TypeScript sources.

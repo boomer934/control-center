@@ -73,7 +73,7 @@ export default defineConfig(({ mode }) => {
           },
           // Runtime dependencies loaded from node_modules: a native addon and the Tree-sitter
           // runtime, which reads its .wasm files next to itself.
-          external: ['node-pty', '@vscode/tree-sitter-wasm'],
+          external: ['node-pty', '@vscode/tree-sitter-wasm', 'electron-updater'],
         },
       },
     },

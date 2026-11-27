@@ -15,6 +15,7 @@ import {
   type IpcMainInvokeEvent,
   type WebContentsDidStartNavigationEventParams,
 } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import { contract, type Handlers } from '@control-center/ipc-contract';
 import {
   createEventEmitter,
@@ -40,6 +41,7 @@ import { createProjectService } from './project/service';
 import { isAppUrl } from './security/urls';
 import { createTerminalService } from './terminal/service';
 import { resolveShell } from './terminal/shells';
+import { createUpdateService } from './updates/service';
 import { openInEditor } from './workspace/editor';
 import { resolveWorkspaceFile } from './workspace/paths';
 import { createWorkspaceService } from './workspace/service';
@@ -70,6 +72,7 @@ export function makeSenderCheck(devServer: URL | null) {
 
 function makeHandlers(
   errors: ErrorsService,
+  updates: ReturnType<typeof createUpdateService>,
   workspace: Handlers['workspace'],
   terminal: Handlers['terminal'],
   claude: Handlers['claude'],
@@ -90,6 +93,9 @@ function makeHandlers(
         platform: process.platform,
         packaged: app.isPackaged,
       }),
+      getUpdateStatus: updates.getStatus,
+      setUpdateEnabled: ({ enabled }) => updates.setEnabled(enabled),
+      restartToUpdate: updates.restart,
     },
     errors: {
       list: () => ({ revision: errors.store.revision, groups: errors.store.list() }),
@@ -164,6 +170,17 @@ export function registerIpc(
   projectRoot: string,
 ): () => Promise<void> {
   const reportFailure = makeFailureRouter(errors);
+  const updates = createUpdateService({
+    updater:
+      app.isPackaged &&
+      process.platform === 'win32' &&
+      existsSync(join(process.resourcesPath, 'app-update.yml'))
+        ? autoUpdater
+        : undefined,
+    dataDir: app.getPath('userData'),
+    changed: (status) => emit(contract.app.updateStatus, status),
+    failed: () => errors.logger.warn('updater', 'update-operation-failed'),
+  });
   const terminals = createTerminalService();
   const gitService = createGitService();
   const machineSnapshot = createMachineSnapshotReader();
@@ -557,7 +574,18 @@ export function registerIpc(
 
   const disposeHandlers = registerIpcHandlers(
     ipcMain,
-    makeHandlers(errors, workspace, terminal, claude, codex, capabilities, git, project, infra),
+    makeHandlers(
+      errors,
+      updates,
+      workspace,
+      terminal,
+      claude,
+      codex,
+      capabilities,
+      git,
+      project,
+      infra,
+    ),
     {
       isTrustedSender: makeSenderCheck(devServer),
       onFailure: reportFailure,
@@ -573,8 +601,10 @@ export function registerIpc(
     emit(contract.errors.changed, { revision: errors.store.revision }),
   );
   const stopErrors = errors.store.onChange(errorsChanged.trigger);
+  updates.start();
 
   return () => {
+    updates.dispose();
     claudeSessions.terminateAll();
     codexSessions.terminateAll();
     projects.dispose();

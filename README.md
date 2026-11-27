@@ -1,6 +1,6 @@
 # Control Center
 
-> Working name. **Status: early development (Phase 0: foundations).** Nothing to install yet.
+> Working name. **Status: early development.**
 
 A desktop app (Electron, Windows first) that shows **in real time what your AI coding agents are doing** on your project, next to your local dev infrastructure.
 
@@ -21,11 +21,18 @@ A desktop app (Electron, Windows first) that shows **in real time what your AI c
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and logged in
 - Optional: Docker Desktop, Ollama, an NVIDIA GPU
 
+## Windows installation and updates
+
+Run the x64 NSIS installer from [GitHub Releases](https://github.com/boomer934/control-center/releases) when it is listed under the release assets. The app checks there for stable updates at launch and every six hours. It downloads in the background, installs when you close the app, and offers **Restart to update** when a download is ready. Use **Settings → Automatic app updates** to turn it off.
+
+The updater verifies the installer's SHA-512 digest against the release manifest fetched over HTTPS. When the installer is unsigned, Windows may show a SmartScreen warning. The digest alone does not verify the publisher's identity.
+
 ## Development
 
 ```bash
 pnpm install
 pnpm verify   # format check, typecheck, lint, unit tests
+pnpm dist     # Windows x64 installer and update metadata, built locally
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the project plan in [`docs/memoria/PIANO.md`](docs/memoria/PIANO.md) (Italian).

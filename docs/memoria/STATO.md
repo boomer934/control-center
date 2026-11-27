@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27 (5h.1 unita su `main` con la PR #80, `b4ad79f`; 5h.2 sul branch `feat/codex-capabilities`, PR da aprire o aperta). Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f.2 (Codex) e 5h (Claude), poi 5g e la Fase 6._
+_Ultimo aggiornamento 2026-11-27. La 5h.2 è su `main` (PR #81). La 5h.7 è implementata su `codex/5h7-auto-update` in subentro per crediti Claude esauriti. La 5h.4 è in PR #82 e la 5f.2 in PR #78. La Fase 5 (5a–5e+) è chiusa, con sintesi in `STORIA.md`._
 
 ## Fase
 
@@ -17,7 +17,7 @@ _Ultimo aggiornamento 2026-11-27 (5h.1 unita su `main` con la PR #80, `b4ad79f`;
 - **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; unita su `main` con la PR #67 (`c33838b`), CI verde. Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
 - **5f.1, PR A (contratto e Claude):** unita su `main` (PR #77, ADR 0017).
 - **5f.1, PR B (sessione Codex nel main):** unita su `main` (PR #79, `c9c38b9`, ADR 0018). Il commit del piano 5h (`e32f4e6`) era rimasto fuori dallo squash: riportato su `feat/capabilities-contract`.
-- **5h, capacità e aggiornamento automatico:** piano approvato in `FASE_5h.md`. 5h.1 (catalogo Claude e contratto `capabilities:*`) unita (PR #80, `b4ad79f`). 5h.2 (inventario Codex, metodi ammessi, sonda senza chat, riga `init` di Claude) su `feat/codex-capabilities`.
+- **5h, capacità e aggiornamento automatico:** piano in `FASE_5h.md`. 5h.1 (catalogo Claude e contratto `capabilities:*`) unita (PR #80, `b4ad79f`). 5h.2 (inventario Codex, metodi ammessi, sonda senza chat, riga `init` di Claude) unita (PR #81, `59db811`). Per la 5h.7, installer NSIS x64, feed stabile e preferenza in Settings (ADR 0019).
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -38,7 +38,7 @@ _Ultimo aggiornamento 2026-11-27 (5h.1 unita su `main` con la PR #80, `b4ad79f`;
 
 ## Branch
 
-Claude: `feat/codex-capabilities` (5h.2) dalla cartella principale, creato da `main` dopo il merge della #80 (`b4ad79f`); `feat/capabilities-contract` è unito e si può cancellare. Worktree `..\control-center-5f1` e branch locali `feat/codex-session-main`/`feat/codex-session-contract` rimossi; resta da rimuovere `fix/hooks-bridge-hardening` (PR #76 unita). Inoltre `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto: esiste in locale (un commit, `13589c8`, su una base vecchia di `main`), va ribasato. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
+Claude è su `feat/codex-capabilities` nel worktree principale, pulito, con la 5h.2 già unita. Il branch locale `feat/revisione-frontend` (`13589c8`) resta da riallineare. Codex ha isolato la 5h.7 in `control-center-5h7` su `codex/5h7-auto-update`, partendo da `59db811`. La 5h.3 ha modifiche locali in `control-center-codex` su `feat/5h3-codex-fixtures`. La 5h.4 è in `control-center-5h4` su `feat/5h4-compat-probe` (PR #82).
 
 ## Punto di ripresa
 
@@ -94,9 +94,11 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Revisione Astra della PR #80 (2026-11-27):** 5 rilievi P2 e 2 P3 sul commit `c8741a1` (dettaglio nel branch locale di Codex `codex/review-pr80`, commit `f18c16d`), tutti corretti in `d054075` con test di regressione: tetto alle voci rimosse, rimozioni solo per i tipi presenti nella risposta, stato per revisioni invece che per orari (istantanea `v: 2`, la `v: 1` si rilegge vuota), nuova sonda se la CLI era indisponibile, limite d'output su tutte le righe, sonda interrotta e attesa all'uscita, 64º modello conservato. Verificato: `pnpm verify` verde (577 test), E2E Claude, Codex e sicurezza verdi (27), prova reale `CC_REAL_CLAUDE=1` verde.
 - **PR #80 unita (2026-11-27, `b4ad79f`).** Il branch `codex/review-pr80` porta solo la nota di revisione di Codex: non va unito.
 - **5h.2 fatta (2026-11-27, `feat/codex-capabilities`):** `codex/methods.ts` con gli elenchi chiusi della sessione e della sonda; `codex/rpc.ts` rifiuta ogni altro metodo prima di scriverlo (`CodexMethodRefused`); `codex/inventory.ts` (feature, skill non di repo, hook dell'utente, plugin installati, server MCP e tool, capacità del provider, profili, modelli); `codex/discovery.ts` (sonda `codex app-server` in `userData`, al più una per avvio, versione cambiata, lettura di oltre 24 h o `skills/changed`); `deprecationNotice` in Console; riga `init` di Claude nell'inventario come lettura additiva. `SICUREZZA.md` aggiornato. Verificato: `pnpm verify` verde (596 test, 0 errori di lint); prova reale `CC_REAL_CODEX=1 … -t probe` con 0.171.0-alpha.13.2: 10 modelli, 224 feature, 49 skill, 1 hook, 22 plugin, 4 MCP, 292 tool, 2 capacità, 3 profili. E2E non rieseguiti (nessun canale IPC nuovo).
-- **Ora (punto di ripresa):** PR della 5h.2 e revisione incrociata di Codex (IPC, processi). Codex può partire con 5h.3 (fixture e `fake-codex` con i metodi dell'inventario, `deprecationNotice`, `skills/changed`) e 5h.4; dopo il merge della 5h.2, la vista 5h.5. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
+- **Punto di ripresa (2026-11-27):** 5h.2 unita in [PR #81](https://github.com/boomer934/control-center/pull/81). Subentro per crediti esauriti: Codex ha implementato la 5h.7 su `codex/5h7-auto-update`, inclusi workflow di release, IPC e installer NSIS x64. Al rientro, rivedere la 5h.7 e riprendere la 5h.6 (`compat-watch`) dopo l'integrazione della sonda 5h.4 (PR #82). Restano aperti `feat/revisione-frontend` e le voci «Quando capita».
 
 ### Corsia Codex
+
+- **5h.7 (2026-11-27):** updater Windows su `codex/5h7-auto-update`. Handoff e revisione nel punto di ripresa della corsia Claude.
 
 - **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è unita su `main` (PR #68 e #70, ADR 0016). La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`. Il [collaudo 5g](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) richiede una prova parallela reale su Windows e una revisione Impeccable in Electron.
 - **Dopo la 5g (Fase 6):** pannelli Docker (sola lettura di default), porte locali e GPU/Ollama con stati vuoti corretti, a partire dall'inventario della 5d (ADR 0014). Goal in `PIANO.md`, modello ed effort in `CORSIE.md`. Prima riallineare il worktree a `main`.

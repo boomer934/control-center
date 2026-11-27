@@ -5,6 +5,7 @@
       "release-type": "node",
       "package-name": "control-center",
       "changelog-path": "CHANGELOG.md",
+      "draft": true,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": false
     }

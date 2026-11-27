@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
-import type { AppInfo, GitCheckpoint } from '@control-center/ipc-contract';
+import type { AppInfo, AppUpdateStatus, GitCheckpoint } from '@control-center/ipc-contract';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import type { WorkspaceState } from '@control-center/ipc-contract/workspace';
 import { SessionDock } from './chat/SessionDock';
@@ -26,6 +26,7 @@ import { ComponentsPage } from './pages/ComponentsPage';
 import { ActivityBar } from './shell/ActivityBar';
 import { useRoute, type RouteId } from './shell/route';
 import { StatusBar } from './shell/StatusBar';
+import { UpdateSettings } from './shell/UpdateSettings';
 import { useWorkspaceLayout } from './shell/workspaceLayout';
 import { TerminalDock } from './terminal/TerminalDock';
 import { useTerminals, type Terminals } from './terminal/useTerminals';
@@ -46,7 +47,6 @@ const PHASE_OF: Partial<Record<SectionId, string>> = {
   local: 'Phase 7',
   mcp: 'Phase 8',
   tele: 'Phase 9',
-  settings: 'a later phase',
 };
 
 const GIT_DIFF_MESSAGE: Partial<Record<string, string>> = {
@@ -216,7 +216,6 @@ export function App() {
   const [workspaces, setWorkspaces] = useState<WorkspaceState>({ active: null, recent: [] });
   const [workspaceNotice, setWorkspaceNotice] = useState('');
   const terminals = useTerminals();
-
   useEffect(() => {
     let alive = true;
     void window.api.workspace.getState().then(
@@ -296,6 +295,33 @@ function AppShell({
   const errors = useErrorList();
   const theme = useTheme();
   const total = errors.groups.reduce((n, g) => n + g.count, 0);
+  const [update, setUpdate] = useState<AppUpdateStatus | null>(null);
+  const [updateNotice, setUpdateNotice] = useState('');
+
+  useEffect(() => {
+    let received = false;
+    let alive = true;
+    const unsubscribe = window.api.app.onUpdateStatus((status) => {
+      received = true;
+      setUpdate(status);
+    });
+    void window.api.app.getUpdateStatus().then(
+      (status) => {
+        if (alive && !received) setUpdate(status);
+      },
+      () => {
+        if (alive && !received) {
+          setUpdate({ phase: 'unavailable' });
+          setUpdateNotice('Could not load update settings.');
+        }
+      },
+    );
+    return () => {
+      alive = false;
+      unsubscribe();
+    };
+  }, []);
+
   const reviewCheckpoint = useCallback(
     (value: GitCheckpoint, readOnly = false) => setCheckpoint({ value, readOnly }),
     [],
@@ -519,6 +545,17 @@ function AppShell({
               }
         }
       />
+    ) : route === 'settings' ? (
+      <UpdateSettings
+        status={update}
+        notice={updateNotice}
+        onChange={(enabled) => {
+          setUpdateNotice('');
+          void window.api.app.setUpdateEnabled({ enabled }).catch(() => {
+            setUpdateNotice('Could not save the update setting. Try again.');
+          });
+        }}
+      />
     ) : (
       <Placeholder route={route} />
     );
@@ -669,6 +706,14 @@ function AppShell({
         theme={theme.theme}
         density={theme.density}
         onCycleTheme={() => theme.setTheme(nextThemePref(theme.theme))}
+        update={update}
+        openUpdateSettings={() => go('settings')}
+        restartToUpdate={() => {
+          void window.api.app.restartToUpdate().catch(() => {
+            setUpdateNotice('Could not restart to update. Try again.');
+            go('settings');
+          });
+        }}
       />
       <CommandPalette
         open={palette !== null}

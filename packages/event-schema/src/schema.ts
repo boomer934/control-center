@@ -5,14 +5,34 @@ import { fileRefSchema } from './path';
  * Version of the persisted event format. Bump it on any breaking change and add a migration, so
  * recorded sessions stay replayable (see docs/memoria/PIANO.md, "Versionamento", and ADR 0003).
  */
-export const SCHEMA_VERSION = 2 as const;
+export const SCHEMA_VERSION = 3 as const;
 
-export const providerSchema = z.enum(['claude', 'ollama']);
+export const providerSchema = z.enum(['claude', 'codex', 'ollama']);
 export type Provider = z.infer<typeof providerSchema>;
 
-/** Where an event was derived from: Claude Code stream-json, Claude Code hooks, Ollama, the app. */
-export const sourceSchema = z.enum(['stream', 'hooks', 'ollama', 'app']);
+/**
+ * Where an event was derived from: Claude Code stream-json, Claude Code hooks, the Codex App
+ * Server, Ollama, the app.
+ */
+export const sourceSchema = z.enum(['stream', 'hooks', 'codex', 'ollama', 'app']);
 export type Source = z.infer<typeof sourceSchema>;
+
+/**
+ * A model as the provider's CLI names it: an alias (`opus`, `gpt-6.2-sol`) or a full name, at
+ * most with a bracketed variant (`claude-opus-5-5[1m]`). No spaces, quotes or leading `-`: the
+ * value may become a command line argument.
+ */
+export const modelIdSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,95}(?:\[[A-Za-z0-9._-]{1,16}\])?$/, 'invalid model id');
+export type ModelId = z.infer<typeof modelIdSchema>;
+
+/**
+ * A reasoning effort level as the provider names it (`low` … `max` for Claude Code,
+ * `minimal` … `xhigh` for Codex). The lists of each provider and model live in the IPC contract.
+ */
+export const effortSchema = z.string().regex(/^[a-z][a-z0-9-]{0,23}$/, 'invalid effort level');
+export type Effort = z.infer<typeof effortSchema>;
 
 /**
  * The agent an event belongs to: `main` for the session's own agent, `sub:<toolUseId>` for a
@@ -68,8 +88,23 @@ const event = <T extends string, S extends z.ZodRawShape>(type: T, shape: S) =>
 
 export const sessionStartedSchema = event('session.started', {
   model: z.string().optional(),
+  /** Reasoning effort the run uses, when the app knows it (it chose it or the CLI reported it). */
+  effort: effortSchema.optional(),
   permissionMode: z.string().optional(),
   cliVersion: z.string().optional(),
+});
+/**
+ * The model or the effort changes from this point of the session on (phase 5f). `by: user`: the
+ * person chose it in the chat, the event comes right before the turn that applies it; `by:
+ * provider`: the provider switched by itself (Codex `model/rerouted`). The fields are the
+ * configuration in effect afterwards; `previous*` the one before, when known.
+ */
+export const sessionConfigChangedSchema = event('session.configChanged', {
+  model: modelIdSchema.optional(),
+  effort: effortSchema.optional(),
+  previousModel: modelIdSchema.optional(),
+  previousEffort: effortSchema.optional(),
+  by: z.enum(['user', 'provider']),
 });
 export const sessionEndedSchema = event('session.ended', {
   ok: z.boolean(),
@@ -222,6 +257,7 @@ export type DetectedError = z.infer<typeof detectedErrorSchema>;
 
 export const agentEventSchema = z.discriminatedUnion('type', [
   sessionStartedSchema,
+  sessionConfigChangedSchema,
   sessionEndedSchema,
   messageUserSchema,
   messageAssistantSchema,

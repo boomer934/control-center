@@ -12,6 +12,7 @@
     "./preload": "./src/preload.ts",
     "./workspace": "./src/workspace.ts",
     "./terminal": "./src/terminal.ts",
+    "./agent-config": "./src/agent-config.ts",
     "./claude": "./src/claude.ts",
     "./project": "./src/project.ts"
   },

@@ -4,6 +4,7 @@
 // runs (see apps/desktop/src/main/claude and ADR 0009).
 import { agentEventSchema } from '@control-center/event-schema';
 import { z } from 'zod';
+import { AgentCatalogSchema, AgentConfigSchema } from './agent-config';
 import { GitCheckpointSchema, GitErrorSchema } from './git';
 import { WorkspaceIdSchema } from './workspace';
 
@@ -42,6 +43,9 @@ export const ClaudeSendResultSchema = z.enum([
   'checkpoint-busy',
 ]);
 export type ClaudeSendResult = z.infer<typeof ClaudeSendResultSchema>;
+
+/** Model and effort for the next turns (phase 5f): checked in main against the session's catalog. */
+export const ClaudeConfigureSchema = ClaudeTargetSchema.extend(AgentConfigSchema.shape);
 
 export const ClaudeStatusSchema = z.enum(['idle', 'running', 'closed']);
 
@@ -120,6 +124,14 @@ export const ClaudeUpdateSchema = z.discriminatedUnion('kind', [
     status: ClaudeStatusSchema,
     /** False when hook events are off (no suitable Node): the timeline comes from the stream. */
     hooks: z.boolean(),
+  }),
+  /**
+   * The session's model catalog and current choice (phase 5f): sent once the session is open and
+   * again after every `configure` that changed the choice.
+   */
+  ClaudeTargetSchema.extend({
+    kind: z.literal('config'),
+    catalog: AgentCatalogSchema,
   }),
 ]);
 export type ClaudeUpdate = z.infer<typeof ClaudeUpdateSchema>;

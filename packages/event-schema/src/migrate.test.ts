@@ -25,6 +25,36 @@ describe('event migrations', () => {
     if (parsed.success) expect(parsed.data).toEqual({ ...v1, schemaVersion: SCHEMA_VERSION });
   });
 
+  it('brings a v2 event to the current version', () => {
+    const v2 = { ...v1, schemaVersion: 2 };
+    const parsed = parseAgentEvent(v2);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it('validates session.configChanged and Codex events with the current schema', () => {
+    const { toolUseId: _t, tool: _tool, kind: _k, target: _target, ...envelope } = v1;
+    const changed = {
+      ...envelope,
+      schemaVersion: SCHEMA_VERSION,
+      source: 'app',
+      type: 'session.configChanged',
+      model: 'claude-opus-5-5[1m]',
+      effort: 'high',
+      previousModel: 'sonnet',
+      by: 'user',
+    };
+    expect(parseAgentEvent(changed).success).toBe(true);
+    expect(parseAgentEvent({ ...changed, provider: 'codex', source: 'codex' }).success).toBe(true);
+    expect(parseAgentEvent({ ...changed, by: 'someone' }).success).toBe(false);
+    // a model or an effort that could pass for a command line switch or carry a space
+    expect(parseAgentEvent({ ...changed, model: '--dangerously' }).success).toBe(false);
+    expect(parseAgentEvent({ ...changed, model: 'gpt 6' }).success).toBe(false);
+    expect(parseAgentEvent({ ...changed, effort: 'HIGH' }).success).toBe(false);
+    const started = { ...envelope, schemaVersion: SCHEMA_VERSION, type: 'session.started' };
+    expect(parseAgentEvent({ ...started, model: 'opus', effort: 'max' }).success).toBe(true);
+  });
+
   it('leaves current events alone and does not mutate the input', () => {
     const current = { ...v1, schemaVersion: SCHEMA_VERSION };
     expect(migrateAgentEvent(current)).toBe(current);

@@ -9,12 +9,15 @@
 //   [approve]    the command asks for approval first (decline → the command is declined)
 //   [patch]      the patch asks for approval first
 //   [hang]       starts answering, then waits for `turn/interrupt`
+//   [deaf]       like [hang], but never honours `turn/interrupt`
+//   [early]      also asks approval for another turn before answering `turn/start`
 //   [reroute]    the provider reroutes the turn to another model
 //   [fail]       the turn fails with an error
 //
 // Environment:
 //   FAKE_CODEX_VERSION     version in the `initialize` user agent (default 0.171.0-alpha.13.2)
 //   FAKE_CODEX_SIGNED_OUT  1: `account/read` answers no account
+//   FAKE_CODEX_REVIEWER    approvals reviewer reported for the thread, whatever the app asked
 //   FAKE_CODEX_LOG         file to which every request the app sent is appended, one JSON per line
 import { appendFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -143,7 +146,7 @@ async function playTurn(turnId, text) {
     notify('item/agentMessage/delta', { threadId, turnId, itemId: message.id, delta });
     await sleep(10);
   }
-  if (text.includes('[hang]')) {
+  if (text.includes('[hang]') || text.includes('[deaf]')) {
     await new Promise((resolve) => (current.resolveInterrupt = resolve));
     return;
   }
@@ -294,21 +297,35 @@ function answer(id, method, params) {
         model: 'gpt-6.2-sol',
         modelProvider: 'openai',
         cwd,
-        approvalPolicy: params.approvalPolicy,
-        sandbox: { type: params.sandbox },
+        approvalPolicy: params.approvalPolicy ?? 'on-request',
+        // like the real CLI, a missing reviewer falls back to the user's config
+        approvalsReviewer:
+          process.env.FAKE_CODEX_REVIEWER ?? params.approvalsReviewer ?? 'auto_review',
+        sandbox: {
+          type: params.sandbox === 'workspace-write' ? 'workspaceWrite' : 'readOnly',
+          networkAccess: false,
+        },
         reasoningEffort: 'high',
       };
     }
     case 'turn/start': {
       if (current) return { error: { code: -32000, message: 'A turn is already running' } };
       const turnId = randomUUID();
-      current = { id: turnId, interrupted: false };
       const text = params.input?.[0]?.text ?? '';
+      current = { id: turnId, interrupted: false, deaf: text.includes('[deaf]') };
+      // an approval for another turn, sent before the app knows this turn's id
+      if (text.includes('[early]'))
+        void ask('item/commandExecution/requestApproval', {
+          threadId,
+          turnId: 'not-this-turn',
+          itemId: 'exec-early',
+          command: 'Remove-Item -Recurse .',
+        });
       setTimeout(() => void playTurn(turnId, text), 5);
       return { turn: { id: turnId, items: [], status: 'inProgress', error: null } };
     }
     case 'turn/interrupt': {
-      if (current && current.id === params.turnId) {
+      if (current && current.id === params.turnId && !current.deaf) {
         const turn = current;
         turn.interrupted = true;
         setTimeout(() => {

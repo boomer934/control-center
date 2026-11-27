@@ -55,10 +55,20 @@ export interface CodexSession extends AgentSession {
   readonly threadId: string;
 }
 
-/** What `codex app-server` is asked to run with: approvals for anything not known safe. */
+/**
+ * What `codex app-server` is asked to run with: approvals for anything not known safe, answered
+ * by the user. Without `approvalsReviewer` the CLI applies the user's own setting, which can be
+ * `auto_review` (a model approving its own requests): the app never leaves that to the config.
+ */
 export const CODEX_THREAD_POLICY = {
   approvalPolicy: 'untrusted',
+  approvalsReviewer: 'user',
   sandbox: 'workspace-write',
+} as const;
+/** The same policy restated on every turn: a turn override lasts for the following turns too. */
+const CODEX_TURN_POLICY = {
+  approvalPolicy: CODEX_THREAD_POLICY.approvalPolicy,
+  approvalsReviewer: CODEX_THREAD_POLICY.approvalsReviewer,
 } as const;
 export const MAX_MESSAGE_CHARS = 100_000;
 const MAX_MODEL_PAGES = 4;
@@ -67,7 +77,26 @@ const threadResponse = z.looseObject({
   thread: z.looseObject({ id: ClaudeNativeSessionId }),
   model: z.string().nullable().optional(),
   reasoningEffort: z.string().nullable().optional(),
+  approvalPolicy: z.unknown(),
+  approvalsReviewer: z.unknown(),
+  sandbox: z.unknown(),
 });
+const workspaceWriteSandbox = z.looseObject({ type: z.literal('workspaceWrite') });
+
+/** The policy the server reports for the thread is the one asked for, or the session won't open. */
+function checkThreadPolicy(opened: z.infer<typeof threadResponse>): void {
+  const wrong: string[] = [];
+  if (opened.approvalPolicy !== CODEX_THREAD_POLICY.approvalPolicy) wrong.push('approvalPolicy');
+  if (opened.approvalsReviewer !== CODEX_THREAD_POLICY.approvalsReviewer)
+    wrong.push('approvalsReviewer');
+  if (!workspaceWriteSandbox.safeParse(opened.sandbox).success) wrong.push('sandbox');
+  if (wrong.length === 0) return;
+  const error = new Error(
+    `Codex did not apply the session policy (${wrong.join(', ')}): the session was not opened`,
+  );
+  error.name = 'CodexPolicyRejected';
+  throw error;
+}
 const turnResponse = z.looseObject({ turn: z.looseObject({ id: z.string().min(1).max(128) }) });
 const initializeResponse = z.looseObject({ userAgent: z.string().max(1024) });
 const accountResponse = z.looseObject({ account: z.unknown().nullable() });
@@ -207,8 +236,9 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
     if (
       !params.success ||
       params.data.threadId !== threadId ||
-      !turn ||
-      (turn.id !== undefined && params.data.turnId !== turn.id) ||
+      // only the turn the server confirmed (turn/start answer or turn/started) can ask
+      turn?.id === undefined ||
+      params.data.turnId !== turn.id ||
       pending.size >= MAX_CLAUDE_PERMISSION_REQUESTS
     ) {
       rpc.respond(rpcId, { decision: 'decline' });
@@ -364,11 +394,18 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
     rpc
       .request('turn/interrupt', { threadId, turnId: current.id }, timeouts.interrupt)
       .catch(() => undefined);
-    // a server that never confirms must not keep the session busy forever
+    // A server that never confirms may still be running the turn: the workspace stays busy until
+    // the whole process tree is gone (the turn then ends as interrupted on `close`).
     current.interruptTimer ??= setTimeout(() => {
-      if (turn !== current) return;
-      emit(live.endTurn(now(), 'interrupted'));
-      finishTurn();
+      if (turn !== current || status === 'closed' || stopping) return;
+      report({
+        kind: 'codex-setup',
+        name: 'InterruptNotConfirmed',
+        message: 'Codex did not confirm the interrupt: the session was stopped',
+      });
+      stopping = true;
+      teardown?.cancel();
+      teardown = killTree(child, killFailed, { wait: true });
     }, timeouts.interrupt);
   }
   const start = (text: string, config: AgentConfig) => {
@@ -383,6 +420,7 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
         {
           threadId,
           input: [{ type: 'text', text, text_elements: [] }],
+          ...CODEX_TURN_POLICY,
           ...(effective.model ? { model: effective.model } : {}),
           ...(effective.effort ? { effort: effective.effort } : {}),
         },
@@ -469,6 +507,7 @@ export async function openCodexSession(options: CodexSessionOptions): Promise<Co
         timeouts.open,
       ),
     );
+    checkThreadPolicy(opened);
     threadId = opened.thread.id;
     reportedThread = resume !== undefined && resume === threadId;
     defaults = config.success

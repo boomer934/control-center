@@ -154,7 +154,12 @@ describe('openCodexSession', () => {
     // the thread is saved for resuming once a turn ran
     expect(h.threadIds).toHaveLength(1);
     // with nothing chosen, the configured model and effort are sent explicitly
-    expect(turnStarts(h)[0]?.params).toMatchObject({ model: 'gpt-6.2-sol', effort: 'high' });
+    expect(turnStarts(h)[0]?.params).toMatchObject({
+      model: 'gpt-6.2-sol',
+      effort: 'high',
+      approvalPolicy: 'untrusted',
+      approvalsReviewer: 'user',
+    });
     expect(h.reports).toEqual([]);
   });
 
@@ -293,6 +298,49 @@ describe('openCodexSession', () => {
     await expect(open({ fakeEnv: { FAKE_CODEX_SIGNED_OUT: '1' } })).rejects.toMatchObject({
       name: 'CodexNotSignedIn',
     });
+  });
+
+  it('refuses to open when the thread does not route approvals to the user', async () => {
+    await expect(open({ fakeEnv: { FAKE_CODEX_REVIEWER: 'auto_review' } })).rejects.toMatchObject({
+      name: 'CodexPolicyRejected',
+      message: expect.stringContaining('approvalsReviewer') as string,
+    });
+  });
+
+  it('declines an approval for a turn the server has not confirmed', async () => {
+    const h = await open();
+    h.session.send('[early] read notes', NONE);
+    await h.idle();
+    const answers = h.sent().filter((m) => (m as { result?: unknown }).result !== undefined) as {
+      id?: unknown;
+      result?: { decision?: string };
+    }[];
+    expect(answers).toEqual([expect.objectContaining({ result: { decision: 'decline' } })]);
+    expect(h.permissions.flat()).toEqual([]);
+    expect(types(h.events)).not.toContain('permission.requested');
+    expect(h.events.at(-1)).toMatchObject({ type: 'session.ended', ok: true });
+  });
+
+  it('keeps the turn running until the process is gone when an interrupt is not confirmed', async () => {
+    const h = await open({ timeouts: { interrupt: 300 } });
+    h.session.send('[deaf] count', NONE);
+    await new Promise((r) => setTimeout(r, 200));
+    expect(h.session.interrupt()).toBe(true);
+    await new Promise((r) => setTimeout(r, 150));
+    // no confirmation yet: the workspace is still busy
+    expect(h.session.status).toBe('running');
+    expect(h.session.send('next', NONE)).toBe('busy');
+    await h.idle();
+    expect(h.session.status).toBe('closed');
+    expect(h.reports).toEqual([
+      expect.objectContaining({ kind: 'codex-setup', name: 'InterruptNotConfirmed' }),
+    ]);
+    expect(h.events.at(-1)).toMatchObject({
+      type: 'session.ended',
+      ok: false,
+      reason: 'interrupted',
+    });
+    expect(h.session.send('next', NONE)).toBe('closed');
   });
 
   it('warns once about an untested version', async () => {

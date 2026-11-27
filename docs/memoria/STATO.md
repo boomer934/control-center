@@ -85,7 +85,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
   - normalizzatore minimo `LiveCodexSession` in `@control-center/event-schema`;
   - finto `codex app-server` (`packages/fixtures/bin/fake-codex.mjs`) e prova reale `real-codex.smoke.test.ts` (`CC_REAL_CODEX=1`).
 - **Verificato (PR B):** `pnpm verify` verde (535 test, 2 saltati, 0 errori di lint). E2E `codex.spec.ts` (2), `claude.spec.ts`, `security.spec.ts` e `project-errors.spec.ts` verdi. Prova con la CLI vera 0.171.0-alpha.13.2: approvazione accettata e file scritto, interruzione durante lo streaming, ripresa del thread con memoria del turno prima.
-- **Ora (punto di ripresa):** aprire la PR di `feat/codex-session-main` e chiedere la revisione incrociata di Codex (tocca processi e IPC). Poi la 5f.2 di Codex collega `window.api.codex` a chat, pannello agenti, Vista Live e replay. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
+- **PR B aperta:** [PR #79](https://github.com/boomer934/control-center/pull/79). Revisione incrociata di Codex: "unire con correzioni", 6 rilievi. Corretti i tre visibili: P1 `approvalsReviewer: user` esplicito (la CLI reale riportava `auto_review`) con verifica della politica restituita (`CodexPolicyRejected`) e ripetizione in ogni `turn/start`; P2 interruzione non confermata → chiusura dell'albero dei processi invece di liberare il workspace; P2 approvazioni accettate solo con l'id del turno confermato. `pnpm verify` 538 test, E2E `codex.spec.ts` + `security.spec.ts` verdi (20), prova reale `CC_REAL_CODEX=1` verde.
+- **Ora (punto di ripresa):** ricevere e correggere gli altri tre rilievi di Codex sulla PR #79 (non pubblicati su GitHub), poi merge dell'utente. Poi la 5f.2 di Codex collega `window.api.codex` a chat, pannello agenti, Vista Live e replay. Restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita".
 
 ### Corsia Codex
 

@@ -7,7 +7,7 @@ import type { ErrorInput } from '@control-center/app-log';
 import { FAKE_CLAUDE } from '@control-center/fixtures';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createCapabilityService } from '../capabilities/service';
-import type { ClaudeDiscovery } from './catalog';
+import type { ClaudeDiscovery, ProbeOptions } from './catalog';
 import { createClaudeDiscovery, readClaudeVersion } from './discovery';
 
 const dirs: string[] = [];
@@ -20,9 +20,12 @@ const found = (version: string): ClaudeDiscovery => ({
   version,
   models: [opus],
   capabilities: [{ agent: 'claude', kind: 'model', id: 'opus', label: 'Opus 5.5', tags: [] }],
+  kinds: ['model'],
 });
 
-function setup(options: { program?: boolean; answer?: ClaudeDiscovery; version?: string } = {}) {
+function setup(
+  options: { program?: () => boolean; answer?: ClaudeDiscovery; version?: string } = {},
+) {
   const dataDir = mkdtempSync(join(tmpdir(), 'cc-discovery-'));
   dirs.push(dataDir);
   const reports: ErrorInput[] = [];
@@ -32,14 +35,14 @@ function setup(options: { program?: boolean; answer?: ClaudeDiscovery; version?:
     report: (r) => reports.push(r),
     now: () => new Date(clock),
   });
-  const probe = vi.fn(async () => options.answer);
+  const probe = vi.fn(async (_options: ProbeOptions) => options.answer);
   const version = vi.fn(async () => options.version ?? '2.1.326');
   const make = () =>
     createClaudeDiscovery({
       dataDir,
       report: (r) => reports.push(r),
       program: async () =>
-        options.program === false ? undefined : { command: 'claude', args: [] },
+        options.program?.() === false ? undefined : { command: 'claude', args: [] },
       capabilities,
       probe,
       version,
@@ -77,7 +80,7 @@ describe('Claude discovery', () => {
   });
 
   it('falls back when the CLI is missing or does not answer, and says so once', async () => {
-    const missing = setup({ program: false });
+    const missing = setup({ program: () => false });
     await expect(missing.make().models()).resolves.toBeUndefined();
     expect(missing.probe).not.toHaveBeenCalled();
     expect((await missing.capabilities.list()).agents[0]?.state).toBe('unavailable');
@@ -86,6 +89,43 @@ describe('Claude discovery', () => {
     await expect(silent.make().models()).resolves.toBeUndefined();
     await expect(silent.make().models()).resolves.toBeUndefined();
     expect(silent.reports.filter((r) => r.name === 'ClaudeCatalogUnavailable')).toHaveLength(2);
+  });
+});
+
+describe('Claude discovery after the CLI was unreachable', () => {
+  it('reads again when the CLI is back, even with the same version and a recent read', async () => {
+    let installed = true;
+    const t = setup({ answer: found('2.1.326'), program: () => installed });
+    await t.make().refresh();
+    installed = false;
+    await t.make().refresh();
+    expect((await t.capabilities.list()).agents[0]?.state).toBe('unavailable');
+    installed = true;
+    await t.make().refresh();
+    expect(t.probe).toHaveBeenCalledTimes(2);
+    expect((await t.capabilities.list()).agents[0]?.state).toBe('ready');
+  });
+
+  it('stops a running probe on close and records nothing after it', async () => {
+    const t = setup();
+    let seen: AbortSignal | undefined;
+    t.probe.mockImplementationOnce(
+      (options: ProbeOptions) =>
+        new Promise<undefined>((resolve) => {
+          seen = options.signal;
+          options.signal?.addEventListener('abort', () => resolve(undefined));
+        }),
+    );
+    const discovery = t.make();
+    void discovery.refresh();
+    await vi.waitFor(() => expect(seen).toBeDefined());
+    await discovery.close();
+    expect(seen?.aborted).toBe(true);
+    expect(t.reports.filter((r) => r.name === 'ClaudeCatalogUnavailable')).toEqual([]);
+    expect((await t.capabilities.list()).agents[0]?.state).toBe('not-read');
+    // nothing starts once closed
+    await discovery.refresh();
+    expect(t.probe).toHaveBeenCalledTimes(1);
   });
 });
 

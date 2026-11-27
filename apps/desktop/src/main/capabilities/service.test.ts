@@ -40,10 +40,14 @@ describe('capability service', () => {
     const { file, changes, make } = setup();
     const service = make();
     await expect(service.list()).resolves.toMatchObject({ revision: 0, entries: [] });
-    await service.record('claude', '2.1.326', [cap('a')]);
-    await service.record('claude', '2.1.330', [cap('a'), cap('b')]);
+    await service.record('claude', { version: '2.1.326', entries: [cap('a')], kinds: ['command'] });
+    await service.record('claude', {
+      version: '2.1.330',
+      entries: [cap('a'), cap('b')],
+      kinds: ['command'],
+    });
     expect(changes).toEqual([1, 2]);
-    expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ v: 1, revision: 2 });
+    expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ v: 2, revision: 2 });
 
     const again = make();
     const list = await again.list();
@@ -60,10 +64,16 @@ describe('capability service', () => {
 
   it('starts again from an invalid file and says so', async () => {
     const { reports, make } = setup(
-      JSON.stringify({ v: 1, revision: 1, agents: [], entries: [{ id: '-' }] }),
+      JSON.stringify({ v: 2, revision: 1, agents: [], entries: [{ id: '-' }] }),
     );
     await expect(make().list()).resolves.toMatchObject({ revision: 0 });
     expect(reports.map((r) => r.name)).toEqual(['CapabilitySnapshotInvalid']);
+  });
+
+  it('reads a snapshot of an older format as empty, without an error', async () => {
+    const { reports, make } = setup(JSON.stringify({ v: 1, revision: 4, agents: [], entries: [] }));
+    await expect(make().list()).resolves.toMatchObject({ revision: 0 });
+    expect(reports).toEqual([]);
   });
 
   it('does not notify when nothing changed', async () => {

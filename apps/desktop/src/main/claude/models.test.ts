@@ -139,6 +139,16 @@ describe('Claude models and effort (phase 5f)', () => {
       model: 'opus',
       effort: 'high',
     });
+    // a full list keeps all its models, and makes room only for a configured one it lacks
+    const full = Array.from({ length: 64 }, (_, i) => ({
+      id: `m${i}`,
+      label: `M${i}`,
+      efforts: [],
+    }));
+    expect(claudeCatalog(none, none, full).models).toHaveLength(64);
+    const configured = claudeCatalog({ model: 'claude-custom', effort: null }, none, full).models;
+    expect(configured).toHaveLength(64);
+    expect(configured.at(-1)?.id).toBe('claude-custom');
     // an empty list is no list: the aliases
     expect(claudeCatalog(none, none, []).models.map((m) => m.id)).toContain('sonnet');
   });

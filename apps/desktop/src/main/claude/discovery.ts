@@ -31,7 +31,11 @@ export interface ClaudeDiscoveryDeps {
   capabilities: Pick<CapabilityService, 'record' | 'unavailable' | 'lastRead'>;
   env?: NodeJS.ProcessEnv;
   probe?: (options: ProbeOptions) => Promise<ClaudeDiscovery | undefined>;
-  version?: (program: Program, env: NodeJS.ProcessEnv) => Promise<string | null>;
+  version?: (
+    program: Program,
+    env: NodeJS.ProcessEnv,
+    signal?: AbortSignal,
+  ) => Promise<string | null>;
   now?: () => Date;
   firstWaitMs?: number;
 }
@@ -40,12 +44,13 @@ export interface ClaudeDiscoveryDeps {
 export function readClaudeVersion(
   program: Program,
   env: NodeJS.ProcessEnv,
+  signal?: AbortSignal,
 ): Promise<string | null> {
   return new Promise((resolve) => {
     execFile(
       program.command,
       [...program.args, '--version'],
-      { env, windowsHide: true, timeout: 10_000, maxBuffer: 64 * 1024 },
+      { env, windowsHide: true, timeout: 10_000, maxBuffer: 64 * 1024, signal },
       (error, stdout) => {
         const word = error ? undefined : /^\s*(\S+)/.exec(String(stdout))?.[1];
         resolve(AgentVersionSchema.safeParse(word).data ?? null);
@@ -73,16 +78,26 @@ export function createClaudeDiscovery(deps: ClaudeDiscoveryDeps) {
   });
   let checked: Promise<void> | undefined;
   let warned = false;
+  /** Aborted by close(): the app is quitting, nothing new starts and a running probe ends. */
+  const closing = new AbortController();
+  const signal = closing.signal;
 
   async function run(): Promise<void> {
+    if (signal.aborted) return;
     const claude = await deps.program();
+    if (signal.aborted) return;
     if (!claude) return deps.capabilities.unavailable('claude');
     const last = await deps.capabilities.lastRead('claude');
-    if (last && models) {
+    // a recent read of the same version is enough, unless the CLI was unreachable since: then
+    // only a new read can say it is back
+    if (last?.state === 'ready' && models) {
       const fresh = now().getTime() - Date.parse(last.readAt) < CATALOG_MAX_AGE_MS;
-      if (fresh && last.version !== null && last.version === (await version(claude, env))) return;
+      if (fresh && last.version !== null && last.version === (await version(claude, env, signal)))
+        return;
     }
-    const found = await probe({ claude, cwd: deps.dataDir, env, report: deps.report });
+    if (signal.aborted) return;
+    const found = await probe({ claude, cwd: deps.dataDir, env, report: deps.report, signal });
+    if (signal.aborted) return;
     if (!found) {
       if (!warned) {
         warned = true;
@@ -105,7 +120,11 @@ export function createClaudeDiscovery(deps: ClaudeDiscoveryDeps) {
         models: found.models,
       }).catch(() => undefined);
     }
-    await deps.capabilities.record('claude', found.version, found.capabilities);
+    await deps.capabilities.record('claude', {
+      version: found.version,
+      entries: found.capabilities,
+      kinds: found.kinds,
+    });
   }
 
   /** Reads the CLI once per app run, when its answer may have changed. */
@@ -116,6 +135,11 @@ export function createClaudeDiscovery(deps: ClaudeDiscoveryDeps) {
 
   return {
     refresh,
+    /** For app quit: stops a running probe and waits until its process tree is gone. */
+    async close(): Promise<void> {
+      closing.abort();
+      await checked;
+    },
     /**
      * The models of the next session: the ones found, else the last known ones (a refresh starts
      * in the background), else a first probe, waited for a bounded time. Undefined: none known.

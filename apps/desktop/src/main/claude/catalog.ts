@@ -16,6 +16,7 @@ import {
   MAX_AGENT_MODELS,
   type AgentModel,
   type Capability,
+  type CapabilityKind,
 } from '@control-center/ipc-contract';
 import { z } from 'zod';
 import { superviseChild } from '../errors/children';
@@ -61,6 +62,8 @@ export interface ClaudeDiscovery {
   /** Empty when the answer listed no model the app can offer. */
   models: AgentModel[];
   capabilities: Capability[];
+  /** The kinds the answer listed (a field present): only those can have removed entries. */
+  kinds: CapabilityKind[];
 }
 
 const each = <T>(items: readonly unknown[] | undefined, schema: z.ZodType<T>): T[] =>
@@ -128,17 +131,28 @@ export function parseClaudeInitialize(value: unknown): ClaudeDiscovery | undefin
       makeCapability('claude', { kind: 'capability', id: c }),
     ),
   ];
+  const listed: [CapabilityKind, unknown][] = [
+    ['model', init.models],
+    ['command', init.commands],
+    ['agent', init.agents],
+    ['output-style', init.available_output_styles],
+    ['capability', init.capabilities],
+  ];
   return {
     version: AgentVersionSchema.safeParse(init.claude_code_version).data ?? null,
     models: catalog,
     capabilities: capabilities.filter((c): c is Capability => c !== undefined),
+    kinds: listed.filter(([, field]) => field !== undefined).map(([kind]) => kind),
   };
 }
 
 export const PROBE_TIMEOUT_MS = 30_000;
 /** How long the probe waits for its process tree to end once it has the answer. */
 const CLOSE_WAIT_MS = 5000;
-/** The answer is one line of about 100 KB with 130 commands: far below this. */
+/**
+ * All the probe reads of stdout, every line included: the answer is one line of about 100 KB with
+ * 130 commands, far below this.
+ */
 export const MAX_PROBE_OUTPUT_CHARS = 4 * 1024 * 1024;
 
 export interface ProbeOptions {
@@ -148,6 +162,8 @@ export interface ProbeOptions {
   env: NodeJS.ProcessEnv;
   report: (input: ErrorInput) => unknown;
   timeoutMs?: number;
+  /** Aborted when the app quits: the probe ends its process tree and answers undefined. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -156,9 +172,11 @@ export interface ProbeOptions {
  */
 export function probeClaude(options: ProbeOptions): Promise<ClaudeDiscovery | undefined> {
   const requestId = randomUUID();
+  if (options.signal?.aborted) return Promise.resolve(undefined);
   return new Promise((resolve) => {
     let settled = false;
     let output = '';
+    let received = 0;
     let ended = false;
     const child = superviseChild({
       name: 'claude-probe',
@@ -179,6 +197,8 @@ export function probeClaude(options: ProbeOptions): Promise<ClaudeDiscovery | un
       report: options.report,
       onStdout(chunk) {
         if (settled) return;
+        received += chunk.length;
+        if (received > MAX_PROBE_OUTPUT_CHARS) return finish(undefined);
         output += chunk;
         let nl: number;
         while ((nl = output.indexOf('\n')) >= 0) {
@@ -187,10 +207,11 @@ export function probeClaude(options: ProbeOptions): Promise<ClaudeDiscovery | un
           const answer = readAnswer(line, requestId);
           if (answer !== null) return finish(answer);
         }
-        if (output.length > MAX_PROBE_OUTPUT_CHARS) finish(undefined);
       },
     });
     const timer = setTimeout(() => finish(undefined), options.timeoutMs ?? PROBE_TIMEOUT_MS);
+    const onAbort = () => finish(undefined);
+    options.signal?.addEventListener('abort', onAbort, { once: true });
     let exited = false;
     let afterExit: (() => void) | undefined;
     const onExit = () => {
@@ -211,6 +232,7 @@ export function probeClaude(options: ProbeOptions): Promise<ClaudeDiscovery | un
       settled = true;
       ended = true;
       clearTimeout(timer);
+      options.signal?.removeEventListener('abort', onAbort);
       child.stdin?.end();
       if (exited) return resolve(result);
       const teardown = killTree(child, () =>

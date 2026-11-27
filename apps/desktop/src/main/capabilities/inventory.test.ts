@@ -1,6 +1,11 @@
 // The capability inventory (phase 5h): the snapshot diff (new, changed, removed), the first read
 // as baseline, "mark as seen" with its revision check, and the cleaning of untrusted text.
-import { CapabilityListSchema, type Capability } from '@control-center/ipc-contract';
+import {
+  CapabilityKindSchema,
+  CapabilityListSchema,
+  MAX_CAPABILITIES_PER_AGENT,
+  type Capability,
+} from '@control-center/ipc-contract';
 import { describe, expect, it } from 'vitest';
 import {
   applyRead,
@@ -21,6 +26,14 @@ const cap = (id: string, extra: Partial<Capability> = {}): Capability => ({
   tags: [],
   ...extra,
 });
+/** A read that lists every kind, as a full `initialize` answer does. */
+const readAll = (
+  snapshot: Parameters<typeof applyRead>[0],
+  agent: Parameters<typeof applyRead>[1],
+  version: string | null,
+  entries: Capability[],
+  now: Date,
+) => applyRead(snapshot, agent, { version, entries, kinds: CapabilityKindSchema.options }, now);
 const statuses = (snapshot: Parameters<typeof toCapabilityList>[0]) =>
   Object.fromEntries(toCapabilityList(snapshot).entries.map((e) => [e.id, e.status]));
 
@@ -57,7 +70,7 @@ describe('makeCapability', () => {
 
 describe('capability snapshot', () => {
   it('takes the first read as the baseline: nothing is new', () => {
-    const first = applyRead(EMPTY_SNAPSHOT, 'claude', '2.1.326', [cap('a'), cap('b')], at(0));
+    const first = readAll(EMPTY_SNAPSHOT, 'claude', '2.1.326', [cap('a'), cap('b')], at(0));
     expect(statuses(first)).toEqual({ a: 'seen', b: 'seen' });
     const list = toCapabilityList(first);
     expect(CapabilityListSchema.parse(list)).toEqual(list);
@@ -74,14 +87,14 @@ describe('capability snapshot', () => {
   });
 
   it('marks new, changed and removed entries against the last time they were seen', () => {
-    const first = applyRead(
+    const first = readAll(
       EMPTY_SNAPSHOT,
       'claude',
       '2.1.326',
       [cap('a'), cap('b'), cap('c')],
       at(0),
     );
-    const second = applyRead(
+    const second = readAll(
       first,
       'claude',
       '2.1.330',
@@ -92,7 +105,7 @@ describe('capability snapshot', () => {
     const d = toCapabilityList(second).entries.find((e) => e.id === 'd');
     expect(d?.firstSeen).toEqual({ version: '2.1.330', at: at(5).toISOString() });
     // the same read again changes nothing
-    const again = applyRead(
+    const again = readAll(
       second,
       'claude',
       '2.1.330',
@@ -104,8 +117,8 @@ describe('capability snapshot', () => {
   });
 
   it('marks as seen only the revision the user was shown, and drops what was removed', () => {
-    const first = applyRead(EMPTY_SNAPSHOT, 'claude', null, [cap('a'), cap('c')], at(0));
-    const second = applyRead(first, 'claude', null, [cap('a'), cap('d')], at(5));
+    const first = readAll(EMPTY_SNAPSHOT, 'claude', null, [cap('a'), cap('c')], at(0));
+    const second = readAll(first, 'claude', null, [cap('a'), cap('d')], at(5));
     const stale = markSeen(second, undefined, first.revision, at(6));
     expect(stale.result).toBe('stale');
     expect(stale.snapshot).toBe(second);
@@ -113,13 +126,13 @@ describe('capability snapshot', () => {
     expect(seen.result).toBe('marked');
     expect(statuses(seen.snapshot)).toEqual({ a: 'seen', d: 'seen' });
     // an entry that comes back after being seen as removed is new again
-    const back = applyRead(seen.snapshot, 'claude', null, [cap('a'), cap('c'), cap('d')], at(7));
+    const back = readAll(seen.snapshot, 'claude', null, [cap('a'), cap('c'), cap('d')], at(7));
     expect(statuses(back)).toEqual({ a: 'seen', c: 'new', d: 'seen' });
   });
 
   it('keeps each agent apart, and the last entries of an agent whose CLI is gone', () => {
-    const claude = applyRead(EMPTY_SNAPSHOT, 'claude', null, [cap('a')], at(0));
-    const codex = applyRead(
+    const claude = readAll(EMPTY_SNAPSHOT, 'claude', null, [cap('a')], at(0));
+    const codex = readAll(
       claude,
       'codex',
       '0.171.0-alpha.13.2',
@@ -140,7 +153,7 @@ describe('capability snapshot', () => {
       readAt: null,
     });
     // only entries of the agent being read count, and duplicates once
-    const mixed = applyRead(
+    const mixed = readAll(
       EMPTY_SNAPSHOT,
       'claude',
       null,
@@ -149,5 +162,57 @@ describe('capability snapshot', () => {
     );
     expect(mixed.entries.map((e) => [e.agent, e.id])).toEqual([['claude', 'x']]);
     expect(CapabilitySnapshotSchema.parse(gone)).toEqual(gone);
+  });
+
+  it('removes only kinds the answer listed: a field missing from the answer says nothing', () => {
+    const first = readAll(
+      EMPTY_SNAPSHOT,
+      'claude',
+      null,
+      [cap('a'), cap('m', { kind: 'model' })],
+      at(0),
+    );
+    // an answer with only a version, then one with models only
+    const empty = applyRead(first, 'claude', { version: '2.1.330', entries: [], kinds: [] }, at(1));
+    expect(statuses(empty)).toEqual({ a: 'seen', m: 'seen' });
+    const models = applyRead(
+      empty,
+      'claude',
+      { version: null, entries: [], kinds: ['model'] },
+      at(2),
+    );
+    expect(statuses(models)).toEqual({ a: 'seen', m: 'removed' });
+    // an entry of a kind the read does not cover is ignored, not added
+    const stray = applyRead(
+      models,
+      'claude',
+      { version: null, entries: [cap('z')], kinds: ['model'] },
+      at(3),
+    );
+    expect(stray.entries.map((e) => e.id)).not.toContain('z');
+  });
+
+  it('never outgrows the schema: removals beyond the per-agent limit drop, oldest first', () => {
+    const many = (prefix: string) =>
+      Array.from({ length: MAX_CAPABILITIES_PER_AGENT }, (_, i) => cap(`${prefix}${i}`));
+    const first = readAll(EMPTY_SNAPSHOT, 'claude', null, many('a'), at(0));
+    const second = readAll(first, 'claude', null, many('b'), at(1));
+    const third = readAll(second, 'claude', null, many('c').slice(0, 10), at(2));
+    for (const snapshot of [second, third]) {
+      expect(snapshot.entries.length).toBeLessThanOrEqual(MAX_CAPABILITIES_PER_AGENT);
+      expect(CapabilitySnapshotSchema.safeParse(snapshot).success).toBe(true);
+      expect(CapabilityListSchema.safeParse(toCapabilityList(snapshot)).success).toBe(true);
+    }
+    // the ten present entries stay, the newest removals (the b's) fill the rest
+    const ids = third.entries.map((e) => e.id);
+    expect(ids.filter((id) => id.startsWith('c'))).toHaveLength(10);
+    expect(ids.filter((id) => id.startsWith('a'))).toHaveLength(0);
+  });
+
+  it('orders by revision: a read in the same millisecond as "mark as seen" is still news', () => {
+    const first = readAll(EMPTY_SNAPSHOT, 'claude', null, [cap('a')], at(0));
+    const seen = markSeen(first, 'claude', first.revision, at(1)).snapshot;
+    const same = readAll(seen, 'claude', null, [cap('a', { label: 'changed' }), cap('b')], at(1));
+    expect(statuses(same)).toEqual({ a: 'changed', b: 'new' });
   });
 });

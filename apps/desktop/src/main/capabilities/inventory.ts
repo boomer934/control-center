@@ -74,12 +74,19 @@ export function makeCapability(
 }
 
 // ── the snapshot ────────────────────────────────────────────────────────────
+//
+// What is new or changed is decided by revisions, not by clocks: two operations in the same
+// millisecond (a read right after "mark as seen") still come in order.
 
 const IsoSchema = z.iso.datetime();
+const RevisionSchema = z.number().int().nonnegative();
 
 const StoredEntrySchema = CapabilitySchema.extend({
   firstSeen: z.strictObject({ version: AgentVersionSchema.nullable(), at: IsoSchema }),
   changedAt: IsoSchema,
+  /** The revision that added the entry, and the one that last changed it. */
+  firstRevision: RevisionSchema,
+  changedRevision: RevisionSchema,
   /** Set while the entry is gone; dropped with the entry once the user has seen it. */
   removedAt: IsoSchema.optional(),
 });
@@ -91,11 +98,14 @@ const StoredAgentSchema = z.strictObject({
   version: AgentVersionSchema.nullable(),
   readAt: IsoSchema.nullable(),
   seenAt: IsoSchema.nullable(),
+  /** The revision of the last "mark as seen" (or of the first read): later changes are news. */
+  seenRevision: RevisionSchema.nullable(),
 });
 
+export const SNAPSHOT_VERSION = 2;
 export const CapabilitySnapshotSchema = z.strictObject({
-  v: z.literal(1),
-  revision: z.number().int().nonnegative(),
+  v: z.literal(SNAPSHOT_VERSION),
+  revision: RevisionSchema,
   agents: z.array(StoredAgentSchema).max(CapabilityAgentSchema.options.length),
   entries: z
     .array(StoredEntrySchema)
@@ -103,7 +113,12 @@ export const CapabilitySnapshotSchema = z.strictObject({
 });
 export type CapabilitySnapshot = z.infer<typeof CapabilitySnapshotSchema>;
 
-export const EMPTY_SNAPSHOT: CapabilitySnapshot = { v: 1, revision: 0, agents: [], entries: [] };
+export const EMPTY_SNAPSHOT: CapabilitySnapshot = {
+  v: SNAPSHOT_VERSION,
+  revision: 0,
+  agents: [],
+  entries: [],
+};
 
 const key = (e: Pick<Capability, 'agent' | 'kind' | 'id'>) =>
   `${e.agent}\u0000${e.kind}\u0000${e.id}`;
@@ -111,6 +126,7 @@ const signature = (e: Pick<Capability, 'label' | 'description' | 'tags'>) =>
   JSON.stringify([e.label, e.description ?? '', e.tags]);
 const order = (a: Capability, b: Capability) =>
   a.agent.localeCompare(b.agent) || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id);
+const byAgent = (a: { agent: string }, b: { agent: string }) => a.agent.localeCompare(b.agent);
 const capability = ({ agent, kind, id, label, description, tags }: Capability): Capability => ({
   agent,
   kind,
@@ -120,65 +136,101 @@ const capability = ({ agent, kind, id, label, description, tags }: Capability): 
   tags,
 });
 
+/** One read of an agent's CLI: the entries found, and the kinds the answer actually listed. */
+export interface CapabilityRead {
+  version: string | null;
+  entries: readonly Capability[];
+  /**
+   * The kinds this read covers. An entry of another kind is kept as it is: an answer without a
+   * `commands` field says nothing about the commands, it does not remove them.
+   */
+  kinds: readonly CapabilityKind[];
+}
+
 /**
  * The snapshot after a successful read of `agent`: entries it did not have are new, entries whose
- * text or tags differ are changed, entries the read lacks are removed. The first read of an agent
- * is the baseline: it counts as seen, so a fresh install does not show hundreds of novelties.
+ * text or tags differ are changed, entries of a covered kind the read lacks are removed. The first
+ * read of an agent is the baseline: it counts as seen, so a fresh install shows no novelties.
+ * An agent never holds more than MAX_CAPABILITIES_PER_AGENT entries: the oldest removals go first.
  */
 export function applyRead(
   snapshot: CapabilitySnapshot,
   agent: CapabilityAgent,
-  version: string | null,
-  read: readonly Capability[],
+  read: CapabilityRead,
   now: Date,
 ): CapabilitySnapshot {
   const at = now.toISOString();
-  const safeVersion = AgentVersionSchema.safeParse(version).data ?? null;
+  const revision = snapshot.revision + 1;
+  const version = AgentVersionSchema.safeParse(read.version).data ?? null;
+  const covered = new Set(read.kinds);
   const previous = new Map(
     snapshot.entries.filter((e) => e.agent === agent).map((e) => [key(e), e]),
   );
   const incoming = new Map<string, Capability>();
-  for (const c of read) {
-    if (c.agent !== agent || incoming.has(key(c))) continue;
+  for (const c of read.entries) {
+    if (c.agent !== agent || !covered.has(c.kind) || incoming.has(key(c))) continue;
     if (incoming.size >= MAX_CAPABILITIES_PER_AGENT) break;
     incoming.set(key(c), c);
   }
 
-  const entries: StoredEntry[] = [];
+  const present: StoredEntry[] = [];
   for (const [k, c] of incoming) {
     const old = previous.get(k);
     if (!old) {
-      entries.push({ ...capability(c), firstSeen: { version: safeVersion, at }, changedAt: at });
+      present.push({
+        ...capability(c),
+        firstSeen: { version, at },
+        changedAt: at,
+        firstRevision: revision,
+        changedRevision: revision,
+      });
     } else if (old.removedAt !== undefined || signature(old) !== signature(c)) {
       // back after a removal, or different: changed now, first seen when it first appeared
-      entries.push({ ...capability(c), firstSeen: old.firstSeen, changedAt: at });
+      present.push({
+        ...capability(c),
+        firstSeen: old.firstSeen,
+        changedAt: at,
+        firstRevision: old.firstRevision,
+        changedRevision: revision,
+      });
     } else {
-      entries.push(old);
+      present.push(old);
     }
   }
+  const removed: StoredEntry[] = [];
   for (const [k, old] of previous) {
     if (incoming.has(k)) continue;
-    entries.push(old.removedAt === undefined ? { ...old, removedAt: at, changedAt: at } : old);
+    if (old.removedAt !== undefined) removed.push(old);
+    else if (!covered.has(old.kind)) present.push(old);
+    else removed.push({ ...old, removedAt: at, changedAt: at, changedRevision: revision });
   }
+  // present entries first, then the newest removals while there is room: the snapshot never
+  // outgrows its own schema (nor the IPC list)
+  const current = present.slice(0, MAX_CAPABILITIES_PER_AGENT);
+  removed.sort((a, b) => b.changedRevision - a.changedRevision);
+  const kept = removed.slice(0, MAX_CAPABILITIES_PER_AGENT - current.length);
 
   const record = snapshot.agents.find((a) => a.agent === agent);
+  const baseline = !record?.readAt;
   const agents = [
     ...snapshot.agents.filter((a) => a.agent !== agent),
     {
       agent,
       state: 'ready' as const,
-      version: safeVersion,
+      version,
       readAt: at,
-      // the first read is the baseline
-      seenAt: record?.readAt ? record.seenAt : at,
+      seenAt: baseline ? at : (record?.seenAt ?? null),
+      seenRevision: baseline ? revision : (record?.seenRevision ?? null),
     },
-  ].sort((a, b) => a.agent.localeCompare(b.agent));
+  ].sort(byAgent);
 
   return {
-    v: 1,
-    revision: snapshot.revision + 1,
+    v: SNAPSHOT_VERSION,
+    revision,
     agents,
-    entries: [...snapshot.entries.filter((e) => e.agent !== agent), ...entries].sort(order),
+    entries: [...snapshot.entries.filter((e) => e.agent !== agent), ...current, ...kept].sort(
+      order,
+    ),
   };
 }
 
@@ -191,13 +243,18 @@ export function markUnavailable(
   if (record?.state === 'unavailable') return snapshot;
   const next = record
     ? { ...record, state: 'unavailable' as const }
-    : { agent, state: 'unavailable' as const, version: null, readAt: null, seenAt: null };
+    : {
+        agent,
+        state: 'unavailable' as const,
+        version: null,
+        readAt: null,
+        seenAt: null,
+        seenRevision: null,
+      };
   return {
     ...snapshot,
     revision: snapshot.revision + 1,
-    agents: [...snapshot.agents.filter((a) => a.agent !== agent), next].sort((a, b) =>
-      a.agent.localeCompare(b.agent),
-    ),
+    agents: [...snapshot.agents.filter((a) => a.agent !== agent), next].sort(byAgent),
   };
 }
 
@@ -219,27 +276,37 @@ export function markSeen(
     snapshot: {
       ...snapshot,
       revision: snapshot.revision + 1,
-      agents: snapshot.agents.map((a) => (targets(a.agent) ? { ...a, seenAt: at } : a)),
+      agents: snapshot.agents.map((a) =>
+        targets(a.agent) ? { ...a, seenAt: at, seenRevision: revision } : a,
+      ),
       entries: snapshot.entries.filter((e) => !(targets(e.agent) && e.removedAt !== undefined)),
     },
   };
 }
 
-function statusOf(entry: StoredEntry, seenAt: string | null): CapabilityEntry['status'] {
-  const after = (time: string) => seenAt === null || time > seenAt;
+function statusOf(entry: StoredEntry, seenRevision: number | null): CapabilityEntry['status'] {
+  const after = (r: number) => seenRevision === null || r > seenRevision;
   if (entry.removedAt !== undefined) return 'removed';
-  if (after(entry.firstSeen.at)) return 'new';
-  if (after(entry.changedAt)) return 'changed';
+  if (after(entry.firstRevision)) return 'new';
+  if (after(entry.changedRevision)) return 'changed';
   return 'seen';
 }
 
 /** What `capabilities:list` returns: every agent, read or not, and the entries with a status. */
 export function toCapabilityList(snapshot: CapabilitySnapshot): CapabilityList {
+  const records = new Map(snapshot.agents.map((a) => [a.agent, a]));
   const agents: AgentInventory[] = CapabilityAgentSchema.options.map((agent) => {
-    const record = snapshot.agents.find((a) => a.agent === agent);
-    return record ?? { agent, state: 'not-read', version: null, readAt: null, seenAt: null };
+    const record = records.get(agent);
+    return record
+      ? {
+          agent,
+          state: record.state,
+          version: record.version,
+          readAt: record.readAt,
+          seenAt: record.seenAt,
+        }
+      : { agent, state: 'not-read', version: null, readAt: null, seenAt: null };
   });
-  const seen = new Map(agents.map((a) => [a.agent, a.seenAt]));
   return {
     revision: snapshot.revision,
     agents,
@@ -247,7 +314,7 @@ export function toCapabilityList(snapshot: CapabilitySnapshot): CapabilityList {
       ...capability(entry),
       firstSeen: entry.firstSeen,
       changedAt: entry.changedAt,
-      status: statusOf(entry, seen.get(entry.agent) ?? null),
+      status: statusOf(entry, records.get(entry.agent)?.seenRevision ?? null),
     })),
   };
 }

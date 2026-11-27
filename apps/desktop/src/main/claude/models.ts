@@ -97,13 +97,13 @@ export function claudeCatalog(
   chosen?: AgentConfig,
   discovered?: readonly AgentModel[],
 ): AgentCatalog {
-  const models = [...(discovered?.length ? discovered : CLAUDE_MODELS)].slice(
-    0,
-    MAX_AGENT_MODELS - 1,
-  );
+  const models = [...(discovered?.length ? discovered : CLAUDE_MODELS)].slice(0, MAX_AGENT_MODELS);
   const configured = safeModelId(defaults.model);
-  if (configured !== null && !models.some((m) => m.id === configured))
+  if (configured !== null && !models.some((m) => m.id === configured)) {
+    // the configured model must stay choosable: on a full list it takes the last place
+    if (models.length >= MAX_AGENT_MODELS) models.pop();
     models.push({ id: configured, label: configured, efforts: [...CLAUDE_EFFORTS] });
+  }
   const current =
     chosen &&
     (chosen.model === null || safeModelId(chosen.model) !== null) &&

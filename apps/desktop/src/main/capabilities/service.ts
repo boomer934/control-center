@@ -7,7 +7,6 @@ import { mkdir, open, rename, rm, writeFile, type FileHandle } from 'node:fs/pro
 import { dirname } from 'node:path';
 import type { ErrorInput } from '@control-center/app-log';
 import type {
-  Capability,
   CapabilityAgent,
   CapabilityList,
   CapabilityMarkSeenResult,
@@ -19,7 +18,9 @@ import {
   EMPTY_SNAPSHOT,
   markSeen,
   markUnavailable,
+  SNAPSHOT_VERSION,
   toCapabilityList,
+  type CapabilityRead,
   type CapabilitySnapshot,
 } from './inventory';
 
@@ -34,7 +35,10 @@ export interface CapabilityServiceDeps {
   now?: () => Date;
 }
 
-/** The snapshot on disk; a missing, oversized or invalid file reads as empty. */
+/**
+ * The snapshot on disk; a missing, oversized or invalid file reads as empty. A snapshot of an
+ * older format (`v` below the current one) is not an error: it is read as empty and rebuilt.
+ */
 export async function readSnapshot(
   file: string,
 ): Promise<{ snapshot: CapabilitySnapshot; invalid: boolean }> {
@@ -42,8 +46,11 @@ export async function readSnapshot(
   try {
     handle = await open(file, 'r');
     const text = await readLimited(handle, MAX_SNAPSHOT_BYTES);
-    const parsed =
-      text === undefined ? undefined : CapabilitySnapshotSchema.safeParse(JSON.parse(text));
+    const value: unknown = text === undefined ? undefined : JSON.parse(text);
+    const v = (value as { v?: unknown } | null)?.v;
+    if (typeof v === 'number' && v < SNAPSHOT_VERSION)
+      return { snapshot: EMPTY_SNAPSHOT, invalid: false };
+    const parsed = value === undefined ? undefined : CapabilitySnapshotSchema.safeParse(value);
     return parsed?.success
       ? { snapshot: parsed.data, invalid: false }
       : { snapshot: EMPTY_SNAPSHOT, invalid: true };
@@ -101,20 +108,23 @@ export function createCapabilityService(deps: CapabilityServiceDeps) {
       await queue;
       return toCapabilityList(snapshot);
     },
-    /** Version of the last successful read of `agent`, once the snapshot is loaded. */
+    /**
+     * The last successful read of `agent` (its CLI version and time), and whether the CLI was
+     * reachable at the last attempt; undefined when it was never read.
+     */
     async lastRead(
       agent: CapabilityAgent,
-    ): Promise<{ version: string | null; readAt: string } | undefined> {
+    ): Promise<
+      { version: string | null; readAt: string; state: 'ready' | 'unavailable' } | undefined
+    > {
       await queue;
       const record = snapshot.agents.find((a) => a.agent === agent);
-      return record?.readAt ? { version: record.version, readAt: record.readAt } : undefined;
+      return record?.readAt
+        ? { version: record.version, readAt: record.readAt, state: record.state }
+        : undefined;
     },
-    record(
-      agent: CapabilityAgent,
-      version: string | null,
-      read: readonly Capability[],
-    ): Promise<void> {
-      return change((current) => applyRead(current, agent, version, read, now()));
+    record(agent: CapabilityAgent, read: CapabilityRead): Promise<void> {
+      return change((current) => applyRead(current, agent, read, now()));
     },
     unavailable(agent: CapabilityAgent): Promise<void> {
       return change((current) => markUnavailable(current, agent));

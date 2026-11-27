@@ -92,6 +92,18 @@ describe('Claude catalog from initialize (phase 5h)', () => {
     expect(JSON.stringify(found)).not.toContain('someone');
   });
 
+  it('says which kinds the answer listed, so a missing field removes nothing', () => {
+    expect(parseClaudeInitialize(recorded())?.kinds).toEqual([
+      'model',
+      'command',
+      'agent',
+      'output-style',
+      'capability',
+    ]);
+    expect(parseClaudeInitialize({ claude_code_version: '2.1.330' })?.kinds).toEqual([]);
+    expect(parseClaudeInitialize({ models: [] })?.kinds).toEqual(['model']);
+  });
+
   it('is not an answer when the shape is wrong', () => {
     expect(parseClaudeInitialize(null)).toBeUndefined();
     expect(parseClaudeInitialize({ models: 'opus' })).toBeUndefined();
@@ -125,6 +137,53 @@ describe('Claude catalog probe', () => {
     });
     expect(found).toBeUndefined();
     expect(Date.now() - started).toBeLessThan(5000);
+  });
+
+  it('counts every line against the output limit, not only the unfinished one', async () => {
+    const script = join(tempDir(), 'chatty.mjs');
+    // many complete lines, none of them the answer, then silence
+    writeFileSync(
+      script,
+      [
+        "const line = JSON.stringify({ type: 'system', text: 'x'.repeat(1000) }) + '\\n';",
+        'for (let i = 0; i < 5000; i++) process.stdout.write(line);',
+        'setInterval(() => {}, 1000);',
+      ].join('\n'),
+    );
+    const started = Date.now();
+    const found = await probeClaude({
+      claude: { command: process.execPath, args: [script] },
+      cwd: tempDir(),
+      env: env(),
+      report: () => undefined,
+      timeoutMs: 20_000,
+    });
+    expect(found).toBeUndefined();
+    expect(Date.now() - started).toBeLessThan(15_000);
+  });
+
+  it('ends at once when aborted, and never starts when already aborted', async () => {
+    const controller = new AbortController();
+    const probe = probeClaude({
+      claude: program,
+      cwd: tempDir(),
+      env: env({ FAKE_CLAUDE_INIT: 'silent' }),
+      report: () => undefined,
+      signal: controller.signal,
+    });
+    setTimeout(() => controller.abort(), 200);
+    const started = Date.now();
+    await expect(probe).resolves.toBeUndefined();
+    expect(Date.now() - started).toBeLessThan(10_000);
+    await expect(
+      probeClaude({
+        claude: { command: join(tempDir(), 'missing.exe'), args: [] },
+        cwd: tempDir(),
+        env: env(),
+        report: () => undefined,
+        signal: controller.signal,
+      }),
+    ).resolves.toBeUndefined();
   });
 
   it('is undefined when the program cannot start', async () => {

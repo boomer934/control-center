@@ -566,6 +566,10 @@ export function registerIpc(
     errorsChanged.cancel();
     capabilityChanged.cancel();
     disposeHandlers();
-    return Promise.all([claudeSessions.closeAll(), codexSessions.closeAll()]).then(() => undefined);
+    return Promise.all([
+      claudeSessions.closeAll(),
+      codexSessions.closeAll(),
+      claudeDiscovery.close(),
+    ]).then(() => undefined);
   };
 }

@@ -126,8 +126,9 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
-- **Ripresa 5e+:** branch `feat/error-quick-actions`. La chat usa una bozza modificabile. Il main offre il sorgente verificato in sola lettura e invia a Ollama il solo riepilogo ripulito dell'errore. I percorsi principali interessati sono `packages/ipc-contract`, `apps/desktop/src/main` e `apps/desktop/src/renderer/src/live`.
-- **Verificato (5e+):** `pnpm verify` verde con 440 test passati e uno saltato, 74 E2E funzionali verdi, prova Ollama con `qwen2.5-coder:7b` e Impeccable nei due temi. Gli snapshot di riferimento restano alla CI Windows.
+- **5e+ (2026-11-27):** [PR #68](https://github.com/boomer934/control-center/pull/68) da `feat/error-quick-actions` verso `main` (ADR 0016). Il branch era già allineato a `origin/main`. L'ispettore offre una bozza Claude, una spiegazione Ollama e il sorgente in sola lettura alla riga dell'errore.
+- **Verificato (5e+):** `pnpm verify` verde con 440 test passati e uno saltato. Nella suite Electron, 70 test sono passati al primo giro. Gli altri quattro funzionali sono passati nei rilanci mirati, tre con profili Electron temporanei e uno dopo un errore sulla porta riservata di Windows. Quattro confronti visivi locali falliti. Prova Ollama con `qwen2.5-coder:7b` e Impeccable nei due temi completati durante l'implementazione.
+- **Prima del merge:** [CI Windows e confronti visivi](https://github.com/boomer934/control-center/pull/68/checks) e revisione incrociata Claude con `/code-review high` su IPC, contratto e lettura dei file del workspace. Il merge spetta all'utente.
 
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.

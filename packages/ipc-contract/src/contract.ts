@@ -27,6 +27,7 @@ import {
   GitWorkspaceSchema,
 } from './git';
 import { AgentConfigureResultSchema } from './agent-config';
+import { AppUpdateStatusSchema } from './app-update';
 import {
   CapabilitiesChangedSchema,
   CapabilityListSchema,
@@ -230,6 +231,18 @@ export const ErrorsChangedSchema = z.object({ revision: z.number().int().nonnega
 export const contract = {
   app: {
     getInfo: invoke('app:get-info', NoRequest, AppInfoSchema),
+    getUpdateStatus: invoke('app:get-update-status', NoRequest, AppUpdateStatusSchema),
+    setUpdateEnabled: invoke(
+      'app:set-update-enabled',
+      z.object({ enabled: z.boolean() }).strict(),
+      AppUpdateStatusSchema,
+    ),
+    restartToUpdate: invoke(
+      'app:restart-to-update',
+      NoRequest,
+      z.object({ restarting: z.boolean() }).strict(),
+    ),
+    updateStatus: event('app:update-status', AppUpdateStatusSchema),
   },
   errors: {
     list: invoke('errors:list', NoRequest, ErrorListSchema),

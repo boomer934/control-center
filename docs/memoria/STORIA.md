@@ -1,5 +1,12 @@
 # Storia del progetto
 
+## 2026-11-27 — Aggiornamenti Windows e installer NSIS (5h.7)
+
+- **Fatto.** Codex è subentrato per crediti Claude esauriti e ha implementato la 5h.7 in `control-center-5h7` su `codex/5h7-auto-update`. In `STATO.md` la corsia Claude riparte dalla 5h.2 già unita (PR #81), con la 5h.6 dopo la sonda 5h.4.
+- **Decisioni.** Anticipati installer NSIS x64, canale stabile e manifesti, versione dal pacchetto radice. Release Please pubblica la bozza solo dopo l'allegato dei tre asset. Il main conserva l'opt-out, invia `app:update-status` e installa alla chiusura o con «Restart to update». Firma e beta in Fase 10 (ADR 0019).
+- **Verifica.** `pnpm verify` con 602 test passati e 5 saltati. `pnpm dist` con ConPTY precompilato, SHA-512 dell'installer confrontato con `latest.yml`, `actionlint`, 18 E2E di sicurezza e 10 E2E del pacchetto. Prova installata 90.0.0 → 90.1.0 su feed isolato, con pulsante di riavvio e alla chiusura normale senza riapertura. Verifica Impeccable a 960×600 nei due temi.
+- **Resta.** Revisione della PR, CI e aggiornamento da GitHub con due release ufficiali dotate di installer.
+
 Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stato fatto, decisioni prese, problemi incontrati.
 
 ---

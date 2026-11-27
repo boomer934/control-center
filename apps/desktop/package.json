@@ -13,10 +13,12 @@
     "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json && tsc -p tsconfig.e2e.json",
     "e2e": "electron-vite build --mode e2e && playwright test --project=app",
     "package:dir": "electron-vite build && electron-builder --dir --config electron-builder.config.ts",
+    "dist": "electron-vite build && electron-builder --win nsis --publish never --config electron-builder.config.ts",
     "e2e:packaged": "pnpm package:dir && playwright test --project=packaged"
   },
   "dependencies": {
     "@vscode/tree-sitter-wasm": "0.3.1",
+    "electron-updater": "6.8.11",
     "node-pty": "^1.1.0"
   },
   "devDependencies": {

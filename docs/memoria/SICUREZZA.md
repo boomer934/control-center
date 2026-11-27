@@ -4,23 +4,23 @@ Leggere prima di toccare IPC, processi figli, file system, segreti, Docker, brid
 
 ## Modello delle minacce
 
-| Superficie          | Rischio                                                         | Contromisura                                                                                                          | Fase |
-| ------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---- |
-| Renderer            | XSS dall'output degli agenti (Markdown, log) → accesso all'IPC  | sandbox, CSP, Markdown sanitizzato, niente HTML raw                                                                   | 3    |
-| IPC                 | comandi arbitrari dal renderer                                  | canali espliciti in `ipc-contract`, zod, controllo del mittente, nessun "esegui comando" generico                     | 3    |
-| Hooks/MCP bridge    | un processo locale invia eventi falsi                           | named pipe (scrittura a utente, SYSTEM e Administrators; lettura a tutti) + token per sessione, niente TCP (ADR 0009) | 4, 7 |
-| File system         | path traversal, symlink fuori dal workspace                     | normalizzazione + verifica del percorso reale                                                                         | 4    |
-| Docker              | il socket equivale a privilegi elevati                          | sola lettura di default, conferma sulle azioni                                                                        | 6    |
-| Porte               | esposizione involontaria                                        | solo lettura delle porte locali, avviso su `0.0.0.0`, nessuna scansione remota                                        | 6    |
-| Server MCP di terzi | codice non fidato                                               | mostrare comando e origine prima di abilitarli; i nuovi server non si avviano mai da soli                             | 8    |
-| Agenti locali       | output inaffidabile                                             | nessuna scrittura diretta, solo proposte di diff; allowlist dei tool MCP                                              | 7    |
-| Git/checkpoint      | perdita di lavoro                                               | ref nascosti, mai toccare il branch dell'utente, conferma + anteprima del diff                                        | 4b   |
-| Modello progetto    | lettura fuori dal workspace, file enormi, contenuti esposti     | worker in sola lettura, niente symlink, limiti di file e dimensioni, solo percorsi e import al renderer (ADR 0012)    | 5a   |
-| Dipendenze          | supply chain                                                    | lockfile, Dependabot, `pnpm audit`, ADR per ogni dipendenza, pnpm `onlyBuiltDependencies`                             | 0    |
-| Aggiornamenti       | update malevolo                                                 | firma e verifica di electron-updater                                                                                  | 10   |
-| Repo pubblica       | segreti nella cronologia                                        | gitleaks in pre-commit e in CI (cronologia completa)                                                                  | 0    |
-| Fixture pubblicate  | segreti, contenuti di file o dati personali nelle registrazioni | pulizia ad allowlist (`sanitize.mjs`), `--check` in CI e in Vitest, gitleaks; grezzi git-ignored                      | 2    |
-| Eventi              | segreti o percorsi personali in eventi e log                    | `makeTextCleaner` (radice → `.`, home → `~`, `redactSecrets`) su ogni testo; schema senza assoluti                    | 2    |
+| Superficie          | Rischio                                                         | Contromisura                                                                                                          | Fase     |
+| ------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------- |
+| Renderer            | XSS dall'output degli agenti (Markdown, log) → accesso all'IPC  | sandbox, CSP, Markdown sanitizzato, niente HTML raw                                                                   | 3        |
+| IPC                 | comandi arbitrari dal renderer                                  | canali espliciti in `ipc-contract`, zod, controllo del mittente, nessun "esegui comando" generico                     | 3        |
+| Hooks/MCP bridge    | un processo locale invia eventi falsi                           | named pipe (scrittura a utente, SYSTEM e Administrators; lettura a tutti) + token per sessione, niente TCP (ADR 0009) | 4, 7     |
+| File system         | path traversal, symlink fuori dal workspace                     | normalizzazione + verifica del percorso reale                                                                         | 4        |
+| Docker              | il socket equivale a privilegi elevati                          | sola lettura di default, conferma sulle azioni                                                                        | 6        |
+| Porte               | esposizione involontaria                                        | solo lettura delle porte locali, avviso su `0.0.0.0`, nessuna scansione remota                                        | 6        |
+| Server MCP di terzi | codice non fidato                                               | mostrare comando e origine prima di abilitarli; i nuovi server non si avviano mai da soli                             | 8        |
+| Agenti locali       | output inaffidabile                                             | nessuna scrittura diretta, solo proposte di diff; allowlist dei tool MCP                                              | 7        |
+| Git/checkpoint      | perdita di lavoro                                               | ref nascosti, mai toccare il branch dell'utente, conferma + anteprima del diff                                        | 4b       |
+| Modello progetto    | lettura fuori dal workspace, file enormi, contenuti esposti     | worker in sola lettura, niente symlink, limiti di file e dimensioni, solo percorsi e import al renderer (ADR 0012)    | 5a       |
+| Dipendenze          | supply chain                                                    | lockfile, Dependabot, `pnpm audit`, ADR per ogni dipendenza, pnpm `onlyBuiltDependencies`                             | 0        |
+| Aggiornamenti       | update malevolo                                                 | GitHub Releases via HTTPS, verifica SHA-512, feed stabile; firma dell'editore in Fase 10                              | 5h.7, 10 |
+| Repo pubblica       | segreti nella cronologia                                        | gitleaks in pre-commit e in CI (cronologia completa)                                                                  | 0        |
+| Fixture pubblicate  | segreti, contenuti di file o dati personali nelle registrazioni | pulizia ad allowlist (`sanitize.mjs`), `--check` in CI e in Vitest, gitleaks; grezzi git-ignored                      | 2        |
+| Eventi              | segreti o percorsi personali in eventi e log                    | `makeTextCleaner` (radice → `.`, home → `~`, `redactSecrets`) su ogni testo; schema senza assoluti                    | 2        |
 
 ## Checklist Electron (Fase 3: tutte verificate in test)
 
@@ -166,6 +166,13 @@ Test: **R** = `apps/desktop/src/main/codex/rpc.test.ts`, **N** = `codex/inventor
 - **Testi e percorsi:** ogni voce passa da `makeCapability` (cartelle personali a `~`, segreti redatti, limiti). Gli hook hanno come id evento e posizione, mai il percorso del file; il loro comando è descrizione e passa dalla stessa redazione (N). Le skill di repository e gli hook di progetto restano fuori: l'inventario descrive l'agente, non un workspace (N). Un metodo che fallisce o risponde fuori schema non rimuove le voci del suo tipo (N, Y).
 - **Riga `init` di Claude:** tool, server MCP, plugin e skill della prima riga `system/init` di una sessione entrano come lettura additiva: si aggiungono o aggiornano, non si rimuovono, e non cambiano la versione né l'ora dell'ultima lettura dell'agente, così non sostituiscono la sonda. Una lettura senza novità non crea una revisione (C, I).
 - **Console:** `deprecationNotice` di Codex va in Console (`CodexDeprecationNotice`), ripulito, una volta per sessione e al più 20 avvisi.
+
+### Aggiornamenti Windows (5h.7, ADR 0019)
+
+- Solo il main esegue l'updater e usa il feed GitHub pubblico incorporato nel pacchetto. Il renderer può leggere lo stato, impostare un booleano e chiedere l'installazione già scaricata. Il gate IPC verifica il mittente e zod scarta payload estranei. Il push contiene solo uno stato e, quando serve, la versione stabile.
+- Le richieste HTTPS sono quelle per trovare e scaricare la release. Non si trasmettono dati del workspace o della sessione. I messaggi remoti e i percorsi della cache restano fuori da UI e log. La preferenza locale blocca le verifiche successive, interrompe i download in corso e revoca l'installazione alla chiusura.
+- Il download richiede SHA-512 nel manifesto e l'updater verifica il contenuto prima di usarlo. Installer web, downgrade e prerelease sono disabilitati. Con un installer senza firma, SHA-512 rileva una differenza rispetto al manifesto e la fiducia resta nel repository e nel workflow che pubblicano anche il manifesto. La verifica dell'identità dell'editore dipende dalla firma in Fase 10.
+- Il job che costruisce gli artefatti da un commit di release ha solo `contents: read`. Il job di pubblicazione allega gli artefatti alla bozza e la pubblica dopo il caricamento completo.
 
 ## Privacy
 

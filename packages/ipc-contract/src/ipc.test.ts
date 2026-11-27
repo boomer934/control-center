@@ -65,7 +65,12 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
   const getInfo = vi.fn(() => (overrides.getInfo ?? info) as AppInfo);
   const openExternal = vi.fn(({ url }: { url: string }) => ({ opened: url.startsWith('https:') }));
   const handlers: Handlers = {
-    app: { getInfo },
+    app: {
+      getInfo,
+      getUpdateStatus: () => ({ phase: 'unavailable' }),
+      setUpdateEnabled: () => ({ phase: 'unavailable' }),
+      restartToUpdate: () => ({ restarting: false }),
+    },
     errors: errorsStub,
     shell: { openExternal },
     workspace: {
@@ -137,6 +142,10 @@ describe('contract', () => {
   it('declares exactly the reviewed channels (adding one must update this test)', () => {
     expect(listChannels()).toEqual([
       'app:get-info',
+      'app:get-update-status',
+      'app:set-update-enabled',
+      'app:restart-to-update',
+      'app:update-status',
       'errors:list',
       'errors:report-renderer',
       'errors:copy-report',
@@ -187,6 +196,7 @@ describe('contract', () => {
       'infra:cancel-project-error-explanation',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
+      'app:update-status',
       'errors:changed',
       'terminal:updated',
       'claude:updated',
@@ -327,11 +337,13 @@ describe('registerIpcHandlers (main)', () => {
     const ipc = new FakeIpcMain();
     const onFailure = vi.fn();
     const secretPath = 'C:\\Users\\someone\\secret.txt';
+    const { handlers } = makeHandlers();
     registerIpcHandlers(
       ipc,
       {
-        ...makeHandlers().handlers,
+        ...handlers,
         app: {
+          ...handlers.app,
           getInfo: () => {
             throw new Error(`cannot read ${secretPath}`);
           },
@@ -347,6 +359,16 @@ describe('registerIpcHandlers (main)', () => {
     });
     expect(JSON.stringify(res)).not.toContain('secret');
     expect(onFailure.mock.calls[0]?.[0].cause).toBeInstanceOf(Error);
+  });
+
+  it('rejects arguments that could change the update source or restart a different process', async () => {
+    const { ipc } = setup();
+    await expect(
+      ipc.call('app:set-update-enabled', trusted, { enabled: true, url: 'https://example.test' }),
+    ).resolves.toMatchObject({ ok: false });
+    await expect(
+      ipc.call('app:restart-to-update', trusted, { executable: 'other.exe' }),
+    ).resolves.toMatchObject({ ok: false });
   });
 
   it('bounds and validates what the renderer may report about its own errors', async () => {
@@ -421,7 +443,13 @@ describe('createApi (preload)', () => {
       'preview',
       'restore',
     ]);
-    expect(Object.keys(api.app)).toEqual(['getInfo']);
+    expect(Object.keys(api.app)).toEqual([
+      'getInfo',
+      'getUpdateStatus',
+      'setUpdateEnabled',
+      'restartToUpdate',
+      'onUpdateStatus',
+    ]);
     expect(Object.keys(api.errors)).toEqual([
       'list',
       'reportRenderer',

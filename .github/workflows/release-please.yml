@@ -5,15 +5,82 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      created: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      sha: ${{ steps.release.outputs.sha }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: googleapis/release-please-action@v5
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-      # Phase 10: when a release is created, build the Windows installer and attach it.
+
+  build-installer:
+    needs: release-please
+    if: needs.release-please.outputs.created == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the installer from the release commit
+        env:
+          RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
+        run: |
+          node -e "if (require('./package.json').version !== process.env.RELEASE_VERSION) process.exit(1)"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          pnpm dist
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $base = "apps/desktop/release/Control-Center-Setup-$env:RELEASE_VERSION-x64.exe"
+          Get-Item -LiteralPath $base, "$base.blockmap", 'apps/desktop/release/latest.yml'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer
+          if-no-files-found: error
+          path: |
+            apps/desktop/release/Control-Center-Setup-*.exe
+            apps/desktop/release/Control-Center-Setup-*.exe.blockmap
+            apps/desktop/release/latest.yml
+
+  publish-installer:
+    needs: [release-please, build-installer]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-installer
+      - name: Attach installer and publish the complete draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.release-please.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
+        run: |
+          draft="$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)"
+          test "$draft" = true
+          installer="Control-Center-Setup-${RELEASE_VERSION}-x64.exe"
+          gh release upload "$RELEASE_TAG" "$installer" "$installer.blockmap" latest.yml --clobber
+          gh release edit "$RELEASE_TAG" --draft=false

@@ -120,6 +120,17 @@ body {
   color: var(--st-error);
 }
 
+.status .status-update {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.status-update .status-btn {
+  color: var(--fg-1);
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
 /* ---------- panels ---------- */
 .view {
   height: 100%;

@@ -1,6 +1,7 @@
 import { Glyph, Icon } from '../ui/icons';
 import type { Density, ThemePref } from '../theme/theme';
 import type { WorkspaceDto } from '@control-center/ipc-contract/workspace';
+import type { AppUpdateStatus } from '@control-center/ipc-contract';
 
 interface StatusBarProps {
   errorCount: number;
@@ -13,6 +14,9 @@ interface StatusBarProps {
   sessionOpen: boolean;
   waiting: boolean;
   onShowSession(): void;
+  update: AppUpdateStatus | null;
+  openUpdateSettings(): void;
+  restartToUpdate(): void;
 }
 
 /**
@@ -29,6 +33,9 @@ export function StatusBar({
   sessionOpen,
   waiting,
   onShowSession,
+  update,
+  openUpdateSettings,
+  restartToUpdate,
 }: StatusBarProps) {
   return (
     <footer className="status" data-testid="status-bar">
@@ -58,6 +65,30 @@ export function StatusBar({
           <span>{errorCount === 1 ? 'problem' : 'problems'}</span>
         </button>
       </span>
+      {update?.phase === 'ready' && (
+        <span className="status-update">
+          <button
+            type="button"
+            className="status-btn"
+            onClick={restartToUpdate}
+            title={`Install version ${update.version} and reopen Control Center`}
+          >
+            Restart to update
+          </button>
+        </span>
+      )}
+      {(update?.phase === 'downloading' || update?.phase === 'installing') && (
+        <span className="status-update" role="status">
+          {update.phase === 'downloading' ? 'Downloading update…' : 'Installing update…'}
+        </span>
+      )}
+      {update?.phase === 'error' && (
+        <span className="status-update">
+          <button type="button" className="status-btn" onClick={openUpdateSettings}>
+            Update failed
+          </button>
+        </span>
+      )}
       <span className="r">
         <button
           type="button"

@@ -70,7 +70,7 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 | 5h.4 · Sonda di compatibilità nel bot           | Codex  | `gpt-6.2-sol` | high   | `packages/agent-compat`, `scripts/compat/probe.mjs` con test. Revisione Claude. Dopo 5h.1 su `main`.                                    |
 | 5h.5 · Vista "Novità e capacità"                | Codex  | `gpt-6.2-sol` | medium | Rotta `#/capabilities`, badge, "segna come viste", stati vuoti, E2E. Impeccable nei due temi e revisione Claude. Dopo 5h.2.             |
 | 5h.6 · Workflow `compat-watch` e auto-merge     | Claude | Opus 5.5      | high   | Config di deploy: cron, guardia sul diff, token dedicato. `/code-review` high.                                                          |
-| 5h.7 · Aggiornamento con electron-updater       | Claude | Opus 5.5      | high   | ADR, `app:updateStatus`. Decisione aperta: anticipa anche il packaging NSIS della Fase 10. `/code-review` high.                         |
+| 5h.7 · Aggiornamento con electron-updater       | Codex  | `gpt-6.2-sol` | high   | Subentro per crediti Claude esauriti. ADR 0019, `app:update-status`, NSIS x64 anticipato. Impeccable e revisione `high`.                |
 | 5g.1 · Sessioni simultanee, isolamento nel main | Claude | Opus 5.5      | high   | Sessioni per worktree, autorizzazioni e interruzioni isolate. Revisione incrociata prima del merge.                                     |
 | 5g.2 · Sessioni simultanee, UI e verifica       | Codex  | `gpt-6.2-sol` | high   | Corsie per sessione e ripresa dalla cronologia. Impeccable, E2E con fixture e prova con entrambe le CLI reali.                          |
 

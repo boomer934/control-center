@@ -30,7 +30,7 @@ pnpm non è installato globalmente: si usa `npx pnpm@10.34.9 <comando>`, oppure 
 
 - `pnpm verify`: format check + typecheck + lint + test. **Deve passare prima di ogni commit.**
 - `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm format`
-- In arrivo: `pnpm dev` (Fase 3), `pnpm e2e` (Fase 3), `pnpm dist` (Fase 10).
+- `pnpm dev` · `pnpm e2e` · `pnpm dist` (installer Windows x64 NSIS e metadati di aggiornamento, Fase 5h.7).
 
 ## Regole fisse
 

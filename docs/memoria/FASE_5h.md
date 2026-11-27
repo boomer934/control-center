@@ -4,7 +4,7 @@ _Piano approvato dall'utente il 2026-11-27. Si parte dopo il merge della PR #79 
 
 **Corsia:** Claude per architettura, IPC, processi e config di deploy · **Modello:** Opus 5.5 · **Effort:** high. Fixture, sonda del bot e vista vanno a Codex (vedi "Ripartizione per corsia").
 
-**Decisione aperta (prima del Livello 3):** electron-updater richiede l'installer NSIS e le release con `latest.yml`, oggi previsti in Fase 10. Anticipare l'updater vuol dire anticipare anche il packaging NSIS (non la firma). Da confermare con l'utente prima di iniziare il Livello 3.
+**Decisione per il Livello 3.** Con l'avvio della 5h.7 si anticipano l'installer NSIS x64 e le release con `latest.yml`. Firma e canale beta restano nel piano della Fase 10. Vedi [ADR 0019](../adr/0019-aggiornamenti-windows.md).
 
 **Prove già fatte (passo 0, 2026-11-27):**
 
@@ -143,8 +143,8 @@ Ordine: il contratto per primo, su `main`. Poi Claude fa C1–C3 mentre Codex fa
 ## Livello 3 — Consegna con electron-updater
 
 - ADR nuova (dipendenza di runtime `electron-updater`) e aggiornamento di `SICUREZZA.md` (superficie "aggiornamenti").
-- `electron-builder` `publish: github`; release-please (già presente) crea la release, un job di build Windows allega installer NSIS + `latest.yml`.
-- Nel main: `autoUpdater` controlla all'avvio e ogni 6 h, scarica in background, installa alla chiusura; nessun riavvio forzato. Stato esposto con un evento IPC `app:updateStatus` nel contratto (zod, mittente verificato) e un indicatore nella barra di stato con "Riavvia per aggiornare". Canale stable; beta in seguito.
+- `electron-builder` usa GitHub Releases. Release Please crea una bozza da pubblicare dopo la build Windows e il caricamento di installer NSIS, blockmap e `latest.yml`.
+- Nel main: `autoUpdater` controlla all'avvio e ogni 6 h, scarica in background e installa alla normale chiusura. Il contratto espone `app:update-status` (zod, mittente verificato) e la barra di stato offre «Restart to update». Il canale è stable.
 - Integrità: sha512 di `latest.yml` su HTTPS. Le build non firmate non hanno la verifica dell'editore: va scritto in `SICUREZZA.md` e nel README; la firma del codice resta opzionale (Fase 10).
 - Nessuna telemetria: l'unica chiamata è il controllo della release su GitHub; disattivabile nelle impostazioni.
 
@@ -166,7 +166,7 @@ Ordine: il contratto per primo, su `main`. Poi Claude fa C1–C3 mentre Codex fa
 
 - `apps/desktop/src/main/claude/models.ts`, `cli.ts`, `session.ts` (init/control_request), nuovo `claude/catalog.ts`
 - `apps/desktop/src/main/codex/cli.ts` (versioni da `compat.json`)
-- `packages/ipc-contract/src/agent-config.ts` (capacità opzionali), `contract.ts` (`app:updateStatus`)
+- `packages/ipc-contract/src/agent-config.ts` (capacità opzionali), `contract.ts` (`app:update-status`)
 - `packages/event-schema/src/normalize/*` (eventi sconosciuti)
 - nuovi `packages/agent-compat/`, `scripts/compat/probe.mjs`, `.github/workflows/compat-watch.yml`
 - `.github/workflows/release-please.yml`, config electron-builder, `docs/adr/`, `docs/memoria/SICUREZZA.md`
@@ -181,4 +181,4 @@ Da riusare: `toAgentModel`/`codexCatalog` come modello per Claude; `safeModelId`
 - 1b++: E2E della vista (badge, "segna come viste", filtri, stati vuoti), screenshot nei due temi, impeccable.
 - 2b: `node scripts/compat/probe.mjs --claude 2.1.326 --codex 0.171.0-alpha.13.2` dà `compatible`; con un help finto senza `--effort` dà `broken`.
 - 2c: `workflow_dispatch` su un fork o con una versione forzata: la PR si apre, la CI parte, l'auto-merge si attiva solo con diff limitato a `compat.json`.
-- 3: release di prova `x.y.z-beta` su GitHub, installare la versione precedente, controllare che l'app scarichi e proponga il riavvio; `pnpm e2e:packaged`.
+- 3: `pnpm dist`, `pnpm e2e:packaged` e prova installata tra due versioni stabili su un feed isolato. Verificare da GitHub Releases con i primi due installer pubblicati. Prova con il canale beta in Fase 10.

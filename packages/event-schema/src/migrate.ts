@@ -9,6 +9,9 @@ type Step = (event: Record<string, unknown>) => Record<string, unknown>;
 const STEPS: Readonly<Record<number, Step>> = {
   // 1 → 2: `error.detected` joins the union. Every v1 event is a valid v2 event.
   1: (event) => ({ ...event, schemaVersion: 2 }),
+  // 2 → 3 (phase 5f): the `codex` provider and source, `session.started.effort` and
+  // `session.configChanged` join. Every v2 event is a valid v3 event.
+  2: (event) => ({ ...event, schemaVersion: 3 }),
 };
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>

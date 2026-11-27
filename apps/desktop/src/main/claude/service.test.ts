@@ -5,7 +5,7 @@ import { SCHEMA_VERSION, type AgentEvent, type ErrorDraft } from '@control-cente
 import type { ClaudeUpdate } from '@control-center/ipc-contract/claude';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GitFailure } from '../git/repository';
-import { createClaudeService } from './service';
+import { createClaudeService, lastChosenConfig } from './service';
 import type { ClaudeSessionOptions, openClaudeSession } from './session';
 
 const ID = '0f8fad5b-d9cb-469f-a165-70867728950e';
@@ -59,6 +59,7 @@ function setup(
     dataDir,
     report: (r) => reports.push(r),
     programs: async () => ({ claude: programs.claude, hooks: undefined }),
+    defaults: async () => DEFAULTS,
     open,
     prepareTurn,
   });
@@ -74,6 +75,8 @@ function setup(
 }
 
 const active = () => true;
+const NONE = { model: null, effort: null };
+const DEFAULTS = { model: 'opus', effort: null };
 
 describe('Claude service', () => {
   it('waits for the first checkpoint and refuses sends while Git or Claude is busy', async () => {
@@ -116,7 +119,7 @@ describe('Claude service', () => {
       const { service, opened, publish, updates, reports } = setup(undefined, undefined, prepare);
       await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
       expect(await service.send(1, ID, 'first', active)).toBe('started');
-      expect(opened[0]?.send).toHaveBeenCalledWith('first');
+      expect(opened[0]?.send).toHaveBeenCalledWith('first', NONE);
       const warning = { kind: 'checkpoint-warning', code };
       expect(updates).toContainEqual({ ...warning, id: ID });
       expect(reports).toEqual(
@@ -163,7 +166,7 @@ describe('Claude service', () => {
     await expect(service.close(2, ID)).resolves.toBe(false);
     expect(opened[0]?.send).not.toHaveBeenCalled();
     expect(await service.send(1, ID, 'hi', active)).toBe('started');
-    expect(opened[0]?.send).toHaveBeenCalledWith('hi');
+    expect(opened[0]?.send).toHaveBeenCalledWith('hi', NONE);
     await service.closeAll();
   });
 
@@ -201,6 +204,131 @@ describe('Claude service', () => {
     await expect(
       none.service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', none.publish),
     ).resolves.toBe('claude-unavailable');
+  });
+
+  it('answers configure only once the session is open, then for any turn state (phase 5f)', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { service, opened, publish } = setup(undefined, gate);
+    const starting = service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await vi.waitFor(() => expect(opened).toHaveLength(1));
+    // opening: the catalog is not final yet, a choice could be overwritten
+    expect(service.configure(1, { id: ID, model: 'sonnet', effort: null })).toBe('closed');
+    release();
+    await expect(starting).resolves.toBe('started');
+    expect(service.configure(1, { id: ID, model: 'sonnet', effort: null })).toBe('applied');
+    // a turn in progress keeps its arguments; the choice waits for the next turn
+    opened[0]!.send.mockImplementation(() => 'started');
+    expect(await service.send(1, ID, 'one', active)).toBe('started');
+    expect(service.configure(1, { id: ID, model: 'haiku', effort: 'low' })).toBe('applied');
+    expect(opened[0]?.send).toHaveBeenLastCalledWith('one', { model: 'sonnet', effort: null });
+    expect(await service.send(1, ID, 'two', active)).toBe('started');
+    expect(opened[0]?.send).toHaveBeenLastCalledWith('two', { model: 'haiku', effort: 'low' });
+    await service.close(1, ID);
+    expect(service.configure(1, { id: ID, model: 'opus', effort: null })).toBe('closed');
+  });
+
+  it.each([
+    ['a model outside the catalog', { model: 'gpt-6.2-sol', effort: 'high' }, NONE],
+    ['an effort the model does not take', { model: 'sonnet', effort: 'ultra' }, NONE],
+    ['a credential-like model', { model: `sk-ant-${'a'.repeat(30)}`, effort: null }, NONE],
+    ['a valid choice', { model: 'sonnet', effort: 'high' }, { model: 'sonnet', effort: 'high' }],
+  ])('resumes a saved session with %s (phase 5f)', async (_name, saved, expected) => {
+    const { dataDir, service, opened, updates, publish } = setup();
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    await service.send(1, ID, 'before', active);
+    await service.closeAll();
+    const [summary] = await service.listHistory(WS);
+    const changed = {
+      schemaVersion: SCHEMA_VERSION,
+      type: 'session.configChanged',
+      id: `${ID}:0`,
+      sessionId: ID,
+      seq: 0,
+      timestamp: '2026-11-27T10:00:00.000Z',
+      source: 'app',
+      provider: 'claude',
+      agentId: 'main',
+      ...(saved.model === null ? {} : { model: saved.model }),
+      ...(saved.effort === null ? {} : { effort: saved.effort }),
+      by: 'user',
+    };
+    const file = join(dataDir, 'claude-history', WS, `${summary!.id}.jsonl`);
+    writeFileSync(
+      file,
+      `${JSON.stringify({ kind: 'events', events: [changed] })}\n{"kind":"resume","id":"abc-123"}\n`,
+      { flag: 'a' },
+    );
+    updates.length = 0;
+    await expect(
+      service.start(1, { id: OTHER, workspaceId: WS, historyId: summary!.id }, 'C:\\ws', publish),
+    ).resolves.toBe('started');
+    const config = updates.find((u) => u.kind === 'config');
+    expect(config?.kind === 'config' && config.catalog.current).toEqual(expected);
+    const ids = config?.kind === 'config' ? config.catalog.models.map((m) => m.id) : [];
+    expect(ids).not.toContain(saved.model === 'sonnet' ? 'none' : saved.model);
+    const resumed = opened.at(-1);
+    expect(resumed?.resumeConfig).toEqual(expected === NONE ? undefined : expected);
+    expect(await service.send(1, OTHER, 'after', active)).toBe('started');
+    expect(resumed?.send).toHaveBeenLastCalledWith('after', expected);
+    await service.closeAll();
+  });
+
+  it('applies only model and effort choices of the catalog, from the next turn (phase 5f)', async () => {
+    const { service, opened, updates, publish } = setup();
+    await service.start(1, { id: ID, workspaceId: WS }, 'C:\\ws', publish);
+    const config = updates.find((u) => u.kind === 'config');
+    expect(config).toMatchObject({ id: ID, catalog: { defaults: DEFAULTS, current: NONE } });
+    const ids = config?.kind === 'config' ? config.catalog.models.map((m) => m.id) : [];
+    expect(ids).toEqual(['fable', 'opus', 'sonnet', 'haiku']);
+
+    expect(service.configure(2, { id: ID, model: 'sonnet', effort: 'high' })).toBe('closed');
+    expect(service.configure(1, { id: ID, model: 'gpt-6.2-sol', effort: null })).toBe('invalid');
+    expect(service.configure(1, { id: ID, model: 'sonnet', effort: 'ultra' })).toBe('invalid');
+    expect(service.configure(1, { id: ID, model: 'sonnet', effort: 'high' })).toBe('applied');
+    const choice = { model: 'sonnet', effort: 'high' };
+    expect(updates.at(-1)).toMatchObject({ kind: 'config', catalog: { current: choice } });
+    const published = updates.length;
+    expect(service.configure(1, { id: ID, ...choice })).toBe('applied');
+    expect(updates).toHaveLength(published); // unchanged: no new update
+
+    expect(await service.send(1, ID, 'hi', active)).toBe('started');
+    expect(opened[0]?.send).toHaveBeenLastCalledWith('hi', choice);
+    expect(service.configure(1, { id: ID, model: null, effort: null })).toBe('applied');
+    expect(await service.send(1, ID, 'again', active)).toBe('started');
+    expect(opened[0]?.send).toHaveBeenLastCalledWith('again', NONE);
+    await service.closeAll();
+  });
+
+  it('keeps the last chosen model and effort when a session resumes (phase 5f)', () => {
+    const changed = (model: string | undefined, by: 'user' | 'provider'): AgentEvent => ({
+      schemaVersion: SCHEMA_VERSION,
+      type: 'session.configChanged',
+      id: 'e',
+      sessionId: ID,
+      seq: 0,
+      timestamp: '2026-11-27T10:00:00.000Z',
+      source: 'app',
+      provider: 'claude',
+      agentId: 'main',
+      ...(model === undefined ? {} : { model }),
+      effort: 'max',
+      by,
+    });
+    expect(lastChosenConfig([{ kind: 'prompt', text: 'x' }])).toBeUndefined();
+    expect(
+      lastChosenConfig([
+        { kind: 'events', events: [changed('opus', 'user')] },
+        { kind: 'events', events: [changed('haiku', 'provider')] },
+      ]),
+    ).toEqual({ model: 'opus', effort: 'max' });
+    expect(
+      lastChosenConfig([
+        { kind: 'events', events: [changed('opus', 'user'), changed(undefined, 'user')] },
+      ]),
+    ).toEqual({ model: null, effort: 'max' });
   });
 
   it('splits event bursts into bounded updates', async () => {
@@ -251,7 +379,7 @@ describe('Claude service', () => {
       { kind: 'prompt', text: 'second prompt' },
       { kind: 'events', events: [event(1)] },
     ];
-    expect(updates.slice(1)).toEqual(records.map((record) => ({ ...record, id: ID })));
+    expect(updates.slice(2)).toEqual(records.map((record) => ({ ...record, id: ID })));
     const [summary] = await service.listHistory(WS);
     expect(summary?.title).toBe('first prompt');
     await expect(service.readHistory(WS, summary!.id)).resolves.toEqual({

@@ -124,6 +124,14 @@ Test: **S** = `packages/fixtures/src/stacks.test.ts`, **T** = `apps/desktop/src/
 - «Ask Claude to fix» prepara una bozza nel flusso esistente. L'invio esplicito e il percorso dei permessi restano quelli della chat.
 - **Regola in vigore dal 2026-11-27, approvata dall'utente.** Il main rifiuta prima di aprire il file se il nome richiesto o quello canonico inizia con `.env`, senza distinzione tra maiuscole e minuscole. Il controllo copre anche symlink e nomi brevi Windows 8.3 che risolvono a un file `.env*`. Il visualizzatore segnala che il sorgente non è disponibile.
 
+### Modello ed effort per turno (5f, ADR 0017)
+
+Test: **A** = `packages/ipc-contract/src/agent-config.test.ts`, **M** = `apps/desktop/src/main/claude/models.test.ts`, **V** = `apps/desktop/src/main/claude/service.test.ts`, **S** = `apps/desktop/src/main/claude/session.test.ts`.
+
+- **Niente argomenti liberi.** Il renderer sceglie solo dal catalogo che il main ha pubblicato per quella sessione. `claude:configure` rifiuta un modello fuori catalogo o un effort che il modello non accetta (`invalid`), risponde solo alla finestra proprietaria e solo a sessione aperta (V). Una scelta ripresa dalla cronologia vale solo se il catalogo costruito da alias e settings la offre; altrimenti si scarta e non arriva né alla riga di comando né agli eventi (V). Gli schemi di modello ed effort escludono spazi, virgolette e `-` iniziale (A); `claudeConfigArgs` li rivalida subito prima della riga di comando (M). `claude` parte sempre senza shell (S verifica gli argomenti ricevuti dal finto `claude`).
+- **Configurazione dell'utente in sola lettura.** Da `~/.claude/settings.json` si leggono solo `model` ed `effortLevel`: un'apertura sola, controllo dal descrittore e al massimo 256 KiB più un byte letti, anche se il file cresce dopo il controllo; validazione zod. Un modello che la redazione dei segreti modificherebbe è scartato, così non arriva al renderer nel catalogo. Un file mancante, non valido o ostile vale "non impostato" (M). Il file non si scrive mai (regola 8).
+- **Eventi.** `session.configChanged` porta solo modello, effort e chi li ha scelti; passa dalla stessa ripulitura degli altri eventi prima della cronologia.
+
 ## Privacy
 
 - Nessuna telemetria esterna né crash reporter remoto.

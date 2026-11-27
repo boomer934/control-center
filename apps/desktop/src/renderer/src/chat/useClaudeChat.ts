@@ -41,6 +41,9 @@ function applyUpdate(chat: Chat, update: ClaudeUpdate): Chat {
         status: update.status,
         ...(update.status !== 'running' && { partial: '', permissions: [] }),
       };
+    case 'config':
+      // the model and effort selector arrives with phase 5f.2
+      return chat;
     case 'events':
       return { ...chat, records: [...chat.records, { kind: 'events', events: update.events }] };
     case 'prompt':

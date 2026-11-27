@@ -6,7 +6,14 @@
 import { randomUUID } from 'node:crypto';
 import type { ErrorInput } from '@control-center/app-log';
 import { makeTextCleaner, type AgentEvent, type ErrorDraft } from '@control-center/event-schema';
-import type { GitCheckpoint, GitError } from '@control-center/ipc-contract';
+import {
+  isConfigInCatalog,
+  type AgentCatalog,
+  type AgentConfig,
+  type AgentConfigureResult,
+  type GitCheckpoint,
+  type GitError,
+} from '@control-center/ipc-contract';
 import { GitFailure } from '../git/repository';
 import {
   CLAUDE_EVENTS_PER_UPDATE,
@@ -20,6 +27,7 @@ import {
 } from '@control-center/ipc-contract/claude';
 import type { Program } from './cli';
 import { createClaudeHistory } from './history';
+import { claudeCatalog, readClaudeDefaults } from './models';
 import { openClaudeSession, type ClaudeSession } from './session';
 import { removeStaleSessions, type HookRunner } from './session-files';
 
@@ -31,6 +39,8 @@ export interface ClaudeServiceDeps {
   /** How to run `claude` and the hook script, looked up at each start. */
   programs: () => Promise<{ claude?: Program; hooks?: HookRunner }>;
   env?: NodeJS.ProcessEnv;
+  /** Model and effort of the user's Claude Code configuration (phase 5f), read at each start. */
+  defaults?: () => Promise<AgentConfig>;
   open?: typeof openClaudeSession;
   prepareTurn?: (
     root: string,
@@ -49,10 +59,29 @@ interface Entry {
   historyId: string;
   record?: (record: ClaudeHistoryRecord) => void;
   clean: (text: string) => string;
+  publish: Publish;
+  /** Model and effort for the next turn, and what could be chosen. */
+  catalog: AgentCatalog;
   session?: ClaudeSession;
   opening?: Promise<ClaudeSession>;
   closed: boolean;
   closing?: Promise<void>;
+}
+
+const NO_CONFIG: AgentConfig = { model: null, effort: null };
+
+/**
+ * The model and effort the user last chose in a saved session, from its `session.configChanged`
+ * events: a resumed session keeps them (phase 5f). Undefined when the session never changed them.
+ */
+export function lastChosenConfig(records: readonly ClaudeHistoryRecord[]): AgentConfig | undefined {
+  let found: AgentConfig | undefined;
+  for (const record of records)
+    if (record.kind === 'events')
+      for (const event of record.events)
+        if (event.type === 'session.configChanged' && event.by === 'user')
+          found = { model: event.model ?? null, effort: event.effort ?? null };
+  return found;
 }
 
 export function createClaudeService(deps: ClaudeServiceDeps) {
@@ -117,7 +146,16 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       if ([...sessions.values()].some((entry) => entry.historyId === historyId))
         return 'history-unavailable';
       const clean = makeTextCleaner(cwd);
-      const entry: Entry = { owner, workspaceId, root: cwd, historyId, clean, closed: false };
+      const entry: Entry = {
+        owner,
+        workspaceId,
+        root: cwd,
+        historyId,
+        clean,
+        publish,
+        catalog: claudeCatalog(NO_CONFIG),
+        closed: false,
+      };
       sessions.set(id, entry);
       try {
         await cleaned;
@@ -127,6 +165,14 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           return 'history-unavailable';
         }
         const { claude, hooks } = await deps.programs();
+        const saved = previous ? lastChosenConfig(previous.records) : undefined;
+        entry.catalog = claudeCatalog(
+          await (deps.defaults ?? readClaudeDefaults)().catch(() => NO_CONFIG),
+          saved,
+        );
+        // A saved choice the catalog no longer offers (or never did: an altered file) is dropped,
+        // and neither reaches the command line nor names itself in a later event.
+        const resumeConfig = saved && entry.catalog.current === saved ? saved : undefined;
         if (entry.closed) return 'failed';
         if (!claude) {
           release(id, entry);
@@ -153,6 +199,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           claude,
           hooks,
           resume: previous?.resume,
+          resumeConfig,
           env: deps.env,
           report: deps.report,
           onEvents: (events: AgentEvent[]) => {
@@ -179,6 +226,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
         hooksOn = session.hooks;
         entry.session = session;
         publish({ kind: 'status', id, status: 'idle', hooks: hooksOn });
+        publish({ kind: 'config', id, catalog: entry.catalog });
         return 'started';
       } catch (error) {
         release(id, entry);
@@ -245,7 +293,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       entry.record = (event) => earlyRecords.push(event);
       let result: ClaudeSendResult;
       try {
-        result = session.send(text);
+        result = session.send(text, entry.catalog.current);
       } finally {
         entry.record = record;
       }
@@ -284,6 +332,26 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       const entry = owned(owner, request.id);
       if (!entry?.session || !isActive(entry.workspaceId)) return false;
       return entry.session.respond(request.requestId, request.choice);
+    },
+
+    /**
+     * Model and effort for the session's next turns (phase 5f). Only values of the catalog the
+     * session published pass; a turn already running keeps its own.
+     */
+    configure(
+      owner: number | undefined,
+      request: { id: string } & AgentConfig,
+    ): AgentConfigureResult {
+      const entry = owned(owner, request.id);
+      // Only once the session is open: its catalog is final then, and nothing overwrites a choice.
+      if (!entry?.session) return 'closed';
+      const config: AgentConfig = { model: request.model, effort: request.effort };
+      if (!isConfigInCatalog(config, entry.catalog.models)) return 'invalid';
+      const current = entry.catalog.current;
+      if (current.model === config.model && current.effort === config.effort) return 'applied';
+      entry.catalog = { ...entry.catalog, current: config };
+      entry.publish({ kind: 'config', id: request.id, catalog: entry.catalog });
+      return 'applied';
     },
 
     interrupt(owner: number | undefined, id: string): boolean {

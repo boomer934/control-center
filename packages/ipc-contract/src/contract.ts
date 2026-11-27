@@ -26,7 +26,9 @@ import {
   GitStatusSchema,
   GitWorkspaceSchema,
 } from './git';
+import { AgentConfigureResultSchema } from './agent-config';
 import {
+  ClaudeConfigureSchema,
   ClaudeHistoryListSchema,
   ClaudeHistorySchema,
   ClaudeHistoryTargetSchema,
@@ -259,6 +261,7 @@ export const contract = {
     start: invoke('claude:start', ClaudeStartSchema, ClaudeStartResultSchema),
     send: invoke('claude:send', ClaudeSendSchema, ClaudeSendResultSchema),
     respond: invoke('claude:respond', ClaudeRespondSchema, z.boolean()),
+    configure: invoke('claude:configure', ClaudeConfigureSchema, AgentConfigureResultSchema),
     listHistory: invoke('claude:list-history', ClaudeWorkspaceSchema, ClaudeHistoryListSchema),
     readHistory: invoke(
       'claude:read-history',

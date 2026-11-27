@@ -34,6 +34,7 @@ export {
   type Namespace,
   type Unsubscribe,
 } from './contract';
+export * from './agent-config';
 export * from './git';
 export * from './infra';
 export * from './project';

@@ -14,6 +14,7 @@ import {
   type AgentEvent,
   type ErrorDraft,
 } from '@control-center/event-schema';
+import type { AgentConfig } from '@control-center/ipc-contract';
 import {
   MAX_CLAUDE_PARTIAL_CHARS,
   type ClaudePermission,
@@ -32,6 +33,7 @@ import { superviseChild } from '../errors/children';
 import { TESTED_CLAUDE_VERSIONS, type Program } from './cli';
 import { killTree, type Teardown } from './kill-tree';
 import { ClaudeNativeSessionId } from './history';
+import { claudeConfigArgs } from './models';
 import { createClaudePermissions } from './permissions';
 import {
   createSessionDir,
@@ -56,6 +58,8 @@ export interface ClaudeSessionOptions {
   hooks?: HookRunner;
   /** Claude's session id to resume from the first run on. */
   resume?: string;
+  /** Model and effort the resumed session's last runs used (phase 5f). */
+  resumeConfig?: AgentConfig;
   env?: NodeJS.ProcessEnv;
   report: (input: ErrorInput) => unknown;
   onEvents: (events: AgentEvent[]) => void;
@@ -74,8 +78,11 @@ export interface ClaudeSession {
   readonly hooks: boolean;
   /** Claude's own session id, once the first run reported it. */
   readonly claudeSessionId: string | undefined;
-  /** Sends a user message: starts a run, unless one is running or the session is closed. */
-  send(text: string): SendResult;
+  /**
+   * Sends a user message: starts a run, unless one is running or the session is closed. `config`:
+   * model and effort of this run (already checked against the catalog); absent, the CLI decides.
+   */
+  send(text: string, config?: AgentConfig): SendResult;
   respond(requestId: string, choice: ClaudePermissionChoice): boolean;
   /** Adds errors the app found in the workspace's output (phase 5e) to the session's events. */
   reportErrors(errors: readonly ErrorDraft[], at: Date): void;
@@ -109,6 +116,12 @@ const CLOSE_WAIT_MS = 3000;
 
 const warnedVersions = new Set<string>();
 
+const DEFAULT_CONFIG: AgentConfig = { model: null, effort: null };
+const runConfig = (config: AgentConfig) => ({
+  model: config.model ?? undefined,
+  effort: config.effort ?? undefined,
+});
+
 /** One Console line for a batch of refused hook messages: codes and counts, nothing else. */
 export function describeRejects(summary: RejectSummary): string {
   const parts = Object.entries(summary.counts).map(([code, n]) =>
@@ -134,6 +147,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
   const now = () => (options.now?.() ?? new Date()).toISOString();
   const tested = options.testedVersions ?? TESTED_CLAUDE_VERSIONS;
   const live = new LiveClaudeSession({ sessionId: id, cwd: options.cwd });
+  if (options.resumeConfig) live.restoreConfig(runConfig(options.resumeConfig));
   const report = (input: Omit<ErrorInput, 'origin' | 'source'> & { source?: string }) =>
     options.report({ origin: 'child', source: 'child:claude', ...input });
 
@@ -331,7 +345,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     }
   };
 
-  const start = (text: string) => {
+  const start = (text: string, config: AgentConfig) => {
     const args = [
       ...options.claude.args,
       '-p',
@@ -344,8 +358,9 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       ...(options.onPermissions ? ['--permission-prompt-tool', 'stdio'] : []),
       ...(settingsArg ? ['--settings', settingsArg] : []),
       ...(claudeSessionId ? ['--resume', claudeSessionId] : []),
+      ...claudeConfigArgs(config),
     ];
-    emit(live.startRun(now()));
+    emit(live.startRun(now(), runConfig(config)));
     const state = { buffer: '', discardingLine: false, stopping: false } as NonNullable<typeof run>;
     state.done = new Promise<void>((resolve) => {
       state.child = superviseChild({
@@ -396,10 +411,10 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     get claudeSessionId() {
       return claudeSessionId;
     },
-    send(text) {
+    send(text, config = DEFAULT_CONFIG) {
       if (status === 'closed') return 'closed';
       if (run) return 'busy';
-      start(text.length > MAX_MESSAGE_CHARS ? text.slice(0, MAX_MESSAGE_CHARS) : text);
+      start(text.length > MAX_MESSAGE_CHARS ? text.slice(0, MAX_MESSAGE_CHARS) : text, config);
       return 'started';
     },
     respond: permissions.respond,

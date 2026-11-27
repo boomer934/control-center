@@ -114,12 +114,29 @@ describe('Claude session with the fake claude', () => {
     const firstRun = h.events.length;
     h.session.send('second');
     await h.idle();
+    // phase 5f: a model and an effort chosen in the chat reach the next run only
+    const thirdRun = h.events.length;
+    h.session.send('third', { model: 'opus', effort: 'high' });
+    await h.idle();
 
     const runs = readFileSync(log, 'utf8')
       .trim()
       .split('\n')
       .map((l) => JSON.parse(l) as string[]);
-    expect(runs).toHaveLength(2);
+    expect(runs).toHaveLength(3);
+    expect(runs[1]).not.toContain('--model');
+    expect(runs[2]?.slice(-6)).toEqual([
+      '--resume',
+      claudeId,
+      '--model',
+      'opus',
+      '--effort',
+      'high',
+    ]);
+    expect(h.events.slice(thirdRun, thirdRun + 2)).toMatchObject([
+      { type: 'session.configChanged', model: 'opus', effort: 'high', by: 'user' },
+      { type: 'session.started', effort: 'high' },
+    ]);
     for (const args of runs)
       expect(args.slice(0, 7)).toEqual([
         '-p',

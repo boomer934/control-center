@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.4.0](https://github.com/boomer934/control-center/compare/control-center-v1.3.0...control-center-v1.4.0) (2026-11-27)
+
+
+### Features
+
+* **live:** add project error quick actions ([#68](https://github.com/boomer934/control-center/issues/68)) ([a5681b9](https://github.com/boomer934/control-center/commit/a5681b96e74e3de3960f7594364cd6e37035d87f))
+* **live:** add session timeline and replay ([d6f35d0](https://github.com/boomer934/control-center/commit/d6f35d0a45d9ccc0b425260f2f431ed34d1c54a9))
+* **live:** add session timeline and replay ([2f8de92](https://github.com/boomer934/control-center/commit/2f8de92bc5f29e45c3283779ee5e913b1b2f04e0))
+* **live:** add session timeline and replay ([#62](https://github.com/boomer934/control-center/issues/62)) ([d6f35d0](https://github.com/boomer934/control-center/commit/d6f35d0a45d9ccc0b425260f2f431ed34d1c54a9))
+* **live:** add the agent panel and event inspector ([b90d53b](https://github.com/boomer934/control-center/commit/b90d53bb564c8cff51e1947172f98926fd10a1e5))
+* **live:** add the agent panel and event inspector ([c7faede](https://github.com/boomer934/control-center/commit/c7faede74b4b7d201dc7126a5602b184de8ad8be))
+* **live:** add the agent panel and event inspector ([#63](https://github.com/boomer934/control-center/issues/63)) ([b90d53b](https://github.com/boomer934/control-center/commit/b90d53bb564c8cff51e1947172f98926fd10a1e5))
+* **live:** show project errors on the map (phase 5e) ([#64](https://github.com/boomer934/control-center/issues/64)) ([1ce73a6](https://github.com/boomer934/control-center/commit/1ce73a664e603a03b2fafef5af540a70f87ca89e))
+* **live:** show read-only machine inventory during replay ([2ba2d52](https://github.com/boomer934/control-center/commit/2ba2d52e1a556407101276ae3982cbbd006f7af0))
+* **main:** choose model and effort per turn (phase 5f.1, PR A) ([#77](https://github.com/boomer934/control-center/issues/77)) ([4802a76](https://github.com/boomer934/control-center/commit/4802a7616b92d839f7317a9fa486db0a2e731ff1))
+* **main:** discover Codex capabilities with a closed method list (phase 5h.2) ([#81](https://github.com/boomer934/control-center/issues/81)) ([59db811](https://github.com/boomer934/control-center/commit/59db811b3ce9e1471fea88ad2529980fe5ff4f2b))
+* **main:** discover the Claude catalog and keep a capability inventory (phase 5h.1) ([#80](https://github.com/boomer934/control-center/issues/80)) ([b4ad79f](https://github.com/boomer934/control-center/commit/b4ad79f2a1548cd8d4e64cb382a6c14e5984860e))
+* **main:** run Codex sessions from the main process (phase 5f.1, PR B) ([#79](https://github.com/boomer934/control-center/issues/79)) ([c9c38b9](https://github.com/boomer934/control-center/commit/c9c38b9a3d230b99e29ca1bd1c5c22dadf23d72c))
+
+
+### Bug Fixes
+
+* **desktop:** support long Git checkpoint paths on Windows ([6bcb9cf](https://github.com/boomer934/control-center/commit/6bcb9cfc79e708629fd696f4c3eb2ae79ff947a3))
+* **desktop:** support long Git checkpoint paths on Windows ([6164bf6](https://github.com/boomer934/control-center/commit/6164bf683e66342f371d503a11eeb3ef1e7b420d))
+* **desktop:** support long Git checkpoint paths on Windows ([#61](https://github.com/boomer934/control-center/issues/61)) ([6bcb9cf](https://github.com/boomer934/control-center/commit/6bcb9cfc79e708629fd696f4c3eb2ae79ff947a3))
+* **hooks-bridge:** harden the pipe, hook script and run teardown ([#76](https://github.com/boomer934/control-center/issues/76)) ([3786c40](https://github.com/boomer934/control-center/commit/3786c40b7fefe737c66bb2a213861e898d770ee4))
+
 ## [1.3.0](https://github.com/boomer934/control-center/compare/control-center-v1.2.0...control-center-v1.3.0) (2026-11-26)
 
 

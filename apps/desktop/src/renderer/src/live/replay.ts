@@ -1,5 +1,6 @@
 import type { AgentEvent, AgentId, ToolKind } from '@control-center/event-schema';
 import type { GitCheckpoint } from '@control-center/ipc-contract';
+import type { TerminalError } from '@control-center/ipc-contract/terminal';
 import { HOLD_MS, MapActivity, type ResolveFile, type ViewOptions } from './activity';
 
 export type ReplayRecord =
@@ -61,6 +62,7 @@ export interface TimelineMark {
   glyph?: string;
   checkpoint?: GitCheckpoint;
   event?: AgentEvent;
+  terminalError?: TerminalError;
   nodeId?: string;
 }
 

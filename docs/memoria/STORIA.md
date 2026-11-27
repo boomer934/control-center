@@ -4,6 +4,38 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Esclusione di `.env*` da «Go to file» (PR #68)
+
+- **Fatto.** Il main controlla con `win32.basename` il nome richiesto e quello canonico prima di aprire il file. I test unitari verificano il blocco prima di `open()`, simulano un symlink e un alias Windows 8.3 e confermano la lettura di `environment.ts`.
+- **Decisioni.** Regola approvata dall'utente il 2026-11-27 e recepita in `SICUREZZA.md` e nelle conseguenze dell'ADR 0016.
+- **Verifica.** `pnpm verify` verde con 448 test passati e uno saltato. `project-errors.spec.ts` 10/10. Il caso `.env:1` mostrava il contenuto della fixture prima della correzione e ora segnala che il sorgente è indisponibile.
+
+---
+
+## 2026-11-27 — Selezione di errori nello stesso file (PR #68)
+
+- **Fatto.** Ripristinata la chiave `mark.id` per `ProjectErrorActions`. Un E2E verifica che il cambio di errore nello stesso file rimuova la spiegazione precedente e annulli la richiesta in corso.
+- **Verifica.** `pnpm verify` verde con 443 test passati e uno saltato. `project-errors.spec.ts` 9/9. Il nuovo caso passa anche sul commit precedente perché l'ispettore padre usa già `mark.id` come chiave.
+
+---
+
+## 2026-11-27 — Seconda revisione delle azioni rapide (PR #68)
+
+- **Fatto.** Stato delle azioni isolato per errore, risoluzione dei percorsi del terminale condivisa con la mappa e ripiego sull'ultimo marcatore visibile del nodo.
+- **Decisioni.** L'ADR 0016 esplicita il limite dell'inode zero per il visualizzatore. In `SICUREZZA.md` è proposta l'esclusione dei file `.env*` prima della lettura, in attesa di conferma.
+- **Verifica.** `pnpm verify` con 443 test passati e uno saltato, `project-errors.spec.ts` 6/6, dieci E2E funzionali della mappa e rilevatore Impeccable senza rilievi.
+
+---
+
+## 2026-11-27 — Azioni rapide sugli errori della Vista Live (5e+)
+
+- **Fatto.** Dall'errore selezionato sulla mappa o nella timeline si può preparare la correzione in Claude, chiedere una spiegazione a Ollama e aprire il file alla riga. Funziona anche per un errore del terminale prima di una chat. Codex ha coperto contratto e UI in subentro per crediti Claude esauriti.
+- **Decisioni.** La chat conserva la bozza esistente e richiede l'invio esplicito. Il visualizzatore interno in sola lettura usa i controlli canonici della 4.2. Ollama riceve i metadati ripuliti dell'errore e usa il modello di completamento locale installato più piccolo (ADR 0016).
+- **Verifica.** `pnpm verify` con 440 test passati e uno saltato. Tutti i 74 E2E funzionali passati, inclusi avvio da un errore del terminale, attraversamento del workspace rifiutato e apertura alla riga. Prova reale con `qwen2.5-coder:7b`. Impeccable in Electron a 960×602 nei due temi segnala solo la gerarchia tipografica compatta. I confronti visivi del runner Windows restano alla CI.
+- **Problemi.** La minimappa copriva il file quando si apriva l'ispettore a finestra stretta. Corretto il Fit al ridimensionamento e tolto l'invito ad avviare una sessione quando c'è già un errore sulla mappa. Il dialogo ripristina il focus dopo Escape.
+
+---
+
 ## 2026-11-26 — Errori del progetto sulla mappa (5e)
 
 - **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).

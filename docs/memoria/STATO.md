@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 5e (errori del progetto sulla mappa) unita con la PR #64 (`1ce73a6`, ADR 0015): con la 5e la Fase 5 ha tutte le sotto-fasi su `main`._
+_Ultimo aggiornamento 2026-11-27. La 5e è su `main`. Le azioni rapide 5e+ sono implementate in `feat/error-quick-actions` (ADR 0016)._
 
 ## Fase
 
@@ -20,6 +20,7 @@ _Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 
 - **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Unita su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`).
 - **5d**, pannello agenti, ispettore e inventario locale: unita su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`, ADR 0014).
 - **5e**, errori del progetto: schema `error.detected` (v2, migrazione 1 → 2), parser di stack trace e colorazione della mappa: ✅ unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`, ADR 0015), CI verde (E2E 77/77). La parte dei parser era della corsia Codex: l'ha fatta Claude su goal dell'utente.
+- **5e+**, azioni rapide dall'ispettore: bozza Claude, spiegazione Ollama e apertura del sorgente alla riga anche per gli errori del terminale prima di una chat.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -36,13 +37,15 @@ _Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 
 
 ## Branch
 
-Claude: `docs/memoria-5e` (questa nota). 5e unita su `main` (PR #64). Mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
+Claude: 5e unita su `main` (PR #64). Codex: `feat/error-quick-actions` nel worktree dedicato, da `origin/main` (`11cd9e4`). Correzione checkpoint e pannello agenti già su `main` (PR #61 e #63).
 
 ## Punto di ripresa
 
 Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizione in [`CORSIE.md`](CORSIE.md)). Ogni agente modifica solo la propria sezione.
 
 ### Corsia Claude
+
+- **Subentro per crediti esauriti:** Codex ha implementato il contratto IPC e le azioni rapide 5e+. Le decisioni di integrazione sono nell'ADR 0016.
 
 - **Fatto:** PR #30 (brief della Fase 4), #31 (`sessione-06`) e #32 (plugin di progetto) unite.
 - **Fatto (fixture `Notification`, PR #38):** `sessione-07` registrata di nuovo il 2026-11-17 e ripulita (12 righe di hooks, nessuno stream): un `Read`, un permesso approvato dopo l'attesa (`Notification` con `notification_type: permission_prompt`) e un rifiuto fatto da una persona. Il blocco della 4.1 è tolto. Due lezioni: `npx --version` e `git log -1` sono di sola lettura e Claude Code non chiede il permesso, quindi non nasce `Notification` (serve un comando che scrive, per esempio `Set-Content`); e `VERNIER_HOOKS_SESSION` va impostata nella stessa finestra PowerShell che lancia `claude`, altrimenti gli hooks finiscono in `unnamed.hooks.jsonl`. Un permesso rifiutato a mano lascia solo `PreToolUse`: `mergeClaudeSession` chiude le chiamate rimaste aperte a fine sessione come `tool.failed` con motivo `interrupted` (è un'inferenza: nel live della 4.1 il rifiuto va letto da un altro segnale). Unita su `main` con la PR #38 (`d6d08da`).
@@ -122,6 +125,12 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Ora (punto di ripresa):** Fase 5 con tutte le sotto-fasi su `main`: resta da decidere la chiusura della fase (sintesi in `STORIA.md`). Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
 
 ### Corsia Codex
+
+- **5e+ (2026-11-27):** recepita la revisione Claude sulla [PR #68](https://github.com/boomer934/control-center/pull/68), branch `feat/error-quick-actions`. L'ispettore usa il risolutore della mappa per mostrare la posizione e alimentare apertura del sorgente, bozza Claude e spiegazione Ollama per gli errori degli agenti e del terminale. Cambiare selezione azzera lo stato delle azioni e annulla la spiegazione in corso. L'ADR 0016 documenta che l'errore selezionato scompare quando esce dagli ultimi 200 errori del terminale del workspace.
+- **Selezione nello stesso file:** anche `ProjectErrorActions` è identificato da `mark.id`. L'E2E seleziona due errori nello stesso file e verifica che la spiegazione già ricevuta scompaia e che la richiesta in corso venga chiusa dal lato del server Ollama simulato.
+- **Verificato:** `npx pnpm@10.34.9 verify` verde (443 test passati, uno saltato) e `project-errors.spec.ts` 9/9. La revisione precedente comprendeva il rilevatore Impeccable senza rilievi e i due E2E che controllano i percorsi risolti per errori Rust e Docker con file omonimi.
+- **Sicurezza (2026-11-27):** il main blocca l'apertura tramite «Go to file» se il nome richiesto o canonico inizia con `.env`, indipendentemente dalle maiuscole. Regola approvata dall'utente e documentata in `SICUREZZA.md` e ADR 0016. `pnpm verify` verde con 448 test passati e uno saltato. `project-errors.spec.ts` 10/10, incluso l'errore su `.env:1`.
+- **Prima del merge:** revisione incrociata della correzione e [CI della PR](https://github.com/boomer934/control-center/pull/68/checks) verde. Il merge spetta all'utente.
 
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.

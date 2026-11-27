@@ -1,0 +1,98 @@
+.project-error-actions {
+  margin-block-start: var(--sp-4);
+}
+
+.project-error-actions [role='group'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.project-error-actions .btn {
+  min-block-size: var(--sp-8);
+}
+
+.project-error-actions [role='status']:not(:empty) {
+  margin-block-start: var(--sp-3);
+}
+
+.project-error-explanation h4 {
+  margin: 0 0 var(--sp-2);
+  font: inherit;
+  font-weight: 600;
+}
+
+.project-error-explanation {
+  margin-block-start: var(--sp-3);
+}
+
+.project-error-explanation :is(p, ul, ol, pre) + :is(p, ul, ol, pre) {
+  margin-block-start: var(--sp-2);
+}
+
+.project-error-explanation :is(ul, ol) {
+  padding-inline-start: var(--sp-5);
+}
+
+.project-error-explanation pre {
+  white-space: pre-wrap;
+}
+
+.error-source {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  margin: auto;
+  inline-size: min(85vw, 90ch);
+  max-block-size: 80vh;
+  padding: 0;
+  border: var(--sz-hair) solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-1);
+  color: var(--fg-1);
+}
+
+.error-source[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.error-source::backdrop {
+  background: var(--scrim);
+}
+
+.error-source header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-block-end: var(--sz-hair) solid var(--line);
+}
+
+.error-source h2 {
+  margin: 0;
+  font-size: var(--fs-m);
+  overflow-wrap: anywhere;
+}
+
+.error-source pre {
+  min-block-size: 0;
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--bg-0);
+  font: var(--fs-s) / 1.5 var(--font-mono);
+}
+
+.error-source pre:focus-visible {
+  outline: var(--sz-stroke) solid var(--accent);
+  outline-offset: calc(-1 * var(--sz-stroke));
+}
+
+.error-source mark {
+  background: var(--accent);
+  color: var(--bg-0);
+}

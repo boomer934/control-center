@@ -27,27 +27,27 @@ import {
   type ReactNode,
 } from 'react';
 import type { TerminalError } from '@control-center/ipc-contract/terminal';
-import type { ProjectSnapshot } from '@control-center/project-model/schema';
 import { useShortcuts } from '../keys/useShortcuts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Glyph, Icon } from '../ui/icons';
 import { Kbd, Sigil } from '../ui/primitives';
-import type { AgentPresence, MapState } from './activity';
+import type { AgentPresence, MapState, ResolveFile } from './activity';
 import type { Box, MapLayout } from './layout';
 import type { MapInspection } from './LiveInspection';
 import { MapContext, MiniNode, nodeTypes, type MapContextValue } from './nodes';
 import { useAgents, useStoreRevision, useTemps, type MapStore } from './store';
-import { makeResolveFile } from './resolve';
+import { resolveErrorPath } from './resolve';
 import { useMapActivity, type EventRecord } from './useMapActivity';
 import { useMapLayout } from './useMapLayout';
-import { buildVisibleMap, indexSnapshot, neighborsOf, type VisibleMap } from './visible';
+import { buildVisibleMap, neighborsOf, type ProjectIndex, type VisibleMap } from './visible';
 
 /** A patch for the diff preview, or why there is none. */
 export type DiffPreview =
   { ok: true; text: string; truncated: boolean } | { ok: false; message: string };
 
 export interface LiveMapProps {
-  snapshot: ProjectSnapshot;
+  index: ProjectIndex;
+  resolveFile: ResolveFile;
   records: readonly EventRecord[];
   /** Errors the integrated terminals found in this workspace (phase 5e). */
   errors?: readonly TerminalError[];
@@ -256,7 +256,8 @@ function placeChips(
 
 function MapInner(props: LiveMapProps) {
   const {
-    snapshot,
+    index,
+    resolveFile,
     records,
     errors,
     pendingPermission,
@@ -274,12 +275,15 @@ function MapInner(props: LiveMapProps) {
   const rf = useReactFlow();
   const { density } = useTheme();
   const wrapper = useRef<HTMLDivElement>(null);
+  const hasTerminalError = useMemo(
+    () => errors?.some((error) => resolveErrorPath(error, resolveFile) !== undefined),
+    [errors, resolveFile],
+  );
+  const showEmpty = !records.length && (historical || !hasTerminalError);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
   const [folders, setFolders] = useState<ReadonlyMap<string, number>>(new Map());
 
-  const index = useMemo(() => indexSnapshot(snapshot), [snapshot]);
-  const resolveFile = useMemo(() => makeResolveFile(index.byPath), [index]);
   const { store, touched } = useMapActivity(records, {
     at,
     historical,
@@ -411,13 +415,35 @@ function MapInner(props: LiveMapProps) {
 
   // The map opens fitted, and stays fitted while nobody moved it (DESIGN.md, 1b).
   const fittedKey = useRef('');
+  const fittedSize = useRef('');
+  const fittedFrame = useRef('');
+  const inspectionLayout = inspection?.layoutRef;
   useEffect(() => {
-    if (!layout || !width || follow.on) return;
-    const key = `${layout.key}|${tempBoxes.size > 0}|${chips.length > 0}`;
-    if (key === fittedKey.current || (fittedKey.current && userMoved.current)) return;
-    fit(Boolean(fittedKey.current));
+    if (!layout || !width || !height || follow.on) return;
+    const key = `${layout.key}|${tempBoxes.size > 0}|${chips.length > 0}|${showEmpty}`;
+    const size = `${width}x${height}`;
+    const frameWidth = inspectionLayout?.current?.clientWidth ?? width;
+    const frame = `${frameWidth}x${height}`;
+    const sameLayout = key === fittedKey.current;
+    const sameSize = size === fittedSize.current;
+    const sameFrame = frame === fittedFrame.current;
+    if (fittedKey.current && userMoved.current) return;
+    // An inspector opening or closing changes the canvas width without resizing the live view.
+    if (!sameLayout || (!sameSize && !sameFrame)) fit(Boolean(fittedKey.current) && sameSize);
     fittedKey.current = key;
-  }, [layout, width, follow.on, tempBoxes.size, chips.length, fit]);
+    fittedSize.current = size;
+    fittedFrame.current = frame;
+  }, [
+    layout,
+    width,
+    height,
+    follow.on,
+    tempBoxes.size,
+    chips.length,
+    showEmpty,
+    fit,
+    inspectionLayout,
+  ]);
 
   const followed = follow.on
     ? (chips.find((c) => c.agent.id === follow.agent) ??
@@ -492,7 +518,9 @@ function MapInner(props: LiveMapProps) {
         }, DIFF_DELAY_MS);
       },
       ...(openDiff ? { openDiff } : {}),
-      ...(canInspect ? { inspectNode: (id: string) => inspectNode.current?.(id) } : {}),
+      ...(canInspect
+        ? { inspectNode: (id: string, error?: boolean) => inspectNode.current?.(id, error) }
+        : {}),
     }),
     [store, loadDiff, openDiff, canInspect],
   );
@@ -731,7 +759,7 @@ function MapInner(props: LiveMapProps) {
         {!layout && !failed && (
           <p className="loading-note lmap-note">
             <span className="prog run" />
-            Laying out {snapshot.files.length.toLocaleString('en-US')} files…
+            Laying out {index.byPath.size.toLocaleString('en-US')} files…
           </p>
         )}
         {failed && (
@@ -739,7 +767,7 @@ function MapInner(props: LiveMapProps) {
             The map could not be laid out.
           </p>
         )}
-        {layout && !records.length && (
+        {layout && showEmpty && (
           <div className="empty lmap-empty" data-testid="map-empty">
             <Icon name="live" className="g" />
             <h2>No session yet</h2>

@@ -6,3 +6,7 @@ export function installE2eFaults(): void {
 export function e2eMachineSnapshot(): undefined {
   return undefined;
 }
+
+export function e2eOllamaPort(): undefined {
+  return undefined;
+}

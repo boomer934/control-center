@@ -1,0 +1,13 @@
+{
+  "claude": {
+    "tested": ["2.1.322", "2.1.326"],
+    "fallbackModels": [
+      { "id": "fable", "label": "Fable" },
+      { "id": "opus", "label": "Opus" },
+      { "id": "sonnet", "label": "Sonnet" },
+      { "id": "haiku", "label": "Haiku" }
+    ],
+    "fallbackEfforts": ["low", "medium", "high", "xhigh", "max"]
+  },
+  "codex": { "tested": ["0.171.0-alpha.13.2"] }
+}

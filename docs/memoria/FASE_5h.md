@@ -129,6 +129,14 @@ Ordine: il contratto per primo, su `main`. Poi Claude fa C1–C3 mentre Codex fa
 - esce con un report JSON: `compatible` / `changed` (diff) / `broken`.
 - Test Vitest dello script con output finti.
 
+La sonda 5h.4 accetta una o entrambe le opzioni `--claude <versione>` e `--codex <versione>`, con versioni npm esatte. Stampa un solo oggetto JSON con `status` aggregato e `providers` separati. Il codice d'uscita è `0` per `compatible`, `1` per `changed`, `2` per `broken` e `64` per argomenti non validi.
+
+- `compatible` include nuovi metodi, feature o effort utilizzabili dal catalogo.
+- `changed` segnala differenze da esaminare, come un cambio di stato di una feature, un metodo rimosso fuori dal contratto seguito o un effort non più offerto.
+- `broken` segnala l'assenza di un flag necessario, la rimozione di un metodo usato, una modifica dei campi controllati o una sonda fallita. Il campo `step` indica a quale punto si è fermata una sonda fallita.
+
+Lo snapshot Codex riporta la versione di origine, i metodi divisi per direzione, la struttura dei campi che l'app usa e il catalogo delle feature da un profilo pulito. Il confronto ignora la documentazione dello schema e i campi non usati. Il workflow 5h.6 userà il report prima di modificare i dati.
+
 **2c. Workflow** `.github/workflows/compat-watch.yml` (cron giornaliero + `workflow_dispatch`):
 
 - confronta l'ultima versione npm con `compat.json`; se nuova, esegue la sonda;

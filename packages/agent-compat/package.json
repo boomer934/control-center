@@ -1,0 +1,14 @@
+{
+  "name": "@control-center/agent-compat",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Validated compatibility data for the agent CLIs.",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

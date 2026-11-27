@@ -9,10 +9,11 @@
 import { execFile } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { delimiter, isAbsolute, join, win32 } from 'node:path';
+import { agentCompat } from '@control-center/agent-compat';
 import { findOnPath, type Program } from '../claude/cli';
 
 /** Codex CLI versions the session and its normalizer were checked against (manual real run). */
-export const TESTED_CODEX_VERSIONS: readonly string[] = ['0.171.0-alpha.13.2'];
+export const TESTED_CODEX_VERSIONS: readonly string[] = agentCompat.codex.tested;
 
 /** The Store package of the Codex app, by OpenAI's publisher id. */
 export const CODEX_PACKAGE =

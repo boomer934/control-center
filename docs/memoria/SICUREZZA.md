@@ -169,6 +169,12 @@ Test: **C** = `apps/desktop/src/main/claude/catalog.test.ts`, **D** = `claude/di
 - Retention configurabile + "cancella tutto".
 - Servizi interni solo su localhost.
 
+## Sonda di compatibilità delle CLI (5h.4)
+
+- Le versioni esatte selezionano solo i due pacchetti ufficiali da npm. Installazione in directory temporanee con gli script npm disabilitati. Le CLI vengono eseguite senza shell, con home e configurazione temporanee e senza ereditare le variabili delle credenziali.
+- Claude legge versione e help e verifica il riconoscimento di un flag senza passargli un valore. Codex elenca le feature e genera lo schema del protocollo in locale. Le sonde hanno limiti di tempo e output e non aprono sessioni.
+- Il report JSON contiene differenze strutturate e nomi delle fasi fallite. Lo stdout e lo stderr delle CLI restano interni alla sonda.
+
 ## Da fare
 
 - Fissare le GitHub Actions a SHA di commit invece che a tag (prima di rendere pubblica la repo).

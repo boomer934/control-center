@@ -103,7 +103,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ## Blocchi e avvertenze
 
-- **Niente protezione di `main`:** ora che la repo è pubblica si può attivare, ma non è ancora configurata. Fino ad allora si lavora solo su branch + PR, merge a mano a CI verde.
+- **Protezione di `main` attiva (2026-11-27):** PR obbligatoria (0 approvazioni, si lavora da soli), check obbligatori Verify (Windows), gitleaks, Conventional commits e Project memory updated; vale anche per gli admin, niente force-push né cancellazione. Se un job cambia nome in `ci.yml`, va aggiornato anche nella protezione.
 - **Repo pubblica:** tutto ciò che si committa (memoria compresa) è visibile. I percorsi locali nei documenti contengono il nome utente Windows: accettato, ma non aggiungere altri dati personali.
 - **Screenshot di riferimento** (`apps/desktop/e2e/app/ui.spec.ts-snapshots/`): sono quelli del runner `windows-latest` (artifact `playwright-results` del run 44100672540), perché i caratteri locali differivano di circa il 4% dei pixel. **In locale i 12 test visivi falliscono**: per rigenerarli o confrontarli si usa l'artifact della CI, non `--update-snapshots` locale. Le asserzioni sono `expect.soft`, così un run fallito salva tutti i candidati.
 - **Font non inclusi:** Instrument Sans e Martian Mono non sono nel pacchetto (la CSP vieta Google Fonts); l'app usa i font di ripiego dei token. Vedi `PROSSIMI_PASSI.md`.

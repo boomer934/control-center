@@ -8,7 +8,7 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 - **Fatto.** La CI non partiva (job fermati dal limite di spesa dell'account GitHub). Controllati segreti e dati personali su tutti i 215 commit e i branch: email dei commit tutte `noreply`, nessun token o chiave, fixture pulite, nessun secret su GitHub e nessun workflow `pull_request_target`. Repo resa pubblica, PR #67 chiusa e riaperta, CI verde (Verify Windows 8m18s, gitleaks su tutta la storia), unita in squash (`c33838b`).
 - **Decisioni.** Il nome utente Windows nei percorsi di `CORSIE.md` e di due vecchi commit di `STATO.md` resta: l'utente ha scelto di non riscrivere la storia.
-- **Problemi.** La protezione di `main` ora è disponibile ma non ancora attivata (`PROBLEMI_NOTI.md`).
+- **Protezione di `main`.** Attivata su richiesta dell'utente: PR obbligatoria con 0 approvazioni, quattro check CI obbligatori (Verify Windows, gitleaks, Conventional commits, Project memory), regole valide anche per gli admin, niente force-push né cancellazione. Le PR di release-please eseguono gli stessi job, quindi non restano bloccate.
 
 ---
 

@@ -213,10 +213,10 @@ test('a terminal error lights the culprit and offers all three actions before a 
 
 test('selecting another error cancels the pending request and frees Ollama', async () => {
   holdFirstChat = true;
-  await writeFile(join(fixture, 'Shop', 'test/cart.test.js'), 'throw new Error("Second error");\n');
+  await writeNodeTrace('second.log', 'Second error');
   const run = await openTerminal();
   await run('node src/cart.js', 'Node.js v');
-  await run('node test/cart.test.js', 'Error: Second error');
+  await run('Get-Content second.log');
   await expect(node('test/cart.test.js')).toHaveAttribute('data-state', 'error');
 
   const inspector = page.getByRole('region', { name: 'Event inspector' });
@@ -241,17 +241,15 @@ test('selecting another error cancels the pending request and frees Ollama', asy
 });
 
 test('switching between errors in the same file clears and cancels local explanations', async () => {
-  await writeFile(
-    join(fixture, 'Shop', 'test/cart.test.js'),
-    'throw new Error(process.argv[2]);\n',
-  );
+  await writeNodeTrace('first.log', 'First error');
+  await writeNodeTrace('second.log', 'Second error');
   const timeline = await runTurn();
   const run = await openTerminal();
   const first = timeline.getByRole('button', { name: 'Error · Error: First error', exact: true });
   const second = timeline.getByRole('button', { name: 'Error · Error: Second error', exact: true });
-  await run('node test/cart.test.js "First error"', 'Error: First error');
+  await run('Get-Content first.log');
   await expect(first).toBeVisible();
-  await run('node test/cart.test.js "Second error"', 'Error: Second error');
+  await run('Get-Content second.log');
   await expect(second).toBeVisible();
 
   const inspector = page.getByRole('region', { name: 'Event inspector' });
@@ -317,17 +315,45 @@ async function runTurn() {
   return timeline;
 }
 
+/**
+ * A Node crash in test/cart.test.js, as printed with a path relative to the workspace. Real
+ * Node prints absolute paths, which the console wraps in a narrow terminal (small CI screens).
+ */
+async function writeNodeTrace(name: string, message: string) {
+  await writeFile(
+    join(fixture, 'Shop', name),
+    [
+      'test/cart.test.js:1',
+      'throw new Error(process.argv[2]);',
+      '^',
+      '',
+      `Error: ${message}`,
+      '    at Object.<anonymous> (test/cart.test.js:1:7)',
+      '',
+      'Node.js v24.0.0',
+      '',
+    ].join('\n'),
+  );
+}
+
 async function openTerminal() {
   await page.keyboard.press('Control+Backquote');
   const terminal = page.getByRole('region', { name: 'Terminal' });
   await terminal.getByRole('button', { name: 'PowerShell', exact: true }).click();
   await expect(terminal.locator('.xterm-rows')).toContainText('Shop', { timeout: 15_000 });
   await terminal.locator('textarea').focus();
-  return async (command: string, done: string) => {
+  let runs = 0;
+  /**
+   * Without `done`, waits for a marker printed after the command exits: the viewport shows only
+   * the last rows, so a long stack trace can scroll any line of its output out of view. The
+   * marker is built at run time, so the echoed command line never contains it.
+   */
+  return async (command: string, done?: string) => {
+    const marker = done ?? `cc-e2e-done-${++runs}`;
     await terminal.locator('textarea').focus();
-    await page.keyboard.type(command);
+    await page.keyboard.type(done ? command : `${command}; 'cc-e2e-done-' + '${runs}'`);
     await page.keyboard.press('Enter');
-    await expect(terminal.locator('.xterm-rows')).toContainText(done, { timeout: 15_000 });
+    await expect(terminal.locator('.xterm-rows')).toContainText(marker, { timeout: 15_000 });
   };
 }
 

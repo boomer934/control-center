@@ -1,9 +1,9 @@
 import { execFile } from 'node:child_process';
-import { get, type RequestOptions } from 'node:http';
 import { win32 } from 'node:path';
 import { promisify } from 'node:util';
 import { MachineSnapshotSchema, type MachineSnapshot } from '@control-center/ipc-contract';
 import { z } from 'zod';
+import { readJson } from './local-json';
 
 const execute = promisify(execFile);
 const TIMEOUT_MS = 4000;
@@ -22,46 +22,14 @@ const ollamaProcesses = z.object({
     .max(128),
 });
 
-/** Fixed local endpoints only; no redirects, shared proxy or renderer-supplied input. */
-function readJson(options: RequestOptions): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const request = get(
-      { ...options, agent: false, signal: AbortSignal.timeout(TIMEOUT_MS) },
-      (response) => {
-        response.once('error', reject);
-        if (response.statusCode !== 200) {
-          response.destroy();
-          reject(new Error('Inventory endpoint unavailable'));
-          return;
-        }
-        let size = 0;
-        const chunks: Buffer[] = [];
-        response.on('data', (chunk: Buffer) => {
-          size += chunk.length;
-          if (size > MAX_BYTES) {
-            response.destroy(new Error('Inventory response too large'));
-            return;
-          }
-          chunks.push(chunk);
-        });
-        response.once('end', () => {
-          try {
-            resolve(JSON.parse(Buffer.concat(chunks, size).toString('utf8')) as unknown);
-          } catch (error) {
-            reject(error);
-          }
-        });
-      },
-    );
-    request.once('error', reject);
-  });
-}
-
 async function inspectDocker(): Promise<MachineSnapshot['docker']> {
-  const data = await readJson({
-    socketPath: '\\\\.\\pipe\\docker_engine',
-    path: '/containers/json?all=0',
-  });
+  const data = await readJson(
+    {
+      socketPath: '\\\\.\\pipe\\docker_engine',
+      path: '/containers/json?all=0',
+    },
+    AbortSignal.timeout(TIMEOUT_MS),
+  );
   return { running: dockerContainers.parse(data).length };
 }
 
@@ -105,7 +73,10 @@ async function inspectGpu(system32: string): Promise<MachineSnapshot['gpu']> {
 }
 
 async function inspectOllama(): Promise<MachineSnapshot['ollama']> {
-  const data = await readJson({ hostname: '127.0.0.1', port: 11434, path: '/api/ps' });
+  const data = await readJson(
+    { hostname: '127.0.0.1', port: 11434, path: '/api/ps' },
+    AbortSignal.timeout(TIMEOUT_MS),
+  );
   return {
     models: ollamaProcesses.parse(data).models.map(({ name, size_vram }) => ({
       name,

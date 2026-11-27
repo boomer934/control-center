@@ -19,6 +19,11 @@ export function e2eMachineSnapshot(): MachineSnapshot | undefined {
   };
 }
 
+export function e2eOllamaPort(): number | undefined {
+  const port = Number(process.env.CC_E2E_OLLAMA_PORT);
+  return Number.isInteger(port) && port > 0 && port <= 65_535 ? port : undefined;
+}
+
 interface Faults {
   uncaught(): void;
   rejection(): void;

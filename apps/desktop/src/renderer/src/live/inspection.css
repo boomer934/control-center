@@ -71,6 +71,22 @@
   min-block-size: 0;
 }
 
+.live-agents[hidden] {
+  display: none;
+}
+
+.inspection-with-error {
+  max-block-size: calc(var(--sp-10) * 5);
+}
+
+.inspection-only {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.inspection-only .live-inspector {
+  max-block-size: none;
+}
+
 .live-inspector {
   max-block-size: calc(var(--sp-10) * 3);
   border-block-start: var(--sz-hair) solid var(--line);

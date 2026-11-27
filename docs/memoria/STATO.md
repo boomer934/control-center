@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. La specifica documentale della 5f è aggiornata e verificata; la PR #67 da `codex/roadmap-codex-claude` è aperta, prima dell'implementazione._
+_Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è nella PR #67 (da `codex/roadmap-codex-claude`), prima dell'implementazione. Seguono 5f e 5g, poi la Fase 6 (Codex)._
 
 ## Fase
 
@@ -12,16 +12,9 @@ _Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. La specifica
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
-**Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
+**Fase 5 — Vista Live**: ✅ 5a–5e+ completate e unite su `main`. Sintesi in `STORIA.md`, voce "Chiusura Fase 5".
 
 - **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; PR #67 aperta da `codex/roadmap-codex-claude`. `pnpm verify` verde (439 test, 1 saltato). Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
-
-- **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
-- **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
-- **5b, rifinitura:** [PR #59](https://github.com/boomer934/control-center/pull/59) (`fix/mappa-rifinitura`) con le correzioni dell'audit impeccable e della prova con una sessione Claude reale. Baseline visive della mappa rigenerate dal runner (`Fit` è cambiato).
-- **5c**, timeline e replay: apertura delle sessioni passate in sola lettura dalla Vista Live. Unita su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`).
-- **5d**, pannello agenti, ispettore e inventario locale: unita su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`, ADR 0014).
-- **5e**, errori del progetto: schema `error.detected` (v2, migrazione 1 → 2), parser di stack trace e colorazione della mappa: ✅ unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`, ADR 0015), CI verde (E2E 77/77). La parte dei parser era della corsia Codex: l'ha fatta Claude su goal dell'utente.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -36,9 +29,13 @@ _Ultimo aggiornamento 2026-11-27. La 5e è su `main` con la PR #64. La specifica
 - **3b**, logger e Console Errori: ✅ unita su `main` (PR #25, `2c64bf8`, ADR 0005).
 - **3c**, design system in codice: ✅ unita su `main` (PR #27, `1765186`, ADR 0006), 6 check verdi compreso Verify (Windows) con i test visivi.
 
+**Fase 5 — Vista Live**: ✅ completata il 2026-11-27 (PR #56, #58, #59, #62, #63, #64, #68, #70; ADR 0012–0016). Sintesi in `STORIA.md`, voce "Chiusura Fase 5".
+
+**Fase 6 — Infrastruttura**: da iniziare, corsia Codex (`CORSIE.md`).
+
 ## Branch
 
-Claude: `docs/memoria-5e` (questa nota). 5e unita su `main` (PR #64). Mappa 5b e rifinitura su `main` (PR #58 e #59). Codex: `fix/git-checkpoint-electron` (PR #61) riallineato dopo la 5c, `feat/agents-inspector` (PR #63) riallineato alla base `main`.
+Claude: `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione), non ancora in PR e non presente sul remoto al 2026-11-27: va verificato sul computer dell'utente. La chiusura della Fase 5 è sul branch della sessione cloud `claude/funny-archimedes-8ecsji`. Codex: il worktree `control-center-codex` va riallineato a `main` prima della Fase 6.
 
 ## Punto di ripresa
 
@@ -72,61 +69,13 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4.3, revisione):** `/code-review high` sulla PR #47 (flusso dei permessi): 9 punti, tutti corretti da Codex nella PR #49 (`f06cd09`) dopo una passata `/code-review medium` di Claude.
 - **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
 - **Fatto (4b, correzioni):** su richiesta dell'utente, cherry-pick delle correzioni di Codex (`5bc30ae`) su `origin/main` nella [PR #55](https://github.com/boomer934/control-center/pull/55), con il test del terminale di `main` e una correzione in più (commit con hook: timeout di 5 minuti, niente `GIT_LITERAL_PATHSPECS` agli hook).
-- **Fatto (5a, ADR 0012):**
-  - pacchetto `packages/project-model`:
-    - scansione con `.gitignore`, senza symlink e junction, fino a 20.000 file;
-    - import con Tree-sitter WASM (`@vscode/tree-sitter-wasm`) per TS/TSX/JS, Python, Go e Rust, risolti verso file, cartelle Go o nomi esterni;
-    - ruoli come plugin: comuni, Next.js, React, API Node;
-    - indicizzatore incrementale e watcher `fs.watch` ricorsivo;
-  - worker thread nel main con specchio del modello; canali `project:open` e `project:updated` (snapshot, poi delta per revisione);
-  - riga di stato nella Vista Live (file, link, avanzamento), in attesa della mappa della 5b;
-  - nel pacchetto, worker, chunk condivisi e `.wasm` fuori da `app.asar`.
-- **Verificato in locale (5a):**
-  - `pnpm verify` verde;
-  - 18 test del modello: grafo dei progetti di prova in 4 linguaggi, aggiornamenti incrementali, watcher, worker dal sorgente, junction;
-  - prestazioni: 5.000 file elencati in 46 ms (cache calda), indicizzati in circa 2 s;
-  - E2E `project.spec.ts` 2/2 e `security.spec.ts` verdi; `pnpm e2e:packaged` 10/10;
-  - suite `app`: rossi solo i 2 test visivi e il test della chat già noto.
-- **Non verificato:** il worker dentro l'app impacchettata (Playwright non si collega al pacchetto: provati solo i file estratti); la CI Windows.
-- **Fatto (5b, ADR 0013):** mappa della Vista Live in `apps/desktop/src/renderer/src/live/`:
-  - React Flow ed elkjs (`rectpacking` in un Web Worker); un contenitore per cartella di primo livello, file toccati e vicini diretti visibili, il resto collassato con barre di calore;
-  - `MapActivity` (puro, `viewAt(t)`) dagli `AgentEvent`: stati dei file, nodi temporanei per comandi/MCP/web, chip degli agenti con archi; store per nodo, eventi accorpati per frame;
-  - Segui agente (`F`, `Esc`), Fit (`0`), zoom semantico, minimappa a heatmap, anteprima diff dal canale `git:diff` esistente (clic → sezione Git), link degli import al passaggio del mouse;
-  - map lab `#/map-lab` solo nelle build di sviluppo ed E2E (verificato: niente chunk nella build di produzione).
-- **Verificato in locale (5b):**
-  - `pnpm verify` verde: 381 test (14 nuovi sulla mappa, sulle fixture vere);
-  - E2E `map.spec.ts`: 9 test di comportamento e prestazioni verdi; prestazioni 144 fps (schermo a 144 Hz), p95 7 ms, 511 nodi, 20 eventi/s;
-  - suite `app`: 66 verdi, rossi solo i test visivi (in locale falliscono sempre; per la mappa mancano ancora le baseline) e il test della chat già noto;
-  - impeccable: rilevatore senza rilievi; dalla verifica manuale corretti apertura del diff da tastiera e toolbar a finestra stretta.
-- **Fatto (5b, CI, 2026-11-26):** PR #58 aperta; baseline visive dal runner; `data-ready` solo sul layout giusto; props di `<ReactFlow>` stabili. Il budget dei 60 fps falliva in CI (12,2% di frame lunghi): il movimento della mappa ridipingeva tutti i 511 nodi a ogni frame. Ora il punto del viaggio va sul compositor, i nodi non hanno transizioni, il `readtick` agisce su `fill/stroke-opacity`; il test misura il tempo del main thread via DevTools (≤ 50%). CI: 64,1 fps, 0% di frame lunghi, main thread 15,8%.
-- **Fatto (5b, rifinitura, PR #59):**
-  - audit impeccable nei due temi: rilevatore pulito sul sorgente e sull'app via CDP; contrasto del testo sulla mappa ≥ 4,5:1;
-  - prova reale (Claude Code 2.1.326, workspace Git di prova): letture, attesa del permesso, edit con diff, due turni, Segui agente, anteprima diff;
-  - corretti: il chip dell'agente non tornava dal secondo turno della chat (una run per messaggio: ora `MapActivity` tiene una run per turno); `Fit` lasciava nodi e chip sotto minimappa e legenda con mappe grandi e il riquadro "No session yet" copriva le cartelle; Segui agente tagliava il chip a destra.
-- **Verificato in locale (rifinitura):** `pnpm verify` verde (386 test); `map.spec.ts` 9 test di comportamento verdi, i 2 visivi rossi (in locale sempre, e le baseline cambiano col nuovo `Fit`).
-- **Trovato, non corretto:** nell'app ogni sessione reale parte con "Turn started without a Git checkpoint (failed)"; lo stesso `checkpoint` del servizio Git, chiamato da un test sullo stesso repo, riesce. Voce in `PROSSIMI_PASSI.md` e `PROBLEMI_NOTI.md`.
-- **Fatto (rifinitura, CI):** in CI erano rossi solo i 2 test visivi della mappa (69 verdi). Le 14 baseline sono state sostituite con le immagini del run 45872508146, controllate a vista: contenuto invariato, mappa spostata sopra legenda e minimappa, nota vuota in alto.
-- **Fatto (5e, ADR 0015, branch `feat/errori-progetto`):**
-  - schema v2: `error.detected` (origine, linguaggio, messaggio ripulito, colpevole con riga e colonna, fino a 20 frame, `toolUseId`); `migrateAgentEvent` porta gli eventi v1 della cronologia alla v2 prima della validazione;
-  - parser a registro in `packages/event-schema/src/stack/` (V8, Firefox, `tsc`, esbuild/Vite, Python, Go, Rust) con 13 fixture in `packages/fixtures/stacks/`, 7 catturate dai runtime veri (Node 26, Python 3.14, Rust 1.97, TypeScript 5.9); ANSI e movimenti del cursore di ConPTY tolti, prefissi di Docker Compose → origine `docker`;
-  - comandi degli agenti: il normalizzatore dello stream analizza l'output degli strumenti shell (origine dal comando: `docker`, test, dev server, `command`); nella `sessione-02` registrata il `npm test` fallito dà il colpevole `test/cart.test.js:10`;
-  - terminale integrato: scanner nel main (250 ms di quiete, banner dei dev server, ripetizioni scartate, 30 errori al minuto), aggiornamento `errors` di `terminal:updated` e iniezione nelle sessioni Claude aperte dalla stessa finestra sullo stesso workspace;
-  - mappa: nodo colpevole `error` con nota `L<riga> <Nome>` finché una scrittura sul file o lo stesso comando che passa non lo ripuliscono; percorsi non del progetto risolti per suffisso univoco; timeline con il segno "Error · …" e ispettore con messaggio, posizione e origine.
-- **Verificato in locale (5e):**
-  - `pnpm verify` verde (439 test, 1 saltato);
-  - E2E `project-errors.spec.ts` 3/3, ripetuto 3 volte (9/9): `node src/cart.js` nel PowerShell integrato colora `src/lib/price.js`; il `npm test` fallito di `sessione-02` (finto `claude`) dà il segno in timeline, `test/cart.test.js` rosso a quell'istante con "Tests · node" e pulito quando lo stesso comando passa; i log di Docker Compose (`/app/app/models.py` → `app/models.py`, "Docker · python") e un **Vite 8 vero** (quello della repo) che serve un modulo TypeScript rotto (`src/main.ts:3:13`, "Dev server · node") nel terminale con la sessione aperta;
-  - suite `app` completa: 73 verdi, rossi solo i 4 test visivi; `claude.spec.ts` torna 6/6 dopo la correzione di `cleanEnv` (vedi `PROBLEMI_NOTI.md`: gli E2E locali avviavano la CLI reale).
-- **Impeccable (audit mirato, nei due temi via CDP):** rilevatore pulito sul sorgente e senza rilievi sulle parti 5e nell'app (restano rilievi già esistenti: testo a 11 px della riga info, un colore ANSI di xterm, la legenda che copre la cartella `test` quando il dock del terminale rimpicciolisce la mappa). Corretti: nota dell'errore anche in `title` e `aria-label` del nodo; `AssertionError [ERR_ASSERTION]` faceva una nota lunga che sfondava il nodo e nascondeva il nome (ora `L10 AssertionError`, nome al massimo 18 caratteri).
-- **Baseline visive:** `map-error-dark.png` e `map-error-light.png` cambiano di proposito (la scena "error" usa `sessione-02`, ora con `test/cart.test.js` rosso): rigenerate dall'artifact del run CI 45903635423 (75 E2E verdi, rossi solo questi due) e controllate a vista nei due temi. Le altre 24 immagini hanno in locale le stesse differenze di `main` (font).
-- **Parser in più dalla prova con Vite 8:** diagnostica di Oxc/Rolldown (`[PARSE_ERROR] …` e `╭─[ file:riga:col ]`); il messaggio di uno stack di Vite si cerca sopra le righe `Plugin:`/`File:`. Fixture reale `vite8-dev.txt`.
-- **Non verificato:** log letti direttamente da Docker (Fase 6; qui il demone Docker non è attivo); la prova Docker è sull'output di `docker compose logs` nel terminale.
-- **Fatto (5e, merge):** CI del run 45904671666 verde (E2E 77/77, app impacchettata 10/10) con le baseline `map-error-*` prese dal run precedente; PR #64 unita su richiesta dell'utente (`1ce73a6`).
-- **Ora (punto di ripresa):** Fase 5 con tutte le sotto-fasi su `main`: resta da decidere la chiusura della fase (sintesi in `STORIA.md`). Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
+- **Fase 5 chiusa (2026-11-27):** sintesi in `STORIA.md`, voce "Chiusura Fase 5".
+- **Ora (punto di ripresa):** la Fase 6 (infrastruttura) spetta a Codex; Claude fa poi `/code-review high` su socket Docker e processi. Per Claude restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita" di `PROSSIMI_PASSI.md`.
 
 ### Corsia Codex
 
-- **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è implementata nel branch `feat/error-quick-actions` (ADR 0016) e può essere chiusa mentre Claude specifica i contratti. La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`. Il [collaudo 5g](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) richiede una prova parallela reale su Windows e una revisione Impeccable in Electron.
-
+- **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è unita su `main` (PR #68 e #70, ADR 0016). La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`. Il [collaudo 5g](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) richiede una prova parallela reale su Windows e una revisione Impeccable in Electron.
+- **Dopo la 5g (Fase 6):** pannelli Docker (sola lettura di default), porte locali e GPU/Ollama con stati vuoti corretti, a partire dall'inventario della 5d (ADR 0014). Goal in `PIANO.md`, modello ed effort in `CORSIE.md`. Prima riallineare il worktree a `main`.
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.
 - **Verifica visiva:** Electron a 960×600 nei due temi. Le azioni dei permessi e il focus sugli argomenti sono verificati dall'E2E. Rilevatore Impeccable senza rilievi.
@@ -134,15 +83,6 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (4b):** il pannello Git mostra branch, modifiche in staging e su disco, diff e commit recenti. Consente stage, unstage e commit. Il main salva il checkpoint prima del primo turno Claude in un workspace Git e la timeline apre il confronto e il ripristino di un file o di tutti i file. Branch, HEAD e stash restano invariati durante cattura e ripristino.
 - **Verificato (4b):** `pnpm verify` verde con 340 test passati e smoke test Claude reale saltato. Sette test di integrazione su repository Git temporanei e 54 E2E Electron funzionali, incluso il ripristino dalla timeline. Controllo del pannello e del dialogo in entrambi i temi a 960×600 e rilevatore Impeccable senza rilievi. I due test degli snapshot dei componenti restano alla CI Windows.
 - **Verificato (2026-11-19):** `pnpm verify` passato con 340 test e 8 E2E locali passati nelle suite Claude e terminale dopo le correzioni ai test Windows.
-- **Fatto (5a):** Codex ha corretto la PR #56 su richiesta dell'utente in un worktree separato. La radice Go è rappresentata da `''` in `importDirs`. Il worker chiude le richieste pendenti, il renderer recupera i delta in volo e il watcher riscansiona alla riattivazione. La scansione applica il limite del contratto e rispetta le reinclusioni dei `.gitignore` annidati e i confini di `.git/info/exclude`.
-- **Fatto (5c):** la timeline mostra le corsie degli agenti e dei subagent su un asse comune, con scrubber, riproduzione e ritorno a Live. Gli eventi file coincidenti con il relativo Read/Edit confluiscono nel marcatore dello strumento.
-- **Replay (5c):** lo scrubber ricostruisce lo stato da un prefisso temporale degli `AgentEvent` e conserva la disposizione della mappa durante la riproduzione. Le sessioni salvate si aprono da History in sola lettura. I checkpoint restano confrontabili anche nel replay.
-- **Verificato (5c):** `pnpm verify` con 393 test passati e uno saltato. Tutti i 69 E2E funzionali passati, inclusi fixture con subagente, sessione salvata riaperta dopo il riavvio e checkpoint. Audit Impeccable senza rilievi in Electron a 960×600 nei due temi. I quattro errori dei confronti visivi locali si riproducono anche su `origin/main`.
-- **Fatto (4b, Windows):** correzione pubblicata con la [PR #61](https://github.com/boomer934/control-center/pull/61). Revisione Claude a effort `medium` senza bug confermati. Su Windows, scrittura di un riferimento con percorso di lock da 315 caratteri fallita senza l'override e riuscita con `core.longpaths=true`.
-- **Fatto (5d):** in Vista Live e nel replay il pannello Agents mostra attività, attese, errori, file toccati e consumi. Timeline, mappa e pannello condividono la selezione. L'ispettore mostra i dettagli e il JSON dell'evento e permette di copiarlo.
-- **Fatto (5d, inventario):** su autorizzazione dell'utente, anticipato il riepilogo in sola lettura della Fase 6. **Machine now** mostra conteggi Docker e TCP, porte su tutte le interfacce, VRAM NVIDIA e modelli Ollama anche durante il replay. I dati sono correnti e separati dall'evento ispezionato (ADR 0014).
-- **Verificato (5d):** l'E2E con `sessione-02` e inventario deterministico nel main controlla tutte e cinque le risposte, appunti e riavvolgimento. Impeccable pulito sul sorgente e in Electron a 960×600 nei due temi, in Details e JSON.
-- **Integrazione 5d:** [PR #63](https://github.com/boomer934/control-center/pull/63) riallineata alla 5c e al branch della correzione Windows. Revisione Claude Opus a effort `high` completata senza rilievi bloccanti. Il gate IPC valida la risposta nel main. L’ordine di integrazione è la [PR #61](https://github.com/boomer934/control-center/pull/61) seguita dalla #63, entrambe a CI verde.
 
 ## Cosa funziona
 

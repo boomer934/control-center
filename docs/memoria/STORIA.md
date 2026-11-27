@@ -31,6 +31,91 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Chiusura Fase 5
+
+**Fatto**
+
+- Fase 5 (Vista Live, il cuore del prodotto) completata in sei sotto-fasi di codice, tutte su `main`:
+  - **5a** modello del progetto (PR #56, `89a3eac`, ADR 0012), di Claude con la revisione Codex: scansione nel worker con `.gitignore`, import con Tree-sitter WASM per TS/JS, Python, Go e Rust, ruoli come plugin e watcher `fs.watch` incrementale;
+  - **5b** mappa (PR #58, `b858988`, ADR 0013, e rifinitura PR #59, `08f5c47`), di Claude: React Flow ed elkjs nel worker, stati dei nodi dagli `AgentEvent`, Segui agente, anteprima diff, minimappa a heatmap;
+  - **5c** timeline e replay (PR #62, `d6f35d0`), di Codex: corsie per agente e subagent, scrubber, sessioni passate in sola lettura con checkpoint confrontabili;
+  - **5d** pannello agenti e ispettore (PR #63, `b90d53b`, ADR 0014), di Codex, con l'inventario locale in sola lettura (Docker, porte, VRAM, Ollama) anticipato dalla Fase 6 su autorizzazione dell'utente;
+  - **5e** errori del progetto (PR #64, `1ce73a6`, ADR 0015), di Claude anche per la parte dei parser assegnata a Codex: schema `error.detected` v2 con la migrazione 1 → 2, parser di stack trace (V8, Firefox, `tsc`, esbuild/Vite/Oxc, Python, Go, Rust) su fixture reali, errori da terminale e comandi degli agenti, nodo colpevole rosso;
+  - **5e+** azioni rapide sull'errore (PR #68, `a5681b9`, ADR 0016, ed E2E stabilizzati con la PR #70, `524ce89`), di Codex in subentro per crediti Claude esauriti: bozza per Claude, spiegazione da Ollama, apertura del sorgente alla riga, con `.env*` sempre esclusi.
+- Fuori dalle sotto-fasi ma nello stesso periodo: checkpoint Git con percorsi lunghi su Windows (PR #61, `6bcb9cf`), che chiude il "checkpoint `failed`" trovato nella prova reale della 5b; release 1.3.0 (PR #57).
+- **DoD di `PIANO.md`:** riproducendo `sessione-02`, l'E2E della 5d trova nella Vista Live la risposta alle cinque domande della Fase 1 senza leggere la chat.
+- **Budget:** 60 fps con 500 nodi e 20 eventi/s misurati in CI (64,1 fps, 0% di frame lunghi, main thread al 15,8%); 5.000 file elencati in 46 ms e indicizzati in circa 2 s.
+- **Ultime verifiche:** `pnpm verify` verde con 448 test (uno saltato); in CI E2E verdi (77/77 sulla 5e, `project-errors.spec.ts` 10/10 sulla 5e+) e app impacchettata 10/10.
+- **Revisioni:**
+  - impeccable su ogni sotto-fase con UI, nei due temi;
+  - revisione incrociata Codex sulla 5a (7 rilievi corretti);
+  - Claude `high` sulla 5d e sull'IPC della 5e+, senza rilievi bloccanti.
+
+**Decisioni:** nessuna oltre le ADR 0012–0016. Due scostamenti da `PIANO.md`:
+
+- `fs.watch` ricorsivo al posto di chokidar e `@vscode/tree-sitter-wasm` al posto di web-tree-sitter con una grammatica per pacchetto (ADR 0012);
+- la mappa raggruppa per cartelle con `rectpacking`, non con un grafo `layered` degli import (ADR 0013).
+
+Le sotto-fasi sono passate da una corsia all'altra in due casi, entrambi annotati in `CORSIE.md`: i parser della 5e e le azioni rapide della 5e+.
+
+**Lezioni**
+
+- Sulla mappa niente animazioni che ridipingono fuori dal segno di un nodo. Il budget dei fps si misura col tempo del main thread, perché i frame del runner senza GPU non distinguono una mappa che regge da una al limite.
+- Le baseline visive vengono solo dagli artifact della CI: in locale i test visivi falliscono sempre per i font.
+- Gli E2E sul terminale non leggono il testo visibile: ConPTY va a capo nei percorsi lunghi sullo schermo piccolo del runner. Servono percorsi relativi e un marcatore di fine comando, e un clic sulla mappa va fatto dopo `data-ready`.
+- Gli E2E con il finto `claude` devono ripulire sia `PATH` sia `Path` (`cleanEnv`), altrimenti parte la CLI reale.
+- Per modificare i sorgenti si usa l'editor, non gli heredoc della shell: perdono gli escape.
+
+**Problemi aperti** (in `PROSSIMI_PASSI.md` e `PROBLEMI_NOTI.md`)
+
+- Il worker del modello e la mappatura degli stack sono provati nei file estratti, non dentro l'app impacchettata (Fase 10).
+- Gli errori letti direttamente dai container Docker e i dev server rilevati dalle porte passano alla Fase 6.
+- Restano i minori della mappa: Fit quando cambia l'altezza col dock aperto, simboli nello zoom semantico, menu `@` per seguire un agente. Resta anche il passaggio del prototipo 1d alle fixture ripulite.
+- Manca ancora la seconda opinione di Astra sulla pipe della 4.1.
+
+---
+
+## 2026-11-27 — Merge delle azioni rapide 5e+ (PR #68)
+
+- **Fatto.** Claude ha rivisto le parti IPC e main della PR (controllo del mittente, workspace attivo, blocco di `.env*`, limiti di dimensione, Ollama solo locale, redazione) senza rilievi. Ha corretto due E2E che fallivano solo in CI (`fe06caf`) e unito la PR con squash (`a5681b9`) a CI verde, su richiesta dell'utente.
+- **Decisioni.** Gli E2E con tracce lunghe usano percorsi relativi e un marcatore di fine comando, invece del testo visibile del terminale. Dopo il merge lo stesso spec è caduto in CI sulla PR 70 (clic su un nodo mentre la mappa si ridispone): `inspectNode` aspetta `data-ready` e ripete il clic finché l'ispettore mostra l'errore.
+- **Problemi.** Sul runner a 1024×768 ConPTY va a capo nei percorsi assoluti di Node e le righe escono dalla parte visibile: voce in `PROBLEMI_NOTI.md`. I due commenti di CodeRabbit (scenari non supportati su Linux, abbonamento scaduto) non chiedevano modifiche. Il merge automatico di GitHub non è attivo nel repository.
+- **Verifica.** `pnpm verify` verde (448 test passati, 1 saltato); `project-errors.spec.ts` 10/10 sia a 1440×900 sia a 1024×728; CI della PR verde.
+
+---
+
+## 2026-11-27 — Esclusione di `.env*` da «Go to file» (PR #68)
+
+- **Fatto.** Il main controlla con `win32.basename` il nome richiesto e quello canonico prima di aprire il file. I test unitari verificano il blocco prima di `open()`, simulano un symlink e un alias Windows 8.3 e confermano la lettura di `environment.ts`.
+- **Decisioni.** Regola approvata dall'utente il 2026-11-27 e recepita in `SICUREZZA.md` e nelle conseguenze dell'ADR 0016.
+- **Verifica.** `pnpm verify` verde con 448 test passati e uno saltato. `project-errors.spec.ts` 10/10. Il caso `.env:1` mostrava il contenuto della fixture prima della correzione e ora segnala che il sorgente è indisponibile.
+
+---
+
+## 2026-11-27 — Selezione di errori nello stesso file (PR #68)
+
+- **Fatto.** Ripristinata la chiave `mark.id` per `ProjectErrorActions`. Un E2E verifica che il cambio di errore nello stesso file rimuova la spiegazione precedente e annulli la richiesta in corso.
+- **Verifica.** `pnpm verify` verde con 443 test passati e uno saltato. `project-errors.spec.ts` 9/9. Il nuovo caso passa anche sul commit precedente perché l'ispettore padre usa già `mark.id` come chiave.
+
+---
+
+## 2026-11-27 — Seconda revisione delle azioni rapide (PR #68)
+
+- **Fatto.** Stato delle azioni isolato per errore, risoluzione dei percorsi del terminale condivisa con la mappa e ripiego sull'ultimo marcatore visibile del nodo.
+- **Decisioni.** L'ADR 0016 esplicita il limite dell'inode zero per il visualizzatore. In `SICUREZZA.md` è proposta l'esclusione dei file `.env*` prima della lettura, in attesa di conferma.
+- **Verifica.** `pnpm verify` con 443 test passati e uno saltato, `project-errors.spec.ts` 6/6, dieci E2E funzionali della mappa e rilevatore Impeccable senza rilievi.
+
+---
+
+## 2026-11-27 — Azioni rapide sugli errori della Vista Live (5e+)
+
+- **Fatto.** Dall'errore selezionato sulla mappa o nella timeline si può preparare la correzione in Claude, chiedere una spiegazione a Ollama e aprire il file alla riga. Funziona anche per un errore del terminale prima di una chat. Codex ha coperto contratto e UI in subentro per crediti Claude esauriti.
+- **Decisioni.** La chat conserva la bozza esistente e richiede l'invio esplicito. Il visualizzatore interno in sola lettura usa i controlli canonici della 4.2. Ollama riceve i metadati ripuliti dell'errore e usa il modello di completamento locale installato più piccolo (ADR 0016).
+- **Verifica.** `pnpm verify` con 440 test passati e uno saltato. Tutti i 74 E2E funzionali passati, inclusi avvio da un errore del terminale, attraversamento del workspace rifiutato e apertura alla riga. Prova reale con `qwen2.5-coder:7b`. Impeccable in Electron a 960×602 nei due temi segnala solo la gerarchia tipografica compatta. I confronti visivi del runner Windows restano alla CI.
+- **Problemi.** La minimappa copriva il file quando si apriva l'ispettore a finestra stretta. Corretto il Fit al ridimensionamento e tolto l'invito ad avviare una sessione quando c'è già un errore sulla mappa. Il dialogo ripristina il focus dopo Escape.
+
+---
+
 ## 2026-11-26 — Errori del progetto sulla mappa (5e)
 
 - **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).

@@ -2,35 +2,27 @@
 
 In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatte restano segnate con ✅ finché la fase non si chiude; poi passano in `STORIA.md`.
 
-> Le Fasi 1, 2, 3 e 4 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1", "Chiusura Fase 2", "Chiusura Fase 3" e "Chiusura Fase 4" (il brief `FASE_4.md` è archiviato lì).
+> Le Fasi 1, 2, 3, 4 e 5 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1"…"Chiusura Fase 5" (il brief `FASE_4.md` è archiviato lì).
 
 ## Ora
 
 **Priorità di prodotto · Codex e uso simultaneo con Claude Code.** I due filoni avanzano in worktree distinti secondo [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
 
 - **[Claude] (5f.1)** Aprire la specifica Codex App Server. Definire i campi `model`/`effort` per provider, la validazione e gli argomenti CLI, quindi pubblicare contratto ed esempi con `session.configChanged` prima di integrare nel main sessione, login, permessi e interruzione. Verificare su Windows l'effort di Claude Code e i parametri per turno dell'App Server di Codex.
-- **[Codex] (5f.2)** Portare a chiusura le azioni rapide 5e+ dal branch `feat/error-quick-actions`, quindi preparare fixture e test mentre Claude lavora al main. Collegare selettore e avviso nel compositore, pannello agenti, ispettore, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
+- **[Codex] (5f.2)** Preparare fixture e test (le azioni rapide 5e+ sono già su `main`, PR #68 e #70) mentre Claude lavora al main. Collegare selettore e avviso nel compositore, pannello agenti, ispettore, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
 - **[Claude + Codex] (5g)** Dopo la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
 
 Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) su Windows. Includere due richieste pendenti, un arresto con l'altra sessione attiva, lo stesso percorso relativo in due worktree e la revisione UI in Electron.
 
-### Completati
+### Altri passi aperti
 
-1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
-
-2. ✅ **[Claude] (F5b)** Mappa unita con la [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013): baseline visive dal runner, budget dei 60 fps verde in CI (64 fps, main thread 15,8%).
-
-3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite con la [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
-4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
-5. ✅ **[Codex] (F4b, bug)** Percorsi lunghi di Git su Windows uniti su `main` con la [PR #61](https://github.com/boomer934/control-center/pull/61) (`6bcb9cf`).
-6. ✅ **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura uniti su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`). La schermata Infra completa resta nella Fase 6.
-7. ✅ **[Claude] (F5e)** Errori del progetto sulla mappa (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`), CI verde.
+1. **[Codex] (F6, dopo la 5g)** Infrastruttura: pannelli Docker (sola lettura di default), porte locali e GPU/Ollama, con stati vuoti corretti quando Docker, GPU o Ollama mancano; test di integrazione con servizi simulati. Parte dall'inventario in sola lettura della 5d (ADR 0014). Comprende i log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e i dev server rilevati dalle porte oltre che dai banner. Revisione: Claude `/code-review high` su socket Docker e processi. Prima: riallineare il worktree `control-center-codex` a `main`.
+2. **[Claude]** Riprendere `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione): verificare che esista sul computer dell'utente e aprire la PR.
 
 ## Dopo
 
-1. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
-2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-3. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
+3. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+4. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
 
 ## Quando capita
 

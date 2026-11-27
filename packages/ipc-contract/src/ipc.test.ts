@@ -73,6 +73,7 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
       chooseFolder: () => null,
       selectRecent: () => null,
       openFile: () => false,
+      readSourceLocation: () => null,
     },
     terminal: {
       start: () => 'workspace-unavailable',
@@ -100,7 +101,11 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
     project: {
       open: () => ({ ok: false, error: 'workspace-unavailable' }),
     },
-    infra: { snapshot: () => ({ docker: null, ports: null, gpu: null, ollama: null }) },
+    infra: {
+      snapshot: () => ({ docker: null, ports: null, gpu: null, ollama: null }),
+      explainProjectError: () => 'unavailable',
+      cancelProjectErrorExplanation: () => false,
+    },
   };
   return { handlers, getInfo, openExternal };
 }
@@ -127,6 +132,7 @@ describe('contract', () => {
       'workspace:choose-folder',
       'workspace:select-recent',
       'workspace:open-file',
+      'workspace:read-source-location',
       'terminal:start',
       'terminal:write',
       'terminal:resize',
@@ -149,6 +155,8 @@ describe('contract', () => {
       'project:open',
       'project:updated',
       'infra:snapshot',
+      'infra:explain-project-error',
+      'infra:cancel-project-error-explanation',
     ]);
     expect(listEvents().map(([, , spec]) => spec.channel)).toEqual([
       'errors:changed',
@@ -244,6 +252,39 @@ describe('registerIpcHandlers (main)', () => {
     expect(res).toMatchObject({ ok: false, error: { code: 'invalid-request' } });
   });
 
+  it('accepts an error summary but rejects renderer-specified model, host and extra messages', async () => {
+    const { ipc } = setup();
+    const workspaceId = 'a'.repeat(64);
+    const requestId = '75e81e15-48a4-4c73-8800-d211abc90c7c';
+    const error = { message: 'TypeError: invalid cart', origin: 'terminal', language: 'node' };
+    const channel = 'infra:explain-project-error';
+    const valid = { workspaceId, requestId, error };
+    await expect(ipc.call(channel, trusted, valid)).resolves.toMatchObject({
+      ok: true,
+      value: 'unavailable',
+    });
+    for (const invalid of [
+      { workspaceId, error },
+      { ...valid, model: 'example:cloud' },
+      { ...valid, host: 'https://example.invalid' },
+      { ...valid, error: { ...error, messages: [] } },
+    ]) {
+      await expect(ipc.call(channel, trusted, invalid)).resolves.toMatchObject({
+        ok: false,
+        error: { code: 'invalid-request' },
+      });
+    }
+    const cancel = 'infra:cancel-project-error-explanation';
+    await expect(ipc.call(cancel, trusted, { requestId })).resolves.toMatchObject({
+      ok: true,
+      value: false,
+    });
+    await expect(ipc.call(cancel, trusted, { requestId: 'invalid' })).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'invalid-request' },
+    });
+  });
+
   it('never echoes received values in validation messages', async () => {
     const { ipc } = setup();
     const res = (await ipc.call('shell:open-external', trusted, { url: 999_111_333 })) as {
@@ -333,7 +374,11 @@ describe('createApi (preload)', () => {
       'project',
       'infra',
     ]);
-    expect(Object.keys(api.infra)).toEqual(['snapshot']);
+    expect(Object.keys(api.infra)).toEqual([
+      'snapshot',
+      'explainProjectError',
+      'cancelProjectErrorExplanation',
+    ]);
     expect(Object.keys(api.project)).toEqual(['open', 'onUpdated']);
     expect(Object.keys(api.git)).toEqual([
       'status',
@@ -357,6 +402,7 @@ describe('createApi (preload)', () => {
       'chooseFolder',
       'selectRecent',
       'openFile',
+      'readSourceLocation',
     ]);
     expect(Object.keys(api.terminal)).toEqual(['start', 'write', 'resize', 'close', 'onUpdated']);
     expect(Object.keys(api.claude)).toEqual([

@@ -1,5 +1,8 @@
 import type { AgentEvent, AgentId, EventOf } from '@control-center/event-schema';
+import type { TerminalError } from '@control-center/ipc-contract/terminal';
+import { fileNodeId, type ResolveFile } from './activity';
 import { timedEvents, type ReplayRecord, type Timeline, type TimelineMark } from './replay';
+import { resolveErrorPath } from './resolve';
 
 type Usage = EventOf<'usage.updated'>;
 type Tokens = { total: number; cache: number };
@@ -15,6 +18,51 @@ export function indexInspection(records: readonly ReplayRecord[], timeline?: Tim
     byNode.set(mark.nodeId, list);
   }
   return { events: timedEvents(records), byId, byNode };
+}
+
+export function markForNode(
+  marks: readonly TimelineMark[] | undefined,
+  {
+    node,
+    cutoff,
+    preferError,
+    terminalErrors,
+    resolveFile,
+  }: {
+    node: string;
+    cutoff: number;
+    preferError: boolean;
+    terminalErrors: readonly TerminalError[];
+    resolveFile: ResolveFile | undefined;
+  },
+): TimelineMark | undefined {
+  const event = preferError
+    ? marks?.findLast((mark) => mark.at <= cutoff && mark.event?.type === 'error.detected')
+    : undefined;
+  const terminal =
+    preferError && cutoff === Infinity && resolveFile
+      ? terminalErrors.findLast((error) => {
+          const path = resolveErrorPath(error, resolveFile);
+          return path !== undefined && fileNodeId(path) === node;
+        })
+      : undefined;
+  if (terminal) {
+    const at = Date.parse(terminal.at);
+    if (!event || at > event.at) {
+      const { file, message, line, column, origin, language } = terminal;
+      return {
+        id:
+          'terminal:' +
+          JSON.stringify([node, terminal.at, file?.path, line, column, origin, language, message]),
+        at,
+        label: 'Project error',
+        tone: 'error',
+        nodeId: node,
+        terminalError: terminal,
+      };
+    }
+  }
+  return event ?? marks?.findLast((mark) => mark.at <= cutoff);
 }
 
 /** A turn's final usage replaces the partial message counts for that agent and turn. */

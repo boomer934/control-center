@@ -16,6 +16,9 @@ updates:
       # typescript-eslint does not support TypeScript 7 yet (see docs/memoria/PROBLEMI_NOTI.md)
       - dependency-name: typescript
         versions: ['>=7']
+      # @xyflow/react 13 no longer exports useStore, used by the live map (see docs/memoria/PROBLEMI_NOTI.md)
+      - dependency-name: '@xyflow/react'
+        versions: ['>=13']
 
   - package-ecosystem: github-actions
     directory: /

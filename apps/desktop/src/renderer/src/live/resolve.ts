@@ -1,11 +1,15 @@
 // Which project file an error's culprit is (phase 5e). Runtimes print paths relative to where
 // they ran (a Rust crate in `rs/` prints `src/stock.rs`) or to a container (`/app/app/main.py`):
 // a path the project does not have is matched by its suffix, only when the match is unique.
-import type { FileRef } from '@control-center/event-schema';
+import type { DetectedError, FileRef } from '@control-center/event-schema';
 import type { ResolveFile } from './activity';
 
 /** Shortest suffix (in path segments) that may name a file outside the workspace. */
 const MIN_EXTERNAL_SEGMENTS = 2;
+
+export function resolveErrorPath(error: DetectedError, resolveFile: ResolveFile) {
+  return error.file && resolveFile(error.file);
+}
 
 export function makeResolveFile(paths: ReadonlyMap<string, unknown>): ResolveFile {
   return (file: FileRef) => {

@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Revisione della PR #79 e piano della 5h
+
+- **Fatto.** PR B aperta come [PR #79](https://github.com/boomer934/control-center/pull/79). Revisione incrociata di Codex: "unire con correzioni", 6 rilievi, tutti corretti con test. P1: `approvalsReviewer: user` esplicito, perché con la CLI reale il thread usava `auto_review` (un sottoagente approva al posto dell'utente); la politica restituita si verifica (`CodexPolicyRejected`) e si ripete in ogni `turn/start`. P2: interruzione non confermata → chiusura dei processi invece di liberare il workspace; approvazioni solo per il turno confermato; ambito effettivo nel testo dell'approvazione; risposte di login fuori schema rifiutate. P3: ricerca della CLI che prosegue dopo un candidato inutilizzabile.
+- **Decisioni.** Nuova sotto-fase 5h (capacità, sezione "Novità e capacità", controllo giornaliero delle CLI con auto-merge di `compat.json`, electron-updater), prima della 5g su scelta dell'utente. Piano in `FASE_5h.md`, righe in `CORSIE.md`, goal in `PIANO.md`. Si parte da `main` dopo il merge della #79, perché la 5h usa la sessione Codex della PR B e tocca gli stessi file.
+- **Verifica.** `pnpm verify` 542 test, E2E Codex e sicurezza (20), prova con la CLI reale verdi.
+- **Da decidere.** Anticipare electron-updater significa anticipare anche il packaging NSIS della Fase 10.
+
 ## 2026-11-27 — Sessione Codex nel main (5f.1, PR B)
 
 - **Fatto.** Su `feat/codex-session-main` (ADR 0018): namespace IPC `codex` con le stesse forme di `claude`; servizio comune ai due provider estratto dal servizio Claude (`main/agents/service.ts`); sessione su `codex app-server` con JSON-RPC su stdio, approvazioni, interruzione, ripresa del thread, catalogo da `model/list`, default da `config/read`; ricerca della CLI dal PATH o dal pacchetto Store letto dal registro; normalizzatore minimo `LiveCodexSession`; finto `codex app-server`; E2E `codex.spec.ts`; prova reale `real-codex.smoke.test.ts`.

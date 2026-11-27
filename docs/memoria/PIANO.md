@@ -2,7 +2,7 @@
 
 ## Context
 
-Vuoi un'app desktop personale (Electron) che faccia da centro di controllo per lo sviluppo con l'AI. Deve mostrare in tempo reale cosa fanno gli agenti (Claude Code e modelli locali Ollama) sulla mappa del progetto, insieme all'infrastruttura locale (Docker, porte, GPU), agli MCP e alle skill.
+Vuoi un'app desktop personale (Electron) che faccia da centro di controllo per lo sviluppo con l'AI. Deve mostrare in tempo reale cosa fanno gli agenti (Claude Code, Codex e modelli locali Ollama) sulla mappa del progetto, insieme all'infrastruttura locale (Docker, porte, GPU), agli MCP e alle skill.
 
 Le tue risposte hanno fissato questi vincoli:
 
@@ -52,6 +52,34 @@ Ogni fase ha deliverable, task e criterio di completamento (DoD). I dettagli com
 | 8   | MCP e Skills: registry, toggle per sessione, editor                             | M          |
 | 9   | Telemetria locale, risparmio Ollama compreso                                    | S          |
 | 10  | Packaging Windows, auto-update, rilascio open source                            | M          |
+
+### Priorità dopo la 5e — Codex e lavoro simultaneo
+
+Le sotto-fasi 5f e 5g precedono la ripresa della Fase 6. La chiusura delle azioni rapide 5e+ può procedere in parallelo alla specifica.
+
+- **5f · Codex in Vernier.** Avviare, interrompere e riprendere una sessione Codex dal workspace, usando il login gestito dalla CLI. La chat mostra lo streaming e le richieste di approvazione. La Vista Live e il replay ricevono eventi `AgentEvent` attribuiti a Codex. Punti da verificare con una prova su Windows: compatibilità della CLI, sandbox, permessi e chiusura dei processi. [Codex App Server](https://learn.chatgpt.com/docs/app-server)
+- **Modello ed effort per turno.** La chat offre un selettore di modello ed effort per ciascun provider. La scelta vale dal messaggio successivo, si può cambiare tra turni e viene conservata quando si riprende una sessione dalla cronologia. Modelli ed effort provengono da elenchi specifici del provider, validati con zod; i valori iniziali derivano dalla configurazione della CLI. `session.started` e il nuovo evento `session.configChanged` registrano modello ed effort, così pannello agenti, timeline e replay mostrano quale modello ha eseguito ogni turno.
+- **Avviso al cambio di modello.** Quando si cambia modello in una sessione già avviata, prima dell'invio compare nel compositore un avviso non bloccante: il nuovo modello rileggerà tutto il contesto (circa N token, stima basata sugli eventi di consumo), quindi il turno successivo sarà più lento e costoso. L'avviso si può chiudere e offre l'opzione «non mostrare più per questa sessione». Per il solo cambio di effort si mostra un avviso soltanto se una prova dimostra che invalida la cache. Verificare su Windows come Claude Code riceve effort e come l'App Server di Codex accetta parametri per turno.
+- **5g · Claude Code e Codex simultanei.** Avviare entrambi sullo stesso repository in worktree Git e branch distinti per le sessioni con scrittura. La Vista Live identifica provider, workspace e sessione di ogni evento e mostra le attività su corsie distinte. Chat, approvazioni, interruzioni e cronologia restano associate alla sessione corretta.
+- **Criterio di completamento della 5g.** Su Windows, una sessione reale per provider gira in parallelo su due worktree. I due agenti modificano un file ciascuno nei rispettivi worktree. Approvare o interrompere una sessione lascia proseguire l'altra. Dopo il riavvio, il replay attribuisce correttamente entrambi i flussi. Coprire lo stesso scenario con fixture ed E2E deterministici in CI.
+
+Il primo rilascio copre le sessioni avviate da Vernier. Il monitoraggio live delle chat già aperte nell'app Codex resta da verificare. La ripartizione del lavoro e i passaggi di consegne sono in [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
+
+#### Criteri di accettazione per le sessioni simultanee
+
+Applicare questi criteri alla specifica e alla revisione della 5f e della 5g. La 5f verifica il flusso Codex singolo e le regressioni Claude. La 5g verifica la convivenza dei due flussi.
+
+| Aspetto             | Comportamento da verificare                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Radice di lavoro    | All'avvio e alla ripresa di una sessione con scrittura, il main verifica worktree canonico e branch effettivo. Due avvii contemporanei, anche da finestre diverse, non possono riservare lo stesso worktree. Se il worktree o il branch è già in uso da una sessione con scrittura, l'avvio si ferma e indica come scegliere un altro worktree. Una modifica in un worktree lascia invariato il contenuto dell'altro anche quando entrambi lavorano sullo stesso percorso relativo. |
+| Conflitti Git       | Le modifiche partono da una base concordata. Prima di integrare il secondo branch, si aggiorna rispetto al primo merge e si rieseguono i test. Se Git segnala un conflitto, il flusso conserva entrambe le modifiche e lascia la risoluzione e il merge all'utente, mostrando branch e file da verificare.                                                                                                                                                                          |
+| Identità e permessi | Provider, worktree e sessione restano riconoscibili dalla chat al replay. Una richiesta mostra quale agente l'ha fatta, il workspace e l'azione proposta. Due richieste pendenti si possono gestire separatamente. Il cambio di chat conserva bozze, autorizzazioni e stato di ciascuna sessione. Gli eventi in background lasciano il focus alla chat selezionata e l'interruzione agisce sulla sola sessione indicata.                                                            |
+| Errori e ripresa    | Simulare una CLI assente, un login richiesto, un processo terminato a metà turno e una sessione interrotta mentre l'altra lavora. La UI indica quale sessione è coinvolta e permette di riprendere da dove previsto. Verificare che gli eventi già salvati restino attribuiti dopo il riavvio e che un'approvazione scaduta non possa essere usata sul turno successivo.                                                                                                            |
+| Vista Live          | Da un evento si risale ad agente, branch e file corretto, anche se entrambi gli agenti toccano `src/index.ts` o usano lo stesso ID agente interno. Chat, timeline e ispettore mantengono una selezione coerente. Le attività dei due agenti sono distinguibili con etichette e stati leggibili anche senza colore.                                                                                                                                                                  |
+| Interazione e resa  | Riutilizzare i componenti e i token di Vernier. Provare avvio, cambio sessione, doppia richiesta, errore, Stop e replay in Electron, nei due temi, a finestra normale e alla dimensione minima supportata. Verificare tastiera, focus visibile e ripristinato, zoom Windows e movimento ridotto. Eseguire la revisione Impeccable e correggere i problemi che impediscono il flusso o rendono ambiguo il bersaglio di un'azione.                                                    |
+| Prestazioni         | Con due flussi concorrenti, ripetere il benchmark della mappa della 5b. Durante lo streaming, cambio sessione, timeline e comandi restano utilizzabili.                                                                                                                                                                                                                                                                                                                             |
+
+Eseguire il collaudo con fixture che alternano gli eventi dei due provider e con una prova Windows usando entrambe le CLI reali su un repository di test. Prima del merge, registrare gli esiti dei test, della revisione incrociata e della prova in Electron.
 
 ### Fase 0 — Repo
 
@@ -359,6 +387,14 @@ Per corsia, modello, effort e revisione di ogni fase o sotto-fase, consulta [COR
 - **Fase 5e**
 
   > I parser di stack trace per Node/TS, Python, Go, Rust e browser passano sulle fixture; gli errori da terminale, comandi degli agenti, Docker e dev server producono eventi error.detected e colorano il nodo giusto sulla mappa (test E2E verde); memoria aggiornata.
+
+- **Fase 5f**
+
+  > Una sessione Codex si avvia, si interrompe e riprende dalla chat di Vernier su Windows. Una richiesta di approvazione arriva alla sessione corretta. Gli eventi Codex si vedono nella Vista Live e nel replay. Modello ed effort si scelgono dalla chat per entrambi i provider, valgono dal turno successivo, risultano negli eventi e nel replay; il cambio di modello mostra l'avviso sul contesto. E2E con fixture e prova con la CLI reale verdi. Memoria aggiornata.
+
+- **Fase 5g**
+
+  > Claude Code e Codex girano contemporaneamente su due worktree dello stesso repository. Chat, eventi live, permessi, interruzioni e storico sono attribuiti alla sessione corretta. E2E deterministico e prova con entrambe le CLI reali su Windows verdi. Memoria aggiornata.
 
 - **Fase 6**
 

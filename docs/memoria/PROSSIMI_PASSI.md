@@ -6,9 +6,17 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
+**Priorità di prodotto · Codex e uso simultaneo con Claude Code.** I due filoni avanzano in worktree distinti secondo [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
 
-1. **[Codex] (F6)** Infrastruttura: pannelli Docker (sola lettura di default), porte locali e GPU/Ollama, con stati vuoti corretti quando Docker, GPU o Ollama mancano; test di integrazione con servizi simulati. Parte dall'inventario in sola lettura della 5d (ADR 0014). Comprende i log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e i dev server rilevati dalle porte oltre che dai banner. Revisione: Claude `/code-review high` su socket Docker e processi. Prima: riallineare il worktree `control-center-codex` a `main`.
+- **[Claude] (5f.1)** Aprire la specifica Codex App Server. Definire i campi `model`/`effort` per provider, la validazione e gli argomenti CLI, quindi pubblicare contratto ed esempi con `session.configChanged` prima di integrare nel main sessione, login, permessi e interruzione. Verificare su Windows l'effort di Claude Code e i parametri per turno dell'App Server di Codex.
+- **[Codex] (5f.2)** Preparare fixture e test (le azioni rapide 5e+ sono già su `main`, PR #68 e #70) mentre Claude lavora al main. Collegare selettore e avviso nel compositore, pannello agenti, ispettore, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
+- **[Claude + Codex] (5g)** Dopo la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
+
+Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) su Windows. Includere due richieste pendenti, un arresto con l'altra sessione attiva, lo stesso percorso relativo in due worktree e la revisione UI in Electron.
+
+### Altri passi aperti
+
+1. **[Codex] (F6, dopo la 5g)** Infrastruttura: pannelli Docker (sola lettura di default), porte locali e GPU/Ollama, con stati vuoti corretti quando Docker, GPU o Ollama mancano; test di integrazione con servizi simulati. Parte dall'inventario in sola lettura della 5d (ADR 0014). Comprende i log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e i dev server rilevati dalle porte oltre che dai banner. Revisione: Claude `/code-review high` su socket Docker e processi. Prima: riallineare il worktree `control-center-codex` a `main`.
 2. **[Claude]** Riprendere `feat/revisione-frontend` (orchestratore, icone dei file, dock della sessione): verificare che esista sul computer dell'utente e aprire la PR.
 
 ## Dopo

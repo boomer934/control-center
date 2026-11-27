@@ -4,6 +4,33 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Specifica modello ed effort per turno nella 5f
+
+- **Fatto.** In `PIANO.md` il cambio di modello/effort per provider è ora parte della 5f: vale dal turno seguente, si conserva nella ripresa e compare in `session.started`/`session.configChanged` per Vista Live e replay. Aggiunti avviso sul contesto, stima token e opzione per non ripeterlo nella sessione.
+- **Decisioni.** Avviso per il solo effort solo se una prova mostra invalidazione della cache. In `CORSIE.md`, Claude possiede contratto, validazione e CLI; Codex selettore, avviso e superfici UI/E2E. Aggiornati goal, prossimi passi e Vault.
+- **Verifica.** `npx pnpm@10.34.9 verify` verde: 439 test passati, 1 saltato; lint con 418 warning e zero errori.
+- **Da verificare.** Su Windows il supporto all'effort di Claude Code e ai parametri per turno del Codex App Server.
+
+---
+
+## 2026-11-27 — Collaudo dell'integrazione Claude Code e Codex
+
+- **Fatto.** Definiti i criteri di accettazione per worktree, conflitti Git, attribuzione di eventi e richieste, ripresa dopo errori, accessibilità e prestazioni della Vista Live.
+- **Decisioni.** La consegna del contratto sblocca il collegamento della UI. La 5g richiede fixture concorrenti, prova con le due CLI reali e revisione Impeccable in Electron.
+- **Verifica.** `pnpm verify` verde con 439 test passati e uno saltato.
+- **Da verificare.** I criteri si applicano durante l'implementazione di 5f e 5g.
+
+---
+
+## 2026-11-27 — Priorità Codex e uso simultaneo con Claude Code
+
+- **Fatto.** Aggiornati piano, prossimi passi e corsie. Codex in Vernier (5f) e sessioni simultanee di Claude Code e Codex (5g) precedono la Fase 6.
+- **Decisioni.** La prima consegna è una sessione Codex avviata da Vernier. Per la 5g il piano prevede due worktree Git e corsie distinte nella Vista Live. Claude prende contratti, runtime e isolamento. Codex prende fixture, trasformazione degli eventi, UI e verifica. Il lavoro sulle fixture può procedere in parallelo al runtime.
+- **Verifica.** `pnpm verify` verde: 439 test passati e uno saltato.
+- **Da verificare.** Comportamento dell'App Server su Windows, doppia sessione con le CLI reali e disponibilità di eventi live per chat avviate fuori da Vernier.
+
+---
+
 ## 2026-11-27 — Chiusura Fase 5
 
 **Fatto**

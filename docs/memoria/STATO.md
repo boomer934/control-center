@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. Fase 5 chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. Prossima: Fase 6 (Codex)._
+_Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è nella PR #67 (da `codex/roadmap-codex-claude`), prima dell'implementazione. Seguono 5f e 5g, poi la Fase 6 (Codex)._
 
 ## Fase
 
@@ -11,6 +11,10 @@ _Ultimo aggiornamento 2026-11-27. Fase 5 chiusa: tutte le sotto-fasi su `main`, 
 **Fase 2 — Schema eventi**: ✅ completata il 2026-11-14 (PR #16, #20). Sintesi in `STORIA.md`, voce "Chiusura Fase 2".
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
+
+**Fase 5 — Vista Live**: ✅ 5a–5e+ completate e unite su `main`. Sintesi in `STORIA.md`, voce "Chiusura Fase 5".
+
+- **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; PR #67 aperta da `codex/roadmap-codex-claude`. `pnpm verify` verde (439 test, 1 saltato). Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -70,7 +74,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
-- **Prossimo (Fase 6):** pannelli Docker (sola lettura di default), porte locali e GPU/Ollama con stati vuoti corretti, a partire dall'inventario della 5d (ADR 0014). Goal in `PIANO.md`, modello ed effort in `CORSIE.md`. Prima riallineare il worktree a `main`.
+- **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è unita su `main` (PR #68 e #70, ADR 0016). La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`. Il [collaudo 5g](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) richiede una prova parallela reale su Windows e una revisione Impeccable in Electron.
+- **Dopo la 5g (Fase 6):** pannelli Docker (sola lettura di default), porte locali e GPU/Ollama con stati vuoti corretti, a partire dall'inventario della 5d (ADR 0014). Goal in `PIANO.md`, modello ed effort in `CORSIE.md`. Prima riallineare il worktree a `main`.
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.
 - **Verifica visiva:** Electron a 960×600 nei due temi. Le azioni dei permessi e il focus sugli argomenti sono verificati dall'E2E. Rilevatore Impeccable senza rilievi.

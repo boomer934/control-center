@@ -2,7 +2,15 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { claudeCatalog, claudeConfigArgs, readClaudeDefaults } from './models';
+import type { FileHandle } from 'node:fs/promises';
+import {
+  claudeCatalog,
+  claudeConfigArgs,
+  MAX_SETTINGS_BYTES,
+  readClaudeDefaults,
+  readLimited,
+  safeModelId,
+} from './models';
 
 const homes: string[] = [];
 afterEach(() => {
@@ -62,5 +70,52 @@ describe('Claude models and effort (phase 5f)', () => {
       'xhigh',
     ]);
     expect(() => claudeConfigArgs({ model: '--evil', effort: null })).toThrow();
+  });
+
+  it('bounds the read by what it reads, not by an earlier size check', async () => {
+    // the descriptor reports a small file, then the file keeps growing while it is read
+    const grower = {
+      stat: async () => ({ isFile: () => true, size: 10 }),
+      read: async (buffer: Buffer, offset: number, length: number) => {
+        buffer.fill(0x61, offset, offset + length);
+        return { bytesRead: length, buffer };
+      },
+    } as unknown as FileHandle;
+    await expect(readLimited(grower, 64)).resolves.toBeUndefined();
+    const notFile = {
+      stat: async () => ({ isFile: () => false, size: 1 }),
+    } as unknown as FileHandle;
+    await expect(readLimited(notFile, 64)).resolves.toBeUndefined();
+    const exact = JSON.stringify({ model: 'opus' }).padEnd(MAX_SETTINGS_BYTES, ' ');
+    await expect(readClaudeDefaults(home(exact))).resolves.toEqual({ model: 'opus', effort: null });
+    await expect(readClaudeDefaults(home(`${exact} `))).resolves.toEqual({
+      model: null,
+      effort: null,
+    });
+  });
+
+  it('keeps credential-like model ids out of the catalog and the events', async () => {
+    const key = `sk-ant-${'a'.repeat(30)}`;
+    expect(safeModelId(key)).toBeNull();
+    expect(safeModelId('claude-opus-5-5[1m]')).toBe('claude-opus-5-5[1m]');
+    await expect(readClaudeDefaults(home(JSON.stringify({ model: key })))).resolves.toEqual({
+      model: null,
+      effort: null,
+    });
+    const catalog = claudeCatalog({ model: key, effort: null }, { model: key, effort: null });
+    expect(JSON.stringify(catalog)).not.toContain('sk-ant');
+  });
+
+  it('takes a saved choice only if the catalog offers it', () => {
+    const none = { model: null, effort: null };
+    expect(claudeCatalog(none, { model: 'sonnet', effort: 'max' }).current).toEqual({
+      model: 'sonnet',
+      effort: 'max',
+    });
+    expect(claudeCatalog(none, { model: 'claude-x-9', effort: null }).current).toEqual(none);
+    expect(claudeCatalog(none, { model: 'opus', effort: 'ultra' }).current).toEqual(none);
+    // a full name is offered only when the user's settings configure it
+    const configured = { model: 'claude-x-9', effort: null };
+    expect(claudeCatalog(configured, configured).current).toEqual(configured);
   });
 });

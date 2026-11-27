@@ -138,7 +138,7 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
         historyId,
         clean,
         publish,
-        catalog: claudeCatalog(NO_CONFIG, NO_CONFIG),
+        catalog: claudeCatalog(NO_CONFIG),
         closed: false,
       };
       sessions.set(id, entry);
@@ -150,11 +150,14 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
           return 'history-unavailable';
         }
         const { claude, hooks } = await deps.programs();
-        const resumeConfig = previous ? lastChosenConfig(previous.records) : undefined;
+        const saved = previous ? lastChosenConfig(previous.records) : undefined;
         entry.catalog = claudeCatalog(
           await (deps.defaults ?? readClaudeDefaults)().catch(() => NO_CONFIG),
-          resumeConfig ?? NO_CONFIG,
+          saved,
         );
+        // A saved choice the catalog no longer offers (or never did: an altered file) is dropped,
+        // and neither reaches the command line nor names itself in a later event.
+        const resumeConfig = saved && entry.catalog.current === saved ? saved : undefined;
         if (entry.closed) return 'failed';
         if (!claude) {
           release(id, entry);
@@ -325,7 +328,8 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       request: { id: string } & AgentConfig,
     ): AgentConfigureResult {
       const entry = owned(owner, request.id);
-      if (!entry) return 'closed';
+      // Only once the session is open: its catalog is final then, and nothing overwrites a choice.
+      if (!entry?.session) return 'closed';
       const config: AgentConfig = { model: request.model, effort: request.effort };
       if (!isConfigInCatalog(config, entry.catalog.models)) return 'invalid';
       const current = entry.catalog.current;

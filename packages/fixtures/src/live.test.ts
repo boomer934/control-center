@@ -270,12 +270,26 @@ describe('model and effort per run (phase 5f)', () => {
     const events = run(live, '2026-11-27T10:00:00.000Z', { model: 'opus', effort: 'max' });
     expect(events.some((e) => e.type === 'session.configChanged')).toBe(false);
     // back to the CLI's own configuration
-    const reset = run(live, '2026-11-27T11:00:00.000Z');
+    const reset = run(live, '2026-11-27T11:00:00.000Z', {});
     expect(reset[0]).toMatchObject({
       type: 'session.configChanged',
       previousModel: 'opus',
       previousEffort: 'max',
     });
     expect(reset[0]).not.toHaveProperty('model');
+  });
+
+  it('a run that dies before starting changes nothing: the retry reports the choice', () => {
+    const live = new LiveClaudeSession({ sessionId: 's', cwd: CWD });
+    // the CLI exits before `init`, without hooks: no event at all
+    expect(live.startRun('2026-11-27T10:00:00.000Z', { model: 'opus' })).toEqual([]);
+    expect(live.endRun('2026-11-27T10:00:01.000Z', 'process-failed')).toEqual([]);
+    const retry = run(live, '2026-11-27T10:01:00.000Z', { model: 'opus' });
+    expect(retry.slice(0, 2)).toMatchObject([
+      { type: 'session.configChanged', model: 'opus', seq: 0 },
+      { type: 'session.started', seq: 1 },
+    ]);
+    expect(retry[0]).not.toHaveProperty('previousModel');
+    expect(retry.map((e) => e.seq)).toEqual(retry.map((_, i) => i));
   });
 });

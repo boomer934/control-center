@@ -6,8 +6,7 @@
 // through the live normalizers of @control-center/event-schema and leave as AgentEvents. The
 // session owns its pipe, its token and its temporary files, and removes them when it closes.
 import { randomUUID } from 'node:crypto';
-import { execFile, execFileSync, type ChildProcess } from 'node:child_process';
-import { join } from 'node:path';
+import type { ChildProcess } from 'node:child_process';
 import type { ErrorInput } from '@control-center/app-log';
 import {
   LiveClaudeSession,
@@ -31,6 +30,7 @@ import {
 import { z } from 'zod';
 import { superviseChild } from '../errors/children';
 import { TESTED_CLAUDE_VERSIONS, type Program } from './cli';
+import { killTree, type Teardown } from './kill-tree';
 import { ClaudeNativeSessionId } from './history';
 import { createClaudePermissions } from './permissions';
 import {
@@ -104,56 +104,10 @@ const textDelta = z.looseObject({
 
 export const MAX_LINE_CHARS = 16 * 1024 * 1024;
 export const MAX_MESSAGE_CHARS = 100_000;
+/** How long close() waits for the run to end before it abandons the teardown. */
+const CLOSE_WAIT_MS = 3000;
 
 const warnedVersions = new Set<string>();
-
-/** taskkill's exit code when the process is gone already: nothing left to end. */
-const TASKKILL_NOT_FOUND = 128;
-
-/**
- * Ends a run with what it started (hook scripts, the commands of the agent's tools): on Windows
- * killing the process alone would leave its children running in the workspace. `taskkill /T`
- * follows the parent links that still exist, so a process whose parent already exited (or one
- * started detached) escapes it; only a Job Object would hold the whole tree (see SICUREZZA.md).
- * A failed taskkill is retried once, then reported and the run's own process killed.
- */
-export function killTree(child: ChildProcess, onFailure: () => void, wait = false): void {
-  const pid = child.pid;
-  if (process.platform !== 'win32' || pid === undefined) {
-    child.kill();
-    return;
-  }
-  // full path: never a taskkill found on PATH or in the workspace
-  const taskkill = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'taskkill.exe');
-  const args = ['/PID', String(pid), '/T', '/F'];
-  const giveUp = () => {
-    try {
-      onFailure();
-    } finally {
-      child.kill();
-    }
-  };
-  if (wait) {
-    // the app is quitting: an asynchronous taskkill would never get to run
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        execFileSync(taskkill, args, { windowsHide: true, stdio: 'ignore', timeout: 5000 });
-        return;
-      } catch (error) {
-        if ((error as { status?: unknown }).status === TASKKILL_NOT_FOUND) return;
-      }
-    }
-    giveUp();
-    return;
-  }
-  const attempt = (retries: number) =>
-    execFile(taskkill, args, { windowsHide: true, timeout: 5000 }, (error) => {
-      if (!error || error.code === TASKKILL_NOT_FOUND) return;
-      if (retries > 0) setTimeout(() => attempt(retries - 1), 250);
-      else giveUp();
-    });
-  attempt(1);
-}
 
 /** One Console line for a batch of refused hook messages: codes and counts, nothing else. */
 export function describeRejects(summary: RejectSummary): string {
@@ -191,6 +145,8 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
         buffer: string;
         discardingLine: boolean;
         stopping: boolean;
+        /** The run's one teardown, shared by interrupt, close and a failed stdin write. */
+        teardown?: Teardown;
         done: Promise<void>;
       }
     | undefined;
@@ -203,7 +159,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       const input = current?.child.stdin;
       if (!current || current.stopping || !input?.writable) return false;
       input.write(`${line}\n`, (error) => {
-        if (error && run === current && !current.stopping) killTree(current.child, killFailed);
+        if (error && run === current && !current.stopping) stopRun(current);
       });
       return true;
     },
@@ -290,8 +246,14 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       kind: 'child-exit',
       name: 'ProcessTreeNotEnded',
       message:
-        'Could not end every process of a Claude run (taskkill failed twice): commands it started may still be running',
+        'Could not end every process of a Claude run (taskkill failed or did not finish): commands it started may still be running',
     });
+  /** Starts the run's teardown, once: a second stop joins the first instead of racing it. */
+  const stopRun = (current: NonNullable<typeof run>): Teardown => {
+    current.stopping = true;
+    current.teardown ??= killTree(current.child, killFailed);
+    return current.teardown;
+  };
 
   // ── stream-json from stdout ──
   let droppedLines = 0;
@@ -446,25 +408,31 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
     },
     interrupt() {
       if (!run) return false;
-      run.stopping = true;
       clearPreview();
       permissions.clear();
-      killTree(run.child, killFailed);
+      stopRun(run);
       return true;
     },
     terminate() {
       const current = run;
       if (!current) return;
       current.stopping = true;
-      killTree(current.child, killFailed, true);
+      current.teardown?.cancel();
+      current.teardown = killTree(current.child, killFailed, { wait: true });
     },
     async close() {
       if (status === 'closed') return;
       const current = run;
       if (current) {
-        current.stopping = true;
-        killTree(current.child, killFailed);
-        await Promise.race([current.done, new Promise((r) => setTimeout(r, 3000))]);
+        const teardown = stopRun(current);
+        let timer: NodeJS.Timeout | undefined;
+        await Promise.race([
+          Promise.all([current.done, teardown.done]),
+          new Promise((r) => (timer = setTimeout(r, CLOSE_WAIT_MS))),
+        ]);
+        clearTimeout(timer);
+        // nothing of the teardown outlives close(): a late taskkill could name a reused PID
+        teardown.abandon();
       }
       setStatus('closed');
       await server?.close();

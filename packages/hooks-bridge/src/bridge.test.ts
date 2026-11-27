@@ -19,6 +19,19 @@ import {
 } from './index.ts';
 
 const BIN = fileURLToPath(new URL('./bin.ts', import.meta.url));
+
+/** Creating links needs Developer Mode or admin rights on Windows: without them the test is skipped. */
+const canSymlink = (() => {
+  const dir = mkdtempSync(join(tmpdir(), 'cc-bridge-probe-'));
+  try {
+    symlinkSync(join(dir, 'target'), join(dir, 'link'), 'file');
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+})();
 const payload: HookPayload = {
   hook_event_name: 'PreToolUse',
   session_id: 'claude-session',
@@ -174,6 +187,50 @@ describe('bridge server', () => {
     await expect.poll(() => rejects).toEqual(['timeout']);
   });
 
+  it('checks the deadline when data arrives, not only when its timer runs', async () => {
+    let clock = 0;
+    const { pipe, token, events, rejects } = await startServer({
+      timeoutMs: 10_000,
+      now: () => clock,
+    });
+    const message = line({ v: 1, token, payload });
+    const answer = await new Promise<string>((resolve) => {
+      let text = '';
+      const socket = connect(pipe, () => {
+        socket.write(message.slice(0, 5));
+        setTimeout(() => {
+          clock += 10_001; // past the deadline, while the 10 s timer is still pending
+          socket.write(message.slice(5));
+        }, 50);
+      });
+      socket.setEncoding('utf8');
+      socket.on('data', (c: string) => (text += c));
+      socket.on('close', () => resolve(text));
+      socket.on('error', () => undefined);
+    });
+    expect(JSON.parse(answer)).toEqual({ ok: false, code: 'timeout' });
+    expect(events).toEqual([]);
+    await expect.poll(() => rejects).toEqual(['timeout']);
+  });
+
+  it('drops open connections at close: nothing is counted after the final summary', async () => {
+    const summaries: RejectSummary[] = [];
+    const { pipe, server } = await startServer({
+      onReject: (s) => summaries.push(s),
+      reportIntervalMs: 60_000,
+      timeoutMs: 100,
+    });
+    await raw(pipe, line({ v: 1, token: 'guess', payload }));
+    const hanging = raw(pipe, null, true);
+    await new Promise((r) => setTimeout(r, 50)); // the server holds the connection
+    await server.close();
+    await hanging;
+    await new Promise((r) => setTimeout(r, 250)); // well past the connection's deadline
+    expect(summaries).toEqual([
+      { counts: { 'bad-token': 1 }, total: 1, capped: false, final: true },
+    ]);
+  });
+
   it('refuses a message split into too many pieces', async () => {
     const { pipe, rejects } = await startServer({ maxFragments: 3 });
     await new Promise<void>((resolve) => {
@@ -297,24 +354,20 @@ describe('hook script', () => {
     expect(events[0]?.error).toHaveLength(16_384);
   });
 
-  it('refuses a bridge file that is a link, too big, or not a file', async () => {
+  it.skipIf(!canSymlink)('refuses a bridge file that is a link', async () => {
     const { pipe, token, events } = await startServer();
     const dir = sessionDir({ v: 1, pipe, token });
-    const real = join(dir, BRIDGE_FILE);
-
     const linked = mkdtempSync(join(tmpdir(), 'cc-bridge-link-'));
     cleanups.push(() => rmSync(linked, { recursive: true, force: true }));
-    let linkMade = true;
-    try {
-      symlinkSync(real, join(linked, BRIDGE_FILE), 'file');
-    } catch {
-      linkMade = false; // creating links needs Developer Mode or admin rights on Windows
-    }
-    if (linkMade) {
-      const viaLink = await runHook([join(linked, BRIDGE_FILE)], JSON.stringify(payload));
-      expect(viaLink).toMatchObject({ code: 0, stdout: '' });
-      expect(viaLink.stderr).toContain('no-config');
-    }
+    symlinkSync(join(dir, BRIDGE_FILE), join(linked, BRIDGE_FILE), 'file');
+    const viaLink = await runHook([join(linked, BRIDGE_FILE)], JSON.stringify(payload));
+    expect(viaLink).toMatchObject({ code: 0, stdout: '' });
+    expect(viaLink.stderr).toContain('no-config');
+    expect(events).toEqual([]);
+  });
+
+  it('refuses a bridge file that is too big or not a file', async () => {
+    const { pipe, token, events } = await startServer();
 
     const big = mkdtempSync(join(tmpdir(), 'cc-bridge-big-'));
     cleanups.push(() => rmSync(big, { recursive: true, force: true }));

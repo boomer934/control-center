@@ -36,7 +36,9 @@ async function readStdin(): Promise<string | undefined> {
  * The bridge file: an absolute path named `bridge.json`, a regular file (not a link) of at most
  * 4 KiB. It is opened once and checked through that handle, and the handle must be the file the
  * path named, so it cannot be swapped between the check and the read; at most 4 KiB + 1 bytes
- * are read, whatever the file claims its size is.
+ * are read, whatever the file claims its size is. The dev/ino comparison identifies the file on
+ * local NTFS; on ReFS the 64-bit ID libuv exposes can match for distinct files (a 128-bit
+ * FileIdInfo would need a native call): see docs/memoria/SICUREZZA.md.
  */
 function readConfig(file: string | undefined) {
   if (!file || !isAbsolute(file) || basename(file) !== BRIDGE_FILE) return undefined;

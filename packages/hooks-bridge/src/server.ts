@@ -40,6 +40,8 @@ export interface BridgeServerOptions {
   reportIntervalMs?: number;
   /** Summaries per server; after the last one refusals are only counted, until close. Default 20. */
   maxReports?: number;
+  /** Monotonic clock in milliseconds, for the connection deadline. Test seam. */
+  now?: () => number;
 }
 
 export interface BridgeServer {
@@ -57,8 +59,12 @@ export function createBridgeServer(options: BridgeServerOptions): BridgeServer {
   const maxFragments = options.maxFragments ?? 1024;
   const reportIntervalMs = options.reportIntervalMs ?? 2000;
   const maxReports = options.maxReports ?? 20;
-  const sockets = new Set<Socket>();
+  const now = options.now ?? (() => performance.now());
+  /** Open connections, each with the function that drops it without counting a refusal. */
+  const sockets = new Map<Socket, () => void>();
   let server: Server | undefined;
+  /** Set by close(): from then on nothing is counted, so the final summary is the last word. */
+  let closing = false;
 
   // ── refusals, grouped before they reach the caller ──
   let counts: Partial<Record<RejectCode, number>> = {};
@@ -78,6 +84,7 @@ export function createBridgeServer(options: BridgeServerOptions): BridgeServer {
     }
   };
   const refused = (code: RejectCode) => {
+    if (closing) return;
     counts[code] = (counts[code] ?? 0) + 1;
     total++;
     if (reportTimer || reports >= maxReports) return;
@@ -88,11 +95,16 @@ export function createBridgeServer(options: BridgeServerOptions): BridgeServer {
   };
 
   const handle = (socket: Socket) => {
+    if (closing) {
+      socket.destroy();
+      return;
+    }
     let done = false;
     let size = 0;
     const chunks: Buffer[] = [];
     // set once the connection is accepted; `busy` refuses before it exists
     const timer: { deadline?: NodeJS.Timeout } = {};
+    const deadline = now() + timeoutMs;
 
     const finish = (code?: RejectCode) => {
       if (done) return;
@@ -130,17 +142,23 @@ export function createBridgeServer(options: BridgeServerOptions): BridgeServer {
       }
     };
 
-    sockets.add(socket);
+    sockets.set(socket, () => {
+      done = true;
+      clearTimeout(timer.deadline);
+      socket.destroy();
+    });
     socket.on('close', () => {
       clearTimeout(timer.deadline);
       sockets.delete(socket);
     });
     socket.on('error', () => socket.destroy());
     if (sockets.size > maxConnections) return finish('busy');
-    // absolute: a client that trickles a byte at a time does not get more time
+    // absolute: a client that trickles a byte at a time does not get more time. The timer can run
+    // after I/O that arrived past the deadline, so `data` checks the clock as well.
     timer.deadline = setTimeout(() => finish('timeout'), timeoutMs);
     socket.on('data', (chunk: Buffer) => {
       if (done) return;
+      if (now() >= deadline) return finish('timeout');
       const nl = chunk.indexOf(0x0a);
       const take = nl >= 0 ? chunk.subarray(0, nl) : chunk;
       size += take.length;
@@ -167,7 +185,10 @@ export function createBridgeServer(options: BridgeServerOptions): BridgeServer {
       }),
     close: () =>
       new Promise((resolve) => {
-        for (const socket of sockets) socket.destroy();
+        if (closing) return resolve();
+        // synchronously: no connection timer may count a refusal after the final summary
+        closing = true;
+        for (const drop of sockets.values()) drop();
         sockets.clear();
         clearTimeout(reportTimer);
         reportTimer = undefined;

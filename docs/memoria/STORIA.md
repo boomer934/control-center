@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Esclusione di `.env*` da «Go to file» (PR #68)
+
+- **Fatto.** Il main controlla con `win32.basename` il nome richiesto e quello canonico prima di aprire il file. I test unitari verificano il blocco prima di `open()`, simulano un symlink e un alias Windows 8.3 e confermano la lettura di `environment.ts`.
+- **Decisioni.** Regola approvata dall'utente il 2026-11-27 e recepita in `SICUREZZA.md` e nelle conseguenze dell'ADR 0016.
+- **Verifica.** `pnpm verify` verde con 448 test passati e uno saltato. `project-errors.spec.ts` 10/10. Il caso `.env:1` mostrava il contenuto della fixture prima della correzione e ora segnala che il sorgente è indisponibile.
+
+---
+
 ## 2026-11-27 — Selezione di errori nello stesso file (PR #68)
 
 - **Fatto.** Ripristinata la chiave `mark.id` per `ProjectErrorActions`. Un E2E verifica che il cambio di errore nello stesso file rimuova la spiegazione precedente e annulli la richiesta in corso.

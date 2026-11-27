@@ -22,6 +22,8 @@ La Vista Live mostra la causa segnalata dal progetto e la posizione ricavata dal
 
 Il visualizzatore supporta file UTF-8 fino a 1 MiB e richiede una riga esistente. L'anteprima usa il file corrente del workspace anche quando il riferimento viene dal replay. La spiegazione locale richiede un modello Ollama installato con capacità di generazione testuale. Si mantiene un solo lavoro di inferenza alla volta.
 
+Dal 2026-11-27, **Go to file** esclude i file con nome `.env*`. Il main controlla sia il nome richiesto sia quello canonico prima di aprire il file, senza distinzione tra maiuscole e minuscole. Questo copre anche symlink e nomi brevi Windows 8.3 che risolvono a un file escluso. Il visualizzatore segnala che il sorgente non è disponibile.
+
 Il renderer conserva gli ultimi 200 errori del terminale per workspace. Quando l'errore selezionato esce da questo insieme, la selezione nell'ispettore si chiude e l'eventuale spiegazione locale in corso viene annullata.
 
 La verifica dell'identità del file rifiuta un inode pari a zero (`ino === 0n`). Questo include i file su volumi FAT o exFAT quando Windows restituisce zero per l'identificativo, come previsto per i file system che non espongono un ID a 64 bit. [Microsoft FileInternalInformation](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/7d796611-2fa5-41ac-8178-b6fea3a017b3).

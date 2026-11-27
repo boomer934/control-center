@@ -1,6 +1,11 @@
 import { open, stat } from 'node:fs/promises';
+import { win32 } from 'node:path';
 import { MAX_SOURCE_BYTES } from '@control-center/ipc-contract';
 import { resolveWorkspaceFile, type WorkspaceRoot } from './paths';
+
+function isEnvFile(path: string): boolean {
+  return win32.basename(path).toLowerCase().startsWith('.env');
+}
 
 export async function readSourceLocation(
   root: WorkspaceRoot,
@@ -8,8 +13,10 @@ export async function readSourceLocation(
   line: number,
 ): Promise<string | null> {
   try {
+    if (isEnvFile(path)) return null;
     const file = await resolveWorkspaceFile(root, path);
-    if (!file) return null;
+    // The canonical name can differ when the request uses a symlink or Windows short name.
+    if (!file || isEnvFile(file)) return null;
     const handle = await open(file, 'r');
     try {
       const opened = await handle.stat({ bigint: true });

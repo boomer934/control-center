@@ -331,6 +331,34 @@ async function openTerminal() {
   };
 }
 
+test('Go to file does not show .env source', async () => {
+  const shop = join(fixture, 'Shop');
+  await writeFile(join(shop, '.env'), 'EXAMPLE=fixture-only\n');
+  await writeFile(
+    join(shop, 'dotenv-error.log'),
+    [
+      'Traceback (most recent call last):',
+      '  File ".env", line 1, in <module>',
+      'ValueError: Invalid environment file',
+      '',
+    ].join('\n'),
+  );
+
+  const run = await openTerminal();
+  await run('Get-Content dotenv-error.log', 'ValueError: Invalid environment file');
+  const culprit = node('.env');
+  await expect(culprit).toHaveAttribute('data-state', 'error');
+  await culprit.click();
+
+  const inspector = page.getByRole('region', { name: 'Event inspector' });
+  await expect(inspector).toContainText('.env:1');
+  await inspector.getByRole('button', { name: 'Go to file' }).click();
+  await expect(inspector.getByRole('status')).toContainText(
+    'Source or line unavailable in this workspace.',
+  );
+  await expect(page.getByRole('dialog', { name: '.env:1', exact: true })).toHaveCount(0);
+});
+
 test('a Docker terminal error opens the resolved workspace source before a session', async () => {
   const shop = join(fixture, 'Shop');
   await mkdir(join(shop, 'api/app'), { recursive: true });

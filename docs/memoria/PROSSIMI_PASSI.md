@@ -26,6 +26,7 @@ Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-d
 
 ## Quando capita
 
+- **[Claude] (repo)** La repo è pubblica dal 2026-11-27: attivare la protezione di `main` (PR obbligatoria, CI verde obbligatoria, niente force-push) con il consenso dell'utente.
 - **(F5b, dall'audit della 5e)** Con il dock del terminale aperto la mappa si rimpicciolisce e la legenda copre l'ultima cartella (`test`): rifare il Fit quando cambia l'altezza della mappa. Nei nodi stretti una nota d'errore lascia pochi caratteri al nome del file.
 
 - **(F4.2, dalla revisione)** Primo: filtrare l'ambiente passato al pty (oggi eredita tutto `process.env`, regola 3 sui segreti). Poi: i link dei Problems si risolvono rispetto alla cartella dell'app, quindi aprono solo se il workspace è il repo stesso; i link del terminale non coprono `file.ts(12,5):` né `file.ts:12:5:`; `chooseFolder` lancia un errore per una cartella non disponibile e finisce nei Problems (meglio un risultato esplicito); un `id` duplicato è segnalato come `limit` e il tetto di 8 terminali è globale; una voce dei recenti non più risolvibile non si può togliere; Notepad apre il percorso verificato come stringa (finestra TOCTOU, impatto basso); la regex su xterm in `apps/desktop/xterm-csp.ts` e l'ordine dei passi CI (il pacchetto ricompila node-pty prima dell'E2E) sono fragili.

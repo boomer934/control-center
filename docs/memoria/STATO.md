@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è nella PR #67 (da `codex/roadmap-codex-claude`), prima dell'implementazione. Seguono 5f e 5g, poi la Fase 6 (Codex)._
+_Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi su `main`, sintesi in `STORIA.md`. La specifica documentale della 5f è su `main` (PR #67, `c33838b`). La repo GitHub è pubblica dal 2026-11-27. Seguono 5f e 5g, poi la Fase 6 (Codex)._
 
 ## Fase
 
@@ -14,7 +14,7 @@ _Ultimo aggiornamento 2026-11-27. Fase 5 (5a–5e+) chiusa: tutte le sotto-fasi 
 
 **Fase 5 — Vista Live**: ✅ 5a–5e+ completate e unite su `main`. Sintesi in `STORIA.md`, voce "Chiusura Fase 5".
 
-- **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; PR #67 aperta da `codex/roadmap-codex-claude`. `pnpm verify` verde (439 test, 1 saltato). Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
+- **5f, specifica modello ed effort:** piano, corsie, prossimi passi e storia aggiornati; unita su `main` con la PR #67 (`c33838b`), CI verde. Prima dell'implementazione: contratto/processo in 5f.1 Claude, UI e replay in 5f.2 Codex.
 
 **Fase 4 — Prima versione usabile**: ✅ completata il 2026-11-18 (PR #35, #40, #42, #44, #47). Sintesi in `STORIA.md`, voce "Chiusura Fase 4"; il brief `FASE_4.md` è archiviato lì. Sotto-fasi: 4.0 (canale push, da `CORSIE.md`), 4.1 (bridge e sessione), 4.2 (workspace e terminale) e 4.3 (chat e permessi).
 
@@ -70,6 +70,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Fatto (chiusura Fase 4):** memoria chiusa con la PR `docs/chiusura-fase-4`; `FASE_4.md` archiviato in `STORIA.md`.
 - **Fatto (4b, correzioni):** su richiesta dell'utente, cherry-pick delle correzioni di Codex (`5bc30ae`) su `origin/main` nella [PR #55](https://github.com/boomer934/control-center/pull/55), con il test del terminale di `main` e una correzione in più (commit con hook: timeout di 5 minuti, niente `GIT_LITERAL_PATHSPECS` agli hook).
 - **Fase 5 chiusa (2026-11-27):** sintesi in `STORIA.md`, voce "Chiusura Fase 5".
+- **Repo pubblica (2026-11-27):** GitHub Actions non partiva più per il limite di spesa dell'account; dopo un controllo di segreti e dati personali su tutta la storia la repo è stata resa pubblica e la PR #67 è stata unita a CI verde.
 - **Ora (punto di ripresa):** la Fase 6 (infrastruttura) spetta a Codex; Claude fa poi `/code-review high` su socket Docker e processi. Per Claude restano aperti `feat/revisione-frontend` (vedi "Branch") e le voci "Quando capita" di `PROSSIMI_PASSI.md`.
 
 ### Corsia Codex
@@ -102,7 +103,8 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ## Blocchi e avvertenze
 
-- **Niente protezione di `main`:** non è disponibile per le repo private con il piano gratuito di GitHub. Si lavora solo su branch + PR, merge a mano a CI verde.
+- **Niente protezione di `main`:** ora che la repo è pubblica si può attivare, ma non è ancora configurata. Fino ad allora si lavora solo su branch + PR, merge a mano a CI verde.
+- **Repo pubblica:** tutto ciò che si committa (memoria compresa) è visibile. I percorsi locali nei documenti contengono il nome utente Windows: accettato, ma non aggiungere altri dati personali.
 - **Screenshot di riferimento** (`apps/desktop/e2e/app/ui.spec.ts-snapshots/`): sono quelli del runner `windows-latest` (artifact `playwright-results` del run 44100672540), perché i caratteri locali differivano di circa il 4% dei pixel. **In locale i 12 test visivi falliscono**: per rigenerarli o confrontarli si usa l'artifact della CI, non `--update-snapshots` locale. Le asserzioni sono `expect.soft`, così un run fallito salva tutti i candidati.
 - **Font non inclusi:** Instrument Sans e Martian Mono non sono nel pacchetto (la CSP vieta Google Fonts); l'app usa i font di ripiego dei token. Vedi `PROSSIMI_PASSI.md`.
 - Nessuna title bar personalizzata: cornice nativa di Windows.

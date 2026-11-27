@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Repo pubblica e merge della PR #67
+
+- **Fatto.** La CI non partiva (job fermati dal limite di spesa dell'account GitHub). Controllati segreti e dati personali su tutti i 215 commit e i branch: email dei commit tutte `noreply`, nessun token o chiave, fixture pulite, nessun secret su GitHub e nessun workflow `pull_request_target`. Repo resa pubblica, PR #67 chiusa e riaperta, CI verde (Verify Windows 8m18s, gitleaks su tutta la storia), unita in squash (`c33838b`).
+- **Decisioni.** Il nome utente Windows nei percorsi di `CORSIE.md` e di due vecchi commit di `STATO.md` resta: l'utente ha scelto di non riscrivere la storia.
+- **Protezione di `main`.** Attivata su richiesta dell'utente: PR obbligatoria con 0 approvazioni, quattro check CI obbligatori (Verify Windows, gitleaks, Conventional commits, Project memory), regole valide anche per gli admin, niente force-push né cancellazione. Le PR di release-please eseguono gli stessi job, quindi non restano bloccate.
+
+---
+
 ## 2026-11-27 — Specifica modello ed effort per turno nella 5f
 
 - **Fatto.** In `PIANO.md` il cambio di modello/effort per provider è ora parte della 5f: vale dal turno seguente, si conserva nella ripresa e compare in `session.started`/`session.configChanged` per Vista Live e replay. Aggiunti avviso sul contesto, stima token e opzione per non ripeterlo nella sessione.

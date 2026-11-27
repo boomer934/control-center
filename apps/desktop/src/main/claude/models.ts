@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { effortSchema, modelIdSchema, redactSecrets } from '@control-center/event-schema';
 import {
   isConfigInCatalog,
+  MAX_AGENT_MODELS,
   type AgentCatalog,
   type AgentConfig,
   type AgentModel,
@@ -18,7 +19,10 @@ import {
 /** `--effort` levels of Claude Code 2.1.326 (`claude --help`). */
 export const CLAUDE_EFFORTS: readonly string[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 
-/** The aliases Claude Code resolves to the latest model of each family. */
+/**
+ * The aliases Claude Code resolves to the latest model of each family: only the fallback, when the
+ * CLI did not list its models (`initialize`, see ./catalog.ts).
+ */
 export const CLAUDE_MODELS: readonly AgentModel[] = [
   { id: 'fable', label: 'Fable', efforts: [...CLAUDE_EFFORTS] },
   { id: 'opus', label: 'Opus', efforts: [...CLAUDE_EFFORTS] },
@@ -83,15 +87,23 @@ export async function readClaudeDefaults(home: string = homedir()): Promise<Agen
 }
 
 /**
- * The catalog of a session: the aliases, plus the configured model when it is a full name the
- * aliases do not cover. `chosen` (the last choice of a resumed session) becomes the current choice
- * only if this catalog offers it: a saved value never adds a model or an effort by itself.
+ * The catalog of a session: the models the CLI listed (else the aliases), plus the configured
+ * model when it is a full name the list does not cover. `chosen` (the last choice of a resumed
+ * session) becomes the current choice only if this catalog offers it: a saved value never adds a
+ * model or an effort by itself.
  */
-export function claudeCatalog(defaults: AgentConfig, chosen?: AgentConfig): AgentCatalog {
-  const models = [...CLAUDE_MODELS];
+export function claudeCatalog(
+  defaults: AgentConfig,
+  chosen?: AgentConfig,
+  discovered?: readonly AgentModel[],
+): AgentCatalog {
+  const models = [...(discovered?.length ? discovered : CLAUDE_MODELS)].slice(0, MAX_AGENT_MODELS);
   const configured = safeModelId(defaults.model);
-  if (configured !== null && !models.some((m) => m.id === configured))
+  if (configured !== null && !models.some((m) => m.id === configured)) {
+    // the configured model must stay choosable: on a full list it takes the last place
+    if (models.length >= MAX_AGENT_MODELS) models.pop();
     models.push({ id: configured, label: configured, efforts: [...CLAUDE_EFFORTS] });
+  }
   const current =
     chosen &&
     (chosen.model === null || safeModelId(chosen.model) !== null) &&

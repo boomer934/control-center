@@ -13,6 +13,11 @@
 //                         | crash (exits 3 halfway) | permissions (bidirectional chat fixture)
 //   FAKE_CLAUDE_VERSION   version reported in the init line (default: the recorded one)
 //   FAKE_CLAUDE_ARGV_LOG  file to which the received arguments are appended, one JSON per run
+//   FAKE_CLAUDE_INIT      answer to an `initialize` control request: a recording in ../sanitized
+//                         (default `claude-initialize.control`) or `silent` (no answer)
+//
+// A run whose first input line is the `initialize` control request (the app's catalog probe)
+// answers it and waits for the end of the input, without a fixture and without a turn.
 import { spawn } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
@@ -166,12 +171,21 @@ async function permissionTurn(lines, message, resume) {
   emit({ type: 'result', subtype: 'success', is_error: false, session_id });
 }
 
-async function main() {
-  const name = process.env.FAKE_CLAUDE_FIXTURE ?? '';
-  if (!NAME.test(name)) {
-    process.stderr.write('fake-claude: FAKE_CLAUDE_FIXTURE is missing or invalid\n');
-    process.exit(2);
+async function initialize(request, closed) {
+  const init = process.env.FAKE_CLAUDE_INIT ?? 'claude-initialize.control';
+  if (init !== 'silent') {
+    if (!/^[a-z0-9][a-z0-9.-]{0,63}$/i.test(init)) throw new Error('FAKE_CLAUDE_INIT is invalid');
+    const [answer] = readJsonl(`${init}.jsonl`);
+    if (!answer) throw new Error(`no recording ${init}`);
+    answer.response.request_id = request.request_id;
+    if (process.env.FAKE_CLAUDE_VERSION)
+      answer.response.response.claude_code_version = process.env.FAKE_CLAUDE_VERSION;
+    emit(answer);
   }
+  await closed;
+}
+
+async function main() {
   if (process.env.FAKE_CLAUDE_ARGV_LOG)
     appendFileSync(process.env.FAKE_CLAUDE_ARGV_LOG, `${JSON.stringify(argv)}\n`);
   const mode = process.env.FAKE_CLAUDE_MODE ?? 'normal';
@@ -179,15 +193,9 @@ async function main() {
   const resume = flag('--resume');
   const cwd = process.cwd();
 
-  // one user message, as the app sends it
+  // one user message, as the app sends it, or the catalog probe's `initialize`
   const input = createInterface({ input: process.stdin });
   const lines = input[Symbol.asyncIterator]();
-  const first = await lines.next();
-  const message = first.done ? undefined : JSON.parse(first.value);
-  if (message?.type !== 'user') {
-    process.stderr.write('fake-claude: expected a stream-json user message on stdin\n');
-    process.exit(2);
-  }
   let stdinClosed = false;
   const closed = new Promise((resolve) => {
     input.on('close', () => {
@@ -195,6 +203,21 @@ async function main() {
       resolve();
     });
   });
+  const first = await lines.next();
+  const message = first.done ? undefined : JSON.parse(first.value);
+  if (message?.type === 'control_request' && message.request?.subtype === 'initialize') {
+    await initialize(message, closed);
+    return;
+  }
+  const name = process.env.FAKE_CLAUDE_FIXTURE ?? '';
+  if (!NAME.test(name)) {
+    process.stderr.write('fake-claude: FAKE_CLAUDE_FIXTURE is missing or invalid\n');
+    process.exit(2);
+  }
+  if (message?.type !== 'user') {
+    process.stderr.write('fake-claude: expected a stream-json user message on stdin\n');
+    process.exit(2);
+  }
   if (mode === 'permissions') {
     await permissionTurn(lines, message, resume);
     await closed;

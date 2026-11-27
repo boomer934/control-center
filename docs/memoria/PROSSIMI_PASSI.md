@@ -6,14 +6,15 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 
 ## Ora
 
-**Priorità di prodotto · Codex e uso simultaneo con Claude Code.** I due filoni avanzano in worktree distinti secondo [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo).
+**Priorità di prodotto · Codex, capacità e uso simultaneo con Claude Code.** I filoni avanzano in worktree distinti secondo [CORSIE.md](CORSIE.md#priorità-codex-e-lavoro-simultaneo). Su scelta dell'utente (2026-11-27) la 5h viene prima della 5g.
 
-- **[Claude] (5f.1)** Divisa in due PR.
-  - **PR A, contratto e Claude** (branch `feat/codex-session-contract`, ADR 0017): schema eventi v3 (provider e sorgente `codex`, `session.started.effort`, `session.configChanged`, migrazione 2 → 3), contratto condiviso `agent-config.ts` (catalogo, `AgentConfig`, `isConfigInCatalog`), `claude:configure` e aggiornamento `config`, `--model`/`--effort` per run con ripresa dalla cronologia. Prova reale su Windows fatta: l'effort non invalida la cache, quindi nessun avviso per il solo effort. Da aprire come PR, con revisione incrociata di Codex prima del merge.
-  - ✅ **PR A** unita su `main` (PR #77).
-  - **PR B, sessione Codex nel main:** fatta su `feat/codex-session-main` (ADR 0018), test, E2E e prova reale verdi. Da aprire come PR, con revisione incrociata di Codex prima del merge.
+- ✅ **[Claude] (5f.1)** PR A unita (PR #77, ADR 0017). PR B, sessione Codex nel main: unita (PR #79, ADR 0018).
+- **[Claude] (5h.1)** Fatta in [PR #80](https://github.com/boomer934/control-center/pull/80) (`feat/capabilities-contract`). Revisione di `gpt-6.2-astra` fatta: 7 rilievi corretti in `d054075`. Manca il merge (utente). Le voci della riga `init` di sessione (tool, server MCP, skill: punto 1b del piano) non sono ancora nell'inventario: vanno con la 5h.2.
+- **[Claude] (5h.2)** Dopo la 5h.1: inventario Codex con i soli metodi di sola lettura dell'app-server (`experimentalFeature/list`, `skills/list`, `hooks/list`, `plugin/list`, `app/list`, `mcpServerStatus/list`…), elenco chiuso dei metodi ammessi in `codex/rpc.ts` (le feature si mostrano, non si attivano), sonde senza chat aperta per Claude e Codex quando cambia la versione della CLI. Aggiornare `SICUREZZA.md`. Revisione incrociata di Codex.
+- **[Claude] (5h.6, 5h.7)** Dopo: workflow `compat-watch` con auto-merge limitato a `compat.json` (serve un token dedicato e "Allow auto-merge" nella repo); electron-updater. **Prima del 5h.7 decidere con l'utente** se anticipare anche il packaging NSIS della Fase 10.
+- **[Codex] (5h.3–5h.5)** Quando la 5h.1 è su `main`: fixture e `fake-codex` esteso (`gpt-6-luna`), sonda di compatibilità nel bot (`gpt-6.2-sol` high); dopo la 5h.2, vista "Novità e capacità" (`gpt-6.2-sol` medium, impeccable).
 - **[Codex] (5f.2)** Con la PR B su `main`: `window.api.codex` (stesse forme di `claude`, `codex:updated`) da collegare alla chat, al pannello agenti, alla Vista Live e al replay, con il selettore e l'avviso anche per Codex; completare `LiveCodexSession` (sottoagenti, piani, ragionamento) e preparare le fixture ripulite. Con la PR A su `main` si può già partire da selettore e avviso per Claude (aggiornamento `config` di `claude:updated`, `claude:configure`, eventi `session.configChanged`). Preparare fixture e test (le azioni rapide 5e+ sono già su `main`, PR #68 e #70) mentre Claude lavora al main. Collegare selettore e avviso nel compositore, pannello agenti, ispettore, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
-- **[Claude + Codex] (5g)** Dopo la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
+- **[Claude + Codex] (5g)** Dopo la 5h e la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
 
 Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) su Windows. Includere due richieste pendenti, un arresto con l'altra sessione attiva, lo stesso percorso relativo in due worktree e la revisione UI in Electron.
 

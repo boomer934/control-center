@@ -1,7 +1,7 @@
 // The Claude sessions of the app's windows, behind the `claude:*` IPC methods: the shared agent
 // service (../agents/service.ts) with Claude's program, catalog and session.
 import type { ErrorInput } from '@control-center/app-log';
-import type { AgentConfig, GitCheckpoint } from '@control-center/ipc-contract';
+import type { AgentConfig, AgentModel, GitCheckpoint } from '@control-center/ipc-contract';
 import { MAX_CLAUDE_SESSIONS, type ClaudeStartResult } from '@control-center/ipc-contract/claude';
 import { createAgentService, type AgentSession } from '../agents/service';
 import type { Program } from './cli';
@@ -19,6 +19,8 @@ export interface ClaudeServiceDeps {
   env?: NodeJS.ProcessEnv;
   /** Model and effort of the user's Claude Code configuration (phase 5f), read at each start. */
   defaults?: () => Promise<AgentConfig>;
+  /** The models Claude Code listed (phase 5h); undefined: the built-in aliases. */
+  models?: () => Promise<readonly AgentModel[] | undefined>;
   open?: typeof openClaudeSession;
   prepareTurn?: (
     root: string,
@@ -63,8 +65,13 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
       hooks = found.hooks;
       return found.claude;
     },
-    catalog: async (saved) =>
-      claudeCatalog(await (deps.defaults ?? readClaudeDefaults)().catch(() => NO_CONFIG), saved),
+    catalog: async (saved) => {
+      const [defaults, models] = await Promise.all([
+        (deps.defaults ?? readClaudeDefaults)().catch(() => NO_CONFIG),
+        deps.models?.().catch(() => undefined),
+      ]);
+      return claudeCatalog(defaults, saved, models);
+    },
     open: (options, claude) => open({ ...options, claude, hooks }) as Promise<AgentSession>,
   });
   return {

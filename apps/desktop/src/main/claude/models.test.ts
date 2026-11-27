@@ -118,4 +118,38 @@ describe('Claude models and effort (phase 5f)', () => {
     const configured = { model: 'claude-x-9', effort: null };
     expect(claudeCatalog(configured, configured).current).toEqual(configured);
   });
+
+  it('offers the models the CLI listed, with their own efforts, instead of the aliases', () => {
+    const none = { model: null, effort: null };
+    const discovered = [
+      { id: 'opus', label: 'Opus 5.5', efforts: ['low', 'high'] },
+      { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5', efforts: [] },
+    ];
+    const catalog = claudeCatalog({ model: 'claude-custom', effort: null }, none, discovered);
+    expect(catalog.models.map((m) => m.id)).toEqual([
+      'opus',
+      'claude-haiku-4-5-20251001',
+      'claude-custom',
+    ]);
+    // a saved effort the listed model does not take is not restored
+    expect(claudeCatalog(none, { model: 'opus', effort: 'xhigh' }, discovered).current).toEqual(
+      none,
+    );
+    expect(claudeCatalog(none, { model: 'opus', effort: 'high' }, discovered).current).toEqual({
+      model: 'opus',
+      effort: 'high',
+    });
+    // a full list keeps all its models, and makes room only for a configured one it lacks
+    const full = Array.from({ length: 64 }, (_, i) => ({
+      id: `m${i}`,
+      label: `M${i}`,
+      efforts: [],
+    }));
+    expect(claudeCatalog(none, none, full).models).toHaveLength(64);
+    const configured = claudeCatalog({ model: 'claude-custom', effort: null }, none, full).models;
+    expect(configured).toHaveLength(64);
+    expect(configured.at(-1)?.id).toBe('claude-custom');
+    // an empty list is no list: the aliases
+    expect(claudeCatalog(none, none, []).models.map((m) => m.id)).toContain('sonnet');
+  });
 });

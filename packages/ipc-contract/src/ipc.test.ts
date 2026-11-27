@@ -101,6 +101,10 @@ function makeHandlers(overrides: Partial<{ getInfo: unknown; openExternal: unkno
       interrupt: () => false,
       close: () => false,
     },
+    capabilities: {
+      list: () => ({ revision: 0, agents: [], entries: [] }),
+      markSeen: () => 'stale',
+    },
     git: {
       status: () => ({ ok: false, error: 'workspace-unavailable' }),
       diff: () => ({ ok: false, error: 'workspace-unavailable' }),
@@ -167,6 +171,9 @@ describe('contract', () => {
       'codex:interrupt',
       'codex:close',
       'codex:updated',
+      'capabilities:list',
+      'capabilities:mark-seen',
+      'capabilities:changed',
       'git:status',
       'git:diff',
       'git:stage',
@@ -184,6 +191,7 @@ describe('contract', () => {
       'terminal:updated',
       'claude:updated',
       'codex:updated',
+      'capabilities:changed',
       'project:updated',
     ]);
     expect(listMethods()).toHaveLength(listChannels().length - listEvents().length);
@@ -393,10 +401,12 @@ describe('createApi (preload)', () => {
       'terminal',
       'claude',
       'codex',
+      'capabilities',
       'git',
       'project',
       'infra',
     ]);
+    expect(Object.keys(api.capabilities)).toEqual(['list', 'markSeen', 'onChanged']);
     expect(Object.keys(api.infra)).toEqual([
       'snapshot',
       'explainProjectError',

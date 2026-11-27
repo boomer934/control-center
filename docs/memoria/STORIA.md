@@ -4,6 +4,27 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Correzioni dalla revisione Astra della PR #80
+
+- **Fatto.** Corretti i 7 rilievi di `gpt-6.2-astra` sul commit `c8741a1`, con test di regressione (`d054075`). P2: le voci rimosse contano nel limite di 2048 per agente e cadono le più vecchie, così istantanea e lista restano valide. Una risposta senza un campo non rimuove le voci di quel tipo (`kinds` nella lettura). Una CLI tornata disponibile si rilegge anche con la cache fresca. Il limite d'output della sonda conta tutte le righe. All'uscita la sonda si interrompe e la chiusura ne attende la fine. P3: "nuovo" e "cambiato" si decidono per revisione e non per orario; una lista piena conserva il 64º modello.
+- **Decisioni.** L'istantanea passa a `v: 2` (revisioni per voce e `seenRevision` per agente). Una `v: 1` si rilegge vuota senza avviso: esisteva solo in sviluppo. La nota di revisione di Codex resta sul suo branch locale `codex/review-pr80` e non si unisce.
+- **Verifica.** `pnpm verify` verde (577 test). E2E Claude, Codex e sicurezza verdi (27). Prova reale verde.
+- **Problemi.** Anche Codex ha visto un worker di Vitest uscire una volta (`infra/snapshot.test.ts`): è lo stesso errore intermittente già annotato in `PROBLEMI_NOTI.md`.
+
+## 2026-11-27 — Catalogo Claude e inventario delle capacità (5h.1)
+
+- **Fatto.** PR #79 unita. Il commit del piano 5h era rimasto fuori dallo squash ed è stato riportato. Su `feat/capabilities-contract` ([PR #80](https://github.com/boomer934/control-center/pull/80)): una sonda chiede a Claude Code solo `initialize`, senza prompt e senza consumo di token. Dalla risposta arrivano i modelli con i loro effort, che diventano il catalogo della chat (`CLAUDE_MODELS` resta solo come ripiego), e i comandi, gli agenti, gli stili e le capacità. Nuovi `capabilities/inventory.ts` e `service.ts` (istantanea in `capabilities.json`; voci nuove, cambiate e rimosse) e il namespace IPC `capabilities`. Fixture `claude-initialize.control.jsonl` e finto `claude` che risponde a `initialize`. `SICUREZZA.md` aggiornato.
+- **Decisioni.** La sonda non parte all'avvio: parte alla prima sessione Claude o alla prima `capabilities:list`. Gira al più una volta per avvio, e solo se la versione è cambiata o l'ultima lettura ha più di 24 h. La prima lettura di un agente fa da base: niente centinaia di novità alla prima apertura. `mark-seen` vuole la revisione mostrata (`stale` se è cambiata). `capabilities:changed` porta solo la revisione, come `errors:changed`. Il modello `default` della risposta non entra nel catalogo, perché equivale a "nessuna scelta". Nuovo tipo d'errore `capabilities`.
+- **Verifica.** `pnpm verify` verde (568 test). E2E Claude, Codex e sicurezza verdi. Prova reale con 2.1.326 verde.
+- **Problemi.** In 2 run complete di `vitest` su circa 15 è comparso un «Unhandled Error» che non si è più riprodotto (vedi `PROBLEMI_NOTI.md`). Le barre rovesciate nei heredoc di Bash si perdono ancora: correggere con Edit.
+
+## 2026-11-27 — Revisione della PR #79 e piano della 5h
+
+- **Fatto.** PR B aperta come [PR #79](https://github.com/boomer934/control-center/pull/79). Revisione incrociata di Codex: "unire con correzioni", 6 rilievi, tutti corretti con test. P1: `approvalsReviewer: user` esplicito, perché con la CLI reale il thread usava `auto_review` (un sottoagente approva al posto dell'utente); la politica restituita si verifica (`CodexPolicyRejected`) e si ripete in ogni `turn/start`. P2: interruzione non confermata → chiusura dei processi invece di liberare il workspace; approvazioni solo per il turno confermato; ambito effettivo nel testo dell'approvazione; risposte di login fuori schema rifiutate. P3: ricerca della CLI che prosegue dopo un candidato inutilizzabile.
+- **Decisioni.** Nuova sotto-fase 5h (capacità, sezione "Novità e capacità", controllo giornaliero delle CLI con auto-merge di `compat.json`, electron-updater), prima della 5g su scelta dell'utente. Piano in `FASE_5h.md`, righe in `CORSIE.md`, goal in `PIANO.md`. Si parte da `main` dopo il merge della #79, perché la 5h usa la sessione Codex della PR B e tocca gli stessi file.
+- **Verifica.** `pnpm verify` 542 test, E2E Codex e sicurezza (20), prova con la CLI reale verdi.
+- **Da decidere.** Anticipare electron-updater significa anticipare anche il packaging NSIS della Fase 10.
+
 ## 2026-11-27 — Sessione Codex nel main (5f.1, PR B)
 
 - **Fatto.** Su `feat/codex-session-main` (ADR 0018): namespace IPC `codex` con le stesse forme di `claude`; servizio comune ai due provider estratto dal servizio Claude (`main/agents/service.ts`); sessione su `codex app-server` con JSON-RPC su stdio, approvazioni, interruzione, ripresa del thread, catalogo da `model/list`, default da `config/read`; ricerca della CLI dal PATH o dal pacchetto Store letto dal registro; normalizzatore minimo `LiveCodexSession`; finto `codex app-server`; E2E `codex.spec.ts`; prova reale `real-codex.smoke.test.ts`.

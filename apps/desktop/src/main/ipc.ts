@@ -22,7 +22,9 @@ import {
   type Emit,
   type EventReceiver,
 } from '@control-center/ipc-contract/main';
+import { createCapabilityService } from './capabilities/service';
 import { resolveClaude, resolveHookNode } from './claude/cli';
+import { createClaudeDiscovery } from './claude/discovery';
 import { createClaudeService } from './claude/service';
 import { createCodexService } from './codex/service';
 import type { ErrorsService } from './errors/service';
@@ -70,6 +72,7 @@ function makeHandlers(
   terminal: Handlers['terminal'],
   claude: Handlers['claude'],
   codex: Handlers['codex'],
+  capabilities: Handlers['capabilities'],
   git: Handlers['git'],
   project: Handlers['project'],
   infra: Handlers['infra'],
@@ -105,6 +108,7 @@ function makeHandlers(
     terminal,
     claude,
     codex,
+    capabilities,
     git,
     project,
     infra,
@@ -147,6 +151,8 @@ export function trustedReceivers(devServer: URL | null, owner?: number): EventRe
   return out;
 }
 
+/** At most one `capabilities:changed` every this many ms: a read and its save are one reload. */
+const CAPABILITIES_CHANGED_DELAY_MS = 100;
 /** At most one `errors:changed` every this many ms: an error storm is one reload, not hundreds. */
 const ERRORS_CHANGED_DELAY_MS = 50;
 
@@ -166,9 +172,28 @@ export function registerIpc(
     report: errors.report,
   });
   let hooksWarned = false;
+  const capabilityChanged = coalesce(
+    CAPABILITIES_CHANGED_DELAY_MS,
+    () =>
+      void capabilityService
+        .list()
+        .then(({ revision }) => emit(contract.capabilities.changed, { revision })),
+  );
+  const capabilityService = createCapabilityService({
+    file: join(app.getPath('userData'), 'capabilities.json'),
+    report: errors.report,
+    onChanged: () => capabilityChanged.trigger(),
+  });
+  const claudeDiscovery = createClaudeDiscovery({
+    dataDir: app.getPath('userData'),
+    report: errors.report,
+    program: async () => resolveClaude(),
+    capabilities: capabilityService,
+  });
   const claudeSessions = createClaudeService({
     dataDir: app.getPath('userData'),
     report: errors.report,
+    models: () => claudeDiscovery.models(),
     prepareTurn: async (root, workspaceId, active, create) => {
       const current = await getWorkspaces()
         .then((workspaces) => workspaces.activeRootFor(workspaceId))
@@ -504,9 +529,18 @@ export function registerIpc(
     },
   };
 
+  const capabilities: Handlers['capabilities'] = {
+    list: () => {
+      // the list answers at once; a read of the CLI, when due, arrives as `capabilities:changed`
+      void claudeDiscovery.refresh();
+      return capabilityService.list();
+    },
+    markSeen: ({ agent, revision }) => capabilityService.markSeen(agent, revision),
+  };
+
   const disposeHandlers = registerIpcHandlers(
     ipcMain,
-    makeHandlers(errors, workspace, terminal, claude, codex, git, project, infra),
+    makeHandlers(errors, workspace, terminal, claude, codex, capabilities, git, project, infra),
     {
       isTrustedSender: makeSenderCheck(devServer),
       onFailure: reportFailure,
@@ -530,7 +564,12 @@ export function registerIpc(
     for (const owner of owners.values()) owner.close();
     stopErrors();
     errorsChanged.cancel();
+    capabilityChanged.cancel();
     disposeHandlers();
-    return Promise.all([claudeSessions.closeAll(), codexSessions.closeAll()]).then(() => undefined);
+    return Promise.all([
+      claudeSessions.closeAll(),
+      codexSessions.closeAll(),
+      claudeDiscovery.close(),
+    ]).then(() => undefined);
   };
 }

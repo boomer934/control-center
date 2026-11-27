@@ -64,8 +64,17 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 | ----------------------------------------------- | ------ | ------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | 5f.1 · Codex, processo e contratti              | Claude | Opus 5.5      | high   | Campi `model`/`effort` nel contratto, validazione, argomenti CLI, evento `session.configChanged`. Revisione incrociata prima del merge. |
 | 5f.2 · Codex, chat e Vista Live                 | Codex  | `gpt-6.2-sol` | high   | Selettore e avviso nel compositore, pannello agenti, ispettore, E2E. Impeccable e prova su Windows.                                     |
+| 5h.1 · Catalogo Claude e contratto capacità     | Claude | Opus 5.5      | high   | `initialize` di Claude, `claude/catalog.ts`, schema `Capability`, `capabilities:*`, istantanea e diff. `gpt-6.2-astra` sul contratto.   |
+| 5h.2 · Inventario Codex, allowlist e sonde      | Claude | Opus 5.5      | high   | Metodi di sola lettura dell'app-server, elenco chiuso dei metodi, sonde senza chat. Revisione incrociata (IPC, processi).               |
+| 5h.3 · Fixture e `fake-codex` esteso            | Codex  | `gpt-6-luna`  | medium | Risposte ripulite di `experimentalFeature/list`, `skills/list`, `mcpServerStatus/list`. Revisione Claude. Dopo 5h.1 su `main`.          |
+| 5h.4 · Sonda di compatibilità nel bot           | Codex  | `gpt-6.2-sol` | high   | `packages/agent-compat`, `scripts/compat/probe.mjs` con test. Revisione Claude. Dopo 5h.1 su `main`.                                    |
+| 5h.5 · Vista "Novità e capacità"                | Codex  | `gpt-6.2-sol` | medium | Rotta `#/capabilities`, badge, "segna come viste", stati vuoti, E2E. Impeccable nei due temi e revisione Claude. Dopo 5h.2.             |
+| 5h.6 · Workflow `compat-watch` e auto-merge     | Claude | Opus 5.5      | high   | Config di deploy: cron, guardia sul diff, token dedicato. `/code-review` high.                                                          |
+| 5h.7 · Aggiornamento con electron-updater       | Claude | Opus 5.5      | high   | ADR, `app:updateStatus`. Decisione aperta: anticipa anche il packaging NSIS della Fase 10. `/code-review` high.                         |
 | 5g.1 · Sessioni simultanee, isolamento nel main | Claude | Opus 5.5      | high   | Sessioni per worktree, autorizzazioni e interruzioni isolate. Revisione incrociata prima del merge.                                     |
 | 5g.2 · Sessioni simultanee, UI e verifica       | Codex  | `gpt-6.2-sol` | high   | Corsie per sessione e ripresa dalla cronologia. Impeccable, E2E con fixture e prova con entrambe le CLI reali.                          |
+
+**5h prima della 5g (scelta dell'utente, 2026-11-27).** Dopo il merge della PR #79 la corsia Claude fa la 5h (piano in [FASE_5h.md](FASE_5h.md)) mentre Codex fa la 5f.2; poi Codex prende 5h.3–5h.5 e Claude torna alla 5g.1.
 
 Claude consegna per primi esempi di eventi e firme del contratto. Codex può chiudere la 5e+ e preparare le fixture e i test in un branch proprio mentre Claude lavora al main. Il collegamento di normalizzatore e UI parte quando il relativo contratto è su `main`. Per la 5g si segue lo stesso ordine: Claude definisce il contratto di isolamento, Codex prepara le verifiche del doppio flusso, poi li collega. Le due corsie mantengono worktree e branch distinti per tutto il lavoro.
 

@@ -34,7 +34,11 @@ export function listClaudeSessions(): string[] {
   if (!existsSync(SANITIZED_DIR)) return [];
   return readdirSync(SANITIZED_DIR)
     .filter(
-      (f) => f.endsWith('.jsonl') && !f.endsWith('.hooks.jsonl') && !f.includes('.synthetic.'),
+      (f) =>
+        f.endsWith('.jsonl') &&
+        !f.endsWith('.hooks.jsonl') &&
+        !f.includes('.synthetic.') &&
+        !f.includes('.control.'),
     )
     .map((f) => f.slice(0, -'.jsonl'.length))
     .filter((n) => NAME.test(n))

@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Catalogo Claude e inventario delle capacità (5h.1)
+
+- **Fatto.** PR #79 unita. Il commit del piano 5h era rimasto fuori dallo squash ed è stato riportato. Su `feat/capabilities-contract` ([PR #80](https://github.com/boomer934/control-center/pull/80)): una sonda chiede a Claude Code solo `initialize`, senza prompt e senza consumo di token. Dalla risposta arrivano i modelli con i loro effort, che diventano il catalogo della chat (`CLAUDE_MODELS` resta solo come ripiego), e i comandi, gli agenti, gli stili e le capacità. Nuovi `capabilities/inventory.ts` e `service.ts` (istantanea in `capabilities.json`; voci nuove, cambiate e rimosse) e il namespace IPC `capabilities`. Fixture `claude-initialize.control.jsonl` e finto `claude` che risponde a `initialize`. `SICUREZZA.md` aggiornato.
+- **Decisioni.** La sonda non parte all'avvio: parte alla prima sessione Claude o alla prima `capabilities:list`. Gira al più una volta per avvio, e solo se la versione è cambiata o l'ultima lettura ha più di 24 h. La prima lettura di un agente fa da base: niente centinaia di novità alla prima apertura. `mark-seen` vuole la revisione mostrata (`stale` se è cambiata). `capabilities:changed` porta solo la revisione, come `errors:changed`. Il modello `default` della risposta non entra nel catalogo, perché equivale a "nessuna scelta". Nuovo tipo d'errore `capabilities`.
+- **Verifica.** `pnpm verify` verde (568 test). E2E Claude, Codex e sicurezza verdi. Prova reale con 2.1.326 verde.
+- **Problemi.** In 2 run complete di `vitest` su circa 15 è comparso un «Unhandled Error» che non si è più riprodotto (vedi `PROBLEMI_NOTI.md`). Le barre rovesciate nei heredoc di Bash si perdono ancora: correggere con Edit.
+
 ## 2026-11-27 — Revisione della PR #79 e piano della 5h
 
 - **Fatto.** PR B aperta come [PR #79](https://github.com/boomer934/control-center/pull/79). Revisione incrociata di Codex: "unire con correzioni", 6 rilievi, tutti corretti con test. P1: `approvalsReviewer: user` esplicito, perché con la CLI reale il thread usava `auto_review` (un sottoagente approva al posto dell'utente); la politica restituita si verifica (`CodexPolicyRejected`) e si ripete in ogni `turn/start`. P2: interruzione non confermata → chiusura dei processi invece di liberare il workspace; approvazioni solo per il turno confermato; ambito effettivo nel testo dell'approvazione; risposte di login fuori schema rifiutate. P3: ricerca della CLI che prosegue dopo un candidato inutilizzabile.

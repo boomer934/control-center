@@ -64,11 +64,11 @@ type InspectionEvent = AgentEvent | (TerminalError & { type: 'terminal.error' })
 function eventFields(
   event: InspectionEvent,
   summary: ReturnType<typeof summarizeEvents>,
-  terminalPath: string | undefined,
+  errorPath: string | undefined,
 ) {
   const call =
     'toolUseId' in event && event.toolUseId ? summary.calls.get(event.toolUseId) : undefined;
-  const path = terminalPath ?? ('file' in event ? event.file?.path : call?.target);
+  const path = errorPath ?? ('file' in event ? event.file?.path : call?.target);
   const error =
     event.type === 'error.detected' || event.type === 'terminal.error' ? event : undefined;
   const write = event.type === 'file.written' ? event : path ? summary.writes.get(path) : undefined;
@@ -106,7 +106,7 @@ function Inspector({
   summary,
   start,
   workspaceId,
-  terminalPath,
+  errorPath,
   onDraft,
 }: {
   mark?: TimelineMark;
@@ -114,7 +114,7 @@ function Inspector({
   summary: ReturnType<typeof summarizeEvents>;
   start: number;
   workspaceId?: string | undefined;
-  terminalPath: string | undefined;
+  errorPath: string | undefined;
   onDraft?: ((text: string) => void) | undefined;
 }) {
   const [json, setJson] = useState(false);
@@ -189,7 +189,7 @@ function Inspector({
               )}
             </p>
             <dl>
-              {eventFields(event, summary, terminalPath).map(([name, value]) => (
+              {eventFields(event, summary, errorPath).map(([name, value]) => (
                 <div key={name}>
                   <dt>{name}</dt>
                   <dd>{value}</dd>
@@ -198,12 +198,10 @@ function Inspector({
             </dl>
             {error && workspaceId && (
               <ProjectErrorActions
-                key={mark.id}
+                key={errorPath}
                 workspaceId={workspaceId}
                 error={error}
-                path={
-                  terminalPath ?? (error.file?.external === false ? error.file.path : undefined)
-                }
+                path={errorPath}
                 onDraft={onDraft}
               />
             )}
@@ -273,6 +271,10 @@ export function LiveInspection({
       ? selected
       : undefined;
   const mark = terminalMark ?? (current && current.at <= time ? current : undefined);
+  const agentError = mark?.event?.type === 'error.detected' ? mark.event : undefined;
+  const errorPath = terminalMark
+    ? terminalPath
+    : agentError && resolveFile && resolveErrorPath(agentError, resolveFile);
   const cutoff = at ?? Infinity;
   const inspectNode = useCallback(
     (node: string, preferError = false) => {
@@ -426,7 +428,7 @@ export function LiveInspection({
               summary={summary}
               start={timeline?.start ?? 0}
               workspaceId={workspaceId}
-              terminalPath={terminalMark ? terminalPath : undefined}
+              errorPath={errorPath}
               onDraft={replay.archived ? undefined : onDraft}
             />
           </aside>

@@ -340,6 +340,97 @@ test('a failing test run by the agent shows its error in the timeline, the inspe
   await expect(node('test/cart.test.js')).not.toHaveAttribute('data-state', 'error');
 });
 
+for (const example of [
+  {
+    name: 'Rust crate',
+    command: 'cd rs && cargo run',
+    output: "thread 'main' panicked at src/stock.rs:2:5:\nStock unavailable\n",
+    message: 'Stock unavailable',
+    path: 'rs/src/stock.rs',
+    decoy: 'stock.rs',
+    location: 'rs/src/stock.rs:2:5',
+    source: 'fn main() {\n    panic!("Stock unavailable");\n}\n',
+    line: 'panic!("Stock unavailable");',
+  },
+  {
+    name: 'Docker container',
+    command: 'docker compose logs api',
+    output: [
+      'api-1  | Traceback (most recent call last):',
+      'api-1  |   File "/app/app/models.py", line 2, in parse',
+      'api-1  |     return int(row["qty"])',
+      'api-1  | ValueError: Invalid quantity',
+    ].join('\n'),
+    message: 'ValueError: Invalid quantity',
+    path: 'service/app/app/models.py',
+    decoy: 'app/models.py',
+    location: 'service/app/app/models.py:2',
+    source: 'def parse(row):\n    return int(row["qty"])\n',
+    line: 'return int(row["qty"])',
+  },
+]) {
+  test(`an agent error from a ${example.name} uses the resolved workspace source`, async () => {
+    const shop = join(fixture, 'Shop');
+    await mkdir(dirname(join(shop, example.path)), { recursive: true });
+    await mkdir(dirname(join(shop, example.decoy)), { recursive: true });
+    await writeFile(join(shop, example.path), example.source);
+    await writeFile(join(shop, example.decoy), '// Unrelated file\n// Unrelated line\n');
+
+    // Emit Bash output through the Claude stream so it becomes a real agent error event.
+    const sessionId = 'source-location-session';
+    const lines = [
+      { type: 'system', subtype: 'init', session_id: sessionId, claude_code_version: '2.1.322' },
+      {
+        type: 'assistant',
+        message: {
+          content: [
+            {
+              type: 'tool_use',
+              id: 'diagnostic',
+              name: 'Bash',
+              input: { command: example.command },
+            },
+          ],
+        },
+      },
+      {
+        type: 'user',
+        message: {
+          content: [{ type: 'tool_result', tool_use_id: 'diagnostic', content: example.output }],
+        },
+      },
+      { type: 'result', subtype: 'success', is_error: false, session_id: sessionId },
+    ];
+    const stream = lines.map((line) => JSON.stringify(line)).join('\n') + '\n';
+    await writeFile(
+      join(fixture, 'bin/node_modules/@anthropic-ai/claude-code/cli.js'),
+      `if (process.argv.includes('--version')) console.log('2.1.322 (Claude Code)');
+else process.stdin.once('data', () => process.stdout.write(${JSON.stringify(stream)}));\n`,
+    );
+
+    const timeline = await runTurn();
+    await timeline.getByRole('button', { name: `Error · ${example.message}`, exact: true }).click();
+
+    const inspector = page.getByRole('region', { name: 'Event inspector' });
+    await inspector.getByRole('button', { name: 'Go to file' }).click({ timeout: 5_000 });
+    const source = page.getByRole('dialog', { name: example.location, exact: true });
+    await expect(source.locator('mark')).toHaveText(example.line);
+    await page.keyboard.press('Escape');
+    await expect(inspector).toContainText(example.location);
+    await inspector.getByRole('button', { name: 'Ask Claude to fix' }).click();
+    const draft = page.getByRole('textbox', { name: 'Message Claude' });
+    await expect.poll(() => draft.inputValue()).toContain(`"path": "${example.path}"`);
+    await inspector.getByRole('button', { name: 'Explain locally' }).click();
+    await expect(inspector.getByRole('region', { name: 'Local explanation' })).toBeVisible();
+    expect(ollamaRequests.at(-1)?.body).toMatchObject({
+      messages: [
+        { role: 'system' },
+        { role: 'user', content: expect.stringContaining(example.path) },
+      ],
+    });
+  });
+}
+
 test('Docker Compose logs and a real Vite dev server in the terminal reach the map and the timeline', async () => {
   const workspace = await realpath(join(fixture, 'Shop'));
   await mkdir(join(workspace, 'app'));

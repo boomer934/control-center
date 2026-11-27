@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Merge delle azioni rapide 5e+ (PR #68)
+
+- **Fatto.** Claude ha rivisto le parti IPC e main della PR (controllo del mittente, workspace attivo, blocco di `.env*`, limiti di dimensione, Ollama solo locale, redazione) senza rilievi. Ha corretto due E2E che fallivano solo in CI (`fe06caf`) e unito la PR con squash (`a5681b9`) a CI verde, su richiesta dell'utente.
+- **Decisioni.** Gli E2E con tracce lunghe usano percorsi relativi e un marcatore di fine comando, invece del testo visibile del terminale. Dopo il merge lo stesso spec è caduto in CI sulla PR 70 (clic su un nodo mentre la mappa si ridispone): `inspectNode` aspetta `data-ready` e ripete il clic finché l'ispettore mostra l'errore.
+- **Problemi.** Sul runner a 1024×768 ConPTY va a capo nei percorsi assoluti di Node e le righe escono dalla parte visibile: voce in `PROBLEMI_NOTI.md`. I due commenti di CodeRabbit (scenari non supportati su Linux, abbonamento scaduto) non chiedevano modifiche. Il merge automatico di GitHub non è attivo nel repository.
+- **Verifica.** `pnpm verify` verde (448 test passati, 1 saltato); `project-errors.spec.ts` 10/10 sia a 1440×900 sia a 1024×728; CI della PR verde.
+
+---
+
 ## 2026-11-27 — Esclusione di `.env*` da «Go to file» (PR #68)
 
 - **Fatto.** Il main controlla con `win32.basename` il nome richiesto e quello canonico prima di aprire il file. I test unitari verificano il blocco prima di `open()`, simulano un symlink e un alias Windows 8.3 e confermano la lettura di `environment.ts`.

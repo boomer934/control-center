@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Inventario Codex, metodi ammessi e sonde (5h.2)
+
+- **Fatto.** PR #80 unita (`b4ad79f`). Su `feat/codex-capabilities`: elenchi chiusi dei metodi dell'app-server (`codex/methods.ts`) obbligatori in `createRpcClient`, con rifiuto prima dell'invio; inventario Codex (`codex/inventory.ts`) da feature, skill, hook, plugin installati, server MCP e tool, capacità del provider, profili e modelli; sonda senza chat (`codex/discovery.ts`); `deprecationNotice` in Console e `skills/changed` che rinnova la lettura; tool, MCP, plugin e skill della riga `init` di Claude nell'inventario.
+- **Decisioni.** Niente `plugin/list` né `app/list`: interrogano i server di OpenAI e superavano i 20 s. Skill di repository e hook di progetto esclusi, e la riga `init` di Claude entra come lettura additiva (nessuna rimozione, nessun cambio dell'ultima lettura): l'inventario descrive l'agente, non il workspace aperto. `mcpServer/startupStatus/updated` e `app/list/updated` non rinnovano la lettura: arrivano a ogni thread. `fake-codex` non toccato (è della 5h.3): la sonda è provata contro il finto con i soli metodi che conosce.
+- **Verifica.** `pnpm verify` verde (596 test). Prova reale della sonda con Codex 0.171.0-alpha.13.2 verde (circa 600 voci in meno di un secondo).
+- **Problemi.** Le barre rovesciate nei heredoc di Bash si perdono ancora (test con percorsi Windows): corretto con Edit.
+
 ## 2026-11-27 — Correzioni dalla revisione Astra della PR #80
 
 - **Fatto.** Corretti i 7 rilievi di `gpt-6.2-astra` sul commit `c8741a1`, con test di regressione (`d054075`). P2: le voci rimosse contano nel limite di 2048 per agente e cadono le più vecchie, così istantanea e lista restano valide. Una risposta senza un campo non rimuove le voci di quel tipo (`kinds` nella lettura). Una CLI tornata disponibile si rilegge anche con la cache fresca. Il limite d'output della sonda conta tutte le righe. All'uscita la sonda si interrompe e la chiusura ne attende la fine. P3: "nuovo" e "cambiato" si decidono per revisione e non per orario; una lista piena conserva il 64º modello.

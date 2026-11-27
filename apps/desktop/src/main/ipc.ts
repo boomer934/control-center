@@ -26,6 +26,8 @@ import { createCapabilityService } from './capabilities/service';
 import { resolveClaude, resolveHookNode } from './claude/cli';
 import { createClaudeDiscovery } from './claude/discovery';
 import { createClaudeService } from './claude/service';
+import { resolveCodex } from './codex/cli';
+import { createCodexDiscovery } from './codex/discovery';
 import { createCodexService } from './codex/service';
 import type { ErrorsService } from './errors/service';
 import { openExternalSafely } from './hardening';
@@ -190,10 +192,18 @@ export function registerIpc(
     program: async () => resolveClaude(),
     capabilities: capabilityService,
   });
+  const codexDiscovery = createCodexDiscovery({
+    dataDir: app.getPath('userData'),
+    report: errors.report,
+    program: () => resolveCodex(),
+    capabilities: capabilityService,
+    clientVersion: app.getVersion(),
+  });
   const claudeSessions = createClaudeService({
     dataDir: app.getPath('userData'),
     report: errors.report,
     models: () => claudeDiscovery.models(),
+    onCapabilities: (read) => void capabilityService.record('claude', { ...read, additive: true }),
     prepareTurn: async (root, workspaceId, active, create) => {
       const current = await getWorkspaces()
         .then((workspaces) => workspaces.activeRootFor(workspaceId))
@@ -225,6 +235,12 @@ export function registerIpc(
     dataDir: app.getPath('userData'),
     report: errors.report,
     clientVersion: app.getVersion(),
+    program: () => {
+      // like Claude's catalog, the first session (or the first look at the list) reads Codex
+      void codexDiscovery.refresh();
+      return resolveCodex();
+    },
+    onCapabilitiesChanged: () => codexDiscovery.invalidate(),
     prepareTurn: async (root, workspaceId, active, create) => {
       const current = await getWorkspaces()
         .then((workspaces) => workspaces.activeRootFor(workspaceId))
@@ -533,6 +549,7 @@ export function registerIpc(
     list: () => {
       // the list answers at once; a read of the CLI, when due, arrives as `capabilities:changed`
       void claudeDiscovery.refresh();
+      void codexDiscovery.refresh();
       return capabilityService.list();
     },
     markSeen: ({ agent, revision }) => capabilityService.markSeen(agent, revision),
@@ -570,6 +587,7 @@ export function registerIpc(
       claudeSessions.closeAll(),
       codexSessions.closeAll(),
       claudeDiscovery.close(),
+      codexDiscovery.close(),
     ]).then(() => undefined);
   };
 }

@@ -16,6 +16,8 @@ export interface CodexServiceDeps {
   program?: () => Promise<Program | undefined>;
   clientVersion?: string;
   env?: NodeJS.ProcessEnv;
+  /** A session heard that Codex's skills changed (phase 5h.2). */
+  onCapabilitiesChanged?: () => void;
   open?: typeof openCodexSession;
   prepareTurn?: (
     root: string,
@@ -42,7 +44,13 @@ export function createCodexService(deps: CodexServiceDeps) {
       current: { model: null, effort: null },
     }),
     accepts: acceptsCodexConfig,
-    open: (options, codex) => open({ ...options, codex, clientVersion: deps.clientVersion }),
+    open: (options, codex) =>
+      open({
+        ...options,
+        codex,
+        clientVersion: deps.clientVersion,
+        onCapabilitiesChanged: deps.onCapabilitiesChanged,
+      }),
   });
   return {
     ...service,

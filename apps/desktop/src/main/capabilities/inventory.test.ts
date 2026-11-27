@@ -192,6 +192,30 @@ describe('capability snapshot', () => {
     expect(stray.entries.map((e) => e.id)).not.toContain('z');
   });
 
+  it('adds without removing on an additive read, and keeps the last read of the agent', () => {
+    const tool = (id: string, description?: string) =>
+      cap(id, { kind: 'tool', label: id, ...(description ? { description } : {}) });
+    const first = readAll(EMPTY_SNAPSHOT, 'claude', '2.1.326', [tool('Read')], at(0));
+    const session = (entries: Capability[], now: Date, from = first) =>
+      applyRead(
+        from,
+        'claude',
+        { version: '9.9.9', entries, kinds: ['tool'], additive: true },
+        now,
+      );
+    // a session that lacks `Read` but has an MCP tool: nothing removed, the tool is new
+    const second = session([tool('mcp__gh__search')], at(1));
+    expect(statuses(second)).toEqual({ Read: 'seen', mcp__gh__search: 'new' });
+    expect(second.agents).toEqual(first.agents);
+    // a session with nothing new is no change at all
+    expect(session([tool('Read')], at(2), second)).toBe(second);
+    expect(session([], at(2), second)).toBe(second);
+    // a changed description still counts
+    const changed = session([tool('Read', 'Reads files')], at(3), second);
+    expect(statuses(changed).Read).toBe('changed');
+    expect(CapabilitySnapshotSchema.parse(changed)).toEqual(changed);
+  });
+
   it('never outgrows the schema: removals beyond the per-agent limit drop, oldest first', () => {
     const many = (prefix: string) =>
       Array.from({ length: MAX_CAPABILITIES_PER_AGENT }, (_, i) => cap(`${prefix}${i}`));

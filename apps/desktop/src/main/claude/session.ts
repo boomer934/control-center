@@ -33,6 +33,7 @@ import { superviseChild } from '../errors/children';
 import { TESTED_CLAUDE_VERSIONS, type Program } from './cli';
 import { killTree, type Teardown } from './kill-tree';
 import { ClaudeNativeSessionId } from './history';
+import { parseClaudeInitLine } from './catalog';
 import { claudeConfigArgs } from './models';
 import { createClaudePermissions } from './permissions';
 import {
@@ -67,6 +68,11 @@ export interface ClaudeSessionOptions {
   onPartial?: (text: string) => void;
   onSessionId?: (id: string) => void;
   onStatus?: (status: ClaudeSessionStatus) => void;
+  /**
+   * The tools, MCP servers, plugins and skills of the session's first `system/init` line (phase
+   * 5h.2), for the capability inventory as an additive read.
+   */
+  onCapabilities?: (read: NonNullable<ReturnType<typeof parseClaudeInitLine>>) => void;
   testedVersions?: readonly string[];
   now?: () => Date;
 }
@@ -271,6 +277,7 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
 
   // ── stream-json from stdout ──
   let droppedLines = 0;
+  let initRead = false;
   const onLine = (text: string) => {
     if (text.length > MAX_LINE_CHARS) {
       droppedLines++;
@@ -301,6 +308,11 @@ export async function openClaudeSession(options: ClaudeSessionOptions): Promise<
       if (sid.success && sid.data !== claudeSessionId) {
         claudeSessionId = sid.data;
         options.onSessionId?.(sid.data);
+      }
+      if (!initRead && options.onCapabilities) {
+        initRead = true;
+        const read = parseClaudeInitLine(l);
+        if (read) options.onCapabilities(read);
       }
       const version = typeof l.claude_code_version === 'string' ? l.claude_code_version : '';
       if (version && !tested.includes(version) && !warnedVersions.has(version)) {

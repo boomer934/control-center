@@ -119,3 +119,41 @@ it.skipIf(process.env.CC_REAL_CODEX !== '1')(
   },
   300_000,
 );
+
+// The capability probe (phase 5h.2) against the real CLI: read-only methods, no thread, no turn.
+//   CC_REAL_CODEX=1 npx vitest run apps/desktop/src/main/codex/real-codex.smoke.test.ts -t probe
+it.skipIf(process.env.CC_REAL_CODEX !== '1')(
+  'the probe lists what the real Codex offers',
+  async () => {
+    const { probeCodex } = await import('./discovery');
+    const codex = await resolveCodex();
+    expect(codex, 'codex on PATH or the Codex app').toBeDefined();
+    if (!codex) return;
+    const dir = mkdtempSync(join(tmpdir(), 'cc-real-codex-probe-'));
+    try {
+      const reports: ErrorInput[] = [];
+      const read = await probeCodex({
+        codex,
+        cwd: dir,
+        env: process.env,
+        report: (r) => reports.push(r),
+      });
+      expect(read?.version).toBeTruthy();
+      const count = (kind: string) => read?.entries.filter((e) => e.kind === kind).length ?? 0;
+      process.stderr.write(
+        `Codex ${read?.version}: kinds ${read?.kinds.join(', ')}; ` +
+          ['model', 'feature', 'skill', 'hook', 'plugin', 'mcp', 'tool', 'capability', 'profile']
+            .map((k) => `${k} ${count(k)}`)
+            .join(', ') +
+          '\n',
+      );
+      expect(read?.kinds).toEqual(
+        expect.arrayContaining(['model', 'feature', 'skill', 'plugin', 'mcp', 'profile']),
+      );
+      expect(reports.filter((r) => r.name === 'CodexMethodRefused')).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+    }
+  },
+  90_000,
+);

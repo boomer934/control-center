@@ -83,6 +83,8 @@ Codex ha quindi già una fonte strutturata delle novità, più ricca di quella d
 
 Le notifiche `skills/changed`, `app/list/updated`, `mcpServer/startupStatus/updated` e `deprecationNotice` aggiornano l'inventario mentre la sessione è aperta. `deprecationNotice` va anche in Console.
 
+**Fatto nella 5h.2 (2026-11-27):** `plugin/list` e `app/list` esclusi (vanno in rete, oltre 20 s nella prova); al loro posto `plugin/installed`, locale. Solo `skills/changed` rinnova la lettura: `app/list/updated` e `mcpServer/startupStatus/updated` arrivano a ogni thread e riguardano dati che l'inventario non tiene. `deprecationNotice` va in Console. Skill di repository e hook di progetto esclusi.
+
 **C2. Allowlist dei metodi (sicurezza).** L'app-server espone anche scritture potenti (`experimentalFeature/enablement/set`, `config/value/write`, `plugin/install`, `fs/*`, `command/exec`, `account/*`). `codex/rpc.ts` riceve un elenco chiuso dei metodi che l'app può chiamare. Un metodo fuori elenco viene rifiutato prima di partire e segnalato in Console. Nessun canale IPC permette al renderer di scegliere il metodo. L'app **mostra** le feature ma non le attiva: si attivano da Codex (`config.toml` o la sua UI), coerente con la regola 8. Da annotare in `SICUREZZA.md`.
 
 **C3. Senza sessione aperta.** La sezione Novità deve funzionare anche prima di aprire una chat. Una sonda breve nel main avvia `codex app-server`, chiede solo `initialize` + i metodi C1 e chiude l'albero dei processi (riusa `resolveCodex`, `killTree`, i limiti di `rpc.ts`). Gira all'avvio solo se la versione della CLI è cambiata, altrimenti si usa l'istantanea. Lo stesso vale per Claude: un `claude -p` con il solo `initialize`, senza prompt, che non consuma token del modello (verificato al passo 0).

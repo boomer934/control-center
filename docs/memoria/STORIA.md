@@ -4,6 +4,14 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Piano: nuova fase 5f, rifinitura visiva
+
+- **Decisione.** L'utente trova la parte grafica ancora "alfa". Si procede su due binari: fase 5f di rifinitura visiva (nuova, M, Claude) e Fasi 6-10 funzionali in parallelo. Restano 5 fasi funzionali (6 M, 7 L, 8 M, 9 S, 10 M).
+- **Fatto.** Aggiornati `PIANO.md`, `CORSIE.md` e `PROSSIMI_PASSI.md`. Nessun codice toccato.
+- **Aperto.** Servono gli screenshot dell'utente per scrivere il goal della 5f.
+
+---
+
 ## 2026-11-26 — Errori del progetto sulla mappa (5e)
 
 - **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).

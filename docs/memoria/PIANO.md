@@ -307,6 +307,7 @@ Due livelli, un'unica **Console Errori** (pannello in basso, accanto a terminale
 - Fase 3: + logger, cattura errori, Console Errori, source map.
 - **Fase 4b (nuova, M):** pannello Git e checkpoint degli agenti.
 - **Fase 5e (nuova, M):** errori del progetto in tempo reale sulla mappa.
+- **Fase 5f (nuova, M):** rifinitura visiva dell'app, in parallelo alla Fase 6. Parte dagli screenshot dell'utente su Windows: elenco dei difetti per schermata (spaziature, tipografia, densità, animazioni, stati vuoti), correzioni solo con i token, font inclusi nel pacchetto, legenda della mappa e layout a finestra stretta, audit impeccable e baseline visive rigenerate dal runner. Le fasi 6-10 continuano a curare la grafica delle proprie schermate.
 
 ## Goal per ogni fase
 

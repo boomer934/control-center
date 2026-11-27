@@ -20,6 +20,8 @@ Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
 
 ## Dopo
 
+7b. **[Claude] (F5f)** Rifinitura visiva in parallelo alla Fase 6. Serve prima l'input dell'utente: screenshot dell'app su Windows (Vista Live, Git, Console, palette) con l'elenco di ciò che sembra "alfa". Poi: audit per schermata, correzioni solo con i token, font nel pacchetto, legenda della mappa col terminale aperto, `aria-live`, layout a finestra stretta.
+
 8. **[Claude o Codex] (F5e+)** Azioni rapide sull'errore: "chiedi a Claude di sistemarlo", "spiegalo in locale" (Ollama), "vai al file" (serve un metodo IPC che apra un file a una riga, con i controlli di percorso della 4.2).
 9. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
 10. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.

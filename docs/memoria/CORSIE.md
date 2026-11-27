@@ -46,6 +46,7 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 | 5c Timeline e replay                                 | Codex  | `gpt-6.2-sol`   | high   | impeccable                                                       |
 | 5d Pannello agenti e ispettore                       | Codex  | `gpt-6.2-sol`   | medium | impeccable                                                       |
 | 5e Schema `error.detected` e migrazione              | Claude | Opus 5.5        | high   | —                                                                |
+| 5f Rifinitura visiva                                 | Claude | Opus 5.5        | high   | impeccable e baseline visive dal runner                          |
 | 5e Parser di stack trace e colorazione               | Claude | Opus 5.5        | high   | impeccable sulla UI (fatta da Claude su goal dell'utente)        |
 | 6 Infrastruttura: Docker, porte, GPU e stato Ollama  | Codex  | `gpt-6.2-sol`   | medium | Claude `/code-review` high su socket Docker e processi           |
 | 7 Client Ollama e comandi diretti                    | Codex  | `gpt-6.2-sol`   | medium | Claude `/code-review` medium                                     |

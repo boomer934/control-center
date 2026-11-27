@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Correzioni dalla revisione Astra della PR #80
+
+- **Fatto.** Corretti i 7 rilievi di `gpt-6.2-astra` sul commit `c8741a1`, con test di regressione (`d054075`). P2: le voci rimosse contano nel limite di 2048 per agente e cadono le più vecchie, così istantanea e lista restano valide. Una risposta senza un campo non rimuove le voci di quel tipo (`kinds` nella lettura). Una CLI tornata disponibile si rilegge anche con la cache fresca. Il limite d'output della sonda conta tutte le righe. All'uscita la sonda si interrompe e la chiusura ne attende la fine. P3: "nuovo" e "cambiato" si decidono per revisione e non per orario; una lista piena conserva il 64º modello.
+- **Decisioni.** L'istantanea passa a `v: 2` (revisioni per voce e `seenRevision` per agente). Una `v: 1` si rilegge vuota senza avviso: esisteva solo in sviluppo. La nota di revisione di Codex resta sul suo branch locale `codex/review-pr80` e non si unisce.
+- **Verifica.** `pnpm verify` verde (577 test). E2E Claude, Codex e sicurezza verdi (27). Prova reale verde.
+- **Problemi.** Anche Codex ha visto un worker di Vitest uscire una volta (`infra/snapshot.test.ts`): è lo stesso errore intermittente già annotato in `PROBLEMI_NOTI.md`.
+
 ## 2026-11-27 — Catalogo Claude e inventario delle capacità (5h.1)
 
 - **Fatto.** PR #79 unita. Il commit del piano 5h era rimasto fuori dallo squash ed è stato riportato. Su `feat/capabilities-contract` ([PR #80](https://github.com/boomer934/control-center/pull/80)): una sonda chiede a Claude Code solo `initialize`, senza prompt e senza consumo di token. Dalla risposta arrivano i modelli con i loro effort, che diventano il catalogo della chat (`CLAUDE_MODELS` resta solo come ripiego), e i comandi, gli agenti, gli stili e le capacità. Nuovi `capabilities/inventory.ts` e `service.ts` (istantanea in `capabilities.json`; voci nuove, cambiate e rimosse) e il namespace IPC `capabilities`. Fixture `claude-initialize.control.jsonl` e finto `claude` che risponde a `initialize`. `SICUREZZA.md` aggiornato.

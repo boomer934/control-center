@@ -2,7 +2,7 @@
 // A stand-in for the `claude` CLI, for tests only: the CI never calls the real service.
 //
 // It accepts the flags the app passes (`-p --input-format stream-json --output-format stream-json
-// --verbose [--settings <file>] [--resume <id>]`), reads one user message from stdin, then
+// --verbose [--settings <file-or-json>] [--resume <id>]`), reads one user message from stdin, then
 // replays a sanitized recording: stream-json lines on stdout and, at their recorded moments, the
 // hook commands of `--settings` with the recorded payloads on stdin, through a shell, one at a
 // time, as Claude Code does. The recorded workspace path becomes the current folder.
@@ -64,9 +64,12 @@ function relocate(value, cwd, sessionId) {
   return value;
 }
 
-function hookCommands(settingsFile, event) {
-  if (!settingsFile) return [];
-  const settings = JSON.parse(readFileSync(settingsFile, 'utf8'));
+function hookCommands(settingsArg, event) {
+  if (!settingsArg) return [];
+  // like Claude Code: `--settings` is a file or a JSON string
+  const settings = JSON.parse(
+    settingsArg.trimStart().startsWith('{') ? settingsArg : readFileSync(settingsArg, 'utf8'),
+  );
   return (settings.hooks?.[event] ?? []).flatMap((m) => m.hooks ?? []).map((h) => h.command);
 }
 
@@ -172,7 +175,7 @@ async function main() {
   if (process.env.FAKE_CLAUDE_ARGV_LOG)
     appendFileSync(process.env.FAKE_CLAUDE_ARGV_LOG, `${JSON.stringify(argv)}\n`);
   const mode = process.env.FAKE_CLAUDE_MODE ?? 'normal';
-  const settingsFile = flag('--settings');
+  const settingsArg = flag('--settings');
   const resume = flag('--resume');
   const cwd = process.cwd();
 
@@ -225,7 +228,7 @@ async function main() {
       if (mode === 'hang' && toolUse) await new Promise(() => {});
     } else {
       const payload = item.value.payload;
-      for (const command of hookCommands(settingsFile, payload.hook_event_name))
+      for (const command of hookCommands(settingsArg, payload.hook_event_name))
         await runHook(command, payload);
     }
   }

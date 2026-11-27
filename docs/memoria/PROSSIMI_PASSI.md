@@ -23,10 +23,14 @@ Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-d
 
 ## Dopo
 
-3. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+3. ✅ **[Codex] (F4.1, revisione)** Seconda opinione di Astra sulla pipe fatta; correzioni di Claude su `fix/hooks-bridge-hardening` (vedi `STATO.md`). Resta la revisione incrociata di Codex sulla PR.
+   - **[Claude] (F4.1, manuale)** Provare l'accesso alla pipe da un secondo account locale (atteso: solo lettura) e da un AppContainer (atteso: nessun accesso). Serve un account creato dall'utente.
+   - **[Claude] (F4.1, ADR)** Valutare un Job Object con `KILL_ON_JOB_CLOSE` per le run di `claude`: `taskkill /T` non prende i processi rimasti senza genitore. Dipendenza nativa → ADR.
 4. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
 
 ## Quando capita
+
+- **(F3, test)** `e2e/app/dev.spec.ts` › "navigation to another loopback port is still blocked in dev" fallisce in locale il 2026-11-27: l'URL atteso è senza `#/live`. La navigazione resta bloccata; il test va aggiornato alla vista iniziale.
 
 - **(F5b, dall'audit della 5e)** Con il dock del terminale aperto la mappa si rimpicciolisce e la legenda copre l'ultima cartella (`test`): rifare il Fit quando cambia l'altezza della mappa. Nei nodi stretti una nota d'errore lascia pochi caratteri al nome del file.
 

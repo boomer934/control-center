@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -10,11 +18,11 @@ import {
   resolveHookNode,
 } from './cli';
 import {
+  createSessionDir,
   hookCommand,
   hookSettings,
   removeStaleSessions,
   SESSIONS_DIR,
-  writeSessionFiles,
 } from './session-files';
 
 const dirs: string[] = [];
@@ -124,43 +132,40 @@ describe('session files', () => {
     expect(settings.hooks.SessionStart?.[0]).not.toHaveProperty('matcher');
   });
 
-  it('writes the bridge and settings files and removes them', async () => {
+  it('writes the bridge file only when asked, never a settings file, and removes it', async () => {
     const data = temp();
-    const files = await writeSessionFiles(data, id, { runner, config });
-    expect(JSON.parse(readFileSync(join(files.dir, 'bridge.json'), 'utf8'))).toEqual(config);
-    expect(files.settingsFile).toBe(join(files.dir, 'settings.json'));
-    await expect(writeSessionFiles(data, id, { runner, config })).rejects.toThrow();
+    const files = await createSessionDir(data, id);
+    expect(files.bridgeFile).toBe(join(files.dir, 'bridge.json'));
+    expect(readdirSync(files.dir)).toEqual([]);
+    await files.writeBridge(config);
+    expect(JSON.parse(readFileSync(files.bridgeFile, 'utf8'))).toEqual(config);
+    await expect(files.writeBridge(config)).rejects.toThrow();
+    expect(readdirSync(files.dir)).toEqual(['bridge.json']);
+    await expect(createSessionDir(data, id)).rejects.toThrow();
     await files.remove();
     expect(existsSync(files.dir)).toBe(false);
   });
 
-  it('writes no bridge file without hooks, or when the command would be unsafe', async () => {
-    const data = temp();
-    const off = await writeSessionFiles(data, id, undefined);
-    expect(off.settingsFile).toBeUndefined();
-    expect(existsSync(join(off.dir, 'bridge.json'))).toBe(false);
-    await off.remove();
-    const unsafe = await writeSessionFiles(data, id, {
-      runner: { ...runner, script: 'C:\\a%b\\bin.ts' },
-      config,
-    });
-    expect(unsafe.settingsFile).toBeUndefined();
-    expect(existsSync(join(unsafe.dir, 'bridge.json'))).toBe(false);
+  it('passes the hooks as inline JSON that a shell-free argv keeps intact', () => {
+    const command = hookCommand(runner, 'C:\\data\\s\\bridge.json');
+    expect(command).toBeDefined();
+    const inline = JSON.stringify(hookSettings(command ?? ''));
+    expect(inline.startsWith('{')).toBe(true);
+    expect(inline).not.toContain(config.token);
+    expect(JSON.parse(inline)).toEqual(hookSettings(command ?? ''));
   });
 
   it('accepts only UUID session ids', async () => {
-    await expect(writeSessionFiles(temp(), '..\\escape', undefined)).rejects.toThrow(
-      'Invalid session id',
-    );
+    await expect(createSessionDir(temp(), '..\\escape')).rejects.toThrow('Invalid session id');
   });
 
   it('removes the folders a crash left behind, and nothing else', async () => {
     const data = temp();
-    await writeSessionFiles(data, id, { runner, config });
+    await (await createSessionDir(data, id)).writeBridge(config);
     mkdirSync(join(data, SESSIONS_DIR, 'keep-me'));
-    await expect(removeStaleSessions(data)).resolves.toBe(1);
+    await expect(removeStaleSessions(data)).resolves.toEqual({ removed: 1, failed: 0 });
     expect(existsSync(join(data, SESSIONS_DIR, id))).toBe(false);
     expect(existsSync(join(data, SESSIONS_DIR, 'keep-me'))).toBe(true);
-    await expect(removeStaleSessions(temp())).resolves.toBe(0);
+    await expect(removeStaleSessions(temp())).resolves.toEqual({ removed: 0, failed: 0 });
   });
 });

@@ -1,7 +1,7 @@
 // Integration tests of the Claude session: the fake `claude` replays a recording, runs the hook
 // commands of the session's settings, the real hook script delivers them over the named pipe,
 // and the session turns stream and hooks into AgentEvents.
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -147,6 +147,8 @@ describe('Claude session with the fake claude', () => {
         '--verbose',
         '--settings',
       ]);
+    // inline JSON with the hook command, never a file path
+    expect(JSON.parse(runs[0]?.[7] ?? '')).toHaveProperty('hooks.PreToolUse');
     expect(runs[0]).not.toContain('--resume');
     expect(runs[1]?.slice(-2)).toEqual(['--resume', claudeId]);
     expect(h.events[firstRun]).toMatchObject({ type: 'session.started', seq: firstRun });
@@ -219,12 +221,12 @@ describe('Claude session with the fake claude', () => {
     await send({ v: 1, token: 'f'.repeat(64), payload: forged });
     await send({ v: 1, token, payload: { ...forged, hook_event_name: 'Nope' } });
 
-    const rejected = h.reports.filter((r) => r.kind === 'bridge-rejected');
-    expect(rejected.map((r) => r.message)).toEqual([
-      'Refused a hook message (no-token)',
-      'Refused a hook message (bad-token)',
-      'Refused a hook message (invalid-event)',
-    ]);
+    // refusals reach the Console grouped, after the server's report interval
+    await expect
+      .poll(() => h.reports.filter((r) => r.kind === 'bridge-rejected').map((r) => r.message), {
+        timeout: 10_000,
+      })
+      .toEqual(['Refused 3 hook message(s) (no-token, bad-token, invalid-event)']);
     expect(JSON.stringify(h.reports)).not.toContain(token);
     expect(h.events.some((e) => 'toolUseId' in e && e.toolUseId === 'forged')).toBe(false);
     h.session.interrupt();
@@ -258,7 +260,8 @@ describe('Claude session with the fake claude', () => {
     const h = await open('sessione-05');
     const dir = join(h.dataDir, SESSIONS_DIR, h.session.id);
     expect(existsSync(join(dir, BRIDGE_FILE))).toBe(true);
-    expect(existsSync(join(dir, 'settings.json'))).toBe(true);
+    // the hooks travel on the command line: no settings file on disk
+    expect(readdirSync(dir)).toEqual([BRIDGE_FILE]);
     await h.session.close();
     expect(existsSync(dir)).toBe(false);
     expect(h.session.send('late')).toBe('closed');

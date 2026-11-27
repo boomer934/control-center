@@ -89,7 +89,22 @@ export function createClaudeService(deps: ClaudeServiceDeps) {
   const sessions = new Map<string, Entry>();
   const history = createClaudeHistory(deps.dataDir);
   // folders left by a crash go before the first session writes its own
-  const cleaned = removeStaleSessions(deps.dataDir).catch(() => 0);
+  const cleaned = removeStaleSessions(deps.dataDir).then(
+    ({ failed }) => {
+      if (failed > 0) reportStale(`${failed} old session folder(s) could not be removed`);
+    },
+    () => reportStale('The old session folders could not be read'),
+  );
+  function reportStale(message: string) {
+    // a left-over folder may still hold a bridge token: the user should know it is there
+    deps.report({
+      origin: 'main',
+      source: 'claude',
+      kind: 'claude-setup',
+      name: 'StaleSessionCleanupFailed',
+      message,
+    });
+  }
 
   const owned = (owner: number | undefined, id: string) => {
     const entry = sessions.get(id);

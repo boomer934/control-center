@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Correzioni del bridge degli hooks dalla revisione Astra (F4.1)
+
+- **Fatto.** Su `fix/hooks-bridge-hardening`: hooks passati a `claude --settings` come JSON inline, quindi nessun `settings.json` su disco; `bridge.json` scritto solo dopo `listen()`. Server della pipe con scadenza assoluta, limite di frammenti (`fragmented`) e rifiuti raggruppati e limitati prima della Console (`RejectSummary`). Lo script legge `bridge.json` con un solo `open`, verifica con `fstat` sull'handle e legge al massimo 4 KiB + 1 byte. `killTree` ritenta `taskkill` e segnala `ProcessTreeNotEnded`. La pulizia delle cartelle rimaste usa `maxRetries` e segnala `StaleSessionCleanupFailed`. Nuovi test: in `bridge.test.ts`, `cli.test.ts`, `session.test.ts` e `kill-tree.test.ts`.
+- **Decisioni.** Lo stesso utente a integrità media resta fuori dal modello delle minacce. Un broker o una DACL esplicita sono opzioni future, come il Job Object. Tutte richiedono una dipendenza nativa e un'ADR. In `SICUREZZA.md` sono ridimensionate le frasi «esce sempre con 0», «intero albero» e «al primo avvio».
+- **Verifica.** `pnpm verify` verde: 455 test e 0 errori di lint. Sono verdi i 4 E2E di `claude.spec.ts`. La DACL è stata letta su Electron 45.4.1: utente, SYSTEM e Administrators hanno controllo completo, Everyone e Anonymous la lettura. Un processo a bassa integrità può leggere ma non scrivere.
+- **Problemi.** Gli strumenti Bash/heredoc dimezzano le barre rovesciate: correggere con Edit. Dopo `pnpm install` mancava il binario di Electron 45.4.1, scaricato dal pacchetto. `dev.spec.ts` è rosso in locale per `#/live`, senza legame con questo branch.
+
+---
+
 ## 2026-11-27 — Repo pubblica e merge della PR #67
 
 - **Fatto.** La CI non partiva (job fermati dal limite di spesa dell'account GitHub). Controllati segreti e dati personali su tutti i 215 commit e i branch: email dei commit tutte `noreply`, nessun token o chiave, fixture pulite, nessun secret su GitHub e nessun workflow `pull_request_target`. Repo resa pubblica, PR #67 chiusa e riaperta, CI verde (Verify Windows 8m18s, gitleaks su tutta la storia), unita in squash (`c33838b`).

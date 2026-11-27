@@ -1,6 +1,6 @@
 # Stato attuale
 
-_Ultimo aggiornamento 2026-11-27. La 5e e le azioni rapide 5e+ sono su `main` (PR #64 e #68, ADR 0015 e 0016)._
+_Ultimo aggiornamento 2026-11-27. Fase 5 chiusa: tutte le sotto-fasi 5a–5e+ sono su `main`._
 
 ## Fase
 
@@ -12,7 +12,7 @@ _Ultimo aggiornamento 2026-11-27. La 5e e le azioni rapide 5e+ sono su `main` (P
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
-**Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
+**Fase 5 — Vista Live**: ✅ completata il 2026-11-27 (PR #56, #58, #59, #62, #63, #64, #68, #70; ADR 0012–0016). Sintesi in `STORIA.md`, voce "Chiusura Fase 5". Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
 
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.
@@ -122,7 +122,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 - **Parser in più dalla prova con Vite 8:** diagnostica di Oxc/Rolldown (`[PARSE_ERROR] …` e `╭─[ file:riga:col ]`); il messaggio di uno stack di Vite si cerca sopra le righe `Plugin:`/`File:`. Fixture reale `vite8-dev.txt`.
 - **Non verificato:** log letti direttamente da Docker (Fase 6; qui il demone Docker non è attivo); la prova Docker è sull'output di `docker compose logs` nel terminale.
 - **Fatto (5e, merge):** CI del run 45904671666 verde (E2E 77/77, app impacchettata 10/10) con le baseline `map-error-*` prese dal run precedente; PR #64 unita su richiesta dell'utente (`1ce73a6`).
-- **Ora (punto di ripresa):** Fase 5 con tutte le sotto-fasi su `main`: resta da decidere la chiusura della fase (sintesi in `STORIA.md`). Dopo: azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file).
+- **Ora (punto di ripresa):** Fase 5 chiusa (sintesi in `STORIA.md`). Prossima: Fase 6, infrastruttura (Docker, porte, GPU, Ollama).
 
 ### Corsia Codex
 

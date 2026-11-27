@@ -2,28 +2,17 @@
 
 In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatte restano segnate con ✅ finché la fase non si chiude; poi passano in `STORIA.md`.
 
-> Le Fasi 1, 2, 3 e 4 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1", "Chiusura Fase 2", "Chiusura Fase 3" e "Chiusura Fase 4" (il brief `FASE_4.md` è archiviato lì).
+> Le Fasi 1, 2, 3, 4 e 5 sono chiuse: sintesi in `STORIA.md`, voci "Chiusura Fase 1" … "Chiusura Fase 5" (il brief `FASE_4.md` è archiviato lì).
 
 ## Ora
 
-Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)).
-
-1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).
-
-2. ✅ **[Claude] (F5b)** Mappa unita con la [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013): baseline visive dal runner, budget dei 60 fps verde in CI (64 fps, main thread 15,8%).
-
-3. ✅ **[Claude] (F5b, rifinitura)** Audit e prova reale fatti, tre correzioni unite con la [PR #59](https://github.com/boomer934/control-center/pull/59). Baseline visive della mappa rigenerate dalla CI.
-4. ✅ **[Codex] (F5c)** Timeline e replay uniti su `main` con la [PR #62](https://github.com/boomer934/control-center/pull/62) a CI verde.
-5. ✅ **[Codex] (F4b, bug)** Percorsi lunghi di Git su Windows uniti su `main` con la [PR #61](https://github.com/boomer934/control-center/pull/61) (`6bcb9cf`).
-6. ✅ **[Codex] (F5d)** Pannello agenti, ispettore e riepilogo in sola lettura uniti su `main` con la [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`). La schermata Infra completa resta nella Fase 6.
-7. ✅ **[Claude] (F5e)** Errori del progetto sulla mappa (ADR 0015): schema `error.detected` v2 con migrazione, parser per Node/TS, Python, Go, Rust e browser, errori da terminale e comandi degli agenti, nodo colpevole rosso. Unita su `main` con la [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`), CI verde.
-8. ✅ **[Codex] (F5e+)** Azioni rapide dall'ispettore (ADR 0016). Unita su `main` con la [PR #68](https://github.com/boomer934/control-center/pull/68) (`a5681b9`), revisione IPC di Claude e CI verde.
+Due corsie in parallelo (vedi [`CORSIE.md`](CORSIE.md)). La Fase 5 è chiusa: si riparte dalla Fase 6.
 
 ## Dopo
 
-9. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
-10. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
-11. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
+1. **[Codex] (F6)** Log dei container Docker nello stesso scanner del terminale (`createTerminalErrorScanner`, origine `docker`) e dev server rilevati dalle porte oltre che dai banner.
+2. **[Codex] (F4.1, revisione)** Seconda opinione sulla pipe (`packages/hooks-bridge`) con `gpt-6.2-astra`, effort `high`.
+3. **[Codex o Claude] (F4.3, test)** E2E `claude.spec.ts` › "streams the chat, answers permissions…" già risultato instabile in locale. Passato nella suite della 5c. Il 2026-11-26 la causa locale era la CLI reale avviata al posto del finto `claude` (`cleanEnv`, ora corretto): 6/6 in locale.
 
 ## Quando capita
 

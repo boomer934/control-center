@@ -4,6 +4,20 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Chiusura Fase 5
+
+**Fatto**
+
+- Fase 5 (Vista Live) completata in sotto-fasi: 5a modello del progetto (#56, ADR 0012), 5b mappa (#58, #59, ADR 0013), 5c timeline e replay (#62), 5d pannello agenti, ispettore e inventario locale (#63, ADR 0014), 5e errori del progetto con schema `error.detected` v2 e parser di stack trace (#64, ADR 0015), 5e+ azioni rapide dall'ispettore (#68, #70, ADR 0016). Correzione collegata: percorsi lunghi di Git su Windows (#61).
+- Risultato: la Vista Live mostra la mappa del progetto con lo stato dei file in tempo reale, la timeline con scrubber e replay delle sessioni salvate, il pannello degli agenti con l'ispettore degli eventi, l'inventario locale in sola lettura e gli errori del progetto (da agenti e terminale) sul file colpevole, con azioni rapide (bozza per Claude, spiegazione Ollama locale, apertura del sorgente alla riga, con `.env*` escluso).
+- Verifiche all'ultima PR (#68/#70): `pnpm verify` verde (448 test, 1 saltato), E2E `project-errors.spec.ts` 10/10, CI verde; budget dei 60 fps della mappa verde in CI.
+
+**Decisioni:** ADR 0012 (modello del progetto con Tree-sitter WASM), 0013 (mappa con React Flow ed elkjs), 0014 (inventario locale), 0015 (errori del progetto e migrazione dello schema 1 → 2), 0016 (azioni rapide sugli errori).
+
+**Problemi aperti:** ConPTY va a capo nei percorsi lunghi a 1024×768 (`PROBLEMI_NOTI.md`); "Turn started without a Git checkpoint" nelle sessioni reali; la legenda copre l'ultima cartella con il dock del terminale aperto; Docker letto solo da `docker compose logs` nel terminale (Fase 6).
+
+---
+
 ## 2026-11-27 — Merge delle azioni rapide 5e+ (PR #68)
 
 - **Fatto.** Claude ha rivisto le parti IPC e main della PR (controllo del mittente, workspace attivo, blocco di `.env*`, limiti di dimensione, Ollama solo locale, redazione) senza rilievi. Ha corretto due E2E che fallivano solo in CI (`fe06caf`) e unito la PR con squash (`a5681b9`) a CI verde, su richiesta dell'utente.

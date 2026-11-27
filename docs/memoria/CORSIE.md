@@ -41,13 +41,6 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 | ---------------------------------------------------- | ------ | --------------- | ------ | ---------------------------------------------------------------- |
 | 4b Git e checkpoint                                  | Codex  | `gpt-6.2-sol`   | high   | Claude `/code-review` medium                                     |
 | 4.1 Seconda opinione sulla named pipe                | Codex  | `gpt-6.2-astra` | high   | Una passata mirata su `packages/hooks-bridge`                    |
-| 5a Modello del progetto, scanner e watcher           | Claude | Opus 5.5        | high   | `/code-review` medium                                            |
-| 5b Mappa                                             | Claude | Opus 5.5        | high   | impeccable e budget 60 fps in CI                                 |
-| 5c Timeline e replay                                 | Codex  | `gpt-6.2-sol`   | high   | impeccable                                                       |
-| 5d Pannello agenti e ispettore                       | Codex  | `gpt-6.2-sol`   | medium | impeccable                                                       |
-| 5e Schema `error.detected` e migrazione              | Claude | Opus 5.5        | high   | —                                                                |
-| 5e Parser di stack trace e colorazione               | Claude | Opus 5.5        | high   | impeccable sulla UI (fatta da Claude su goal dell'utente)        |
-| 5e+ Azioni rapide sugli errori                       | Codex  | `gpt-6.2-sol`   | high   | Impeccable e test IPC. Subentro per crediti Claude esauriti      |
 | 6 Infrastruttura: Docker, porte, GPU e stato Ollama  | Codex  | `gpt-6.2-sol`   | medium | Claude `/code-review` high su socket Docker e processi           |
 | 7 Client Ollama e comandi diretti                    | Codex  | `gpt-6.2-sol`   | medium | Claude `/code-review` medium                                     |
 | 7 `mcp-bridge`, allowlist e skill `delegate-local`   | Claude | Opus 5.5        | high   | `/code-review` high e `gpt-6.2-astra` high                       |
@@ -62,21 +55,28 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 
 Le righe riportano le assegnazioni del piano precedente. I risultati e le PR sono in [STORIA.md](STORIA.md).
 
-| Fase                                           | Corsia | Modello previsto | Effort | Revisione o nota                           |
-| ---------------------------------------------- | ------ | ---------------- | ------ | ------------------------------------------ |
-| 0 Fondamenta della repo                        | Claude | Sonnet 5.5       | medium | Opus per le istruzioni di progetto         |
-| 1a Ricerca UX e architettura dell'informazione | Claude | Opus 5.5         | high   | Revisione dell'utente                      |
-| 1b Direzioni estetiche                         | Claude | Opus 5.5         | high   | Ultracode per esplorare tre direzioni      |
-| 1c Token e design system HTML                  | Claude | Opus 5.5         | high   | impeccable                                 |
-| 1d Prototipo Vista Live                        | Claude | Opus 5.5         | high   | Playwright e impeccable                    |
-| 2 Fixture, schema eventi e normalizzatori      | Claude | Opus 5.5         | high   | Sanitizzazione e test                      |
-| 3a Shell e IPC                                 | Claude | Opus 5.5         | high   | `/code-review` high                        |
-| 3b Logger e Console Errori                     | Claude | Sonnet 5.5       | high   | `/code-review` medium                      |
-| 3c Design system in codice                     | Claude | Sonnet 5.5       | medium | impeccable                                 |
-| 4.0 Canale push nel contratto IPC              | Claude | Opus 5.5         | high   | `/code-review` high                        |
-| 4.1 Hooks bridge e sessione Claude             | Claude | Opus 5.5         | high   | `/code-review` high                        |
-| 4.2 Workspace e terminale                      | Codex  | `gpt-6.1-sol`    | high   | Claude `/code-review` high                 |
-| 4.3 Chat, permessi e cronologia                | Codex  | `gpt-6.1-sol`    | high   | Claude Opus high sui permessi e impeccable |
+| Fase                                           | Corsia | Modello previsto | Effort | Revisione o nota                                            |
+| ---------------------------------------------- | ------ | ---------------- | ------ | ----------------------------------------------------------- |
+| 0 Fondamenta della repo                        | Claude | Sonnet 5.5       | medium | Opus per le istruzioni di progetto                          |
+| 1a Ricerca UX e architettura dell'informazione | Claude | Opus 5.5         | high   | Revisione dell'utente                                       |
+| 1b Direzioni estetiche                         | Claude | Opus 5.5         | high   | Ultracode per esplorare tre direzioni                       |
+| 1c Token e design system HTML                  | Claude | Opus 5.5         | high   | impeccable                                                  |
+| 1d Prototipo Vista Live                        | Claude | Opus 5.5         | high   | Playwright e impeccable                                     |
+| 2 Fixture, schema eventi e normalizzatori      | Claude | Opus 5.5         | high   | Sanitizzazione e test                                       |
+| 3a Shell e IPC                                 | Claude | Opus 5.5         | high   | `/code-review` high                                         |
+| 3b Logger e Console Errori                     | Claude | Sonnet 5.5       | high   | `/code-review` medium                                       |
+| 3c Design system in codice                     | Claude | Sonnet 5.5       | medium | impeccable                                                  |
+| 4.0 Canale push nel contratto IPC              | Claude | Opus 5.5         | high   | `/code-review` high                                         |
+| 4.1 Hooks bridge e sessione Claude             | Claude | Opus 5.5         | high   | `/code-review` high                                         |
+| 4.2 Workspace e terminale                      | Codex  | `gpt-6.1-sol`    | high   | Claude `/code-review` high                                  |
+| 4.3 Chat, permessi e cronologia                | Codex  | `gpt-6.1-sol`    | high   | Claude Opus high sui permessi e impeccable                  |
+| 5a Modello del progetto, scanner e watcher     | Claude | Opus 5.5         | high   | `/code-review` medium                                       |
+| 5b Mappa                                       | Claude | Opus 5.5         | high   | impeccable e budget 60 fps in CI                            |
+| 5c Timeline e replay                           | Codex  | `gpt-6.2-sol`    | high   | impeccable                                                  |
+| 5d Pannello agenti e ispettore                 | Codex  | `gpt-6.2-sol`    | medium | impeccable                                                  |
+| 5e Schema `error.detected` e migrazione        | Claude | Opus 5.5         | high   | —                                                           |
+| 5e Parser di stack trace e colorazione         | Claude | Opus 5.5         | high   | impeccable sulla UI (fatta da Claude su goal dell'utente)   |
+| 5e+ Azioni rapide sugli errori                 | Codex  | `gpt-6.2-sol`    | high   | Impeccable e test IPC. Subentro per crediti Claude esauriti |
 
 ## Ordine di lavoro (onde)
 

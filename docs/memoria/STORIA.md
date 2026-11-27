@@ -4,6 +4,40 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Chiusura Fase 5
+
+**Fatto**
+
+- Fase 5 (Vista Live) completata in cinque sotto-fasi, tutte su `main`:
+  - 5a modello del progetto: [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012);
+  - 5b mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), più la rifinitura dopo audit e prova reale con la [PR #59](https://github.com/boomer934/control-center/pull/59);
+  - 5c timeline e replay: [PR #62](https://github.com/boomer934/control-center/pull/62) (`d6f35d0`);
+  - 5d pannello agenti, ispettore e riepilogo della macchina: [PR #63](https://github.com/boomer934/control-center/pull/63) (`b90d53b`, ADR 0014);
+  - 5e errori del progetto sulla mappa: [PR #64](https://github.com/boomer934/control-center/pull/64) (`1ce73a6`, ADR 0015).
+  - Lungo la strada, la correzione dei checkpoint Git con percorsi lunghi su Windows ([PR #61](https://github.com/boomer934/control-center/pull/61), `6bcb9cf`).
+- Risultato: la Vista Live mostra la mappa del progetto (React Flow + elkjs) con file, comandi, MCP e agenti, la timeline a corsie con scrubber e replay (anche per le sessioni salvate, in sola lettura), il pannello Agents con l'ispettore (dettagli e JSON copiabile), l'inventario locale e gli errori del progetto con il colpevole in rosso. Tutto parte dagli `AgentEvent`, quindi dal vivo e in replay lo stato è lo stesso.
+
+**Budget misurati**
+
+- 60 fps con 500 nodi e 20 eventi/s (`map.spec.ts`, in CI): 64,1 fps, 0% di frame lunghi, main thread al 15,8% (limite 50%).
+- Apertura di un progetto da 5.000 file in meno di 2 s (`model.test.ts`, in CI): 5.000 file elencati in 46 ms a cache calda, indicizzazione completa in circa 2 s.
+
+**DoD verificata**
+
+- Le cinque domande della Fase 1 trovano risposta senza leggere la chat: l'E2E `answers the five Live questions during replay and synchronizes the inspector` (`map.spec.ts`) controlla tutte e cinque con `sessione-02`. Per la quarta (cosa gira sulla macchina) l'inventario è anticipato dalla Fase 6, in sola lettura (ADR 0014).
+- Test visivi Playwright degli stati dei nodi con le baseline del runner Windows. Impeccable senza rilievi bloccanti nei due temi a 960×600 su ogni sotto-fase. Ultimo run CI su `main` verde (E2E 77/77, app impacchettata 10/10).
+
+**Decisioni:** ADR 0012 (modello del progetto, `fs.watch` invece di chokidar), 0013 (mappa), 0014 (inventario locale), 0015 (errori del progetto, schema v2 con migrazione 1 → 2). Il riepilogo della macchina della Fase 6 è stato anticipato su autorizzazione dell'utente; i parser della 5e, assegnati a Codex, li ha fatti Claude su goal dell'utente.
+
+**Problemi aperti**
+
+- Ogni sessione reale parte con "Turn started without a Git checkpoint (failed)" nell'app (`PROBLEMI_NOTI.md`; il servizio Git da solo riesce).
+- Con il dock del terminale aperto la legenda copre l'ultima cartella della mappa: rifare il Fit al cambio di altezza.
+- In locale i test visivi falliscono sempre (font): le baseline si prendono dall'artifact della CI.
+- Azioni rapide sull'errore (chiedi a Claude, spiega in locale, vai al file) e log di Docker nello scanner: restano in `PROSSIMI_PASSI.md`.
+
+---
+
 ## 2026-11-26 — Errori del progetto sulla mappa (5e)
 
 - **Fatto.** `error.detected` nello schema (v2) con la migrazione 1 → 2 per la cronologia; parser di stack trace a registro con fixture reali; errori dai comandi degli agenti e dal terminale integrato; colpevole rosso sulla mappa, segno nella timeline, dettagli nell'ispettore (ADR 0015).

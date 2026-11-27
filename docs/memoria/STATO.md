@@ -12,7 +12,7 @@ _Ultimo aggiornamento 2026-11-26. 5c, 5d e correzione dei checkpoint su `main`. 
 
 **Fase 3 — Shell sicura**: ✅ completata il 2026-11-17 (PR #23, #25, #27). Sintesi in `STORIA.md`, voce "Chiusura Fase 3".
 
-**Fase 5 — Vista Live**: in corso. Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
+**Fase 5 — Vista Live**: ✅ completata il 2026-11-27 (PR #56, #58, #59, #62, #63, #64). Sintesi in `STORIA.md`, voce "Chiusura Fase 5". Sotto-fasi 5a (modello del progetto), 5b (mappa), 5c (timeline e replay), 5d (pannello agenti e ispettore), 5e (errori del progetto).
 
 - **5a**, modello del progetto: ✅ implementata, rivista e corretta, unita su `main` con la [PR #56](https://github.com/boomer934/control-center/pull/56) (`89a3eac`, ADR 0012).
 - **5b**, mappa: [PR #58](https://github.com/boomer934/control-center/pull/58) (ADR 0013), CI verde su `fd558b6` con le baseline visive del runner e il budget dei 60 fps; unita su richiesta dell'utente il 2026-11-26.

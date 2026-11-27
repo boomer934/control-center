@@ -4,6 +4,15 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Collaudo dell'integrazione Claude Code e Codex
+
+- **Fatto.** Definiti i criteri di accettazione per worktree, conflitti Git, attribuzione di eventi e richieste, ripresa dopo errori, accessibilità e prestazioni della Vista Live.
+- **Decisioni.** La consegna del contratto sblocca il collegamento della UI. La 5g richiede fixture concorrenti, prova con le due CLI reali e revisione Impeccable in Electron.
+- **Verifica.** `pnpm verify` verde con 439 test passati e uno saltato.
+- **Da verificare.** I criteri si applicano durante l'implementazione di 5f e 5g.
+
+---
+
 ## 2026-11-27 — Priorità Codex e uso simultaneo con Claude Code
 
 - **Fatto.** Aggiornati piano, prossimi passi e corsie. Codex in Vernier (5f) e sessioni simultanee di Claude Code e Codex (5g) precedono la Fase 6.

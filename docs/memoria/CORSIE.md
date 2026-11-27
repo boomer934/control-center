@@ -68,6 +68,8 @@ _Creato il 2026-11-17. Modelli aggiornati il 2026-11-18. Questa tabella assegna 
 
 Claude consegna per primi esempi di eventi e firme del contratto. Codex può chiudere la 5e+ e preparare le fixture e i test in un branch proprio mentre Claude lavora al main. Il collegamento di normalizzatore e UI parte quando il relativo contratto è su `main`. Per la 5g si segue lo stesso ordine: Claude definisce il contratto di isolamento, Codex prepara le verifiche del doppio flusso, poi li collega. Le due corsie mantengono worktree e branch distinti per tutto il lavoro.
 
+**Coordinamento delle due corsie.** Prima di implementare, scambiare base Git, file assegnati, contratto ed esempi con eventi simultanei. Claude ha la responsabilità di schema, IPC e main. Codex ha la responsabilità di normalizzatore, renderer e test di integrazione. Dichiarare in `STATO.md` eventuali eccezioni e l'ordine di consegna. Se i test richiedono un file di proprietà dell'altra corsia, far passare la modifica nella PR del proprietario prima di collegarla. Usare fixture di contratto per proseguire sulla UI durante lo sviluppo del main. Integrare prima il contratto, riallineare i branch e validare il flusso completo sul commit che li riunisce.
+
 ### Fasi chiuse
 
 Le righe riportano le assegnazioni del piano precedente. I risultati e le PR sono in [STORIA.md](STORIA.md).

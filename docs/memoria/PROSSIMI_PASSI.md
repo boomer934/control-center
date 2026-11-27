@@ -12,6 +12,8 @@ In ordine. Il riferimento tra parentesi è alla fase di `PIANO.md`. Le voci fatt
 - **[Codex] (5f.2)** Portare a chiusura le azioni rapide 5e+ dal branch `feat/error-quick-actions`, quindi preparare fixture e test mentre Claude lavora al main. Collegare chat, normalizzatore, Vista Live e replay quando i contratti sono su `main`.
 - **[Claude + Codex] (5g)** Dopo la prima sessione Codex funzionante, dare priorità all'esecuzione simultanea nello stesso repository con worktree separati. Claude prende l'isolamento nel main. Codex prende la Vista Live e la verifica con le due CLI.
 
+Prima di chiudere la 5g, eseguire i [criteri di accettazione](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) su Windows. Includere due richieste pendenti, un arresto con l'altra sessione attiva, lo stesso percorso relativo in due worktree e la revisione UI in Electron.
+
 ### Completati
 
 1. ✅ **[Codex] (F5a, revisione)** Sette rilievi corretti sulla [PR #56](https://github.com/boomer934/control-center/pull/56) (ADR 0012).

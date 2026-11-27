@@ -123,7 +123,7 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
-- **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è implementata nel branch `feat/error-quick-actions` (ADR 0016) e può essere chiusa mentre Claude specifica i contratti. La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`.
+- **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è implementata nel branch `feat/error-quick-actions` (ADR 0016) e può essere chiusa mentre Claude specifica i contratti. La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`. Il [collaudo 5g](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) richiede una prova parallela reale su Windows e una revisione Impeccable in Electron.
 
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.
 - **Verificato in locale:** `pnpm verify` verde (326 test passati, smoke test con CLI reale saltato) e 53 E2E Electron funzionali verdi, inclusi i due casi con il finto `claude`. Gli snapshot preesistenti dei componenti sono esclusi da questa esecuzione locale.

@@ -4,6 +4,50 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Chiusura Fase 5
+
+**Fatto**
+
+- Fase 5 (Vista Live, il cuore del prodotto) completata in sei sotto-fasi di codice, tutte su `main`:
+  - **5a** modello del progetto (PR #56, `89a3eac`, ADR 0012), di Claude con la revisione Codex: scansione nel worker con `.gitignore`, import con Tree-sitter WASM per TS/JS, Python, Go e Rust, ruoli come plugin e watcher `fs.watch` incrementale;
+  - **5b** mappa (PR #58, `b858988`, ADR 0013, e rifinitura PR #59, `08f5c47`), di Claude: React Flow ed elkjs nel worker, stati dei nodi dagli `AgentEvent`, Segui agente, anteprima diff, minimappa a heatmap;
+  - **5c** timeline e replay (PR #62, `d6f35d0`), di Codex: corsie per agente e subagent, scrubber, sessioni passate in sola lettura con checkpoint confrontabili;
+  - **5d** pannello agenti e ispettore (PR #63, `b90d53b`, ADR 0014), di Codex, con l'inventario locale in sola lettura (Docker, porte, VRAM, Ollama) anticipato dalla Fase 6 su autorizzazione dell'utente;
+  - **5e** errori del progetto (PR #64, `1ce73a6`, ADR 0015), di Claude anche per la parte dei parser assegnata a Codex: schema `error.detected` v2 con la migrazione 1 → 2, parser di stack trace (V8, Firefox, `tsc`, esbuild/Vite/Oxc, Python, Go, Rust) su fixture reali, errori da terminale e comandi degli agenti, nodo colpevole rosso;
+  - **5e+** azioni rapide sull'errore (PR #68, `a5681b9`, ADR 0016, ed E2E stabilizzati con la PR #70, `524ce89`), di Codex in subentro per crediti Claude esauriti: bozza per Claude, spiegazione da Ollama, apertura del sorgente alla riga, con `.env*` sempre esclusi.
+- Fuori dalle sotto-fasi ma nello stesso periodo: checkpoint Git con percorsi lunghi su Windows (PR #61, `6bcb9cf`), che chiude il "checkpoint `failed`" trovato nella prova reale della 5b; release 1.3.0 (PR #57).
+- **DoD di `PIANO.md`:** riproducendo `sessione-02`, l'E2E della 5d trova nella Vista Live la risposta alle cinque domande della Fase 1 senza leggere la chat.
+- **Budget:** 60 fps con 500 nodi e 20 eventi/s misurati in CI (64,1 fps, 0% di frame lunghi, main thread al 15,8%); 5.000 file elencati in 46 ms e indicizzati in circa 2 s.
+- **Ultime verifiche:** `pnpm verify` verde con 448 test (uno saltato); in CI E2E verdi (77/77 sulla 5e, `project-errors.spec.ts` 10/10 sulla 5e+) e app impacchettata 10/10.
+- **Revisioni:**
+  - impeccable su ogni sotto-fase con UI, nei due temi;
+  - revisione incrociata Codex sulla 5a (7 rilievi corretti);
+  - Claude `high` sulla 5d e sull'IPC della 5e+, senza rilievi bloccanti.
+
+**Decisioni:** nessuna oltre le ADR 0012–0016. Due scostamenti da `PIANO.md`:
+
+- `fs.watch` ricorsivo al posto di chokidar e `@vscode/tree-sitter-wasm` al posto di web-tree-sitter con una grammatica per pacchetto (ADR 0012);
+- la mappa raggruppa per cartelle con `rectpacking`, non con un grafo `layered` degli import (ADR 0013).
+
+Le sotto-fasi sono passate da una corsia all'altra in due casi, entrambi annotati in `CORSIE.md`: i parser della 5e e le azioni rapide della 5e+.
+
+**Lezioni**
+
+- Sulla mappa niente animazioni che ridipingono fuori dal segno di un nodo. Il budget dei fps si misura col tempo del main thread, perché i frame del runner senza GPU non distinguono una mappa che regge da una al limite.
+- Le baseline visive vengono solo dagli artifact della CI: in locale i test visivi falliscono sempre per i font.
+- Gli E2E sul terminale non leggono il testo visibile: ConPTY va a capo nei percorsi lunghi sullo schermo piccolo del runner. Servono percorsi relativi e un marcatore di fine comando, e un clic sulla mappa va fatto dopo `data-ready`.
+- Gli E2E con il finto `claude` devono ripulire sia `PATH` sia `Path` (`cleanEnv`), altrimenti parte la CLI reale.
+- Per modificare i sorgenti si usa l'editor, non gli heredoc della shell: perdono gli escape.
+
+**Problemi aperti** (in `PROSSIMI_PASSI.md` e `PROBLEMI_NOTI.md`)
+
+- Il worker del modello e la mappatura degli stack sono provati nei file estratti, non dentro l'app impacchettata (Fase 10).
+- Gli errori letti direttamente dai container Docker e i dev server rilevati dalle porte passano alla Fase 6.
+- Restano i minori della mappa: Fit quando cambia l'altezza col dock aperto, simboli nello zoom semantico, menu `@` per seguire un agente. Resta anche il passaggio del prototipo 1d alle fixture ripulite.
+- Manca ancora la seconda opinione di Astra sulla pipe della 4.1.
+
+---
+
 ## 2026-11-27 — Merge delle azioni rapide 5e+ (PR #68)
 
 - **Fatto.** Claude ha rivisto le parti IPC e main della PR (controllo del mittente, workspace attivo, blocco di `.env*`, limiti di dimensione, Ollama solo locale, redazione) senza rilievi. Ha corretto due E2E che fallivano solo in CI (`fe06caf`) e unito la PR con squash (`a5681b9`) a CI verde, su richiesta dell'utente.

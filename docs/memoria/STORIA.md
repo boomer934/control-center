@@ -4,6 +4,13 @@ Diario delle sessioni, con la voce più recente in alto. Ogni voce: cosa è stat
 
 ---
 
+## 2026-11-27 — Sonda di compatibilità delle CLI (5h.4)
+
+- **Fatto.** `compat.json` validato da Zod alimenta le versioni provate e i fallback della CLI Claude. La sonda installa le versioni npm in directory temporanee, verifica i flag e gli effort di Claude e confronta feature e schema Codex con lo snapshot del protocollo usato dall'app.
+- **Decisioni.** Un nuovo metodo o una nuova feature appare nel report compatibile. La sonda segnala un contratto rotto e distingue i cambiamenti che richiedono una verifica. La CLI Claude 2.1.326 riconosce `--permission-prompt-tool` anche se l'help lo cita solo nella descrizione. Il riconoscimento viene controllato con l'errore di argomento mancante.
+- **Verifica.** Sonde reali su Windows con Claude Code 2.1.322 e 2.1.326 e Codex 0.171.0-alpha.13.2. `pnpm verify` verde con 585 test passati e 4 saltati. Build Electron e 27 E2E mirati passati.
+- **Da fare.** Revisione Claude e merge della 5h.4, poi il workflow della 5h.6 potrà usare il comando documentato.
+
 ## 2026-11-27 — Correzioni dalla revisione Astra della PR #80
 
 - **Fatto.** Corretti i 7 rilievi di `gpt-6.2-astra` sul commit `c8741a1`, con test di regressione (`d054075`). P2: le voci rimosse contano nel limite di 2048 per agente e cadono le più vecchie, così istantanea e lista restano valide. Una risposta senza un campo non rimuove le voci di quel tipo (`kinds` nella lettura). Una CLI tornata disponibile si rilegge anche con la cache fresca. Il limite d'output della sonda conta tutte le righe. All'uscita la sonda si interrompe e la chiusura ne attende la fine. P3: "nuovo" e "cambiato" si decidono per revisione e non per orario; una lista piena conserva il 64º modello.

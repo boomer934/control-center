@@ -20,6 +20,7 @@
     "node-pty": "^1.1.0"
   },
   "devDependencies": {
+    "@control-center/agent-compat": "workspace:*",
     "@control-center/app-log": "workspace:*",
     "@control-center/event-schema": "workspace:*",
     "@control-center/fixtures": "workspace:*",

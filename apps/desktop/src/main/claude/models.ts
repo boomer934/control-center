@@ -7,6 +7,7 @@
 import { open, type FileHandle } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { agentCompat } from '@control-center/agent-compat';
 import { effortSchema, modelIdSchema, redactSecrets } from '@control-center/event-schema';
 import {
   isConfigInCatalog,
@@ -17,18 +18,18 @@ import {
 } from '@control-center/ipc-contract';
 
 /** `--effort` levels of Claude Code 2.1.326 (`claude --help`). */
-export const CLAUDE_EFFORTS: readonly string[] = ['low', 'medium', 'high', 'xhigh', 'max'];
+export const CLAUDE_EFFORTS: readonly string[] = agentCompat.claude.fallbackEfforts;
 
 /**
  * The aliases Claude Code resolves to the latest model of each family: only the fallback, when the
  * CLI did not list its models (`initialize`, see ./catalog.ts).
  */
-export const CLAUDE_MODELS: readonly AgentModel[] = [
-  { id: 'fable', label: 'Fable', efforts: [...CLAUDE_EFFORTS] },
-  { id: 'opus', label: 'Opus', efforts: [...CLAUDE_EFFORTS] },
-  { id: 'sonnet', label: 'Sonnet', efforts: [...CLAUDE_EFFORTS] },
-  { id: 'haiku', label: 'Haiku', efforts: [...CLAUDE_EFFORTS] },
-];
+export const CLAUDE_MODELS: readonly AgentModel[] = agentCompat.claude.fallbackModels.map(
+  (model) => ({
+    ...model,
+    efforts: [...CLAUDE_EFFORTS],
+  }),
+);
 
 export const MAX_SETTINGS_BYTES = 256 * 1024;
 const NONE: AgentConfig = { model: null, effort: null };

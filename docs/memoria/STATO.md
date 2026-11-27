@@ -96,6 +96,9 @@ Dal 2026-11-17 il lavoro va su due corsie parallele, Claude e Codex (ripartizion
 
 ### Corsia Codex
 
+- **Fatto (2026-11-27, 5h.4):** `feat/5h4-compat-probe` parte da `main` con la 5h.1 unita. `compat.json` è la fonte delle versioni verificate e dei fallback Claude nell'app. `scripts/compat/probe.mjs` verifica le CLI npm senza login e produce un report JSON per il bot.
+- **Verifica 5h.4:** sonde reali compatibili su Windows (Claude Code 2.1.322 e 2.1.326, Codex 0.171.0-alpha.13.2). `pnpm verify` con 585 test passati e 4 saltati. Build Electron e 27 test E2E mirati su Claude, Codex e sicurezza passati.
+- **Punto di ripresa 5h.4:** revisione Claude e merge. La patch del workflow consumer resta alla 5h.6.
 - **Prossima priorità:** 5f, Codex in Vernier, poi 5g, uso simultaneo con Claude Code prima della Fase 6. La 5e+ è unita su `main` (PR #68 e #70, ADR 0016). La corsia Codex prepara fixture e verifiche e collega UI e normalizzatore dopo la consegna dei contratti su `main`. Il [collaudo 5g](PIANO.md#criteri-di-accettazione-per-le-sessioni-simultanee) richiede una prova parallela reale su Windows e una revisione Impeccable in Electron.
 - **Dopo la 5g (Fase 6):** pannelli Docker (sola lettura di default), porte locali e GPU/Ollama con stati vuoti corretti, a partire dall'inventario della 5d (ADR 0014). Goal in `PIANO.md`, modello ed effort in `CORSIE.md`. Prima riallineare il worktree a `main`.
 - **Fatto (2026-11-17):** la 4.3 aggiunge chat in streaming nel dock Session, Markdown e codice, strumenti richiudibili, permessi via stdin, Stop, riapertura e ripresa dalla cronologia JSONL per workspace. La Vista Live mostra la timeline essenziale.

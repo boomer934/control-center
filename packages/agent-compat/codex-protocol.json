@@ -1,0 +1,1533 @@
+{
+  "version": "0.171.0-alpha.13.2",
+  "methods": {
+    "ClientRequest": [
+      "account/bedrock/checkGovCloudRequirements",
+      "account/bedrock/discover",
+      "account/bedrock/setup",
+      "account/gatewayOAuth/cancel",
+      "account/gatewayOAuth/login",
+      "account/gatewayOAuth/read",
+      "account/gcp/setup",
+      "account/login/cancel",
+      "account/login/start",
+      "account/logout",
+      "account/rateLimitResetCredit/consume",
+      "account/rateLimits/read",
+      "account/read",
+      "account/securitySetup/read",
+      "account/sendAddCreditsNudgeEmail",
+      "account/usage/read",
+      "account/workspaceMessages/read",
+      "accountSession/list",
+      "accountSession/switch",
+      "app/installed",
+      "app/list",
+      "app/read",
+      "collaborationMode/list",
+      "command/exec",
+      "command/exec/resize",
+      "command/exec/terminate",
+      "command/exec/write",
+      "config/batchWrite",
+      "config/mcpServer/reload",
+      "config/read",
+      "config/value/write",
+      "configRequirements/read",
+      "environment/add",
+      "environment/info",
+      "environment/status",
+      "experimentalFeature/enablement/set",
+      "experimentalFeature/list",
+      "externalAgentConfig/detect",
+      "externalAgentConfig/import",
+      "externalAgentConfig/import/readHistories",
+      "externalAgentConfig/import/recordHistory",
+      "feedback/save",
+      "feedback/upload",
+      "fs/copy",
+      "fs/createDirectory",
+      "fs/getMetadata",
+      "fs/readDirectory",
+      "fs/readFile",
+      "fs/remove",
+      "fs/unwatch",
+      "fs/watch",
+      "fs/writeFile",
+      "fuzzyFileSearch",
+      "fuzzyFileSearch/sessionStart",
+      "fuzzyFileSearch/sessionStop",
+      "fuzzyFileSearch/sessionUpdate",
+      "hooks/list",
+      "initialize",
+      "marketplace/add",
+      "marketplace/remove",
+      "marketplace/upgrade",
+      "mcpServer/event/stream/start",
+      "mcpServer/event/stream/stop",
+      "mcpServer/oauth/login",
+      "mcpServer/resource/read",
+      "mcpServer/tool/call",
+      "mcpServerStatus/list",
+      "memory/reset",
+      "memory/status",
+      "mock/experimentalMethod",
+      "model/list",
+      "modelProvider/capabilities/read",
+      "modelProvider/config/write",
+      "modelProvider/default/set",
+      "modelProvider/list",
+      "permissionProfile/list",
+      "plugin/install",
+      "plugin/installed",
+      "plugin/list",
+      "plugin/read",
+      "plugin/reconcile",
+      "plugin/search",
+      "plugin/share/checkout",
+      "plugin/share/delete",
+      "plugin/share/list",
+      "plugin/share/save",
+      "plugin/share/updateTargets",
+      "plugin/skill/read",
+      "plugin/uninstall",
+      "process/kill",
+      "process/resizePty",
+      "process/spawn",
+      "process/writeStdin",
+      "project/create",
+      "project/delete",
+      "project/import",
+      "project/list",
+      "project/move",
+      "project/read",
+      "project/update",
+      "remoteControl/client/list",
+      "remoteControl/client/revoke",
+      "remoteControl/disable",
+      "remoteControl/enable",
+      "remoteControl/pairing/start",
+      "remoteControl/pairing/status",
+      "remoteControl/status/read",
+      "review/start",
+      "rollout/compress",
+      "server/diagnostics",
+      "skills/config/write",
+      "skills/extraRoots/set",
+      "skills/list",
+      "thread/approveGuardianDeniedAction",
+      "thread/archive",
+      "thread/attachment/add",
+      "thread/attachment/list",
+      "thread/attachment/remove",
+      "thread/attachmentOwner/list",
+      "thread/backgroundTerminals/clean",
+      "thread/backgroundTerminals/list",
+      "thread/backgroundTerminals/terminate",
+      "thread/compact/start",
+      "thread/decrement_elicitation",
+      "thread/delete",
+      "thread/fork",
+      "thread/goal/clear",
+      "thread/goal/get",
+      "thread/goal/set",
+      "thread/guardianReview",
+      "thread/increment_elicitation",
+      "thread/inject_items",
+      "thread/items/list",
+      "thread/items/read",
+      "thread/list",
+      "thread/loaded/list",
+      "thread/memory/read",
+      "thread/memoryMode/set",
+      "thread/metadata/update",
+      "thread/name/set",
+      "thread/prediction/request",
+      "thread/prepareApprovedPlan",
+      "thread/queue/add",
+      "thread/queue/delete",
+      "thread/queue/list",
+      "thread/queue/reorder",
+      "thread/queue/start",
+      "thread/queue/update",
+      "thread/read",
+      "thread/readState/update",
+      "thread/realtime/appendAudio",
+      "thread/realtime/appendSpeech",
+      "thread/realtime/appendText",
+      "thread/realtime/list",
+      "thread/realtime/listVoices",
+      "thread/realtime/start",
+      "thread/realtime/stop",
+      "thread/resume",
+      "thread/revert",
+      "thread/sample",
+      "thread/sample/cancel",
+      "thread/search",
+      "thread/search/cancel",
+      "thread/search/stream",
+      "thread/search/stream/cancel",
+      "thread/searchOccurrences",
+      "thread/section/move",
+      "thread/settings/update",
+      "thread/shellCommand",
+      "thread/start",
+      "thread/timeline/list",
+      "thread/turns/list",
+      "thread/unarchive",
+      "thread/unsubscribe",
+      "threadSection/create",
+      "threadSection/delete",
+      "threadSection/list",
+      "threadSection/update",
+      "turn/interrupt",
+      "turn/settings/update",
+      "turn/start",
+      "turn/steer",
+      "userVerification/cancel",
+      "userVerification/delete",
+      "userVerification/enroll",
+      "userVerification/status",
+      "userVerification/verify",
+      "windowsSandbox/readiness",
+      "windowsSandbox/setupStart"
+    ],
+    "ClientNotification": ["initialized"],
+    "ServerRequest": [
+      "account/chatgptAuthTokens/refresh",
+      "applyPatchApproval",
+      "attestation/generate",
+      "execCommandApproval",
+      "item/commandExecution/requestApproval",
+      "item/fileChange/requestApproval",
+      "item/permissions/requestApproval",
+      "item/tool/call",
+      "item/tool/requestUserInput",
+      "mcpServer/elicitation/request"
+    ],
+    "ServerNotification": [
+      "account/gatewayOAuth/changed",
+      "account/login/completed",
+      "account/rateLimits/updated",
+      "account/updated",
+      "app/list/updated",
+      "autoApprovalReview/strictReviewRequired",
+      "command/exec/outputDelta",
+      "configWarning",
+      "deprecationNotice",
+      "error",
+      "externalAgentConfig/import/completed",
+      "externalAgentConfig/import/progress",
+      "fs/changed",
+      "fuzzyFileSearch/sessionCompleted",
+      "fuzzyFileSearch/sessionUpdated",
+      "guardianWarning",
+      "hook/completed",
+      "hook/started",
+      "item/agentMessage/delta",
+      "item/autoApprovalReview/completed",
+      "item/autoApprovalReview/started",
+      "item/commandExecution/outputDelta",
+      "item/commandExecution/terminalInteraction",
+      "item/completed",
+      "item/fileChange/outputDelta",
+      "item/fileChange/patchUpdated",
+      "item/mcpToolCall/progress",
+      "item/plan/delta",
+      "item/reasoning/summaryPartAdded",
+      "item/reasoning/summaryTextDelta",
+      "item/reasoning/textDelta",
+      "item/started",
+      "mcpServer/event/stream/notification",
+      "mcpServer/oauthLogin/completed",
+      "mcpServer/startupStatus/updated",
+      "model/rerouted",
+      "model/safetyBuffering/updated",
+      "model/verification",
+      "modelProvider/authRecoveryCompleted",
+      "modelProvider/authRecoveryStarted",
+      "process/exited",
+      "process/outputDelta",
+      "project/changed",
+      "remoteControl/status/changed",
+      "serverRequest/resolved",
+      "skills/changed",
+      "thread/archived",
+      "thread/attachment/updated",
+      "thread/closed",
+      "thread/compacted",
+      "thread/deleted",
+      "thread/environment/connected",
+      "thread/environment/disconnected",
+      "thread/goal/cleared",
+      "thread/goal/updated",
+      "thread/name/updated",
+      "thread/prediction/updated",
+      "thread/project/updated",
+      "thread/queue/changed",
+      "thread/readState/changed",
+      "thread/realtime/closed",
+      "thread/realtime/error",
+      "thread/realtime/item/completed",
+      "thread/realtime/item/started",
+      "thread/realtime/item/transcript/delta",
+      "thread/realtime/itemAdded",
+      "thread/realtime/outputAudio/delta",
+      "thread/realtime/sdp",
+      "thread/realtime/started",
+      "thread/realtime/transcript/delta",
+      "thread/realtime/transcript/done",
+      "thread/reverted",
+      "thread/search/partial",
+      "thread/section/changed",
+      "thread/settings/updated",
+      "thread/started",
+      "thread/status/changed",
+      "thread/tokenUsage/updated",
+      "thread/unarchived",
+      "turn/completed",
+      "turn/diff/updated",
+      "turn/moderationMetadata",
+      "turn/plan/updated",
+      "turn/started",
+      "warning",
+      "windows/worldWritableWarning",
+      "windowsSandbox/setupCompleted"
+    ]
+  },
+  "fields": {
+    "ClientRequest:initialize": "object required:id,method,params",
+    "ClientRequest:initialize.params": "object required:clientInfo",
+    "ClientRequest:initialize.params.clientInfo": "object required:name,version",
+    "ClientRequest:initialize.params.clientInfo.name": "string",
+    "ClientRequest:initialize.params.clientInfo.title": "null string",
+    "ClientRequest:initialize.params.clientInfo.version": "string",
+    "ClientRequest:initialize.params.capabilities": "null object",
+    "ClientRequest:account/read": "object required:id,method,params",
+    "ClientRequest:account/read.params": "object",
+    "ClientRequest:config/read": "object required:id,method,params",
+    "ClientRequest:config/read.params": "object",
+    "ClientRequest:config/read.params.cwd": "null string",
+    "ClientRequest:thread/start": "object required:id,method,params",
+    "ClientRequest:thread/start.params": "object",
+    "ClientRequest:thread/start.params.cwd": "null string",
+    "ClientRequest:thread/start.params.approvalPolicy": "enum:[\"never\",\"on-request\",\"untrusted\"] null object required:granular string",
+    "ClientRequest:thread/start.params.approvalsReviewer": "enum:[\"auto_review\",\"guardian_subagent\",\"user\"] null string",
+    "ClientRequest:thread/start.params.sandbox": "enum:[\"danger-full-access\",\"read-only\",\"workspace-write\"] null string",
+    "ClientRequest:thread/resume": "object required:id,method,params",
+    "ClientRequest:thread/resume.params": "object required:threadId",
+    "ClientRequest:thread/resume.params.threadId": "string",
+    "ClientRequest:thread/resume.params.cwd": "null string",
+    "ClientRequest:thread/resume.params.excludeTurns": "boolean",
+    "ClientRequest:thread/resume.params.approvalPolicy": "enum:[\"never\",\"on-request\",\"untrusted\"] null object required:granular string",
+    "ClientRequest:thread/resume.params.approvalsReviewer": "enum:[\"auto_review\",\"guardian_subagent\",\"user\"] null string",
+    "ClientRequest:thread/resume.params.sandbox": "enum:[\"danger-full-access\",\"read-only\",\"workspace-write\"] null string",
+    "ClientRequest:turn/start": "object required:id,method,params",
+    "ClientRequest:turn/start.params": "object required:input,threadId",
+    "ClientRequest:turn/start.params.threadId": "string",
+    "ClientRequest:turn/start.params.input": "array",
+    "ClientRequest:turn/start.params.input.*": "object required:fileId required:name,path,type required:path,type required:text,type required:url",
+    "ClientRequest:turn/start.params.input.*.@text": "object required:text,type",
+    "ClientRequest:turn/start.params.input.*.@text.text": "string",
+    "ClientRequest:turn/start.params.input.*.@text.text_elements": "array",
+    "ClientRequest:turn/start.params.model": "null string",
+    "ClientRequest:turn/start.params.effort": "null string",
+    "ClientRequest:turn/start.params.approvalPolicy": "enum:[\"never\",\"on-request\",\"untrusted\"] null object required:granular string",
+    "ClientRequest:turn/start.params.approvalsReviewer": "enum:[\"auto_review\",\"guardian_subagent\",\"user\"] null string",
+    "ClientRequest:turn/interrupt": "object required:id,method,params",
+    "ClientRequest:turn/interrupt.params": "object required:threadId,turnId",
+    "ClientRequest:turn/interrupt.params.threadId": "string",
+    "ClientRequest:turn/interrupt.params.turnId": "string",
+    "ClientRequest:model/list": "object required:id,method,params",
+    "ClientRequest:model/list.params": "object",
+    "ClientRequest:model/list.params.cursor": "null string",
+    "ClientRequest:experimentalFeature/list": "object required:id,method,params",
+    "ClientRequest:experimentalFeature/list.params": "object",
+    "ClientRequest:experimentalFeature/list.params.cursor": "null string",
+    "ClientRequest:skills/list": "object required:id,method,params",
+    "ClientRequest:skills/list.params": "object",
+    "ClientRequest:skills/list.params.cwds": "array",
+    "ClientRequest:hooks/list": "object required:id,method,params",
+    "ClientRequest:hooks/list.params": "object",
+    "ClientRequest:hooks/list.params.cwds": "array",
+    "ClientRequest:plugin/installed": "object required:id,method,params",
+    "ClientRequest:plugin/installed.params": "object",
+    "ClientRequest:plugin/installed.params.cwds": "array null",
+    "ClientRequest:mcpServerStatus/list": "object required:id,method,params",
+    "ClientRequest:mcpServerStatus/list.params": "object",
+    "ClientRequest:mcpServerStatus/list.params.cursor": "null string",
+    "ClientRequest:mcpServerStatus/list.params.detail": "enum:[\"full\",\"toolsAndAuthOnly\"] null string",
+    "ClientRequest:modelProvider/capabilities/read": "object required:id,method,params",
+    "ClientRequest:modelProvider/capabilities/read.params": "object",
+    "ClientRequest:permissionProfile/list": "object required:id,method,params",
+    "ClientRequest:permissionProfile/list.params": "object",
+    "ClientRequest:permissionProfile/list.params.cursor": "null string",
+    "ClientRequest:permissionProfile/list.params.cwd": "null string",
+    "ClientNotification:initialized": "object",
+    "ServerRequest:item/commandExecution/requestApproval": "object",
+    "ServerRequest:item/commandExecution/requestApproval.params": "object",
+    "ServerRequest:item/commandExecution/requestApproval.params.threadId": "string",
+    "ServerRequest:item/commandExecution/requestApproval.params.turnId": "string",
+    "ServerRequest:item/commandExecution/requestApproval.params.itemId": "string",
+    "ServerRequest:item/commandExecution/requestApproval.params.kind": "enum:[\"command\",\"writeStdin\"] enum:[\"humanCommand\"] string",
+    "ServerRequest:item/commandExecution/requestApproval.params.command": "null string",
+    "ServerRequest:item/commandExecution/requestApproval.params.cwd": "null string",
+    "ServerRequest:item/commandExecution/requestApproval.params.reason": "null string",
+    "ServerRequest:item/commandExecution/requestApproval.params.networkApprovalContext": "null object",
+    "ServerRequest:item/commandExecution/requestApproval.params.networkApprovalContext.host": "string",
+    "ServerRequest:item/commandExecution/requestApproval.params.networkApprovalContext.protocol": "string enum:[\"http\",\"https\",\"socks5Tcp\",\"socks5Udp\"]",
+    "ServerRequest:item/commandExecution/requestApproval.params.availableDecisions": "array null",
+    "ServerRequest:item/commandExecution/requestApproval.params.availableDecisions.*": "enum:[\"accept\"] enum:[\"acceptForSession\"] enum:[\"cancel\"] enum:[\"decline\"] object string",
+    "ServerRequest:item/fileChange/requestApproval": "object",
+    "ServerRequest:item/fileChange/requestApproval.params": "object",
+    "ServerRequest:item/fileChange/requestApproval.params.threadId": "string",
+    "ServerRequest:item/fileChange/requestApproval.params.turnId": "string",
+    "ServerRequest:item/fileChange/requestApproval.params.itemId": "string",
+    "ServerRequest:item/fileChange/requestApproval.params.reason": "null string",
+    "ServerRequest:item/fileChange/requestApproval.params.grantRoot": "null string",
+    "ServerNotification:turn/started": "object",
+    "ServerNotification:turn/started.params": "object",
+    "ServerNotification:turn/started.params.threadId": "string",
+    "ServerNotification:turn/started.params.turn": "object",
+    "ServerNotification:turn/started.params.turn.id": "string",
+    "ServerNotification:turn/completed": "object",
+    "ServerNotification:turn/completed.params": "object",
+    "ServerNotification:turn/completed.params.threadId": "string",
+    "ServerNotification:turn/completed.params.turn": "object",
+    "ServerNotification:turn/completed.params.turn.id": "string",
+    "ServerNotification:turn/completed.params.turn.status": "string enum:[\"completed\",\"failed\",\"inProgress\",\"interrupted\"]",
+    "ServerNotification:turn/completed.params.turn.durationMs": "integer null",
+    "ServerNotification:turn/completed.params.turn.error": "null object",
+    "ServerNotification:turn/completed.params.turn.error.message": "string",
+    "ServerNotification:item/started": "object",
+    "ServerNotification:item/started.params": "object",
+    "ServerNotification:item/started.params.threadId": "string",
+    "ServerNotification:item/started.params.turnId": "string",
+    "ServerNotification:item/started.params.item": "object",
+    "ServerNotification:item/started.params.item.@commandExecution": "object",
+    "ServerNotification:item/started.params.item.@commandExecution.id": "string",
+    "ServerNotification:item/started.params.item.@commandExecution.command": "string",
+    "ServerNotification:item/started.params.item.@fileChange": "object",
+    "ServerNotification:item/started.params.item.@fileChange.id": "string",
+    "ServerNotification:item/started.params.item.@fileChange.changes": "array",
+    "ServerNotification:item/started.params.item.@fileChange.changes.*": "object",
+    "ServerNotification:item/started.params.item.@fileChange.changes.*.path": "string",
+    "ServerNotification:item/started.params.item.@mcpToolCall": "object",
+    "ServerNotification:item/started.params.item.@mcpToolCall.id": "string",
+    "ServerNotification:item/started.params.item.@mcpToolCall.server": "string",
+    "ServerNotification:item/started.params.item.@mcpToolCall.tool": "string",
+    "ServerNotification:item/started.params.item.@dynamicToolCall": "object",
+    "ServerNotification:item/started.params.item.@dynamicToolCall.id": "string",
+    "ServerNotification:item/started.params.item.@dynamicToolCall.tool": "string",
+    "ServerNotification:item/started.params.item.@webSearch": "object",
+    "ServerNotification:item/started.params.item.@webSearch.id": "string",
+    "ServerNotification:item/started.params.item.@webSearch.query": "string",
+    "ServerNotification:item/completed": "object",
+    "ServerNotification:item/completed.params": "object",
+    "ServerNotification:item/completed.params.threadId": "string",
+    "ServerNotification:item/completed.params.turnId": "string",
+    "ServerNotification:item/completed.params.item": "object",
+    "ServerNotification:item/completed.params.item.@userMessage": "object",
+    "ServerNotification:item/completed.params.item.@userMessage.id": "string",
+    "ServerNotification:item/completed.params.item.@userMessage.content": "array",
+    "ServerNotification:item/completed.params.item.@userMessage.content.*": "object",
+    "ServerNotification:item/completed.params.item.@userMessage.content.*.@text": "object",
+    "ServerNotification:item/completed.params.item.@userMessage.content.*.@text.text": "string",
+    "ServerNotification:item/completed.params.item.@agentMessage": "object",
+    "ServerNotification:item/completed.params.item.@agentMessage.id": "string",
+    "ServerNotification:item/completed.params.item.@agentMessage.text": "string",
+    "ServerNotification:item/completed.params.item.@commandExecution": "object",
+    "ServerNotification:item/completed.params.item.@commandExecution.id": "string",
+    "ServerNotification:item/completed.params.item.@commandExecution.status": "string enum:[\"completed\",\"declined\",\"failed\",\"inProgress\"]",
+    "ServerNotification:item/completed.params.item.@commandExecution.durationMs": "integer null",
+    "ServerNotification:item/completed.params.item.@commandExecution.command": "string",
+    "ServerNotification:item/completed.params.item.@commandExecution.commandActions": "array",
+    "ServerNotification:item/completed.params.item.@commandExecution.commandActions.*": "object",
+    "ServerNotification:item/completed.params.item.@commandExecution.commandActions.*.@read": "object",
+    "ServerNotification:item/completed.params.item.@commandExecution.commandActions.*.@read.path": "string",
+    "ServerNotification:item/completed.params.item.@commandExecution.exitCode": "integer null",
+    "ServerNotification:item/completed.params.item.@commandExecution.aggregatedOutput": "null string",
+    "ServerNotification:item/completed.params.item.@fileChange": "object",
+    "ServerNotification:item/completed.params.item.@fileChange.id": "string",
+    "ServerNotification:item/completed.params.item.@fileChange.status": "string enum:[\"completed\",\"declined\",\"failed\",\"inProgress\"]",
+    "ServerNotification:item/completed.params.item.@fileChange.changes": "array",
+    "ServerNotification:item/completed.params.item.@fileChange.changes.*": "object",
+    "ServerNotification:item/completed.params.item.@fileChange.changes.*.path": "string",
+    "ServerNotification:item/completed.params.item.@fileChange.changes.*.diff": "string",
+    "ServerNotification:item/completed.params.item.@fileChange.changes.*.kind": "object",
+    "ServerNotification:item/completed.params.item.@fileChange.changes.*.kind.@add": "object",
+    "ServerNotification:item/completed.params.item.@mcpToolCall": "object",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.id": "string",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.status": "string enum:[\"completed\",\"failed\",\"inProgress\"]",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.durationMs": "integer null",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.server": "string",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.tool": "string",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.error": "null object",
+    "ServerNotification:item/completed.params.item.@mcpToolCall.error.message": "string",
+    "ServerNotification:item/completed.params.item.@dynamicToolCall": "object",
+    "ServerNotification:item/completed.params.item.@dynamicToolCall.id": "string",
+    "ServerNotification:item/completed.params.item.@dynamicToolCall.status": "string enum:[\"completed\",\"failed\",\"inProgress\"]",
+    "ServerNotification:item/completed.params.item.@dynamicToolCall.durationMs": "integer null",
+    "ServerNotification:item/completed.params.item.@dynamicToolCall.tool": "string",
+    "ServerNotification:item/completed.params.item.@dynamicToolCall.success": "boolean null",
+    "ServerNotification:item/completed.params.item.@webSearch": "object",
+    "ServerNotification:item/completed.params.item.@webSearch.id": "string",
+    "ServerNotification:item/completed.params.item.@webSearch.query": "string",
+    "ServerNotification:item/agentMessage/delta": "object",
+    "ServerNotification:item/agentMessage/delta.params": "object",
+    "ServerNotification:item/agentMessage/delta.params.threadId": "string",
+    "ServerNotification:item/agentMessage/delta.params.turnId": "string",
+    "ServerNotification:item/agentMessage/delta.params.delta": "string",
+    "ServerNotification:serverRequest/resolved": "object",
+    "ServerNotification:serverRequest/resolved.params": "object",
+    "ServerNotification:serverRequest/resolved.params.threadId": "string",
+    "ServerNotification:serverRequest/resolved.params.requestId": "integer string",
+    "ServerNotification:thread/tokenUsage/updated": "object",
+    "ServerNotification:thread/tokenUsage/updated.params": "object",
+    "ServerNotification:thread/tokenUsage/updated.params.threadId": "string",
+    "ServerNotification:thread/tokenUsage/updated.params.turnId": "string",
+    "ServerNotification:thread/tokenUsage/updated.params.tokenUsage": "object",
+    "ServerNotification:thread/tokenUsage/updated.params.tokenUsage.last": "object",
+    "ServerNotification:thread/tokenUsage/updated.params.tokenUsage.last.inputTokens": "integer",
+    "ServerNotification:thread/tokenUsage/updated.params.tokenUsage.last.outputTokens": "integer",
+    "ServerNotification:thread/tokenUsage/updated.params.tokenUsage.last.cachedInputTokens": "integer",
+    "ServerNotification:thread/tokenUsage/updated.params.tokenUsage.last.cacheWriteInputTokens": "integer",
+    "ServerNotification:model/rerouted": "object",
+    "ServerNotification:model/rerouted.params": "object",
+    "ServerNotification:model/rerouted.params.threadId": "string",
+    "ServerNotification:model/rerouted.params.turnId": "string",
+    "ServerNotification:model/rerouted.params.fromModel": "string",
+    "ServerNotification:model/rerouted.params.toModel": "string",
+    "ServerNotification:error": "object",
+    "ServerNotification:error.params": "object",
+    "ServerNotification:error.params.threadId": "string",
+    "ServerNotification:error.params.turnId": "string",
+    "ServerNotification:error.params.willRetry": "boolean",
+    "ServerNotification:error.params.error": "object",
+    "ServerNotification:error.params.error.message": "string",
+    "ServerNotification:skills/changed": "object",
+    "ServerNotification:skills/changed.params": "object",
+    "ServerNotification:deprecationNotice": "object",
+    "ServerNotification:deprecationNotice.params": "object",
+    "ServerNotification:deprecationNotice.params.summary": "string",
+    "ServerNotification:deprecationNotice.params.details": "null string",
+    "Response:InitializeResponse": "object",
+    "Response:InitializeResponse.userAgent": "string",
+    "Response:GetAccountResponse": "object",
+    "Response:GetAccountResponse.account": "null object",
+    "Response:GetAccountResponse.account.@apiKey": "object",
+    "Response:GetAccountResponse.account.@apiKey.type": "string enum:[\"apiKey\"]",
+    "Response:GetAccountResponse.account.@chatgpt": "object",
+    "Response:GetAccountResponse.account.@chatgpt.type": "string enum:[\"chatgpt\"]",
+    "Response:ConfigReadResponse": "object",
+    "Response:ConfigReadResponse.config": "object",
+    "Response:ConfigReadResponse.config.model": "null string",
+    "Response:ConfigReadResponse.config.model_reasoning_effort": "null string",
+    "Response:ThreadStartResponse": "object",
+    "Response:ThreadStartResponse.thread": "object",
+    "Response:ThreadStartResponse.thread.id": "string",
+    "Response:ThreadStartResponse.model": "string",
+    "Response:ThreadStartResponse.reasoningEffort": "null string",
+    "Response:ThreadStartResponse.approvalPolicy": "enum:[\"never\",\"on-request\",\"untrusted\"] object string",
+    "Response:ThreadStartResponse.approvalsReviewer": "string enum:[\"auto_review\",\"guardian_subagent\",\"user\"]",
+    "Response:ThreadStartResponse.sandbox": "object",
+    "Response:ThreadStartResponse.sandbox.@workspaceWrite": "object",
+    "Response:ThreadResumeResponse": "object",
+    "Response:ThreadResumeResponse.thread": "object",
+    "Response:ThreadResumeResponse.thread.id": "string",
+    "Response:ThreadResumeResponse.model": "string",
+    "Response:ThreadResumeResponse.reasoningEffort": "null string",
+    "Response:ThreadResumeResponse.approvalPolicy": "enum:[\"never\",\"on-request\",\"untrusted\"] object string",
+    "Response:ThreadResumeResponse.approvalsReviewer": "string enum:[\"auto_review\",\"guardian_subagent\",\"user\"]",
+    "Response:ThreadResumeResponse.sandbox": "object",
+    "Response:ThreadResumeResponse.sandbox.@workspaceWrite": "object",
+    "Response:TurnStartResponse": "object",
+    "Response:TurnStartResponse.turn": "object",
+    "Response:TurnStartResponse.turn.id": "string",
+    "Response:TurnInterruptResponse": "object",
+    "Response:ModelListResponse": "object",
+    "Response:ModelListResponse.nextCursor": "null string",
+    "Response:ModelListResponse.data": "array",
+    "Response:ModelListResponse.data.*": "object",
+    "Response:ModelListResponse.data.*.id": "string",
+    "Response:ModelListResponse.data.*.displayName": "string",
+    "Response:ModelListResponse.data.*.hidden": "boolean",
+    "Response:ModelListResponse.data.*.defaultReasoningEffort": "string",
+    "Response:ModelListResponse.data.*.supportedReasoningEfforts": "array",
+    "Response:ModelListResponse.data.*.supportedReasoningEfforts.*": "object",
+    "Response:ModelListResponse.data.*.supportedReasoningEfforts.*.reasoningEffort": "string",
+    "Response:ExperimentalFeatureListResponse": "object",
+    "Response:ExperimentalFeatureListResponse.nextCursor": "null string",
+    "Response:ExperimentalFeatureListResponse.data": "array",
+    "Response:ExperimentalFeatureListResponse.data.*": "object",
+    "Response:ExperimentalFeatureListResponse.data.*.name": "string",
+    "Response:ExperimentalFeatureListResponse.data.*.stage": "enum:[\"beta\"] enum:[\"deprecated\"] enum:[\"removed\"] enum:[\"stable\"] enum:[\"underDevelopment\"] string",
+    "Response:ExperimentalFeatureListResponse.data.*.enabled": "boolean",
+    "Response:ExperimentalFeatureListResponse.data.*.defaultEnabled": "boolean",
+    "Response:ExperimentalFeatureListResponse.data.*.displayName": "null string",
+    "Response:ExperimentalFeatureListResponse.data.*.description": "null string",
+    "Response:ExperimentalFeatureListResponse.data.*.announcement": "null string",
+    "Response:SkillsListResponse": "object",
+    "Response:SkillsListResponse.data": "array",
+    "Response:SkillsListResponse.data.*": "object",
+    "Response:SkillsListResponse.data.*.skills": "array",
+    "Response:SkillsListResponse.data.*.skills.*": "object",
+    "Response:SkillsListResponse.data.*.skills.*.name": "string",
+    "Response:SkillsListResponse.data.*.skills.*.description": "string",
+    "Response:SkillsListResponse.data.*.skills.*.shortDescription": "null string",
+    "Response:SkillsListResponse.data.*.skills.*.scope": "string enum:[\"admin\",\"repo\",\"system\",\"user\"]",
+    "Response:SkillsListResponse.data.*.skills.*.enabled": "boolean",
+    "Response:SkillsListResponse.data.*.skills.*.interface": "null object",
+    "Response:SkillsListResponse.data.*.skills.*.interface.displayName": "null string",
+    "Response:HooksListResponse": "object",
+    "Response:HooksListResponse.data": "array",
+    "Response:HooksListResponse.data.*": "object",
+    "Response:HooksListResponse.data.*.hooks": "array",
+    "Response:HooksListResponse.data.*.hooks.*": "object",
+    "Response:HooksListResponse.data.*.hooks.*.eventName": "string enum:[\"interrupt\",\"permissionRequest\",\"postCompact\",\"postModelRequest\",\"postToolUse\",\"preCompact\",\"preModelRequest\",\"preToolUse\",\"sessionEnd\",\"sessionStart\",\"stop\",\"subagentStart\",\"subagentStop\",\"userPromptSubmit\"]",
+    "Response:HooksListResponse.data.*.hooks.*.enabled": "boolean",
+    "Response:HooksListResponse.data.*.hooks.*.source": "string enum:[\"cloudManagedConfig\",\"cloudRequirements\",\"legacyManagedConfigFile\",\"legacyManagedConfigMdm\",\"mdm\",\"plugin\",\"project\",\"sessionFlags\",\"system\",\"unknown\",\"user\"]",
+    "Response:HooksListResponse.data.*.hooks.*.@handlerType=command": "object",
+    "Response:HooksListResponse.data.*.hooks.*.@handlerType=command.command": "string",
+    "Response:HooksListResponse.data.*.hooks.*.@handlerType=mcpTool": "object",
+    "Response:HooksListResponse.data.*.hooks.*.@handlerType=mcpTool.server": "string",
+    "Response:HooksListResponse.data.*.hooks.*.@handlerType=mcpTool.tool": "string",
+    "Response:PluginInstalledResponse": "object",
+    "Response:PluginInstalledResponse.marketplaces": "array",
+    "Response:PluginInstalledResponse.marketplaces.*": "object",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins": "array",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*": "object",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.id": "string",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.name": "string",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.installed": "boolean",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.enabled": "boolean",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.interface": "null object",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.interface.displayName": "null string",
+    "Response:PluginInstalledResponse.marketplaces.*.plugins.*.interface.shortDescription": "null string",
+    "Response:ListMcpServerStatusResponse": "object",
+    "Response:ListMcpServerStatusResponse.nextCursor": "null string",
+    "Response:ListMcpServerStatusResponse.data": "array",
+    "Response:ListMcpServerStatusResponse.data.*": "object",
+    "Response:ListMcpServerStatusResponse.data.*.name": "string",
+    "Response:ListMcpServerStatusResponse.data.*.authStatus": "string enum:[\"bearerToken\",\"notLoggedIn\",\"oAuth\",\"unknown\",\"unsupported\"]",
+    "Response:ListMcpServerStatusResponse.data.*.serverInfo": "null object",
+    "Response:ListMcpServerStatusResponse.data.*.serverInfo.title": "null string",
+    "Response:ListMcpServerStatusResponse.data.*.serverInfo.description": "null string",
+    "Response:ListMcpServerStatusResponse.data.*.tools": "object",
+    "Response:ListMcpServerStatusResponse.data.*.tools.*": "object",
+    "Response:ListMcpServerStatusResponse.data.*.tools.*.title": "null string",
+    "Response:ListMcpServerStatusResponse.data.*.tools.*.description": "null string",
+    "Response:ModelProviderCapabilitiesReadResponse": "object",
+    "Response:ModelProviderCapabilitiesReadResponse.webSearch": "boolean",
+    "Response:ModelProviderCapabilitiesReadResponse.imageGeneration": "boolean",
+    "Response:PermissionProfileListResponse": "object",
+    "Response:PermissionProfileListResponse.nextCursor": "null string",
+    "Response:PermissionProfileListResponse.data": "array",
+    "Response:PermissionProfileListResponse.data.*": "object",
+    "Response:PermissionProfileListResponse.data.*.id": "string",
+    "Response:PermissionProfileListResponse.data.*.description": "null string",
+    "Response:PermissionProfileListResponse.data.*.allowed": "boolean",
+    "Response:CommandExecutionRequestApprovalResponse": "object required:decision",
+    "Response:CommandExecutionRequestApprovalResponse.decision": "enum:[\"accept\"] enum:[\"acceptForSession\"] enum:[\"cancel\"] enum:[\"decline\"] object required:acceptWithExecpolicyAmendment required:applyNetworkPolicyAmendment string",
+    "Response:FileChangeRequestApprovalResponse": "object required:decision",
+    "Response:FileChangeRequestApprovalResponse.decision": "enum:[\"accept\"] enum:[\"acceptForSession\"] enum:[\"cancel\"] enum:[\"decline\"] string"
+  },
+  "features": {
+    "agent_message_board": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "agent_message_board_mcp": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "analytics_plan_history": {
+      "stage": "experimental",
+      "enabled": false
+    },
+    "api_key_cyber_access_programs": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "api_key_model_discovery": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "app_server_websocket_compression": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "apply_patch_freeform": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "apply_patch_preserve_line_endings": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "apply_patch_streaming_events": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "apps": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "apps_early_resource_discovery": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "apps_mcp_path_override": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "artifact": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "async_compaction": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "async_compaction_root_only": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "auth_elicitation": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "background_paginated_rollout_migration": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "bedrock_setup_wizard": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "browser_annotation_api": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "browser_use": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "browser_use_external": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "browser_use_full_cdp_access": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "catalog_apps_instructions": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "chronicle": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "cli_daybreak": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "cli_resume_account_check": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "code_mode": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "code_mode_buffered_exec": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "code_mode_host": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "code_mode_host_grpc": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "code_mode_host_output_truncation": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "code_mode_interrupt": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "code_mode_only": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "code_mode_only_strict_3p_tools": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "code_mode_prewarm": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "code_mode_tool_description_first": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "code_mode_tool_search": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "codex_apps_mcp_2026_07_28": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "codex_git_commit": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "collaboration_modes": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "command_sessions_world_state": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "compaction_image_budget": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "computer_use": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "concurrent_reasoning_summaries": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "content_item_kinds": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "context_management": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "credential_masking": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "critical_path_timing": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "current_time_reminder": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "cwd_relative_turn_diffs": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "daemon_auto_start": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "daybreak_program_propagation": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "default_mode_request_user_input": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "defer_mailbox_preemption": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "deferred_executor": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "deferred_tool_world_state": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "elevated_windows_sandbox": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "enable_fanout": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "enable_mcp_apps": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "enable_request_compression": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "exec_permission_approvals": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "executed_tool_call_metadata": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "executor_capability_discovery": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "executor_capability_discovery_v2": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "experimental_windows_sandbox": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "external_agent_memory_import": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "external_migration": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "fast_mode": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "file_backed_tool_audio": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "gateway_setup_wizard": {
+      "stage": "stable",
+      "enabled": false
+    },
+    "gcp_setup_wizard": {
+      "stage": "stable",
+      "enabled": false
+    },
+    "goals": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "guardian_approval": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "guardian_conversation_history_tools": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_denial_reconsideration": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_enhanced_node_repl_transcripts": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_ext": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "guardian_include_additional_context": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "guardian_native_multi_agent_history": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_nested_approval_context": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_node_repl_transcript_images": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_recorded_items": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_reuse_parent_compaction": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "guardian_root_handoff_context": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardian_trust_orchestrator_connectors": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardianv2": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardianv2_decisions_comparison": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "guardianv2.thread_context": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "guardianv3": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "hooks": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "hosted_search_policy": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "image_detail_original": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "image_generation": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "image_generation_animation": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "image_resize_notice": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "in_app_browser": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "in_app_chat": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "in_app_dictation": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "in_app_local_automation": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "in_app_updates": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "in_app_voice": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "incremental_exec_tools": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "incremental_tools": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "incremental_tools_legacy": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "incremental_tools_legacy_gcp": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "instant_interrupt": {
+      "stage": "under development",
+      "enabled": true
+    },
+    "interrupt_on_cancel": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "item_ids": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "js_repl": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "js_repl_tools_only": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "local_thread_store_compression": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "local_thread_store_shared_compression": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "login_shell_package_path": {
+      "stage": "experimental",
+      "enabled": false
+    },
+    "mcp_2026_07_28": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "mcp_connection_sharing": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "mcp_lazy_stdio_startup": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "mcp_oauth_refresh_coordination": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "mcp_shared_repl_cwd": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "mcp_tool_list_changed": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "memories": {
+      "stage": "stable",
+      "enabled": false
+    },
+    "mentions_v2": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "model_catalog_in_context": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "multi_agent": {
+      "stage": "deprecated",
+      "enabled": true
+    },
+    "multi_agent_mode": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "multi_agent_v2": {
+      "stage": "stable",
+      "enabled": false
+    },
+    "multi_agent_v2_dynamic_tools": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "multi_env_copy_file": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "multi_environment_mcp": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "network_proxy": {
+      "stage": "experimental",
+      "enabled": false
+    },
+    "non_prefixed_mcp_tool_names": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "nonfatal_clock_read_errors": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "omit_app_server_notification_media": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "omit_skill_descriptions": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "output_token_replay": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "per_environment_context": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "personality": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "plugin_discovery_prefetch": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "plugin_hooks": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "plugin_sharing": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "plugins": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "powershell_shell_version": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "prediction_preserve_parent_tools": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "prefer_mxc": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "prevent_idle_sleep": {
+      "stage": "experimental",
+      "enabled": false
+    },
+    "psp": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "realtime_conversation": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "reasoning_effort_override": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "recommended_plugins": {
+      "stage": "stable",
+      "enabled": false
+    },
+    "remote_compaction_v2": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "remote_control": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "remote_models": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "remote_plugin": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "request_permissions_tool": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "request_rule": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "resize_all_images": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "respect_system_proxy": {
+      "stage": "experimental",
+      "enabled": false
+    },
+    "responses_websockets": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "responses_websockets_v2": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "restored_history_prewarm": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "retain_client_developer_messages": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "retain_client_tool_outputs": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "rollout_budget": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "runtime_agent_instances": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "runtime_metrics": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "safe_image_decoder": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "search_tool": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "secret_auth_storage": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "send_async_message": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "send_message_to_user_async": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "shell_snapshot": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "shell_snapshot_v2": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "shell_tool": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "shell_zsh_fork": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "simplified_selection_hints": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "skill_catalog_deltas": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "skill_env_var_dependency_prompt": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "skill_mcp_dependency_install": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "skill_search": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "skip_host_skill_discovery": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "sleep_tool": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "sqlite": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "stable_environment_tools": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "standalone_web_search": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "steer": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "step_model_switching": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "subagent_default_context_limits": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "subagent_thread_environments": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "suppress_model_change_announcements": {
+      "stage": "stable",
+      "enabled": false
+    },
+    "system_proxy_fallback": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "terminal_resize_reflow": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "terminal_visualization_instructions": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "token_budget": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "tool_call_mcp_elicitation": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "tool_search": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "tool_search_always_defer_mcp_tools": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "tool_suggest": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "transcript_v2": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "tui_app_server": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "tui_extensions_statusline": {
+      "stage": "experimental",
+      "enabled": false
+    },
+    "tui_multi_backend": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "tui_workspace": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "ultrafast_mode": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "unavailable_dummy_tools": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "unbounded_connection_retries": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "undo": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "unified_exec": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "unified_exec_tty": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "unified_exec_zsh_fork": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "unified_image_budget": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "untrusted_as_tool_output": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "use_agent_identity": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "use_legacy_landlock": {
+      "stage": "deprecated",
+      "enabled": false
+    },
+    "use_linux_sandbox_bwrap": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "use_xaa": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "utc_environment_date": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "view_image": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "wake_on_agent_messages": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "web_search_cached": {
+      "stage": "deprecated",
+      "enabled": false
+    },
+    "web_search_request": {
+      "stage": "deprecated",
+      "enabled": false
+    },
+    "windows_sandbox_service": {
+      "stage": "under development",
+      "enabled": false
+    },
+    "workspace_dependencies": {
+      "stage": "stable",
+      "enabled": true
+    },
+    "workspace_owner_usage_nudge": {
+      "stage": "removed",
+      "enabled": false
+    },
+    "worktrees": {
+      "stage": "removed",
+      "enabled": true
+    },
+    "write_stdin_approval": {
+      "stage": "stable",
+      "enabled": true
+    }
+  }
+}
